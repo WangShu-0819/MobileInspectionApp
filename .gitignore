@@ -1,0 +1,23 @@
+# Gradle
+.gradle/
+build/
+**/build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Local configuration
+local.properties
+
+# Android Studio
+.idea/
+*.iml
+*.iws
+
+# Keystore
+*.jks
+*.keystore
+
+# Generated
+captures/
+*.apk
+*.ap_
+

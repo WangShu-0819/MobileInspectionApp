@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- ========== 四个取景框角（白色）- 参考整个画布 108x108 ========== -->
+
+    <!-- 左上取景角 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M22,22 L38,22 L38,26 Q38,30 34,30 L30,30 Q26,30 26,26 L26,22 L30,22 L30,18 L22,18 Z"/>
+
+    <!-- 右上取景角 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M86,22 L70,22 L70,26 Q70,30 74,30 L78,30 Q82,30 82,26 L82,22 L78,22 L78,18 L86,18 Z"/>
+
+    <!-- 左下取景角 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M22,86 L38,86 L38,82 Q38,78 34,78 L30,78 Q26,78 26,82 L26,86 L30,86 L30,90 L22,90 Z"/>
+
+    <!-- 右下取景角 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M86,86 L70,86 L70,82 Q70,78 74,78 L78,78 Q82,78 82,82 L82,86 L78,86 L78,90 L86,90 Z"/>
+
+    <!-- ========== 中央浅青蓝圆形镜头 ========== -->
+    <!-- 外圈 -->
+    <path
+        android:fillColor="#79C7E3"
+        android:pathData="M44,32 Q64,32 64,52 Q64,72 44,72 Q24,72 24,52 Q24,32 44,32 Z"/>
+
+    <!-- 内圈（镜头中心） -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M50,40 Q58,40 58,48 Q58,56 50,56 Q42,56 42,48 Q42,40 50,40 Z"/>
+
+    <!-- ========== 右下绿色勾选（质检通过）- 覆盖右下取景角内侧 ========== -->
+    <path
+        android:fillColor="#218657"
+        android:pathData="M70,74 L76,80 L92,64"
+        android:strokeWidth="3.5"
+        android:strokeColor="#218657"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"/>
+
+</vector>
