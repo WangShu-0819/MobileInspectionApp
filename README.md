@@ -8,6 +8,7 @@
 
 1. `AGENTS.md`
 2. `tasks/todo.md`
+3. `tasks/plan.md`
 
 长期产品需求见 `MOBILE_INSPECTION_AGENT_INSTRUCTION.md`，历史报告见 `docs/reports/`。
 
@@ -23,4 +24,4 @@ APK：`app/build/outputs/apk/debug/app-debug.apk`
 
 ## 当前阶段
 
-B1 共享 CameraX 收口，尚未允许进入 B2。以 `tasks/todo.md` 为准。
+B1 Task 1 已验收；当前只执行 Task 2“CameraPreview 状态与画幅”。尚未允许进入 Task 3、Task 4 或 B2，以 `AGENTS.md` 和 `tasks/todo.md` 为准。

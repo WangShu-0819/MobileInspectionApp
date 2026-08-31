@@ -1,5 +1,7 @@
 # Task 1 审计报告：整理活跃源码边界
 
+> 状态：Task 1 已验收。本报告只证明源码边界整理结果；当前任务请读取根目录 `AGENTS.md` 和 `tasks/todo.md`。
+
 **执行时间**：2026-08-31
 **执行人**：Agent
 **验证结果**：✅ `./gradlew.bat :app:compileDebugKotlin --no-daemon` BUILD SUCCESSFUL
@@ -86,11 +88,11 @@
 | 文件 | 实际职责 | 状态 | 处理结论 |
 |------|---------|------|---------|
 | CameraPreview.kt | 相机预览 Composable（CameraX PreviewView 封装） | B1 待接线 | ⏳ 保留（功能组件，待 LiveInspectionScreen 集成） |
-| ScanImportBottomSheet.kt | 扫描导入底部弹窗（DPM 扫码 + 相册导入） | 待接线子组件 | ⏳ 保留（子组件，待 ProfileScreen 集成） |
+| ScanImportBottomSheet.kt | 待重构扫描入口；DPM 仅允许相机实时扫码，禁止相册码图导入 | 待接线子组件 | ⏳ 保留，后续接入现场采集页顶部“扫一扫”入口 |
 
 ### 补充说明
 
-- **CameraPreview.kt**：当前无任何调用方。`AppNavigation.kt:115` 调用的是 `PlaceholderScreens.kt` 中的 `CameraPreviewScreen`（占位页面），而非 CameraPreview.kt 中的 `CameraPreview` Composable。B1 阶段需要将 `CameraPreview` 集成到 `LiveInspectionScreen` 中。
+- **CameraPreview.kt**：Task 1 验收时无调用方。`AppNavigation.kt:115` 调用的是 `PlaceholderScreens.kt` 中的 `CameraPreviewScreen`（占位页面），而非 CameraPreview.kt 中的 `CameraPreview` Composable。Task 2 负责收敛为单一真实相机页面入口，具体以当前 `tasks/plan.md` 为准。
 - **ScanImportBottomSheet.kt**：当前无任何调用方，计划在 B2 DPM 迁移时集成。
 
 ---

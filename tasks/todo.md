@@ -4,6 +4,8 @@
 
 ## Task 1：整理活跃源码边界
 
+状态：已验收（提交 `754ec5b`）。
+
 - [x] 用导航和全仓引用确认当前活跃 Screen
 - [x] 列出旧/新重复 Screen 的引用与替代关系
 - [x] 将 `LiveInspectionScreen.kt.backup` 移出 `src/main`
@@ -15,11 +17,13 @@
 
 ## Task 2：CameraPreview 状态与画幅
 
-- [ ] 接通 onCameraReady、权限拒绝、永久拒绝和错误回调
-- [ ] 永久拒绝提供系统设置入口，错误状态提供真实重试
-- [ ] 加载状态在相机 ACTIVE 后消失
-- [ ] `PreviewView.ScaleType` 使用 `FIT_CENTER`
-- [ ] Preview/ImageAnalysis/ImageCapture 优先统一 4:3
+状态：当前进行中。Task 3-5 禁止开始。
+
+- [x] 接通 onCameraReady、权限拒绝、永久拒绝和错误回调
+- [x] 永久拒绝提供系统设置入口，错误状态提供真实重试
+- [x] 加载状态在相机 ACTIVE 后消失
+- [x] `PreviewView.ScaleType` 使用 `FIT_CENTER`
+- [x] Preview/ImageAnalysis/ImageCapture 优先统一 4:3
 - [ ] 竖屏内容保持 3:4 或使用实际流比例，不被固定 60/40 拉伸
 - [ ] 输出 PreviewView、流尺寸、旋转和 content rect 诊断
 

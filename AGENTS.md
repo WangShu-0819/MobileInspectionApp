@@ -14,13 +14,24 @@
 
 - 阶段 A：已完成。
 - B0 旧功能迁移审计：已完成，见 `docs/migration/LEGACY_MIGRATION_MAP.md`。
-- B1 共享 CameraX：未完成，当前约 5/9；完整工程可构建，但权限回调、真实拍照、模式切换和完整真机验收尚未通过。
+- B1 Task 1 源码边界整理：已验收，审计提交为 `754ec5b`。
+- B1 共享 CameraX：未完成；当前进入 Task 2，相机权限回调、真实预览接线、完整画幅和诊断信息尚未验收。真实拍照、模式切换和完整真机验收属于后续 Task 3-5。
 - B2 DPM 迁移：禁止开始，直到 B1 的全部验收项完成。
 - DPM 只支持手机相机实时扫一扫，不提供相册码图导入。
 
 ## 当前唯一任务
 
-执行 `tasks/todo.md` 中的“B1 收口”。不要同时迁移 DPM、OCR、模板编辑、轮廓算法或 ROI 算法。
+只执行 `tasks/todo.md` 中的 **Task 2：CameraPreview 状态与画幅**。Task 1 已结束；不得顺手开始 Task 3 的模式切换、Task 4 的真实拍照，也不得迁移 DPM、OCR、模板编辑、轮廓算法或 ROI 算法。
+
+Task 2 必须形成以下单一闭环：
+
+1. 用真实 `CameraPreview.kt` 替换导航中的相机占位实现，删除或收窄 `PlaceholderScreens.kt` 中重复的 `CameraPreviewScreen`；不得同时保留两个相机页面入口。
+2. 接通权限请求、允许、临时拒绝、永久拒绝、打开系统设置、初始化中、相机 ACTIVE、失败和重试等真实状态。
+3. 预览使用 `FIT_CENTER`，Preview、ImageAnalysis、ImageCapture 优先选择同一 4:3 画幅；竖屏容器按实际流比例显示，不能被固定 60/40 布局拉伸或裁切。
+4. 计算并输出真实图像 `contentRect`，后续轮廓与 ROI 坐标只能落在该区域；Debug 信息必须受 `BuildConfig.DEBUG` 控制。
+5. 完成编译、单元测试、当前源码 APK 安装和真机截图验收后更新报告，然后暂停等待 Task 2 验收。
+
+Task 2 不要求快门产出 JPEG；按钮可以明确显示“后续任务接入”，但不得伪造拍照成功、检测成功或相机就绪状态。
 
 完成声明必须基于当前源码生成的新 APK。以下都不算完成证据：单个类能编译、旧 APK 能启动、UI 有按钮、代码中保留 TODO、报告写着“核心完成”。
 

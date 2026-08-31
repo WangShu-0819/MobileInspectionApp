@@ -54,7 +54,7 @@ class CameraController private constructor(private val context: Context) {
     private var previewUseCase: Preview? = null
     private var analysisUseCase: ImageAnalysis? = null
     private var cameraControl: CameraControl? = null
-    private var cameraInfo: androidx.camera.core.CameraInfo? = null
+    private var _cameraInfo: androidx.camera.core.CameraInfo? = null
 
     private var currentLifecycleOwner: LifecycleOwner? = null
     private var frameAnalyzer: ((ImageProxy) -> Unit)? = null
@@ -69,6 +69,9 @@ class CameraController private constructor(private val context: Context) {
     @Volatile
     private var _error: String? = null
     val error: String? get() = _error
+
+    /** 相机信息（只读） */
+    val cameraInfo: androidx.camera.core.CameraInfo? get() = _cameraInfo
 
     /**
      * 连接相机
@@ -147,7 +150,7 @@ class CameraController private constructor(private val context: Context) {
             previewUseCase = preview
             analysisUseCase = analysis
             cameraControl = camera.cameraControl
-            cameraInfo = camera.cameraInfo
+            _cameraInfo = camera.cameraInfo
             currentLifecycleOwner = lifecycleOwner
             cameraMode = mode
             _isActive = true
@@ -180,7 +183,7 @@ class CameraController private constructor(private val context: Context) {
         previewUseCase = null
         analysisUseCase = null
         cameraControl = null
-        cameraInfo = null
+        _cameraInfo = null
         currentLifecycleOwner = null
         _isActive = false
         _error = null
@@ -277,7 +280,7 @@ class CameraController private constructor(private val context: Context) {
     }
 
     /** 最大变焦倍率 */
-    fun maxZoom(): Float = cameraInfo?.zoomState?.value?.maxZoomRatio ?: 1f
+    fun maxZoom(): Float = _cameraInfo?.zoomState?.value?.maxZoomRatio ?: 1f
 }
 
 /**

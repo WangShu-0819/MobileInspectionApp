@@ -1,5 +1,7 @@
 # MobileInspectionApp 阶段 A 完成报告（紧急修复更新）
 
+> 历史快照：本文保留阶段 A 当时的 4 Tab 和验收事实，不描述当前三页面信息架构，也不能作为下一步指令。当前状态以根目录 `AGENTS.md` 和 `tasks/todo.md` 为准。
+
 **项目**：MobileInspectionApp - 手机端通用视觉检测工作台
 **代码基线**：基于 Wearable Inspection @ 228fb4e
 **完成时间**：2026-08-31

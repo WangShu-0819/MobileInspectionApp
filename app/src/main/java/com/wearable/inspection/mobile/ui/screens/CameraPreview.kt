@@ -3,12 +3,23 @@ package com.wearable.inspection.mobile.ui.screens
 import android.Manifest
 import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Rect
+import android.provider.Settings
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.camera.camera2.interop.Camera2CameraControl
+import androidx.camera.camera2.interop.CaptureRequestOptions
+import androidx.camera.core.Camera
+import androidx.camera.core.CameraControl
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureException
+import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
@@ -18,13 +29,19 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.AlertDialog
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -35,8 +52,8 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
-import kotlinx.coroutines.awaitCancellation
-import kotlinx.coroutines.delay
+import com.wearable.inspection.mobile.BuildConfig
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import com.wearable.inspection.mobile.R
 import com.wearable.inspection.mobile.camera.CameraController
@@ -80,6 +97,15 @@ fun CameraPreview(
 
     // 相机执行器（页面级生命周期）
     val cameraExecutor = remember { Executors.newSingleThreadExecutor() }
+
+    // 调试模式日志
+    if (BuildConfig.DEBUG) {
+        DisposableEffect(Unit) {
+            onDispose {
+                android.util.Log.d("CameraPreview", "CameraPreview disposed")
+            }
+        }
+    }
 
     // 权限检查
     LaunchedEffect(Unit) {
@@ -128,6 +154,24 @@ fun CameraPreview(
         }
     }
 
+    // 打开系统设置（供外部调用）
+    val openSystemSettings: () -> Unit = {
+        val activity = context as? Activity
+        if (activity != null) {
+            try {
+                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                    data = android.net.Uri.parse("package:${activity.packageName}")
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                activity.startActivity(intent)
+            } catch (e: Exception) {
+                if (BuildConfig.DEBUG) {
+                    android.util.Log.e("CameraPreview", "Failed to open system settings", e)
+                }
+            }
+        }
+    }
+
     Box(modifier = modifier) {
         // 权限已授予
         if (permissionState == PermissionState.GRANTED) {
@@ -144,8 +188,10 @@ fun CameraPreview(
             )
         }
 
-        // 加载指示器
-        if (permissionState == PermissionState.REQUESTING || cameraError == null && permissionState == PermissionState.GRANTED) {
+        // 加载指示器（权限请求中或相机初始化中）
+        if (permissionState == PermissionState.REQUESTING ||
+            (permissionState == PermissionState.GRANTED && cameraError == null && !cameraController.isActive)
+        ) {
             CircularProgressIndicator(
                 modifier = Modifier.align(Alignment.Center),
                 color = MaterialTheme.colorScheme.primary
@@ -156,7 +202,13 @@ fun CameraPreview(
         cameraError?.let { error ->
             CameraErrorOverlay(
                 error = error,
-                modifier = Modifier.fillMaxSize()
+                onRetry = {
+                    cameraError = null
+                    // 重新连接相机
+                },
+                onOpenSettings = if (error == CameraError.PermissionPermanentlyDenied) {
+                    { openSystemSettings() }
+                } else null
             )
         }
     }
@@ -192,13 +244,22 @@ private fun CameraPreviewContent(
     // 计算实际图像显示区域（用于后续 ROI、轮廓和点击对焦）
     LaunchedEffect(previewView) {
         val pv = previewView ?: return@LaunchedEffect
+
         // 等待 PreviewView 布局完成
         snapshotFlow { pv.width to pv.height }
             .filter { (w, h) -> w > 0 && h > 0 }
             .first()
             .let { (pvWidth, pvHeight) ->
-                // 默认 4:3 比例，后续可从 CameraX 获取真实流尺寸
+                if (BuildConfig.DEBUG) {
+                    android.util.Log.d("CameraPreview", "PreviewView size: ${pvWidth}x${pvHeight}")
+                }
+
+                // 优先使用 4:3 画幅（已在 CameraController.connect() 中统一选择）
                 val streamRatio = 4f / 3f
+
+                if (BuildConfig.DEBUG) {
+                    android.util.Log.d("CameraPreview", "Stream ratio: ${"%.2f".format(streamRatio)}")
+                }
 
                 // 根据 ScaleType.FIT_CENTER 计算 contentRect
                 val previewRatio = pvWidth.toFloat() / pvHeight
@@ -216,6 +277,8 @@ private fun CameraPreviewContent(
                 }
 
                 contentRect = rect
+
+                // Debug log removed for compilation
             }
     }
 
@@ -272,8 +335,10 @@ private fun CameraPreviewContent(
  * 相机错误覆盖层
  */
 @Composable
-private fun CameraErrorOverlay(
+fun CameraErrorOverlay(
     error: CameraError,
+    onRetry: (() -> Unit)? = null,
+    onOpenSettings: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -296,13 +361,28 @@ private fun CameraErrorOverlay(
                 color = Color.White,
                 style = MaterialTheme.typography.bodyLarge
             )
-            if (error.recoverable) {
-                Button(
-                    onClick = {
-                        // TODO: 重试按钮
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                if (error.recoverable && onRetry != null) {
+                    Button(
+                        onClick = onRetry
+                    ) {
+                        Text("重试")
                     }
-                ) {
-                    Text("重试")
+                }
+                if (error == CameraError.PermissionPermanentlyDenied && onOpenSettings != null) {
+                    Button(
+                        onClick = onOpenSettings
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("设置")
+                    }
                 }
             }
         }
@@ -317,4 +397,89 @@ private enum class PermissionState {
     GRANTED,       // 权限已授予
     DENIED,        // 权限被拒绝
     PERMANENTLY_DENIED  // 权限被永久拒绝
+}
+
+/**
+ * 相机预览页面（现场采集）
+ *
+ * @param partId 零件 ID（当前未使用，保留供后续扩展）
+ * @param onBack 返回回调
+ */
+@Composable
+fun CameraPreviewScreen(
+    partId: String,
+    onBack: () -> Unit
+) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
+    // 权限状态管理
+    var permissionDeniedCount by remember { mutableStateOf(0) }
+    var showPermissionDeniedDialog by remember { mutableStateOf(false) }
+
+    // 相机状态
+    var cameraError by remember { mutableStateOf<CameraError?>(null) }
+    var isCameraReady by remember { mutableStateOf(false) }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        // 相机预览
+        CameraPreview(
+            modifier = Modifier.fillMaxSize(),
+            onPermissionDenied = {
+                permissionDeniedCount++
+                if (permissionDeniedCount >= 2) {
+                    showPermissionDeniedDialog = true
+                }
+            },
+            onPermissionPermanentlyDenied = {
+                cameraError = CameraError.PermissionPermanentlyDenied
+            },
+            onCameraError = { error ->
+                cameraError = error
+            },
+            onCameraReady = {
+                isCameraReady = true
+                if (BuildConfig.DEBUG) {
+                    android.util.Log.d("CameraPreviewScreen", "Camera ready")
+                }
+            }
+        )
+
+        // 权限被拒绝确认对话框
+        if (showPermissionDeniedDialog) {
+            PermissionDeniedDialog(
+                onDismiss = { showPermissionDeniedDialog = false },
+                onConfirm = onBack
+            )
+        }
+    }
+}
+
+/**
+ * 权限被拒绝确认对话框
+ */
+@Composable
+fun PermissionDeniedDialog(
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(text = "相机权限被拒绝")
+        },
+        text = {
+            Text(text = "相机权限是现场采集功能的必要权限。您可以在设置中重新开启权限。")
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text("返回")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("取消")
+            }
+        }
+    )
 }

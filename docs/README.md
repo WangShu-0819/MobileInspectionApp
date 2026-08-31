@@ -7,8 +7,8 @@
 ## 当前执行
 
 - `../AGENTS.md`：Agent 唯一入口。
-- `../tasks/plan.md`：当前实施计划。
-- `../tasks/todo.md`：唯一任务清单和阶段门禁。
+- `../tasks/todo.md`：唯一任务清单和阶段门禁；当前为 B1 Task 2。
+- `../tasks/plan.md`：Task 2 的执行顺序、范围和交付物。
 
 ## 迁移
 
@@ -16,13 +16,13 @@
 
 ## 报告
 
-- `reports/phase-a/`：阶段 A 历史报告。
-- `reports/ui/`：信息架构和现场页历史报告。
-- `reports/b1/`：CameraX B1 报告。
+- `reports/phase-a/`：阶段 A 历史快照，正文中的 4 Tab 和“下一步”均已过期。
+- `reports/ui/`：信息架构和现场页历史快照，不能作为当前 DPM 或相机实现要求。
+- `reports/b1/`：B1 过程报告；Task 1 报告是已验收证据，早期 5/9 报告仅保留历史状态。
 
 ## 归档
 
 - `archive/instructions/`：已执行完或被取代的增量指令。
 - `archive/code-backups/`：从源码目录移出的人工备份。
 
-报告只记录历史事实，不能替代 `tasks/todo.md` 的当前状态。
+报告只记录生成当时的历史事实，不能替代 `AGENTS.md`、`tasks/todo.md` 和 `tasks/plan.md` 的当前状态。报告正文中的“下一步”“建议选项”和完成百分比不具有执行效力。
