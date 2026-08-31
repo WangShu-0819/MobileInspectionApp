@@ -6,7 +6,7 @@
 
 ---
 
-## 一、活跃 Screen 清单（9 个）
+## 一、活跃 Screen 清单（8 个）
 
 ### 1. 一级导航页面（3 个）
 
@@ -16,14 +16,13 @@
 | TraceRecordsScreen.kt | 追溯记录页（历史查询、复核、结果移交） | AppNavigation.kt:68 | ✅ 保留（当前活跃） |
 | ProfileScreen.kt | 个人中心页（模板配置、零件管理、应用设置入口） | AppNavigation.kt:76 | ✅ 保留（当前活跃） |
 
-### 2. 二级导航页面（6 个）
+### 2. 二级导航页面（5 个）
 
 | 文件 | 实际职责 | 调用方 | 处理结论 |
 |------|---------|--------|---------|
 | TemplateConfigScreen.kt | 模板配置页（模板列表、创建、编辑） | AppNavigation.kt:91 | ✅ 保留（当前活跃） |
 | AppSettingsScreen.kt | 应用设置页（相机、通知、振动等设置） | AppNavigation.kt:99 | ✅ 保留（当前活跃） |
 | PartManagementScreen.kt | 零件管理页（零件 CRUD） | AppNavigation.kt:105 | ✅ 保留（当前活跃） |
-| CameraPreview.kt | 相机预览页（实时检测，阶段 B 实现） | AppNavigation.kt:115 | ✅ 保留（功能页面） |
 | PlaceholderScreens.kt:InspectionResultScreen | 检测结果详情页（阶段 B 占位） | AppNavigation.kt:126 | ✅ 保留（占位页面） |
 | PlaceholderScreens.kt:TemplateDetailScreen | 模板详情页（阶段 B 占位） | AppNavigation.kt:137 | ✅ 保留（占位页面） |
 
@@ -80,18 +79,23 @@
 
 ---
 
-## 四、其他分类
+## 四、待实现 / 待接线组件（2 个）
 
-### 功能页面 / 子组件（不计入一级导航 Screen）
+以下文件**不是导航 Screen**，当前无调用方，等待后续阶段接线：
 
-| 文件 | 分类 | 说明 |
-|------|------|------|
-| CameraPreview.kt | 功能页面 | 相机预览 Composable，在 CameraPreviewScreen 中集成 |
-| ScanImportBottomSheet.kt | 子组件 | 扫描导入底部弹窗，未在 AppNavigation 中直接引用 |
+| 文件 | 实际职责 | 状态 | 处理结论 |
+|------|---------|------|---------|
+| CameraPreview.kt | 相机预览 Composable（CameraX PreviewView 封装） | B1 待接线 | ⏳ 保留（功能组件，待 LiveInspectionScreen 集成） |
+| ScanImportBottomSheet.kt | 扫描导入底部弹窗（DPM 扫码 + 相册导入） | 待接线子组件 | ⏳ 保留（子组件，待 ProfileScreen 集成） |
+
+### 补充说明
+
+- **CameraPreview.kt**：当前无任何调用方。`AppNavigation.kt:115` 调用的是 `PlaceholderScreens.kt` 中的 `CameraPreviewScreen`（占位页面），而非 CameraPreview.kt 中的 `CameraPreview` Composable。B1 阶段需要将 `CameraPreview` 集成到 `LiveInspectionScreen` 中。
+- **ScanImportBottomSheet.kt**：当前无任何调用方，计划在 B2 DPM 迁移时集成。
 
 ---
 
-## 五、移动文件清单
+## 五、已归档的过期 Screen（4 个）
 
 ```bash
 # 已移动到 docs/archive/code-backups/screens/

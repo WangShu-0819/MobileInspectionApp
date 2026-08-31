@@ -4,8 +4,8 @@
 
 ## Task 1：整理活跃源码边界
 
-- [ ] 用导航和全仓引用确认当前活跃 Screen
-- [ ] 列出旧/新重复 Screen 的引用与替代关系
+- [x] 用导航和全仓引用确认当前活跃 Screen
+- [x] 列出旧/新重复 Screen 的引用与替代关系
 - [x] 将 `LiveInspectionScreen.kt.backup` 移出 `src/main`
 - [x] 不删除仍被引用的 Screen
 
