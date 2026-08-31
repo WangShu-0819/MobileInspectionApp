@@ -51,7 +51,6 @@ fun WorkbenchScreen(
     val parts by viewModel.parts.collectAsState()
     val selectedPart by viewModel.selectedPart.collectAsState()
     val todayStats by viewModel.todayStats.collectAsState()
-    val isLoading by viewModel.isLoading.collectAsState()
 
     Column(
         modifier = Modifier
@@ -66,11 +65,7 @@ fun WorkbenchScreen(
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
-        if (isLoading) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-        } else if (parts.isEmpty()) {
+        if (parts.isEmpty()) {
             // 空状态：无零件
             EmptyPartState(onCreatePart = { /* TODO */ })
         } else {

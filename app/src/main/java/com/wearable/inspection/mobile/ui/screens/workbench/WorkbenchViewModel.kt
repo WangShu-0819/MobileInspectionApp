@@ -103,7 +103,15 @@ class WorkbenchViewModel(
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), TodayStats())
 
-    val isLoading: StateFlow<Boolean> = MutableStateFlow(false)
+    // 相机就绪状态（CameraX 实际状态）
+    private val _cameraReady = MutableStateFlow(false)
+    val cameraReady: StateFlow<Boolean> = _cameraReady.asStateFlow()
+
+    // TODO: 实际接入 CameraController 后更新此状态
+    // 暂时返回 false（阶段 B1 完成后再接通）
+    fun updateCameraReady(ready: Boolean) {
+        _cameraReady.value = ready
+    }
 
     // 综合状态
     val inspectionState: StateFlow<InspectionState> = combine(

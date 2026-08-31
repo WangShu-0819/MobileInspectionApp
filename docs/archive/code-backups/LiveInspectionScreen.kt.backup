@@ -102,6 +102,7 @@ fun LiveInspectionScreen(
     onViewRecord: (Long) -> Unit
 ) {
     val inspectionState by viewModel.inspectionState.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
     val customColors = LocalCustomColors.current
 
     // 拍照确认对话框状态
@@ -145,7 +146,17 @@ fun LiveInspectionScreen(
         },
         containerColor = customColors.pageBackground
     ) { paddingValues ->
-        Column(
+        if (isLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = Primary)
+            }
+        } else {
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
@@ -168,6 +179,7 @@ fun LiveInspectionScreen(
                 )
             }
         }
+    }
 
     // 拍照确认对话框
     if (showCaptureConfirm) {
