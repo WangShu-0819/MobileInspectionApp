@@ -19,11 +19,18 @@ import java.io.FileOutputStream
  *
  * 测试重点：
  * 1. 连续生成文件名不重复
- * 2. 空文件校验失败并清理
- * 3. 损坏 JPEG 校验失败并清理
- * 4. 最终文件已存在时不得覆盖
- * 5. 移动或复制失败时不留下 .part 文件
- * 6. 成功 JPEG 可以重新解码，宽高有效
+ * 2. 空文件校验失败
+ * 3. 不存在文件校验失败
+ * 4. 最终文件已存在时不得覆盖（校验原内容不变）
+ * 5. 成功移动后不留 .part 文件、临时文件被清理
+ * 6. 不存在的临时文件移动失败
+ * 7. 成功 JPEG 可以重新解码，宽高有效
+ * 8. 校验失败时清理临时文件
+ * 9. 存储失败后不留残留
+ *
+ * 注意：Robolectric 的 ShadowBitmapFactory 对任意数据返回固定的 100x100，
+ * 因此"损坏 JPEG"校验（assertTrue assertNull）只能在 instrumented test 中验证。
+ * 本测试使用 guaranteed-failure 路径（空文件、不存在文件）验证 null 返回。
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [28])
@@ -36,7 +43,6 @@ class MobileImageStoreTest {
     fun setUp() {
         context = ApplicationProvider.getApplicationContext()
         store = MobileImageStore(context)
-        // 清理测试环境
         store.cleanTempDir()
         store.cleanPartFiles()
     }
@@ -62,27 +68,12 @@ class MobileImageStoreTest {
     // ─── 校验测试 ───
 
     @Test
-    fun `空文件校验失败并清理`() {
+    fun `空文件校验失败`() {
         val tempFile = store.generateTempFile()
-        tempFile.createNewFile() // 空文件
+        tempFile.createNewFile()
 
         val result = store.validateJpeg(tempFile)
         assertNull("空文件校验应该失败", result)
-    }
-
-    @Test
-    fun `损坏 JPEG 校验失败`() {
-        val tempFile = store.generateTempFile()
-        // 写入明显不是 JPEG 的数据（以 PNG 签名开头但内容不完整）
-        tempFile.writeBytes(byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A) + ByteArray(100))
-
-        val result = store.validateJpeg(tempFile)
-        // 注意：BitmapFactory 在某些情况下可能仍然能解码部分数据
-        // 如果解码成功，至少验证宽高有效
-        if (result != null) {
-            assertTrue("如果解码成功，宽度应该大于 0", result.width > 0)
-            assertTrue("如果解码成功，高度应该大于 0", result.height > 0)
-        }
     }
 
     @Test
@@ -92,64 +83,89 @@ class MobileImageStoreTest {
         assertNull("不存在文件校验应该失败", result)
     }
 
+    @Test
+    fun `有效 JPEG 校验成功且宽高有效`() {
+        val tempFile = createValidJpegTempFile()
+
+        val result = store.validateJpeg(tempFile)
+        assertNotNull("有效 JPEG 校验应该成功", result)
+
+        val stored = result!!
+        assertTrue("宽度应该大于 0", stored.width > 0)
+        assertTrue("高度应该大于 0", stored.height > 0)
+        assertTrue("文件大小应该大于 0", stored.sizeBytes > 0)
+
+        tempFile.delete()
+    }
+
     // ─── 原子移动测试 ───
 
     @Test
     fun `最终文件已存在时不得覆盖`() {
-        // 创建一个有效的 JPEG 临时文件
         val tempFile = createValidJpegTempFile()
 
-        // 第一次移动应该成功
         val result1 = store.atomicMoveToFinal(tempFile)
         assertNotNull("第一次移动应该成功", result1)
 
-        // 记录第一次的结果
         val firstFile = result1!!
         val firstContent = firstFile.readBytes()
 
-        // 创建另一个临时文件
         val tempFile2 = createValidJpegTempFile()
-        tempFile2.writeBytes(ByteArray(200) { (it + 100).toByte() }) // 不同内容
 
-        // 尝试移动到同一个最终文件（实际上会生成新文件名，但测试逻辑正确）
-        // 注意：由于 generateFinalFileName 每次生成不同名，这个测试实际上是验证不会覆盖已有文件
         val result2 = store.atomicMoveToFinal(tempFile2)
-        assertNotNull("第二次移动应该成功（不同文件名）", result2)
+        assertNotNull("第二次移动应该成功", result2)
 
-        // 验证第一个文件没有被覆盖
+        // 关键校验：第一个文件内容未被覆盖
         val firstContentAfter = firstFile.readBytes()
         assertArrayEquals("第一个文件不应该被覆盖", firstContent, firstContentAfter)
 
-        // 清理
         result2?.delete()
         firstFile.delete()
     }
 
     @Test
-    fun `移动失败时不留下 part 文件`() {
+    fun `成功移动后不留 part 文件`() {
         val tempFile = createValidJpegTempFile()
 
-        // 获取 captures 目录
         val capturesDir = File(context.filesDir, "captures")
 
-        // 移动前检查没有 .part 文件
         val partFilesBefore = capturesDir.listFiles()?.filter { it.name.endsWith(".part") } ?: emptyList()
         assertTrue("移动前不应该有 .part 文件", partFilesBefore.isEmpty())
 
-        // 执行移动
         val result = store.atomicMoveToFinal(tempFile)
         assertNotNull("移动应该成功", result)
 
-        // 移动后检查没有 .part 文件
         val partFilesAfter = capturesDir.listFiles()?.filter { it.name.endsWith(".part") } ?: emptyList()
         assertTrue("移动后不应该有 .part 文件", partFilesAfter.isEmpty())
 
-        // 清理
         result?.delete()
     }
 
     @Test
-    fun `成功 JPEG 可以重新解码宽高有效`() {
+    fun `移动后临时文件被删除`() {
+        val tempFile = createValidJpegTempFile()
+        assertTrue("临时文件应该存在", tempFile.exists())
+
+        val result = store.atomicMoveToFinal(tempFile)
+        assertNotNull("移动应该成功", result)
+
+        assertFalse("临时文件应该被删除", tempFile.exists())
+
+        result?.delete()
+    }
+
+    @Test
+    fun `不存在的临时文件移动失败`() {
+        val tempFile = File(context.cacheDir, "nonexistent.jpg")
+
+        val result = store.atomicMoveToFinal(tempFile)
+        assertNull("不存在的文件移动应该失败", result)
+    }
+
+    // ─── 完整存储流程测试 ───
+
+    @Test
+    fun `完整存储流程成功时返回有效结果`() {
         val tempFile = createValidJpegTempFile()
 
         val result = store.storeCapturedImage(tempFile)
@@ -167,7 +183,6 @@ class MobileImageStoreTest {
         assertEquals("宽度应该匹配", stored.width, bitmap.width)
         assertEquals("高度应该匹配", stored.height, bitmap.height)
 
-        // 清理
         bitmap.recycle()
         File(stored.finalPath).delete()
     }
@@ -175,20 +190,32 @@ class MobileImageStoreTest {
     @Test
     fun `校验失败时清理临时文件`() {
         val tempFile = store.generateTempFile()
-        tempFile.createNewFile() // 空文件 - 这个一定会校验失败
+        tempFile.createNewFile() // 空文件
 
         val result = store.storeCapturedImage(tempFile)
         assertNull("空文件存储应该失败", result)
 
-        // 临时文件应该被清理
         assertFalse("临时文件应该被删除", tempFile.exists())
+    }
+
+    @Test
+    fun `存储失败后不留 part 残留`() {
+        val tempFile = store.generateTempFile()
+        tempFile.createNewFile() // 空文件 → validateJpeg 返回 null → storeCapturedImage 删除临时文件
+
+        val capturesDir = File(context.filesDir, "captures")
+
+        val result = store.storeCapturedImage(tempFile)
+        assertNull("空文件存储应该失败", result)
+
+        assertFalse("临时文件应该被删除", tempFile.exists())
+
+        val partFiles = capturesDir.listFiles()?.filter { it.name.endsWith(".part") } ?: emptyList()
+        assertTrue("不应该留下 .part 文件", partFiles.isEmpty())
     }
 
     // ─── 辅助方法 ───
 
-    /**
-     * 创建有效的 JPEG 临时文件
-     */
     private fun createValidJpegTempFile(): File {
         val tempFile = store.generateTempFile()
         val bitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888)

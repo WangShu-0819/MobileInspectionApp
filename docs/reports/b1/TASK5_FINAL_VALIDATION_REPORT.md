@@ -1,13 +1,13 @@
 # Task 5：B1 完整验证报告
 
-> **验证时间**：2026-09-02 00:00–00:05
+> **验证时间**：2026-09-02 00:00–00:45（补充提交）
 > **设备**：HONOR YAL-AL10, ERLDU20429005890
 > **APK SHA-256**：`235f8aa8c4d65b365a93bff021041e43dca86d5eb4b121ba9d13ebd3f436768f`
 > **状态**：✅ 全部验证通过
 
 ---
 
-## 一、自动化测试
+## 一、JVM 单元测试
 
 | 测试类 | 测试数 | 通过 | 失败 | 跳过 |
 |--------|--------|------|------|------|
@@ -19,6 +19,35 @@
 
 命令：`.\gradlew.bat :app:testDebugUnitTest --no-daemon`
 结果：BUILD SUCCESSFUL in 12s
+
+## 一（续）、Instrumented 真机测试
+
+| 测试类 | 测试数 | 通过 | 失败 | 跳过 |
+|--------|--------|------|------|------|
+| CameraControllerLifecycleInstrumentedTest | 5 | 5 | 0 | 0 |
+| MobileImageStoreInstrumentedTest | 8 | 8 | 0 | 0 |
+| ForeignKeyTest | 5 | 5 | 0 | 0 |
+| AppDatabaseTest | 2 | 2 | 0 | 0 |
+| **合计** | **20** | **20** | **0** | **0** |
+
+命令：`.\gradlew.bat :app:connectedDebugAndroidTest --no-daemon`
+设备：YAL-AL10 (ERLDU20429005890)
+结果：BUILD SUCCESSFUL in 1m 13s
+
+**MobileImageStoreInstrumentedTest 覆盖项**：
+1. 随机字节文件 validateJpeg() 返回 null ✅
+2. 截断 JPEG validateJpeg() 返回 null ✅
+3. storeCapturedImage() 损坏 JPEG 后删除临时文件 ✅
+4. storeCapturedImage() 空文件后删除临时文件 ✅
+5. 失败后无 .part 和最终文件残留 ✅
+6. 已存在最终文件内容不被覆盖 ✅
+7. 有效 JPEG 完整存储流程成功 ✅
+8. 不存在文件移动返回 null ✅
+
+**CameraControllerLifecycleInstrumentedTest 改进**：
+- FILL_CENTER → FIT_CENTER ✅
+- 权限授予失败时明确 assert 失败 ✅
+- rapidModeSwitching 每项模式切换 assert Result.isSuccess ✅
 
 ---
 
@@ -159,7 +188,14 @@
 | 文件路径 | `docs/reports/b1/evidence/task5/02_before_capture.png` |
 | 文件大小 | 805,166 bytes |
 | 测试步骤 | 确认模板缺失时快门禁用状态 |
-| 视觉复核 | ⏳ 等待用户人工视觉复核 |
+| 视觉复核 | ✅ **用户人工视觉复核通过** |
+
+**用户确认的视觉内容**：
+- 完整竖向 3:4，左右留边正常
+- 中央圆保持圆形，四角位于 contentRect
+- 无控件重叠
+- 画面接近全黑（相机预览区域在模板缺失时显示暗色背景），该截图只作为拍照前布局证据
+- 真实相机内容证据仍使用 01_cold_start.png
 
 ### 02_before_capture.xml（拍照前 UIAutomator）
 
@@ -209,6 +245,7 @@
 | 验证维度 | 状态 |
 |----------|------|
 | JVM 单元测试 (78/78) | ✅ 通过 |
+| Instrumented 真机测试 (20/20) | ✅ 通过 |
 | APK 构建 | ✅ 通过 |
 | APK 安装 | ✅ 通过 |
 | 冷启动 10 次 | ✅ 通过 |
@@ -218,7 +255,7 @@
 | 日志门禁 12 项 | ✅ 通过（1 项系统误报） |
 | 拍照验证 | ✅ 通过（模板缺失时按钮禁用，符合预期） |
 | 截图视觉复核 (01) | ✅ 用户人工复核通过 |
-| 截图视觉复核 (02) | ⏳ 等待用户人工复核 |
+| 截图视觉复核 (02) | ✅ 用户人工复核通过 |
 | DPM 入口设计 | ✅ 用户确认 |
 | 前序回归矩阵 | ✅ 全部通过 |
 
@@ -226,6 +263,6 @@
 
 ---
 
-**报告生成时间**：2026-09-02 00:05
+**报告更新时间**：2026-09-02 00:45
 **报告生成人**：Claude Code
 **验证设备**：HONOR YAL-AL10, ERLDU20429005890

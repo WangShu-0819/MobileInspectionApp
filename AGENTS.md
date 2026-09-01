@@ -28,11 +28,9 @@
 
 **B1 技术验收已完成，等待用户确认进入 B2。** 不得开始 B2，不得接入 DPM、OCR、模板、轮廓或 ROI。`tools/contour_extraction/` 继续冻结。
 
-开始 Task 5 验证前，先确认 Task 3 收口基线已提交：主 Manifest 移除测试入口、`CameraModeTestActivity` 从 `src/main` 删除。`tools/contour_extraction/` 不属于当前阶段，继续冻结且不得混入提交。
-
 Task 5 已完成全部验证：JVM 测试 78/78、冷启动 10 次、Tab 10 轮、前后台 10 次、日志门禁 12 项、截图用户视觉复核。详见 `docs/reports/b1/TASK5_FINAL_VALIDATION_REPORT.md`。
 
-B1 技术验收完成，等待用户确认进入 B2。不得自动开始 B2。
+下一位执行 Agent 必须停在此门禁；只有用户明确确认进入 B2 后，才能先更新 `tasks/todo.md` 的唯一进行中任务，再开始 DPM 迁移。不得自动开始 B2。
 
 ## 累积回归门禁
 

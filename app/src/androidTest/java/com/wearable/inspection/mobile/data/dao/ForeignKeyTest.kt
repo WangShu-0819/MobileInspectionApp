@@ -1,28 +1,22 @@
 package com.wearable.inspection.mobile.data.dao
 
 import androidx.room.Room
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.platform.app.InstrumentationRegistry
 import com.wearable.inspection.mobile.data.db.AppDatabase
+import com.wearable.inspection.mobile.data.db.ALL_MIGRATIONS
 import com.wearable.inspection.mobile.data.entity.*
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertTrue
+import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * PartDao + TemplateDao + RoiDao 外键关系测试
+ * 外键约束集成测试（真机验证）
  *
- * 验证：
- * 1. Part → Template 外键约束
- * 2. Template → ROI 外键约束
- * 3. Session → ROI Record 外键约束
- * 4. 级联删除行为（CASCADE / SET_NULL）
+ * 验证 Room 数据库的外键级联删除和 SET NULL 行为。
  */
 @RunWith(AndroidJUnit4::class)
 class ForeignKeyTest {
@@ -31,9 +25,11 @@ class ForeignKeyTest {
 
     @Before
     fun createDb() {
-        val context = InstrumentationRegistry.getInstrumentation().targetContext
-        db = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java)
-            .addMigrations(*Migrations.ALL_MIGRATIONS)
+        db = Room.inMemoryDatabaseBuilder(
+            ApplicationProvider.getApplicationContext(),
+            AppDatabase::class.java
+        )
+            .addMigrations(*ALL_MIGRATIONS)
             .build()
     }
 
@@ -42,167 +38,176 @@ class ForeignKeyTest {
         db.close()
     }
 
-    @Test
-    fun part_template_foreignKey_cascadeDelete() = runBlocking {
-        // 创建零件
-        val part = PartEntity(id = "part_001", name = "测试零件", model = "MODEL-001")
-        db.partDao().insert(part)
-
-        // 创建关联模板
-        val template = InspectionTemplateEntity(
-            id = "template_001",
-            partId = "part_001",
-            name = "测试模板",
-            imagePath = "/path/to/image.jpg",
-            outlinePath = "/path/to/outline.json",
-            createdAt = System.currentTimeMillis()
+    /**
+     * 创建 Session 所需的前置数据：Part + Template + RoiDefinition（可选）
+     */
+    private suspend fun createPrerequisites(
+        partId: String = "part_001",
+        templateId: String = "template_001",
+        roiId: String? = null
+    ) {
+        db.partDao().insert(
+            PartEntity(
+                id = partId,
+                name = "Test Part"
+            )
         )
-        db.templateDao().insert(template)
-
-        // 验证模板存在
-        val templates = db.templateDao().getByPartId("part_001")
-        assertEquals(1, templates.size)
-        assertEquals("template_001", templates[0].id)
-
-        // 删除零件（应级联删除模板）
-        db.partDao().deleteById("part_001")
-
-        // 验证模板也被删除
-        val templatesAfterDelete = db.templateDao().getByPartId("part_001")
-        assertEquals(0, templatesAfterDelete.size)
+        db.templateDao().insert(
+            InspectionTemplateEntity(
+                id = templateId,
+                partId = partId,
+                name = "Test Template",
+                mainImagePath = "/data/templates/test.jpg"
+            )
+        )
+        if (roiId != null) {
+            db.roiDao().insert(
+                RoiDefinitionEntity(
+                    id = roiId,
+                    templateId = templateId,
+                    name = "Test ROI",
+                    order = 0,
+                    normalizedRect = "{\"left\":0.1,\"top\":0.2,\"right\":0.9,\"bottom\":0.8}",
+                    inspectionType = "SURFACE"
+                )
+            )
+        }
     }
 
     @Test
-    fun template_roi_foreignKey_cascadeDelete() = runBlocking {
-        // 创建零件和模板
-        val part = PartEntity(id = "part_002", name = "测试零件2", model = "MODEL-002")
-        db.partDao().insert(part)
+    fun template_partForeignKey_cascadeDelete() = runBlocking {
+        createPrerequisites()
 
-        val template = InspectionTemplateEntity(
-            id = "template_002",
-            partId = "part_002",
-            name = "测试模板2",
-            imagePath = "/path/to/image2.jpg",
-            outlinePath = "/path/to/outline2.json",
-            createdAt = System.currentTimeMillis()
+        db.templateDao().insert(
+            InspectionTemplateEntity(
+                id = "template_002",
+                partId = "part_001",
+                name = "另一个模板",
+                mainImagePath = "/data/templates/t2.jpg"
+            )
         )
-        db.templateDao().insert(template)
 
-        // 创建 ROI
-        val roi = RoiDefinitionEntity(
-            id = "roi_001",
-            templateId = "template_002",
-            name = "测试ROI",
-            x = 0.1f,
-            y = 0.1f,
-            width = 0.5f,
-            height = 0.5f,
-            inspectionType = "PRESENCE_GENERIC",
-            threshold = 0.8f,
-            enabled = true,
-            orderIndex = 0
+        db.partDao().deleteById("part_001")
+
+        val templates = db.templateDao().getByPartId("part_001")
+        assertTrue("Part 删除后关联模板应被级联删除", templates.isEmpty())
+    }
+
+    @Test
+    fun session_partForeignKey_setNullOnDelete() = runBlocking {
+        createPrerequisites()
+
+        db.inspectionSessionDao().insert(
+            InspectionSessionEntity(
+                id = "session_001",
+                templateId = "template_001",
+                partId = "part_001",
+                partName = "Test Part",
+                templateName = "Test Template",
+                originalImagePath = "/data/sessions/session_001/original.jpg",
+                autoOverallStatus = "PENDING"
+            )
         )
-        db.roiDao().insert(roi)
 
-        // 验证 ROI 存在
-        val rois = db.roiDao().getByTemplateId("template_002")
-        assertEquals(1, rois.size)
-        assertEquals("roi_001", rois[0].id)
+        db.partDao().deleteById("part_001")
 
-        // 删除模板（应级联删除 ROI）
-        db.templateDao().deleteById("template_002")
+        val found = db.inspectionSessionDao().getById("session_001")
+        assertNotNull("Session 应保留（Part FK 是 SET_NULL）", found)
+        assertNull("partId 应被置为 null", found?.partId)
+    }
 
-        // 验证 ROI 也被删除
-        val roisAfterDelete = db.roiDao().getByTemplateId("template_002")
-        assertEquals(0, roisAfterDelete.size)
+    @Test
+    fun session_templateForeignKey_setNullOnDelete() = runBlocking {
+        createPrerequisites()
+
+        db.inspectionSessionDao().insert(
+            InspectionSessionEntity(
+                id = "session_002",
+                templateId = "template_001",
+                partId = "part_001",
+                partName = "Test Part",
+                templateName = "Test Template",
+                originalImagePath = "/data/sessions/session_002/original.jpg",
+                autoOverallStatus = "PENDING"
+            )
+        )
+
+        db.templateDao().deleteById("template_001")
+
+        val found = db.inspectionSessionDao().getById("session_002")
+        assertNotNull("Session 应保留", found)
+        assertNull("templateId 应被置为 null", found?.templateId)
     }
 
     @Test
     fun session_roiRecord_foreignKey_cascadeDelete() = runBlocking {
-        // 创建完整的检测会话和 ROI 记录
-        val session = InspectionSessionEntity(
-            id = "session_001",
-            partId = "part_001",
-            templateId = "template_001",
-            originalImagePath = "/path/to/original.jpg",
-            resultImagePath = "/path/to/result.jpg",
-            status = "PASS",
-            createdAt = System.currentTimeMillis(),
-            durationMs = 1000L
+        createPrerequisites(roiId = "roi_001")
+
+        db.inspectionSessionDao().insert(
+            InspectionSessionEntity(
+                id = "session_003",
+                templateId = "template_001",
+                partId = "part_001",
+                partName = "Test Part",
+                templateName = "Test Template",
+                originalImagePath = "/data/sessions/session_003/original.jpg",
+                autoOverallStatus = "PENDING"
+            )
         )
-        db.inspectionSessionDao().insert(session)
 
-        // 创建 ROI 记录
-        val roiRecord = RoiInspectionRecordEntity(
-            sessionId = "session_001",
-            roiId = "roi_001",
-            roiName = "测试ROI",
-            roiSnapshot = "{\"x\":0.1,\"y\":0.1,\"width\":0.5,\"height\":0.5}",
-            inspectionType = "PRESENCE_GENERIC",
-            autoStatus = "PASS",
-            durationMs = 500L
+        db.roiRecordDao().insert(
+            RoiInspectionRecordEntity(
+                sessionId = "session_003",
+                roiId = "roi_001",
+                roiName = "Test ROI",
+                roiSnapshot = "{\"left\":0.1,\"top\":0.2,\"right\":0.9,\"bottom\":0.8}",
+                inspectionType = "SURFACE",
+                autoStatus = "PASS",
+                durationMs = 150L
+            )
         )
-        db.roiRecordDao().insert(roiRecord)
 
-        // 验证 ROI 记录存在
-        val records = db.roiRecordDao().getBySessionId("session_001")
-        assertEquals(1, records.size)
+        val records = db.roiRecordDao().getBySessionId("session_003")
+        assertEquals("应有 1 条 ROI 记录", 1, records.size)
 
-        // 删除会话（应级联删除 ROI 记录）
-        db.inspectionSessionDao().deleteById("session_001")
+        db.inspectionSessionDao().deleteById("session_003")
 
-        // 验证 ROI 记录也被删除
-        val recordsAfterDelete = db.roiRecordDao().getBySessionId("session_001")
-        assertEquals(0, recordsAfterDelete.size)
+        val recordsAfterDelete = db.roiRecordDao().getBySessionId("session_003")
+        assertTrue("Session 删除后关联 ROI 记录应被级联删除", recordsAfterDelete.isEmpty())
     }
 
     @Test
     fun roiRecord_roiId_setNullOnDelete() = runBlocking {
-        // 创建会话和 ROI
-        val session = InspectionSessionEntity(
-            id = "session_002",
-            partId = "part_001",
-            templateId = "template_001",
-            originalImagePath = "/path/to/original.jpg",
-            resultImagePath = "/path/to/result.jpg",
-            status = "PASS",
-            createdAt = System.currentTimeMillis(),
-            durationMs = 1000L
-        )
-        db.inspectionSessionDao().insert(session)
+        createPrerequisites(roiId = "roi_002")
 
-        val roi = RoiDefinitionEntity(
-            id = "roi_002",
-            templateId = "template_001",
-            name = "测试ROI2",
-            x = 0.2f,
-            y = 0.2f,
-            width = 0.3f,
-            height = 0.3f,
-            inspectionType = "HOLE_PRESENCE",
-            threshold = 0.9f,
-            enabled = true,
-            orderIndex = 1
+        db.inspectionSessionDao().insert(
+            InspectionSessionEntity(
+                id = "session_004",
+                templateId = "template_001",
+                partId = "part_001",
+                partName = "Test Part",
+                templateName = "Test Template",
+                originalImagePath = "/data/sessions/session_004/original.jpg",
+                autoOverallStatus = "PENDING"
+            )
         )
-        db.roiDao().insert(roi)
 
-        val roiRecord = RoiInspectionRecordEntity(
-            sessionId = "session_002",
-            roiId = "roi_002",
-            roiName = "测试ROI2",
-            roiSnapshot = "{\"x\":0.2,\"y\":0.2,\"width\":0.3,\"height\":0.3}",
-            inspectionType = "HOLE_PRESENCE",
-            autoStatus = "PASS",
-            durationMs = 300L
+        db.roiRecordDao().insert(
+            RoiInspectionRecordEntity(
+                sessionId = "session_004",
+                roiId = "roi_002",
+                roiName = "Test ROI 2",
+                roiSnapshot = "{\"left\":0.1,\"top\":0.2,\"right\":0.9,\"bottom\":0.8}",
+                inspectionType = "SURFACE",
+                autoStatus = "FAIL",
+                durationMs = 200L
+            )
         )
-        db.roiRecordDao().insert(roiRecord)
 
-        // 删除 ROI（应 SET_NULL roiId）
         db.roiDao().deleteById("roi_002")
 
-        // 验证 ROI 记录的 roiId 变为 null
-        val records = db.roiRecordDao().getBySessionId("session_002")
-        assertEquals(1, records.size)
-        assertNull("roiId should be set to null", records[0].roiId)
+        val records = db.roiRecordDao().getBySessionId("session_004")
+        assertEquals("ROI 记录应保留", 1, records.size)
+        assertNull("roiId 应被置为 null", records[0].roiId)
     }
 }
