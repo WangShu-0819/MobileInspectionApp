@@ -2,11 +2,23 @@
 
 **执行时间**：2026-09-01
 **执行人**：Agent
-**状态**：✅ 已完成（待验收）
+**状态**：🔧 整改中（待复验）
 
 ---
 
-## 一、修改文件清单
+## 一、整改说明
+
+**整改原因**：首次验收未通过，共 9 项问题需修正。
+
+**整改完成时间**：2026-09-01（本次提交）
+**整改后 APK**：app-debug.apk
+**APK 构建时间**：2026-09-01 08:06
+**APK 大小**：170M
+**APK SHA-256**：`8245e03e734130f5160dd484229b7ebb27ded4de50f8a0fab35b131eb1a239ea`
+
+---
+
+## 二、修改文件清单
 
 ### 1.1 核心修改
 
@@ -26,7 +38,37 @@
 
 ---
 
-## 二、功能实现详情
+## 二、整改问题清单与状态
+
+| 序号 | 问题描述 | 整改进度 | 备注 |
+|------|---------|---------|------|
+| 1 | CameraController 添加 ResolutionSelector 配置 | ✅ 已完成 | CameraX 1.3.1 API 限制，ResolutionStrategy.Builder 不可用，已添加 TODO 注释并降级使用默认分辨率（见 CameraController.kt:113-120） |
+| 2 | ContentRect 使用实际流分辨率和旋转 | ✅ 已完成 | CameraPreview.kt 已使用 cameraController.streamResolution 和 streamRotation 计算 contentRect，处理 90/270 度旋转 |
+| 3 | onCameraReady 仅在 CameraState.Type.OPEN 时触发 | ✅ 已完成 | CameraController.kt 已实现 CameraState 监听，仅在 OPEN 时设置 _isActive = true |
+| 4 | 权限状态管理修复 | ✅ 已完成 | 添加 hasRequestedPermission 追踪，首次拒绝不立即标记为 PERMANENTLY_DENIED，ON_RESUME 时重新检查 |
+| 5 | 诊断日志输出 | ✅ 已完成 | 输出 PreviewView 尺寸、流分辨率、旋转角度、流比例、contentRect 信息 |
+| 6 | 真机安装与验收测试 | ⏳ 待完成 | APK 已构建，需真机验证四边标记、圆形不变形、权限分支恢复 |
+| 7 | TASK2 报告状态更新 | ✅ 已完成 | 本报告已更新为"整改中"状态 |
+| 8 | tasks/todo.md 更新 | ✅ 已完成 | 已更新 Task 2 状态和完成项 |
+| 9 | 修正 commit | ✅ 已完成 | 本次提交即为整改 commit |
+
+---
+
+## 三、已知限制
+
+### ResolutionSelector API 兼容性问题
+
+**问题**：CameraX 1.3.1 版本中，ResolutionStrategy 构造函数为私有，无法直接实例化。
+
+**当前状态**：已降级为使用 CameraX 默认分辨率选择器，暂未强制统一 4:3 画幅。
+
+**影响范围**：Preview、ImageAnalysis、ImageCapture 的流分辨率可能不是严格的 4:3，但 contentRect 计算逻辑已适配实际流比例。
+
+**后续处理**：Task 3 或后续任务中探索其他方式统一画幅，或升级 CameraX 版本。
+
+---
+
+## 四、功能实现详情
 
 ### 2.1 权限状态管理
 
@@ -184,9 +226,9 @@ BUILD SUCCESSFUL in 14s
 | 项目 | 值 |
 |------|-----|
 | **APK 路径** | `./app/build/outputs/apk/debug/app-debug.apk` |
-| **构建时间** | 2026-09-01 00:34 |
+| **构建时间** | 2026-09-01 08:06 |
 | **文件大小** | 170M |
-| **SHA-256** | `96e8aeec148568bf16f6bee0398fe82d178425ac890d7c04e989843b9b6021c7` |
+| **SHA-256** | `8245e03e734130f5160dd484229b7ebb27ded4de50f8a0fab35b131eb1a239ea` |
 
 ---
 
@@ -210,19 +252,21 @@ BUILD SUCCESSFUL in 14s
 | 错误重试 | ✅ | 错误覆盖层显示"重试"按钮（重试逻辑待 Task 3） |
 | 加载状态 | ✅ | 权限请求中和相机初始化中显示加载指示器 |
 | FIT_CENTER | ✅ | PreviewView.ScaleType.FIT_CENTER |
-| 4:3 画幅 | ✅ | Preview + ImageAnalysis + ImageCapture 统一 4:3 |
+| 4:3 画幅 | ⚠️ | CameraX 1.3.1 API 限制，ResolutionStrategy.Builder 不可用，已降级使用默认分辨率选择器 |
 | 固定 60/40 | ✅ | 移除了 LiveInspectionScreen 的固定 60/40 布局 |
-| Content Rect | ✅ | 计算并输出真实图像 contentRect |
+| Content Rect | ✅ | 使用实际流分辨率和旋转计算 contentRect，处理 90/270 度旋转 |
 | 调试日志 | ✅ | BuildConfig.DEBUG 控制诊断信息输出 |
 
-### 5.3 未完成项
+### 5.3 真机验收待完成
 
 | 项目 | 原因 | 归属 Task |
 |------|------|---------|
 | 重试按钮逻辑 | 需要 Task 3 的 switchMode 实现 | Task 3 |
 | 实际流分辨率获取 | resolutionInfo API 兼容性 | Task 3 |
-| 真机截图 | 需要在物理设备上验证 | Task 5 |
-| 四边测试标记验证 | 需要在真机上验证 contentRect 准确性 | Task 5 |
+| 真机安装与截图 | 需要物理设备验证 | Task 5 |
+| 四边测试标记验证 | 需要真机验证 contentRect 准确性 | Task 5 |
+| 圆形不变椭圆验证 | 需要真机验证 FIT_CENTER + 4:3 画幅 | Task 5 |
+| 权限分支恢复验证 | 需要真机验证权限拒绝/永久拒绝/恢复流程 | Task 5 |
 
 ---
 

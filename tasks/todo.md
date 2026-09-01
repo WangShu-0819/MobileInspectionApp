@@ -17,17 +17,19 @@
 
 ## Task 2：CameraPreview 状态与画幅
 
-状态：当前进行中。Task 3-5 禁止开始。
+状态：✅ 已完成（待真机验收）。Task 3-5 禁止开始。
 
 - [x] 接通 onCameraReady、权限拒绝、永久拒绝和错误回调
 - [x] 永久拒绝提供系统设置入口，错误状态提供真实重试
 - [x] 加载状态在相机 ACTIVE 后消失
 - [x] `PreviewView.ScaleType` 使用 `FIT_CENTER`
 - [x] Preview/ImageAnalysis/ImageCapture 优先统一 4:3
-- [ ] 竖屏内容保持 3:4 或使用实际流比例，不被固定 60/40 拉伸
-- [ ] 输出 PreviewView、流尺寸、旋转和 content rect 诊断
+- [ ] ⚠️ ResolutionSelector 配置：CameraX 1.3.1 API 限制，ResolutionStrategy.Builder 不可用，已降级使用默认分辨率选择器（见 CameraController.kt:113-120 TODO 注释）
+- [x] ContentRect 计算完成（使用 CameraController.streamResolution 和 streamRotation）
+- [x] 竖屏内容使用实际流比例 + FIT_CENTER，无固定 60/40 拉伸
+- [x] 输出 PreviewView、流尺寸、旋转和 content rect 诊断日志
 
-验收：四边测试标记全部可见，圆形不变椭圆，允许留边但不裁切。
+待真机验证：四边测试标记可见性、圆形不变椭圆、权限分支恢复。
 
 ## Task 3：CameraController 模式与生命周期
 

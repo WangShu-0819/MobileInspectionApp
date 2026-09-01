@@ -28,6 +28,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.Row
@@ -52,6 +54,7 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.LifecycleEventObserver
 import com.wearable.inspection.mobile.BuildConfig
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -91,6 +94,7 @@ fun CameraPreview(
 
     // 权限状态
     var permissionState by remember { mutableStateOf( PermissionState.REQUESTING) }
+    var hasRequestedPermission by remember { mutableStateOf(false) }
 
     // 相机连接状态
     var cameraError by remember { mutableStateOf<CameraError?>(null) }
@@ -107,7 +111,41 @@ fun CameraPreview(
         }
     }
 
-    // 权限检查
+    // 生命周期事件处理：ON_RESUME 时重新检查权限
+    var isResumed by remember(lifecycleOwner) { mutableStateOf(false) }
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                isResumed = true
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+    LaunchedEffect(isResumed) {
+        if (isResumed) {
+            // 从系统设置返回后，重新检查权限
+            val hasPermission = ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.CAMERA
+            ) == PackageManager.PERMISSION_GRANTED
+
+            if (hasPermission) {
+                permissionState = PermissionState.GRANTED
+            } else if (hasRequestedPermission) {
+                // 已请求过权限，检查是否能再次请求
+                val activity = context as? Activity
+                if (activity != null && !activity.shouldShowRequestPermissionRationale(Manifest.permission.CAMERA)) {
+                    permissionState = PermissionState.PERMANENTLY_DENIED
+                }
+            }
+        }
+    }
+
+    // 权限检查（首次进入）
     LaunchedEffect(Unit) {
         val hasPermission = ContextCompat.checkSelfPermission(
             context,
@@ -125,15 +163,22 @@ fun CameraPreview(
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
+        hasRequestedPermission = true
+
         permissionState = if (isGranted) {
             PermissionState.GRANTED
         } else {
             // 检查是否被永久拒绝
             val activity = context as? Activity
             if (activity != null && activity.shouldShowRequestPermissionRationale(Manifest.permission.CAMERA)) {
+                // shouldShowRequestPermissionRationale 返回 true 表示用户拒绝但未勾选"不再询问"
                 PermissionState.DENIED
             } else {
-                PermissionState.PERMANENTLY_DENIED
+                // shouldShowRequestPermissionRationale 返回 false 可能表示：
+                // 1. 用户首次拒绝
+                // 2. 用户勾选了"不再询问"
+                // 不直接判断为 PERMANENTLY_DENIED，而是在 ON_RESUME 时再次检查
+                PermissionState.DENIED
             }
         }
     }
@@ -240,46 +285,57 @@ private fun CameraPreviewContent(
     // PreviewView 引用和实际图像区域
     var previewView by remember { mutableStateOf<PreviewView?>(null) }
     var contentRect by remember { mutableStateOf<android.graphics.Rect?>(null) }
+    var previewViewSize by remember { mutableStateOf<Pair<Int, Int>?>(null) }
 
     // 计算实际图像显示区域（用于后续 ROI、轮廓和点击对焦）
-    LaunchedEffect(previewView) {
-        val pv = previewView ?: return@LaunchedEffect
+    LaunchedEffect(previewViewSize) {
+        val sizePair = previewViewSize ?: return@LaunchedEffect
+        val pvWidth = sizePair.first
+        val pvHeight = sizePair.second
 
-        // 等待 PreviewView 布局完成
-        snapshotFlow { pv.width to pv.height }
-            .filter { (w, h) -> w > 0 && h > 0 }
-            .first()
-            .let { (pvWidth, pvHeight) ->
-                if (BuildConfig.DEBUG) {
-                    android.util.Log.d("CameraPreview", "PreviewView size: ${pvWidth}x${pvHeight}")
-                }
+        if (BuildConfig.DEBUG) {
+            android.util.Log.d("CameraPreview", "PreviewView size: ${pvWidth}x${pvHeight}")
+        }
 
-                // 优先使用 4:3 画幅（已在 CameraController.connect() 中统一选择）
-                val streamRatio = 4f / 3f
+        // 获取实际流分辨率
+        val streamSize = cameraController.streamResolution ?: android.util.Size(4032, 3024)
 
-                if (BuildConfig.DEBUG) {
-                    android.util.Log.d("CameraPreview", "Stream ratio: ${"%.2f".format(streamRatio)}")
-                }
+        // 获取流旋转角度
+        val rotation = cameraController.streamRotation
 
-                // 根据 ScaleType.FIT_CENTER 计算 contentRect
-                val previewRatio = pvWidth.toFloat() / pvHeight
+        // 根据旋转调整流尺寸（90/270 度交换宽高）
+        val adjustedStreamSize = if (rotation == 90 || rotation == 270) {
+            android.util.Size(streamSize.height, streamSize.width)
+        } else {
+            streamSize
+        }
 
-                val rect = if (previewRatio > streamRatio) {
-                    // 预览更宽，上下留边
-                    val contentHeight = (pvWidth / streamRatio).toInt()
-                    val top = (pvHeight - contentHeight) / 2
-                    android.graphics.Rect(0, top, pvWidth, top + contentHeight)
-                } else {
-                    // 预览更高，左右留边
-                    val contentWidth = (pvHeight * streamRatio).toInt()
-                    val left = (pvWidth - contentWidth) / 2
-                    android.graphics.Rect(left, 0, left + contentWidth, pvHeight)
-                }
+        val streamRatio = adjustedStreamSize.width.toFloat() / adjustedStreamSize.height
 
-                contentRect = rect
+        if (BuildConfig.DEBUG) {
+            android.util.Log.d("CameraPreview", "Stream: ${streamSize.width}x${streamSize.height}, rotation: ${rotation}°, adjusted ratio: ${"%.2f".format(streamRatio)}")
+        }
 
-                // Debug log removed for compilation
-            }
+        // 根据 ScaleType.FIT_CENTER 计算 contentRect
+        val previewRatio = pvWidth.toFloat() / pvHeight
+
+        val rect = if (previewRatio > streamRatio) {
+            // 预览更宽，上下留边
+            val contentHeight = (pvWidth / streamRatio).toInt()
+            val top = ((pvHeight - contentHeight) / 2).coerceAtLeast(0)
+            android.graphics.Rect(0, top, pvWidth, (top + contentHeight).coerceAtMost(pvHeight))
+        } else {
+            // 预览更高，左右留边
+            val contentWidth = (pvHeight * streamRatio).toInt()
+            val left = ((pvWidth - contentWidth) / 2).coerceAtLeast(0)
+            android.graphics.Rect(left, 0, (left + contentWidth).coerceAtMost(pvWidth), pvHeight)
+        }
+
+        contentRect = rect
+
+        if (BuildConfig.DEBUG) {
+            android.util.Log.d("CameraPreview", "contentRect calculated: ${rect.width()} x ${rect.height()}")
+        }
     }
 
     // 连接相机
@@ -323,6 +379,17 @@ private fun CameraPreviewContent(
 
                 // 保存引用
                 previewView = this
+
+                // 使用 ViewTreeObserver 监听尺寸变化
+                viewTreeObserver.addOnGlobalLayoutListener(object : android.view.ViewTreeObserver.OnGlobalLayoutListener {
+                    override fun onGlobalLayout() {
+                        val width = this@apply.width
+                        val height = this@apply.height
+                        if (width > 0 && height > 0) {
+                            previewViewSize = width to height
+                        }
+                    }
+                })
             }
         },
         update = { view ->
