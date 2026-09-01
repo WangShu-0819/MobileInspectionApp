@@ -1,6 +1,6 @@
-# 当前门禁：B1 已完成，等待确认进入 B2
+# 当前任务：B2 Task 1 - DPM 迁移审计与实时扫码最小闭环
 
-状态：B1 技术验收已完成；当前没有进行中的开发任务。B2 必须等待用户明确确认后才能开始。
+状态：进行中。B1 已完成并获用户确认进入 B2；不得并行开始 B2 Task 2、OCR、模板、轮廓或 ROI。
 
 ## Task 1：整理活跃源码边界
 
@@ -113,12 +113,27 @@
 - [x] 截图与证据收集 — docs/reports/b1/evidence/task5/
 - [x] TASK5_FINAL_VALIDATION_REPORT.md — 已创建
 
-> 注：`connectedDebugAndroidTest` 需要设备端 androidTest 运行环境，当前通过 JVM 单元测试 + 真机手动验证覆盖。拍照完整流程（3 张连续拍摄、JPEG 解码）需要先配置模板，模板功能属于 B4-B6 阶段。
+> 补充提交 `b7c4c08e`：`connectedDebugAndroidTest` 已在 HONOR YAL-AL10 上完成，Instrumented 20/20 通过；JVM 78/78 通过。
 
 ## B1 完成门禁
 
 - [x] 上述所有验收项全部完成
 - [x] `docs/reports/b1/B1_CAMERA_FOUNDATION_REPORT.md` 与真实结果一致
-- [ ] 用户确认进入 B2
+- [x] 用户确认进入 B2
 
-B1 技术验收已经完成；“用户确认进入 B2”是当前唯一未满足门禁。用户确认前不得开始 DPM、OCR、模板、轮廓或 ROI 实现，也不得把 B2 标记为进行中。
+B1 已完成并关闭。
+
+## B2 Task 1：DPM 迁移审计与实时扫码最小闭环
+
+- [ ] 按旧文件、旧职责、新文件、复用内容、去除耦合和迁移测试更新迁移表
+- [ ] “扫一扫”进入真实 `CameraMode.DPM_SCAN`，只绑定 Preview + ImageAnalysis
+- [ ] 使用独立 `DpmFrameAnalyzer`，共享唯一 CameraController
+- [ ] ML Kit 仅识别 DATA_MATRIX，失败时使用 ZXing Data Matrix 兜底
+- [ ] 实现帧节流、single-flight、重复结果抑制和 stop 后不回调
+- [ ] 页面退出后释放扫码分析资源，返回现场采集后相机正常恢复
+- [ ] UI 不存在 DPM 相册选择、码图导入或相关权限/路由
+- [ ] 自动化测试覆盖解码链、节流、并发、重复抑制、停止和资源释放
+- [ ] 真机使用真实或打印 Data Matrix 完成 10 次扫码及 10 次页面往返
+- [ ] 更新 `docs/reports/b2/B2_TASK1_DPM_MINIMAL_REPORT.md` 和证据目录
+
+本 Task 不实现未知码绑定、已绑定码切件、冲突处理、OCR、模板、轮廓、ROI 或检测算法。完成后暂停等待验收，不得自动进入 B2 Task 2。

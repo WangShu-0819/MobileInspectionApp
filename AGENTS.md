@@ -18,19 +18,19 @@
 - B1 Task 2 相机状态与画幅：已通过真机验收，提交为 `28d692d`；证据位于 `docs/reports/b1/evidence/task2/`。
 - B1 Task 3 CameraController 模式与生命周期：已通过累积真机验收，最终修复提交为 `bb22f1e`；最终 APK SHA-256 为 `fad6ef0ddbf1c4b59970ede6810d0e072dfa7680e2fa6d9be9290d2cc3c29720`，证据位于 `docs/reports/b1/evidence/task3/`。
 - B1 Task 4 真实拍照与存储：已验收，整改提交链为 `48f7587` → `566acaea` → `3a04b658`；真机 APK SHA-256 为 `6a3ce752f2f07a09084c57499a4c1ccac8e331b9a52dd8066824c43d7ade858d`；自动化测试 81/81 通过；证据位于 `docs/reports/b1/evidence/task4/`。
-- B1 Task 5 完整验证：已验收；APK SHA-256 为 `235f8aa8c4d65b365a93bff021041e43dca86d5eb4b121ba9d13ebd3f436768f`；JVM 测试 78/78 通过；冷启动 10 次、Tab 10 轮、前后台 10 次、日志门禁 12 项全部通过；截图 01_cold_start.png 用户视觉复核通过；证据位于 `docs/reports/b1/evidence/task5/`。
-- B1 技术验收完成，等待用户确认进入 B2。
-- B2 DPM 迁移：必须等待用户确认进入 B2。
+- B1 Task 5 完整验证：已验收；最终补充提交为 `b7c4c08e`；APK SHA-256 为 `235f8aa8c4d65b365a93bff021041e43dca86d5eb4b121ba9d13ebd3f436768f`；JVM 78/78、Instrumented 20/20 通过；冷启动 10 次、Tab 10 轮、前后台 10 次、日志门禁 12 项全部通过；证据位于 `docs/reports/b1/evidence/task5/`。
+- B1 技术验收完成，用户已确认进入 B2。
+- B2 DPM 迁移：当前执行 Task 1，只做迁移审计与实时扫码最小闭环。
 - DPM 只支持手机相机实时扫一扫，不提供相册码图导入。
 - DPM 入口：顶部扫码图标 contentDescription 为"扫一扫"，只进入实时 DPM 扫描；OCR 图标 contentDescription 为"OCR 钢印"；模板样本相册导入属于"我的 > 模板配置"。
 
 ## 当前唯一任务
 
-**B1 技术验收已完成，等待用户确认进入 B2。** 不得开始 B2，不得接入 DPM、OCR、模板、轮廓或 ROI。`tools/contour_extraction/` 继续冻结。
+执行 **B2 Task 1：DPM 迁移审计与实时扫码最小闭环**。先核对 `docs/migration/LEGACY_MIGRATION_MAP.md` 和旧工程真实源码，再迁移到新工程；旧工程保持只读。
 
-Task 5 已完成全部验证：JVM 测试 78/78、冷启动 10 次、Tab 10 轮、前后台 10 次、日志门禁 12 项、截图用户视觉复核。详见 `docs/reports/b1/TASK5_FINAL_VALIDATION_REPORT.md`。
+本 Task 只接通 `CameraMode.DPM_SCAN`、实时 `Preview + ImageAnalysis`、DATA_MATRIX 解码链、节流与重复结果抑制。不得实现相册码图导入、未知码绑定、自动切件、OCR、模板、轮廓、ROI 或检测算法。不得创建第二套 CameraX；`tools/contour_extraction/` 继续冻结。
 
-下一位执行 Agent 必须停在此门禁；只有用户明确确认进入 B2 后，才能先更新 `tasks/todo.md` 的唯一进行中任务，再开始 DPM 迁移。不得自动开始 B2。
+完成后提交 `docs/reports/b2/B2_TASK1_DPM_MINIMAL_REPORT.md` 和结构化证据，更新控制文档并暂停等待验收，不得自动进入 B2 Task 2。
 
 ## 累积回归门禁
 

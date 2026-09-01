@@ -78,14 +78,17 @@ Task 4 已完成全部验收项：会话安全快门、capture request token 机
 ### Checkpoint：B1
 
 - [x] `tasks/todo.md` 的 B1 验收全部通过
-- [ ] 用户确认进入 B2
+- [x] 用户确认进入 B2
 
-当前无进行中的开发任务。用户确认前不得预建 B2 占位实现、接入扫码依赖或改动相机模式；确认后先把 `tasks/todo.md` 切换为唯一进行中的 B2 任务。
+用户已确认进入 B2。当前只推进 Task 1；后续绑定、切件和工业预处理增强必须等待 Task 1 验收。
 
 ### B2：DPM 迁移
 
-- [ ] 手机相机实时扫码、预处理、ML Kit/ZXing Data Matrix 兜底、绑定与切件
-- [ ] “扫一扫”只进入实时扫码，不提供 DPM 相册选图、码图导入或对应权限/路由
+- [ ] **当前 Task 1：迁移审计与实时扫码最小闭环**
+- [ ] Task 2：未知码绑定、已绑定码切件和冲突处理
+- [ ] Task 3：工业预处理、质量门控、对焦与专项回归
+
+B2 Task 1 固定边界：使用唯一 CameraController 的 `DPM_SCAN` 模式，以 ML Kit DATA_MATRIX 为主、ZXing Data Matrix 为兜底；具备帧节流、single-flight、停止后不回调和重复结果抑制。“扫一扫”只进入实时扫码，不提供 DPM 相册选图、码图导入或对应权限/路由。
 
 ### B3：钢印 OCR 迁移
 
