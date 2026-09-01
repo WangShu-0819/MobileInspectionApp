@@ -49,6 +49,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.viewinterop.AndroidView
@@ -218,6 +219,9 @@ fun CameraPreview(
         }
     }
 
+    // 可观察的相机就绪状态（替代不可观察的 cameraController.isActive）
+    var isCameraReady by remember { mutableStateOf(false) }
+
     Box(modifier = modifier) {
         // 权限已授予
         if (permissionState == PermissionState.GRANTED) {
@@ -227,16 +231,20 @@ fun CameraPreview(
                 cameraController = cameraController,
                 cameraExecutor = cameraExecutor,
                 onCameraError = { error ->
+                    isCameraReady = false
                     cameraError = error
                     onCameraError(error)
                 },
-                onCameraReady = onCameraReady
+                onCameraReady = {
+                    isCameraReady = true
+                    onCameraReady()
+                }
             )
         }
 
-        // 加载指示器（权限请求中或相机初始化中）
+        // 加载指示器：权限请求中 或（权限已有但相机尚未 OPEN）
         if (permissionState == PermissionState.REQUESTING ||
-            (permissionState == PermissionState.GRANTED && cameraError == null && !cameraController.isActive)
+            (permissionState == PermissionState.GRANTED && cameraError == null && !isCameraReady)
         ) {
             CircularProgressIndicator(
                 modifier = Modifier.align(Alignment.Center),
@@ -246,11 +254,12 @@ fun CameraPreview(
 
         // 错误覆盖层
         cameraError?.let { error ->
+            isCameraReady = false
             CameraErrorOverlay(
                 error = error,
                 onRetry = {
                     cameraError = null
-                    // 重新连接相机
+                    isCameraReady = false
                 },
                 onOpenSettings = if (error == CameraError.PermissionPermanentlyDenied) {
                     { openSystemSettings() }
@@ -388,38 +397,92 @@ private fun CameraPreviewContent(
         }
     }
 
-    // PreviewView
-    AndroidView(
-        modifier = Modifier.fillMaxSize(),
-        factory = { context ->
-            PreviewView(context).apply {
-                layoutParams = ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT
-                )
-                // 使用 FIT_CENTER 保持比例，不裁切边缘
-                scaleType = PreviewView.ScaleType.FIT_CENTER
-                implementationMode = PreviewView.ImplementationMode.COMPATIBLE
+    // PreviewView + 校准覆盖层
+    Box(modifier = Modifier.fillMaxSize()) {
+        AndroidView(
+            modifier = Modifier.fillMaxSize(),
+            factory = { context ->
+                PreviewView(context).apply {
+                    layoutParams = ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT
+                    )
+                    // 使用 FIT_CENTER 保持比例，不裁切边缘
+                    scaleType = PreviewView.ScaleType.FIT_CENTER
+                    implementationMode = PreviewView.ImplementationMode.COMPATIBLE
 
-                // 保存引用
-                previewView = this
+                    // 保存引用
+                    previewView = this
 
-                // 使用 ViewTreeObserver 监听尺寸变化
-                viewTreeObserver.addOnGlobalLayoutListener(object : android.view.ViewTreeObserver.OnGlobalLayoutListener {
-                    override fun onGlobalLayout() {
-                        val width = this@apply.width
-                        val height = this@apply.height
-                        if (width > 0 && height > 0) {
-                            previewViewSize = width to height
+                    // 使用 ViewTreeObserver 监听尺寸变化
+                    viewTreeObserver.addOnGlobalLayoutListener(object : android.view.ViewTreeObserver.OnGlobalLayoutListener {
+                        override fun onGlobalLayout() {
+                            val width = this@apply.width
+                            val height = this@apply.height
+                            if (width > 0 && height > 0) {
+                                previewViewSize = width to height
+                            }
                         }
-                    }
-                })
+                    })
+                }
+            },
+            update = { view ->
+                // PreviewView 配置更新
             }
-        },
-        update = { view ->
-            // PreviewView 配置更新
+        )
+
+        // Debug 校准覆盖层：contentRect 四角标记 + 中央圆
+        if (BuildConfig.DEBUG) {
+            val rect = contentRect
+            if (rect != null) {
+                androidx.compose.foundation.Canvas(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    val cornerLen = 24.dp.toPx()
+                    val strokeW = 3.dp.toPx()
+                    val green = Color(0xFF00FF00)
+
+                    // 四角标记
+                    val corners = listOf(
+                        rect.left.toFloat() to rect.top.toFloat(),       // 左上
+                        rect.right.toFloat() to rect.top.toFloat(),      // 右上
+                        rect.left.toFloat() to rect.bottom.toFloat(),    // 左下
+                        rect.right.toFloat() to rect.bottom.toFloat()    // 右下
+                    )
+                    val hDirs = listOf(1f, -1f, 1f, -1f)  // 水平方向
+                    val vDirs = listOf(1f, 1f, -1f, -1f)  // 垂直方向
+
+                    corners.forEachIndexed { i, (cx, cy) ->
+                        // 水平线段
+                        drawLine(
+                            color = green,
+                            start = androidx.compose.ui.geometry.Offset(cx, cy),
+                            end = androidx.compose.ui.geometry.Offset(cx + hDirs[i] * cornerLen, cy),
+                            strokeWidth = strokeW
+                        )
+                        // 垂直线段
+                        drawLine(
+                            color = green,
+                            start = androidx.compose.ui.geometry.Offset(cx, cy),
+                            end = androidx.compose.ui.geometry.Offset(cx, cy + vDirs[i] * cornerLen),
+                            strokeWidth = strokeW
+                        )
+                    }
+
+                    // 中央标准圆
+                    val centerX = (rect.left + rect.right) / 2f
+                    val centerY = (rect.top + rect.bottom) / 2f
+                    val radius = minOf(rect.width(), rect.height()) / 6f
+                    drawCircle(
+                        color = green,
+                        radius = radius,
+                        center = androidx.compose.ui.geometry.Offset(centerX, centerY),
+                        style = Stroke(width = strokeW)
+                    )
+                }
+            }
         }
-    )
+    }
 }
 
 /**

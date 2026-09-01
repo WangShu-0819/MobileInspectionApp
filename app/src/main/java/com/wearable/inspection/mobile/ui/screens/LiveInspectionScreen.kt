@@ -23,8 +23,10 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DocumentScanner
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Photo
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -78,13 +80,8 @@ import com.wearable.inspection.mobile.ui.theme.DividerColor
 import com.wearable.inspection.mobile.ui.theme.PlaceholderColor
 import com.wearable.inspection.mobile.ui.theme.BackgroundVariant1
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.camera.view.PreviewView
-import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.camera.core.Preview
-import androidx.camera.core.CameraSelector
-import androidx.core.content.ContextCompat
-import java.util.concurrent.Executors
+import com.wearable.inspection.mobile.camera.CameraError
+import com.wearable.inspection.mobile.BuildConfig
 
 /**
  * 现场采集页（上实时 + 下模板）
@@ -124,19 +121,19 @@ fun LiveInspectionScreen(
                     actionIconContentColor = Primary
                 ),
                 actions = {
-                    // DPM 扫码
-                    androidx.compose.material3.IconButton(onClick = { /* TODO: DPM 扫码 */ }) {
+                    // 扫一扫：手机相机实时 DPM 扫码入口
+                    androidx.compose.material3.IconButton(onClick = { /* TODO: 扫一扫 DPM 扫码 */ }) {
                         androidx.compose.material3.Icon(
-                            imageVector = Icons.Default.CameraAlt,
-                            contentDescription = "DPM 扫码",
+                            imageVector = Icons.Default.QrCodeScanner,
+                            contentDescription = "扫一扫",
                             tint = Primary
                         )
                     }
-                    // 钢印 OCR
-                    androidx.compose.material3.IconButton(onClick = { /* TODO: OCR */ }) {
+                    // OCR 钢印
+                    androidx.compose.material3.IconButton(onClick = { /* TODO: OCR 钢印 */ }) {
                         androidx.compose.material3.Icon(
-                            imageVector = Icons.Default.Photo,
-                            contentDescription = "钢印 OCR",
+                            imageVector = Icons.Default.DocumentScanner,
+                            contentDescription = "OCR 钢印",
                             tint = Primary
                         )
                     }
@@ -234,6 +231,8 @@ fun LiveInspectionScreen(
 
 /**
  * 上方实时预览区域
+ *
+ * 直接显示真实 CameraX 预览，首屏即可见实时画面，无需进入二级页面。
  */
 @Composable
 private fun CameraPreviewSection(
@@ -242,16 +241,44 @@ private fun CameraPreviewSection(
     rois: List<RoiDefinitionEntity>,
     isReady: Boolean
 ) {
+    var cameraReady by remember { mutableStateOf(false) }
+    var cameraError by remember { mutableStateOf<CameraError?>(null) }
+
     Box(
         modifier = modifier
             .fillMaxWidth()
             .background(Color.Black),
         contentAlignment = Alignment.Center
     ) {
-        // CameraX 实时预览占位（阶段 B 实现）
-        CameraPreviewPlaceholder()
+        // 真实 CameraX 实时预览
+        CameraPreview(
+            modifier = Modifier.fillMaxSize(),
+            onCameraReady = {
+                cameraReady = true
+                if (BuildConfig.DEBUG) {
+                    android.util.Log.d("LiveInspection", "Camera ready")
+                }
+            },
+            onCameraError = { error ->
+                cameraError = error
+                if (BuildConfig.DEBUG) {
+                    android.util.Log.e("LiveInspection", "Camera error: ${error.message}")
+                }
+            },
+            onPermissionDenied = {
+                if (BuildConfig.DEBUG) {
+                    android.util.Log.w("LiveInspection", "Camera permission denied")
+                }
+            },
+            onPermissionPermanentlyDenied = {
+                cameraError = CameraError.PermissionPermanentlyDenied
+                if (BuildConfig.DEBUG) {
+                    android.util.Log.w("LiveInspection", "Camera permission permanently denied")
+                }
+            }
+        )
 
-        // 轮廓和 ROI 叠加层（阶段 B 实现）
+        // 轮廓和 ROI 叠加层
         OverlayGraphics(
             template = template,
             rois = rois,
@@ -261,32 +288,7 @@ private fun CameraPreviewSection(
 }
 
 /**
- * CameraX 预览占位
- */
-@Composable
-private fun CameraPreviewPlaceholder() {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        androidx.compose.material3.Icon(
-            imageVector = Icons.Default.CameraAlt,
-            contentDescription = null,
-            tint = Color.Gray,
-            modifier = Modifier.size(64.dp)
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "相机预览（阶段 B 实现）",
-            color = Color.Gray,
-            style = MaterialTheme.typography.bodyLarge
-        )
-    }
-}
-
-/**
- * 轮廓和 ROI 叠加层占位
+ * 轮廓和 ROI 叠加层
  */
 @Composable
 private fun OverlayGraphics(

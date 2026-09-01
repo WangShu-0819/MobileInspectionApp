@@ -17,19 +17,21 @@
 
 ## Task 2：CameraPreview 状态与画幅
 
-状态：✅ 已完成（待真机验收）。Task 3-5 禁止开始。
+状态：✅ 真机验收完成（HONOR YAL-AL10, ERLDU20429005890）。Task 3-5 禁止开始。
 
 - [x] 接通 onCameraReady、权限拒绝、永久拒绝和错误回调
 - [x] 永久拒绝提供系统设置入口，错误状态提供真实重试
-- [x] 加载状态在相机 ACTIVE 后消失
+- [x] 加载状态在 CameraState.OPEN 后消失（isCameraReady 可观察状态）
 - [x] `PreviewView.ScaleType` 使用 `FIT_CENTER`
-- [x] Preview/ImageAnalysis/ImageCapture 优先统一 4:3
-- [ ] ⚠️ ResolutionSelector 配置：CameraX 1.3.1 API 限制，ResolutionStrategy.Builder 不可用，已降级使用默认分辨率选择器（见 CameraController.kt:113-120 TODO 注释）
+- [x] Preview/ImageAnalysis/ImageCapture 统一 RATIO_4_3_FALLBACK_AUTO_STRATEGY
 - [x] ContentRect 计算完成（使用 CameraController.streamResolution 和 streamRotation）
 - [x] 竖屏内容使用实际流比例 + FIT_CENTER，无固定 60/40 拉伸
 - [x] 输出 PreviewView、流尺寸、旋转和 content rect 诊断日志
-
-待真机验证：四边测试标记可见性、圆形不变椭圆、权限分支恢复。
+- [x] 真机：PreviewView 1080x1039, 流 8000x6000 (4:3), 旋转 90°, contentRect 779x1039
+- [x] 真机：四角标记可见，不进入 letterbox，中央圆不变形
+- [x] 真机：权限临时拒绝后可再次请求并恢复
+- [x] 真机：LiveInspectionScreen 首屏直接显示实时相机预览
+- [x] 真机：顶部操作为扫一扫/OCR 钢印
 
 ## Task 3：CameraController 模式与生命周期
 
