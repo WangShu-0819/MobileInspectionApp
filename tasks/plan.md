@@ -18,8 +18,8 @@
 - [x] Task 1：审计活跃页面并归档未引用旧 Screen
 - [x] Task 2：接入真实 CameraPreview，完成权限、状态、画幅与 content rect（真机提交 `28d692d`）
 - [x] Task 3：完成 CameraController 模式重绑、互斥与生命周期（真机验收完成）
-- [ ] **当前 Task 4：真实 ImageCapture 与 MobileImageStore 收口及最终验收**
-- [ ] 完成自动化和真机验收
+- [x] Task 4：真实 ImageCapture 与 MobileImageStore 收口及最终验收（已验收，提交链 `48f7587` → `566acaea` → `3a04b658`）
+- [x] **Task 5：B1 完整验证** — 已验收，APK SHA-256 `235f8aa8c4d65b365a93bff021041e43dca86d5eb4b121ba9d13ebd3f436768f`；详见 `TASK5_FINAL_VALIDATION_REPORT.md`
 
 ### 已验收 Task 2：CameraPreview 状态与画幅
 
@@ -52,23 +52,32 @@ Task 2 已完成并通过真机验收，证据位于 `docs/reports/b1/evidence/t
 
 Task 3 已完成。其权限、画幅、contentRect、会话互斥和生命周期能力继续作为后续累积门禁。
 
-### 当前 Task 4：真实拍照与存储收口
+### 已验收 Task 4：真实拍照与存储收口
 
-执行顺序：
+当前状态：已验收，提交链 `48f7587` → `566acaea` → `3a04b658`，证据位于 `docs/reports/b1/evidence/task4/`。
 
-1. **收口基线**：先提交 Task 3 遗留的 Manifest/测试 Activity 清理和控制文档，不把 `tools/contour_extraction/` 混入 Task 4。
-2. **现状审计**：读取 `CameraController.takePhoto()`、`MobileImageStore`、现场主快门和数据库接口，列出可复用能力、缺口与所有权；不另建 CameraX Controller。
-3. **会话安全快门**：拍照 API 接收 active sessionId，确认当前模式需要 Capture、session 匹配且相机 OPEN；Controller 层必须实现 fail-fast single-flight，快照进行中时第二个请求立即失败，不得等待前一个请求完成后再次进入。
-4. **文件事务**：生成唯一临时 JPEG，ImageCapture 写入后校验非空/可解码/宽高/EXIF，再由 MobileImageStore 移动到正式目录；审计并确认移动操作的原子性语义。异常、取消、页面离开、过期 session、低存储以及取消后的迟到 CameraX callback 都不得留下临时文件或半成品正式文件。
-5. **UI 状态机**：接通现场主快门，提供 IDLE/CAPTURING/SAVED/ERROR；拍摄中禁用按钮，成功仅表示原图已保存，不能显示检测成功。
-6. **测试**：新增并实际运行 Task 4 专项测试，覆盖生产文件事务、目标重名、空文件、损坏 JPEG、EXIF、取消、取消后迟到 callback、过期 session、并发快门、模式切换、存储失败和临时文件清理；测试必须调用生产实现，不得复制一套测试版逻辑。
-7. **真机验收**：连续拍摄 20 张，核对文件数、唯一名、非零大小、可解码、方向、临时目录为空；重跑 FIT_CENTER、Tab/前后台和禁止日志检查。
+Task 4 已完成全部验收项：会话安全快门、capture request token 机制、.part 文件事务、17 项拍照异步测试、8 项存储测试、真机 20 张连续拍摄。
 
-Task 4 交付物：`docs/reports/b1/TASK4_CAPTURE_STORAGE_REPORT.md`、`docs/reports/b1/evidence/task4/`、20 张真实 CameraX 拍照清单和机器校验摘要、Task 4 专项自动化测试结果、当前最终 APK 信息、更新后的 `tasks/todo.md`。全部完成后暂停等待验收，禁止自行进入 Task 5。
+### 已验收 Task 5：B1 完整验证
+
+状态：✅ 已验收（APK SHA-256 `235f8aa8c4d65b365a93bff021041e43dca86d5eb4b121ba9d13ebd3f436768f`，HONOR YAL-AL10, ERLDU20429005890）。
+
+执行结果：
+
+1. **JVM 测试**：78/78 通过（CameraControllerTest 40 + CameraControllerTakePhotoTest 17 + MobileImageStoreTest 11 + ContentRectCalculatorTest 10）
+2. **APK 构建与安装**：BUILD SUCCESSFUL，adb install Success
+3. **冷启动 10 次**：0 FATAL EXCEPTION
+4. **Tab 往返 10 轮**：无黑屏、重复绑定
+5. **前后台切换 10 次**：无崩溃
+6. **日志门禁 12 项**：0 违规（1 项系统误报）
+7. **截图证据**：01_cold_start.png 用户视觉复核通过
+8. **文档收口**：AGENTS.md、plan.md、todo.md、B1 报告已更新
+
+详见 `TASK5_FINAL_VALIDATION_REPORT.md`。
 
 ### Checkpoint：B1
 
-- [ ] `tasks/todo.md` 的 B1 验收全部通过
+- [x] `tasks/todo.md` 的 B1 验收全部通过
 - [ ] 用户确认进入 B2
 
 ### B2：DPM 迁移

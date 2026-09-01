@@ -1,9 +1,10 @@
-# B1 CameraX 基础实施报告（B1 收口进行中）
+# B1 CameraX 基础实施报告
 
-> 历史快照：本报告记录 B1 早期 5/9 状态，正文中的完成度和“下一步”已过期。当前任务与验收只以根目录 `AGENTS.md`、`tasks/todo.md`、`tasks/plan.md` 为准。
+> **当前状态**：B1 技术验收完成（Task 1-5 全部通过），等待用户确认进入 B2。当前任务与验收只以根目录 `AGENTS.md`、`tasks/todo.md`、`tasks/plan.md` 为准。
+>
+> **历史记录**：下方”已完成文件”和”待完善部分”为 B1 早期（2026-08-31）历史快照，反映 Task 1 初始状态。Task 2/3/4/5 的实际实现已超出早期快照描述的范围，详见各 Task 独立报告和 `TASK5_FINAL_VALIDATION_REPORT.md`。
 
-**完成时间**：2026-08-31 19:00（进行中）
-**状态**：⚠️ **B1 收口进行中（5/9 标准，详见下方对照表）**
+**状态**：✅ B1 技术验收完成，等待用户确认进入 B2
 
 ---
 
@@ -326,41 +327,35 @@ app/src/main/java/com/wearable/inspection/mobile/ui/screens/workbench/
 4. ✅ **冷启动通过**：无 FATAL EXCEPTION
 5. ✅ **LiveInspectionScreen 编译通过**：KSP 错误已修复
 
-### 未达到标准
+### Task 2-4 已完成标准（历史记录）
 
-1. ❌ **真实 CameraX 预览可见**：CameraPreview 已集成，但回调未实现，无法验证真实预览
-2. ❌ **权限状态完整**：占位实现，未验证实际权限流程
-3. ❌ **真实拍照并保存**：takePhoto() 未接入，MobileImageStore 未参与
-4. ❌ **cameraReady 真实状态**：未由 CameraController ACTIVE 状态驱动
-5. ❌ **自动化测试**：单元测试无用例
-6. ❌ **真机验收完整验证**：仅完成安装和冷启动，未完成 10 项详细验证
+以下标准在 Task 2-4 中已全部完成：
 
-### 下一步（B1 补充）
+1. ✅ **真实 CameraX 预览可见**：Task 2 完成，用户视觉复核通过
+2. ✅ **权限状态完整**：Task 2 完成，权限允许/拒绝/永久拒绝/设置恢复全部验证
+3. ✅ **真实拍照并保存**：Task 4 完成，capture request token + .part 文件事务
+4. ✅ **cameraReady 真实状态**：Task 2 完成，由 CameraState.OPEN 驱动
+5. ✅ **自动化测试**：78 项 JVM 测试全部通过
+6. ✅ **真机验收完整验证**：Task 5 完成，详见 TASK5_FINAL_VALIDATION_REPORT.md
 
-1. **完善 CameraPreview 回调**
-   - 实现 onCameraReady → WorkbenchViewModel.updateCameraReady(true)
-   - 实现 onPermissionDenied / onPermissionPermanentlyDenied
-   - 完善错误处理
+### Task 5 验证结果
 
-2. **接通拍照流程**
-   - LiveInspectionScreen 拍照按钮 → CameraController.takePhoto()
-   - MobileImageStore 保存
-   - 按钮禁用防重复点击
+详见 `TASK5_FINAL_VALIDATION_REPORT.md`。
 
-3. **完善 CameraController**
-   - switchMode() 完整实现
-   - 真实模式切换
+- JVM 测试 78/78 通过（CameraControllerTest 40 + CameraControllerTakePhotoTest 17 + MobileImageStoreTest 11 + ContentRectCalculatorTest 10）
+- 冷启动 10 次：0 FATAL EXCEPTION
+- Tab 往返 10 轮：无黑屏、重复绑定
+- 前后台切换 10 次：无崩溃
+- 日志门禁 12 项：0 违规（1 项系统误报）
+- 截图 01_cold_start.png：用户人工视觉复核通过
+- DPM 入口设计：用户确认
 
-4. **完整真机验证**
-   - 权限流程验证
-   - 相机预览验证
-   - 拍照保存验证
-   - 前后台切换 10 次
+### B1 收口结论
    - Tab 往返 10 次
    - 连续拍摄 20 张
 
 ---
 
-**报告更新时间**：2026-08-31 18:49
+**报告更新时间**：2026-09-02 00:05
 **报告更新人**：Claude Code
-**状态**：⚠️ **B1 构建完成，真机验证部分完成，待补充接线和完整验收**
+**状态**：✅ **B1 技术验收完成，等待用户确认进入 B2**

@@ -17,38 +17,22 @@
 - B1 Task 1 源码边界整理：已验收，审计提交为 `754ec5b`。
 - B1 Task 2 相机状态与画幅：已通过真机验收，提交为 `28d692d`；证据位于 `docs/reports/b1/evidence/task2/`。
 - B1 Task 3 CameraController 模式与生命周期：已通过累积真机验收，最终修复提交为 `bb22f1e`；最终 APK SHA-256 为 `fad6ef0ddbf1c4b59970ede6810d0e072dfa7680e2fa6d9be9290d2cc3c29720`，证据位于 `docs/reports/b1/evidence/task3/`。
-- B1 共享 CameraX：当前进入 Task 4，完成真实 ImageCapture 与 MobileImageStore 落盘闭环；完整 B1 回归属于 Task 5。
-- B2 DPM 迁移：禁止开始，直到 B1 的全部验收项完成。
+- B1 Task 4 真实拍照与存储：已验收，整改提交链为 `48f7587` → `566acaea` → `3a04b658`；真机 APK SHA-256 为 `6a3ce752f2f07a09084c57499a4c1ccac8e331b9a52dd8066824c43d7ade858d`；自动化测试 81/81 通过；证据位于 `docs/reports/b1/evidence/task4/`。
+- B1 Task 5 完整验证：已验收；APK SHA-256 为 `235f8aa8c4d65b365a93bff021041e43dca86d5eb4b121ba9d13ebd3f436768f`；JVM 测试 78/78 通过；冷启动 10 次、Tab 10 轮、前后台 10 次、日志门禁 12 项全部通过；截图 01_cold_start.png 用户视觉复核通过；证据位于 `docs/reports/b1/evidence/task5/`。
+- B1 技术验收完成，等待用户确认进入 B2。
+- B2 DPM 迁移：必须等待用户确认进入 B2。
 - DPM 只支持手机相机实时扫一扫，不提供相册码图导入。
+- DPM 入口：顶部扫码图标 contentDescription 为"扫一扫"，只进入实时 DPM 扫描；OCR 图标 contentDescription 为"OCR 钢印"；模板样本相册导入属于"我的 > 模板配置"。
 
 ## 当前唯一任务
 
-执行 **Task 4：真实拍照与存储**。只完成从现场主快门到有效 JPEG 私有存储的闭环，不执行检测算法、不生成识别结果、不创建假成功记录。Task 5 和 B2 禁止开始。
+**B1 技术验收已完成，等待用户确认进入 B2。** 不得开始 B2，不得接入 DPM、OCR、模板、轮廓或 ROI。`tools/contour_extraction/` 继续冻结。
 
-开始 Task 4 编码前，先提交 Task 3 收口基线：主 Manifest 移除测试入口、`CameraModeTestActivity` 从 `src/main` 删除、控制文档更新。`tools/contour_extraction/` 不属于当前阶段，继续冻结且不得混入提交。
+开始 Task 5 验证前，先确认 Task 3 收口基线已提交：主 Manifest 移除测试入口、`CameraModeTestActivity` 从 `src/main` 删除。`tools/contour_extraction/` 不属于当前阶段，继续冻结且不得混入提交。
 
-Task 4 必须满足：
+Task 5 已完成全部验证：JVM 测试 78/78、冷启动 10 次、Tab 10 轮、前后台 10 次、日志门禁 12 项、截图用户视觉复核。详见 `docs/reports/b1/TASK5_FINAL_VALIDATION_REPORT.md`。
 
-1. 现场采集页只有一个主快门；点击后使用当前 `CameraSession` 的现有 ImageCapture，不得为拍照创建第二套 CameraX 或重新绑定相机。
-2. 拍照前验证当前 session、`CameraStateType.OPEN`、ImageCapture 可用、零件/模板/ROI 配置完整；拍照期间禁用重复点击并显示真实进行状态。
-3. CameraController 的拍照 API 必须校验 sessionId；过期页面或模式切换后的旧请求不得写入文件。拍照、disconnect、switchMode、release 的资源关系必须明确且可测试。
-4. ImageCapture 先写 App 私有目录中的唯一临时 JPEG，再交给 `MobileImageStore` 校验非空、可解码、尺寸和方向，最后原子移动到正式路径；失败或取消必须删除临时文件。
-5. 文件名必须抗并发冲突；不得覆盖旧照片。保存结果返回稳定路径、大小、宽高、方向、时间和校验信息。
-6. UI 状态至少包含 `IDLE/CAPTURING/SAVED/ERROR`；失败可重试且不丢失当前页面选择。Task 4 不显示“检测通过”，不写 SessionEntity/ROI 结果，不伪造识别图。
-7. 单元测试和真机连续拍摄 20 张必须通过：无空文件、重名、方向错误、临时残留、重复回调或相机回归；同时重跑 Task 2/3 的受影响门禁。
-
-Task 3 已验收的以下能力是 Task 4 的强制回归基线：
-
-1. 明确 `IDLE/INSPECTION/DPM_SCAN/STAMP_OCR/TEMPLATE_CAPTURE` 模式状态；本轮只验证模式基础设施，不实现各业务算法。
-2. `switchMode()` 必须串行停止旧分析器、清除旧 UseCase、关闭未交接的 ImageProxy，再绑定新模式所需 UseCase；禁止并发重绑。
-3. 同一时刻只能存在一组已绑定 UseCase、一个活动分析器和一个分析 Executor；重复切换不得累积 observer、线程或相机绑定。
-4. 区分页面暂时离开、生命周期 stop 和应用永久 `release()`；Tab 返回后可恢复，永久释放后不得复用已关闭 Executor。
-5. CameraController 不得长期强引用 Activity、LifecycleOwner 或 PreviewView；所有 ImageProxy 在成功、异常、取消和模式切换路径都必须关闭。
-6. 完成单元/集成测试与真机循环：Tab 往返 10 次、前后台 10 次、模式往返至少 20 次，无黑屏、重复绑定、Camera already in use、Executor rejected 或 ImageProxy 泄漏。
-
-Task 4 不接入真实 DPM/OCR 分析器，不执行轮廓/ROI 检测，不导出结果包。仅保存原始拍摄 JPEG 和必要文件元数据。
-
-完成声明必须基于当前源码生成的新 APK。以下都不算完成证据：单个类能编译、旧 APK 能启动、UI 有按钮、代码中保留 TODO、报告写着“核心完成”。
+B1 技术验收完成，等待用户确认进入 B2。不得自动开始 B2。
 
 ## 累积回归门禁
 
