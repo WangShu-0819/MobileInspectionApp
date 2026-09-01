@@ -35,7 +35,7 @@
 
 ## Task 3：CameraController 模式与生命周期
 
-状态：✅ 已验收（提交 `c90ffdc`，HONOR YAL-AL10, ERLDU20429005890）
+状态：✅ 已验收（最终修复提交 `bb22f1e`，HONOR YAL-AL10, ERLDU20429005890；APK SHA-256 `fad6ef0ddbf1c4b59970ede6810d0e072dfa7680e2fa6d9be9290d2cc3c29720`）。
 
 ### Task 2 累积回归恢复
 
@@ -68,11 +68,20 @@
 
 ## Task 4：真实拍照与存储
 
-- [ ] 拍照按钮调用真实 ImageCapture
-- [ ] 拍照中禁用重复点击
-- [ ] 直接写临时 JPEG，再由 MobileImageStore 校验和原子移动
-- [ ] 文件名唯一、方向正确、空文件失败、失败清理临时文件
-- [ ] 本阶段不创建假检测成功记录
+状态：当前进行中。Task 5 和 B2 禁止开始。
+
+- [ ] Task 3 收口基线已提交，正式 Manifest 无测试入口，`tools/contour_extraction/` 未混入
+- [ ] 主快门使用当前 CameraSession/ImageCapture，不创建或重绑第二套 CameraX
+- [ ] 拍照前校验 session、OPEN、Capture、零件、模板和 ROI
+- [ ] UI 使用 IDLE/CAPTURING/SAVED/ERROR，拍摄中禁用重复点击
+- [ ] 临时 JPEG 唯一命名并写入 App 私有目录
+- [ ] MobileImageStore 校验非空、可解码、宽高和方向后原子移动
+- [ ] 失败、取消、过期 session、页面离开和低存储路径清理临时文件
+- [ ] 成功只表示原图保存，不创建假检测记录、识别图或 ROI 结果
+- [ ] 自动化覆盖并发点击、重名、空文件、损坏 JPEG、取消和会话切换
+- [ ] 真机连续拍摄 20 张：无空文件、重名、方向错误和临时残留
+- [ ] Task 2/3 受影响回归矩阵在同一最终 APK 上通过
+
 
 验收：连续拍摄 20 张，无空文件、重名、方向错误或临时残留。
 

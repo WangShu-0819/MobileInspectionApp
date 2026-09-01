@@ -18,7 +18,7 @@
 - [x] Task 1：审计活跃页面并归档未引用旧 Screen
 - [x] Task 2：接入真实 CameraPreview，完成权限、状态、画幅与 content rect（真机提交 `28d692d`）
 - [x] Task 3：完成 CameraController 模式重绑、互斥与生命周期（真机验收完成）
-- [ ] 完成真实 ImageCapture 与 ImageStore
+- [ ] **当前 Task 4：完成真实 ImageCapture 与 MobileImageStore**
 - [ ] 完成自动化和真机验收
 
 ### 已验收 Task 2：CameraPreview 状态与画幅
@@ -36,18 +36,35 @@ Task 2 交付物：源码改动、更新后的 `tasks/todo.md`、`docs/reports/b
 
 Task 2 已完成并通过真机验收，证据位于 `docs/reports/b1/evidence/task2/`。
 
-### 当前 Task 3：CameraController 模式与生命周期
+### 已验收 Task 3：CameraController 模式与生命周期
+
+当前状态：已通过累积真机验收，最终修复提交 `bb22f1e`，证据位于 `docs/reports/b1/evidence/task3/`。
 
 执行顺序：
 
-1. **状态审计**：画出 connect、switchMode、disconnect、release、生命周期事件和分析器所有权关系，先补测试再调整接口。
-2. **串行切换**：通过 Mutex 或等价串行机制保证 unbind/clear analyzer/bind 原子执行；快速重复请求只保留确定的最终模式。
-3. **资源互斥**：每次切换确认旧 analyzer 停止、旧 Executor 关闭、旧 observer 移除、所有 ImageProxy 关闭，同一时刻只有一组 UseCase。
-4. **生命周期**：页面离开只暂停/解绑，可再次连接；永久 release 清空引用并关闭资源；不得持有 Activity、PreviewView 或已离开的 LifecycleOwner。
-5. **故障恢复**：绑定失败时进入真实错误状态并清理半绑定资源；重试不得产生第二套 CameraProvider/UseCase/Executor。
-6. **验证收口**：自动化覆盖并发切换、重复连接、异常分析器和 release 后行为；真机执行 Tab 10 次、前后台 10 次、模式切换 20 次并检查 logcat。
+1. **前序回归恢复**：以 Task 2 提交 `28d692d`、代码收口 `a037a08` 和证据截图为基线，把完整权限、OPEN 状态、`FIT_CENTER`、实际流变换、contentRect、诊断和校准能力适配到当前 CameraController；不得整文件回滚。
+2. **画幅复验**：当前设备容器约 `1080x1039` 时，真实 3:4 图像区域应约 `779x1039` 并左右留边；四角位于图像区域、中央圆不变形、上下内容不裁切。
+3. **坐标复验**：LiveInspection 的轮廓/ROI 叠加接收真实 contentRect，只在图像区域绘制；letterbox 不得出现检测图形。
+4. **测试入口清理**：测试 Activity 从 `src/main` 和主 Manifest 移出，只保留在 androidTest/debug；冻结并不得使用超出当前阶段的 `tools/contour_extraction/`。
+5. **保持生命周期成果**：重新运行并发、模式互斥、ImageProxy、observer 和 20 轮模式测试，确认恢复预览没有破坏 Task 3 已完成部分。
+6. **最终真机循环**：在修复后的同一 APK 上执行 Tab 往返 10 次、前后台 10 次，并重新检查 8 项 logcat 禁止模式。
+7. **累积验收**：报告同时给出 Task 2 回归矩阵和 Task 3 生命周期矩阵；任一项失败都不得进入 Task 4。
 
-Task 3 交付物：源码与测试、更新后的 `tasks/todo.md`、`docs/reports/b1/TASK3_CAMERA_LIFECYCLE_REPORT.md`、真机循环日志和当前 APK 信息。完成后暂停等待验收，禁止进入 Task 4。
+Task 3 已完成。其权限、画幅、contentRect、会话互斥和生命周期能力继续作为后续累积门禁。
+
+### 当前 Task 4：真实拍照与存储
+
+执行顺序：
+
+1. **收口基线**：先提交 Task 3 遗留的 Manifest/测试 Activity 清理和控制文档，不把 `tools/contour_extraction/` 混入 Task 4。
+2. **现状审计**：读取 `CameraController.takePhoto()`、`MobileImageStore`、现场主快门和数据库接口，列出可复用能力、缺口与所有权；不另建 CameraX Controller。
+3. **会话安全快门**：拍照 API 接收 active sessionId，在锁内确认当前模式需要 Capture、session 匹配且相机 OPEN；快门并发只允许一个进行中的请求。
+4. **文件事务**：生成唯一临时 JPEG，ImageCapture 写入后校验非空/可解码/宽高/EXIF，再由 MobileImageStore 原子移动；异常、取消、页面离开和低存储失败全部清理临时文件。
+5. **UI 状态机**：接通现场主快门，提供 IDLE/CAPTURING/SAVED/ERROR；拍摄中禁用按钮，成功仅表示原图已保存，不能显示检测成功。
+6. **测试**：生产文件事务、重名、空文件、损坏 JPEG、取消、过期 session、并发点击、模式切换和清理路径均有测试。
+7. **真机验收**：连续拍摄 20 张，核对文件数、唯一名、非零大小、可解码、方向、临时目录为空；重跑 FIT_CENTER、Tab/前后台和禁止日志检查。
+
+Task 4 交付物：`docs/reports/b1/TASK4_CAPTURE_STORAGE_REPORT.md`、`docs/reports/b1/evidence/task4/`、20 张样例清单和校验摘要、当前 APK 信息、更新后的 `tasks/todo.md`。完成后暂停等待验收，禁止进入 Task 5。
 
 ### Checkpoint：B1
 

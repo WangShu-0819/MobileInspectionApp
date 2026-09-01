@@ -24,4 +24,4 @@ APK：`app/build/outputs/apk/debug/app-debug.apk`
 
 ## 当前阶段
 
-B1 Task 1 已验收；当前只执行 Task 2“CameraPreview 状态与画幅”。尚未允许进入 Task 3、Task 4 或 B2，以 `AGENTS.md` 和 `tasks/todo.md` 为准。
+B1 Task 3 已通过累积真机验收；当前只执行 Task 4“真实拍照与存储”。Task 5 和 B2 尚未开放，以 `AGENTS.md` 和 `tasks/todo.md` 为准。

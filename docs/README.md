@@ -7,8 +7,8 @@
 ## 当前执行
 
 - `../AGENTS.md`：Agent 唯一入口。
-- `../tasks/todo.md`：唯一任务清单和阶段门禁；当前为 B1 Task 2。
-- `../tasks/plan.md`：Task 2 的执行顺序、范围和交付物。
+- `../tasks/todo.md`：唯一任务清单和累积阶段门禁；当前为 B1 Task 4。
+- `../tasks/plan.md`：Task 4 真实拍照、文件事务、验证范围和交付物。
 
 ## 迁移
 

@@ -40,12 +40,6 @@
             </intent-filter>
         </activity>
 
-        <!-- 相机模式切换测试 Activity（仅测试用） -->
-        <activity
-            android:name=".camera.CameraModeTestActivity"
-            android:exported="true"
-            android:screenOrientation="portrait" />
-
         <!-- FileProvider for result sharing -->
         <provider
             android:name="androidx.core.content.FileProvider"
