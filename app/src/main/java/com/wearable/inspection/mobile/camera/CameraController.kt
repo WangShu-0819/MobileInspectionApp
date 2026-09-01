@@ -17,6 +17,7 @@ import androidx.camera.core.resolutionselector.ResolutionSelector
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.Observer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,29 +25,221 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.io.File
+import java.lang.ref.WeakReference
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import kotlin.coroutines.resume
 
 /**
+ * 相机绑定操作的结果
+ *
+ * 用于测试可注入的相机绑定边界。
+ */
+sealed class BindResult {
+    data class Success(val camera: Any) : BindResult()
+    data class Failure(val error: Exception) : BindResult()
+}
+
+/**
+ * 相机绑定协调接口
+ *
+ * 抽象 ProcessCameraProvider 的绑定操作，使 CameraController 的
+ * 状态机和资源协调逻辑可以通过 Fake 实现进行测试。
+ */
+interface CameraBinder {
+    /** 检查相机权限 */
+    fun hasCameraPermission(): Boolean
+
+    /** 获取 ProcessCameraProvider（阻塞调用） */
+    fun getProvider(): Any?
+
+    /** 检查是否有后置相机 */
+    fun hasBackCamera(provider: Any): Boolean
+
+    /** 创建 Preview UseCase */
+    fun createPreview(surfaceProvider: Any): Any
+
+    /** 创建 ImageAnalysis UseCase（needsAnalysis 模式） */
+    fun createAnalysis(): Any
+
+    /** 创建 ImageCapture UseCase（needsCapture 模式） */
+    fun createCapture(): Any
+
+    /**
+     * 绑定 UseCase 到生命周期
+     *
+     * @return BindResult.Success(camera) 或 BindResult.Failure(exception)
+     */
+    fun bindToLifecycle(
+        provider: Any,
+        lifecycleOwner: LifecycleOwner,
+        selector: Any,
+        useCases: List<Any>
+    ): BindResult
+
+    /** 解绑所有 UseCase */
+    fun unbindAll(provider: Any)
+
+    /** 获取 CameraInfo（用于状态观察） */
+    fun getCameraInfo(camera: Any): Any?
+
+    /** 观察 CameraState */
+    fun observeCameraState(
+        cameraInfo: Any,
+        lifecycleOwner: LifecycleOwner,
+        observer: Observer<androidx.camera.core.CameraState>
+    )
+
+    /** 移除 CameraState 观察 */
+    fun removeCameraStateObserver(
+        cameraInfo: Any,
+        observer: Observer<androidx.camera.core.CameraState>
+    )
+
+    /** 设置 ImageAnalysis 分析器回调 */
+    fun setAnalyzer(useCase: Any, executor: java.util.concurrent.ExecutorService, callback: (Any) -> Unit)
+
+    /** 清除 ImageAnalysis 分析器 */
+    fun clearAnalyzer(useCase: Any)
+
+    /** 关闭 UseCase（如关闭 ImageProxy） */
+    fun closeUseCase(useCase: Any) {}
+
+    /** 获取 UseCase 的分辨率信息 */
+    fun getResolutionInfo(useCase: Any): Pair<android.util.Size, Int>? = null
+}
+
+/**
+ * 真实 CameraBinder 实现（生产环境）
+ */
+class RealCameraBinder(private val context: Context) : CameraBinder {
+
+    override fun hasCameraPermission(): Boolean {
+        return ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) ==
+            PackageManager.PERMISSION_GRANTED
+    }
+
+    override fun getProvider(): Any? {
+        return try {
+            ProcessCameraProvider.getInstance(context).get()
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    override fun hasBackCamera(provider: Any): Boolean {
+        return (provider as? ProcessCameraProvider)?.hasCamera(
+            CameraSelector.DEFAULT_BACK_CAMERA
+        ) == true
+    }
+
+    override fun bindToLifecycle(
+        provider: Any,
+        lifecycleOwner: LifecycleOwner,
+        selector: Any,
+        useCases: List<Any>
+    ): BindResult {
+        return try {
+            val p = provider as ProcessCameraProvider
+            val s = selector as CameraSelector
+            @Suppress("UNCHECKED_CAST")
+            val uc = useCases as List<androidx.camera.core.UseCase>
+            val camera = p.bindToLifecycle(lifecycleOwner, s, *uc.toTypedArray())
+            BindResult.Success(camera)
+        } catch (e: Exception) {
+            BindResult.Failure(e)
+        }
+    }
+
+    override fun unbindAll(provider: Any) {
+        (provider as? ProcessCameraProvider)?.unbindAll()
+    }
+
+    override fun getCameraInfo(camera: Any): Any? {
+        return (camera as? Camera)?.cameraInfo
+    }
+
+    override fun observeCameraState(
+        cameraInfo: Any,
+        lifecycleOwner: LifecycleOwner,
+        observer: Observer<androidx.camera.core.CameraState>
+    ) {
+        (cameraInfo as? androidx.camera.core.CameraInfo)?.cameraState?.observe(
+            lifecycleOwner, observer
+        )
+    }
+
+    override fun removeCameraStateObserver(
+        cameraInfo: Any,
+        observer: Observer<androidx.camera.core.CameraState>
+    ) {
+        (cameraInfo as? androidx.camera.core.CameraInfo)?.cameraState?.removeObserver(
+            observer
+        )
+    }
+
+    private val resolutionSelector = ResolutionSelector.Builder()
+        .setAspectRatioStrategy(AspectRatioStrategy.RATIO_4_3_FALLBACK_AUTO_STRATEGY)
+        .build()
+
+    override fun createPreview(surfaceProvider: Any): Any {
+        return Preview.Builder()
+            .setResolutionSelector(resolutionSelector)
+            .build().also { it.setSurfaceProvider(surfaceProvider as Preview.SurfaceProvider) }
+    }
+
+    override fun createAnalysis(): Any {
+        return ImageAnalysis.Builder()
+            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+            .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888)
+            .setResolutionSelector(resolutionSelector)
+            .build()
+    }
+
+    override fun createCapture(): Any {
+        return ImageCapture.Builder()
+            .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
+            .setResolutionSelector(resolutionSelector)
+            .build()
+    }
+
+    override fun setAnalyzer(
+        useCase: Any,
+        executor: java.util.concurrent.ExecutorService,
+        callback: (Any) -> Unit
+    ) {
+        (useCase as? ImageAnalysis)?.setAnalyzer(executor) { imageProxy ->
+            callback(imageProxy)
+        }
+    }
+
+    override fun clearAnalyzer(useCase: Any) {
+        (useCase as? ImageAnalysis)?.clearAnalyzer()
+    }
+
+    override fun getResolutionInfo(useCase: Any): Pair<android.util.Size, Int>? {
+        val info = (useCase as? ImageAnalysis)?.resolutionInfo
+            ?: (useCase as? ImageCapture)?.resolutionInfo
+            ?: return null
+        return Pair(info.resolution, info.rotationDegrees)
+    }
+}
+
+/**
  * 共享相机控制器（单例）
  *
- * 职责：
- * 1. 统一管理 CameraX 生命周期
- * 2. 提供 Preview Surface 供给 LiveInspectionScreen
- * 3. 提供 ImageCapture 拍照能力
- * 4. 提供 ImageAnalysis 分析帧接口
- * 5. 切换相机模式（IDLE / INSPECTION / DPM_SCAN / STAMP_OCR / TEMPLATE_CAPTURE）
- *
  * 设计约束：
- * - 同一时刻只能有一个 CameraX 绑定（一组 UseCase + 一个分析器 + 一个 Executor）
- * - switchMode() 通过 Mutex 串行执行，停止旧资源后重绑新模式
- * - disconnect() 用于页面暂时离开，可再次 connect
- * - release() 用于永久释放，之后不可复用
- * - 不持有 Activity/LifecycleOwner/PreviewView 强引用
- * - 所有 ImageProxy 的关闭由 FrameAnalyzer 实现负责
+ * - 所有资源变更（connect/switchMode/disconnect/release/setFrameAnalyzer/clearFrameAnalyzer）
+ *   必须经过同一 Mutex 串行执行。
+ * - 同一时刻只有一组 UseCase、一个分析器、一个 Executor。
+ * - CameraController 拥有 ImageProxy，在 finally 中关闭；FrameAnalyzer 不负责 close。
+ * - LifecycleOwner 使用 WeakReference 保存，失效时返回错误并清理。
+ * - 每次重绑前显式 removeObserver，防止累积。
  */
-class CameraController private constructor(private val context: Context) {
+class CameraController private constructor(
+    private val context: Context,
+    private val binder: CameraBinder
+) {
 
     companion object {
         @Volatile
@@ -54,38 +247,41 @@ class CameraController private constructor(private val context: Context) {
 
         fun getInstance(context: Context): CameraController {
             return INSTANCE ?: synchronized(this) {
-                INSTANCE ?: CameraController(context.applicationContext).also { INSTANCE = it }
+                INSTANCE ?: CameraController(
+                    context.applicationContext,
+                    RealCameraBinder(context.applicationContext)
+                ).also { INSTANCE = it }
             }
         }
 
-        /** 反射重置单例（仅测试用） */
-        @Volatile
-        var testResetEnabled = false
-
-        fun resetForTest() {
-            if (!testResetEnabled) throw IllegalStateException("testResetEnabled 未开启")
-            INSTANCE?.releaseInternal()
-            INSTANCE = null
+        /** 仅测试用：注入自定义 binder 创建实例 */
+        fun createForTest(context: Context, binder: CameraBinder): CameraController {
+            return CameraController(context, binder)
         }
     }
 
     // ─── CameraX 核心引用 ───
-    private var cameraProvider: ProcessCameraProvider? = null
-    private var previewUseCase: Preview? = null
-    private var analysisUseCase: ImageAnalysis? = null
-    private var imageCapture: ImageCapture? = null
+    private var cameraProvider: Any? = null
+    private var previewUseCase: Any? = null
+    private var analysisUseCase: Any? = null
+    private var imageCapture: Any? = null
     private var cameraControl: CameraControl? = null
-    private var _cameraInfo: androidx.camera.core.CameraInfo? = null
-    private var currentCamera: Camera? = null
+    private var currentCamera: Any? = null
 
     // ─── 分析资源 ───
     private var analysisExecutor: ExecutorService? = null
     private var frameAnalyzer: FrameAnalyzer? = null
 
-    // ─── 连接状态 ───
-    private var currentLifecycleOwner: LifecycleOwner? = null
+    // ─── Observer 管理 ───
+    private var cameraStateObserver: Observer<androidx.camera.core.CameraState>? = null
+    private var observedCameraInfo: Any? = null
+
+    // ─── 连接状态（使用 WeakReference 避免泄漏 LifecycleOwner）───
+    private var lifecycleOwnerRef: WeakReference<LifecycleOwner>? = null
+    private var surfaceProviderRef: WeakReference<Preview.SurfaceProvider>? = null
     private var currentMode: CameraMode = CameraMode.IDLE
     private var isReleased = false
+    private var isConnected = false
 
     // ─── 流信息 ───
     private var _streamResolution: android.util.Size? = null
@@ -106,245 +302,251 @@ class CameraController private constructor(private val context: Context) {
     private var _error: String? = null
     val error: String? get() = _error
 
-    val cameraInfo: androidx.camera.core.CameraInfo? get() = _cameraInfo
+    val cameraInfo: Any? get() = observedCameraInfo
 
-    // ─── 串行保护 ───
-    private val switchMutex = Mutex()
+    // ─── 统一串行保护 ───
+    private val mutex = Mutex()
 
-    // ─── 4:3 统一选择器 ───
-    private val resolutionSelector = ResolutionSelector.Builder()
-        .setAspectRatioStrategy(AspectRatioStrategy.RATIO_4_3_FALLBACK_AUTO_STRATEGY)
-        .build()
+    // ─── 选择器（测试可访问） ───
+    internal val cameraSelector: Any = CameraSelector.DEFAULT_BACK_CAMERA
 
     /**
      * 连接相机
      *
-     * 前置条件：未释放、有权限。
-     * 如果已连接，先断开再重连（防重复 connect）。
-     * connect 成功只表示 BOUND，不触发 CameraState.OPEN。
+     * 所有状态检查和资源变更在 mutex 内完成。
+     * 如果已连接，先清理再重连。
      */
     suspend fun connect(
         lifecycleOwner: LifecycleOwner,
         surfaceProvider: Preview.SurfaceProvider,
         mode: CameraMode = CameraMode.INSPECTION
-    ): Result<Unit> {
+    ): Result<Unit> = mutex.withLock {
+        // 前置检查
         if (isReleased) {
-            return Result.failure(IllegalStateException("CameraController 已永久释放"))
+            return@withLock Result.failure(IllegalStateException("CameraController 已永久释放"))
         }
 
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) !=
-            PackageManager.PERMISSION_GRANTED
-        ) {
-            return Result.failure(SecurityException("未授予相机权限"))
+        if (!binder.hasCameraPermission()) {
+            return@withLock Result.failure(SecurityException("未授予相机权限"))
         }
 
-        return switchMutex.withLock {
-            try {
-                // 防重复 connect：清理旧资源并 unbind
-                val oldProvider = cameraProvider
-                cleanupBoundResources()
-                oldProvider?.unbindAll()
+        try {
+            // 清理旧资源（包括 removeObserver）
+            cleanupBoundResources()
 
-                val provider = ProcessCameraProvider.getInstance(context).get()
-                val selector = CameraSelector.DEFAULT_BACK_CAMERA
+            // 获取 provider
+            val provider = binder.getProvider()
+                ?: return@withLock Result.failure(IllegalStateException("无法获取 CameraProvider"))
 
-                if (!provider.hasCamera(selector)) {
-                    return@withLock Result.failure(IllegalStateException("未找到后置相机"))
-                }
-
-                // 确保干净状态
-                provider.unbindAll()
-
-                // 构建 Preview
-                val preview = Preview.Builder()
-                    .setResolutionSelector(resolutionSelector)
-                    .build().also {
-                        it.setSurfaceProvider(surfaceProvider)
-                    }
-
-                // 根据模式构建 UseCase
-                val analysis = if (mode.needsAnalysis) {
-                    buildAnalysisUseCase()
-                } else null
-
-                val capture = if (mode.needsCapture) {
-                    buildCaptureUseCase()
-                } else null
-
-                // 绑定
-                val useCases = listOfNotNull(preview, analysis, capture)
-                val camera = provider.bindToLifecycle(
-                    lifecycleOwner, selector, *useCases.toTypedArray()
-                )
-
-                // 连续自动对焦
-                try {
-                    Camera2CameraControl.from(camera.cameraControl).addCaptureRequestOptions(
-                        CaptureRequestOptions.Builder()
-                            .setCaptureRequestOption(
-                                android.hardware.camera2.CaptureRequest.CONTROL_AF_MODE,
-                                android.hardware.camera2.CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO
-                            )
-                            .build()
-                    )
-                } catch (_: Exception) { /* 静默降级 */ }
-
-                // 保存引用
-                cameraProvider = provider
-                previewUseCase = preview
-                analysisUseCase = analysis
-                imageCapture = capture
-                cameraControl = camera.cameraControl
-                _cameraInfo = camera.cameraInfo
-                currentCamera = camera
-                currentLifecycleOwner = lifecycleOwner
-                currentMode = mode
-                _isActive = false  // 等待 CameraState.OPEN
-                _error = null
-
-                // 获取流信息
-                val resInfo = analysis?.resolutionInfo ?: capture?.resolutionInfo
-                if (resInfo != null) {
-                    _streamResolution = resInfo.resolution
-                    _streamRotation = resInfo.rotationDegrees
-                }
-
-                // 创建分析 Executor（如果有分析 UseCase）
-                if (analysis != null) {
-                    analysisExecutor = Executors.newSingleThreadExecutor {
-                        Thread(it, "camera-analysis-${mode.name.lowercase()}")
-                    }
-                }
-
-                // 监控 Camera 状态
-                observeCameraState(camera, lifecycleOwner)
-
-                Result.success(Unit)
-            } catch (e: Exception) {
-                _error = e.message ?: "相机连接失败"
-                cleanupBoundResources()
-                Result.failure(e)
+            if (!binder.hasBackCamera(provider)) {
+                return@withLock Result.failure(IllegalStateException("未找到后置相机"))
             }
+
+            // 构建 UseCase（通过 binder 创建，测试可注入）
+            val preview = binder.createPreview(surfaceProvider)
+            val analysis = if (mode.needsAnalysis) binder.createAnalysis() else null
+            val capture = if (mode.needsCapture) binder.createCapture() else null
+
+            // 绑定
+            val useCases = listOfNotNull(preview, analysis, capture)
+            val selector = cameraSelector
+            val bindResult = binder.bindToLifecycle(provider, lifecycleOwner, selector, useCases)
+
+            when (bindResult) {
+                is BindResult.Failure -> {
+                    cleanupBoundResources()
+                    return@withLock Result.failure(bindResult.error)
+                }
+                is BindResult.Success -> {
+                    // 连续自动对焦
+                    try {
+                        val cam = bindResult.camera as? Camera
+                        if (cam != null) {
+                            Camera2CameraControl.from(cam.cameraControl).addCaptureRequestOptions(
+                                CaptureRequestOptions.Builder()
+                                    .setCaptureRequestOption(
+                                        android.hardware.camera2.CaptureRequest.CONTROL_AF_MODE,
+                                        android.hardware.camera2.CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO
+                                    )
+                                    .build()
+                            )
+                        }
+                    } catch (_: Exception) { /* 静默降级 */ }
+
+                    // 保存引用
+                    cameraProvider = provider
+                    previewUseCase = preview
+                    analysisUseCase = analysis
+                    imageCapture = capture
+                    currentCamera = bindResult.camera
+                    lifecycleOwnerRef = WeakReference(lifecycleOwner)
+                    surfaceProviderRef = WeakReference(surfaceProvider)
+                    currentMode = mode
+                    isConnected = true
+                    _isActive = false
+                    _error = null
+
+                    // 流信息
+                    val resInfo = binder.getResolutionInfo(analysis ?: capture ?: preview)
+                    if (resInfo != null) {
+                        _streamResolution = resInfo.first
+                        _streamRotation = resInfo.second
+                    }
+
+                    // 创建 Executor
+                    if (analysis != null) {
+                        analysisExecutor = Executors.newSingleThreadExecutor {
+                            Thread(it, "camera-analysis-${mode.name.lowercase()}")
+                        }
+                    }
+
+                    // 设置分析器回调（如果有）
+                    if (analysis != null && frameAnalyzer != null) {
+                        attachAnalyzerToUseCase(analysis, frameAnalyzer!!)
+                    }
+
+                    // 观察 Camera 状态
+                    setupCameraStateObserver(bindResult.camera, lifecycleOwner)
+
+                    Result.success(Unit)
+                }
+            }
+        } catch (e: Exception) {
+            _error = e.message ?: "相机连接失败"
+            cleanupBoundResources()
+            Result.failure(e)
         }
     }
 
     /**
      * 切换模式
      *
-     * 串行执行：停止旧分析器 → 关闭旧 Executor → unbindAll → 构建新 UseCase → 重绑。
+     * mutex 内完成所有状态检查和资源变更。
      * 相同模式返回成功不做重绑。
      */
-    suspend fun switchMode(mode: CameraMode): Result<Unit> {
+    suspend fun switchMode(mode: CameraMode): Result<Unit> = mutex.withLock {
         if (isReleased) {
-            return Result.failure(IllegalStateException("CameraController 已永久释放"))
+            return@withLock Result.failure(IllegalStateException("CameraController 已永久释放"))
+        }
+        if (!isConnected) {
+            return@withLock Result.failure(IllegalStateException("相机未连接"))
         }
         if (currentMode == mode) {
-            return Result.success(Unit)
+            return@withLock Result.success(Unit)
         }
 
-        return switchMutex.withLock {
-            try {
-                val provider = cameraProvider
-                val owner = currentLifecycleOwner
-                if (provider == null || owner == null) {
-                    return@withLock Result.failure(IllegalStateException("相机未连接"))
+        try {
+            val provider = cameraProvider
+                ?: return@withLock Result.failure(IllegalStateException("CameraProvider 丢失"))
+            val owner = lifecycleOwnerRef?.get()
+                ?: return@withLock Result.failure(IllegalStateException("LifecycleOwner 已失效"))
+
+            // 1. 停止旧分析器 + 断开 UseCase 回调
+            frameAnalyzer?.stop()
+            frameAnalyzer = null
+            analysisUseCase?.let { binder.clearAnalyzer(it) }
+
+            // 2. 关闭旧 Executor
+            analysisExecutor?.shutdownNow()
+            analysisExecutor = null
+
+            // 3. 移除旧 observer
+            removeCameraStateObserver()
+
+            // 4. unbindAll
+            binder.unbindAll(provider)
+
+            // 5. 构建新 UseCase（通过 binder）
+            val preview = previewUseCase ?: surfaceProviderRef?.get()?.let {
+                binder.createPreview(it)
+            } ?: return@withLock Result.failure(IllegalStateException("SurfaceProvider 已失效"))
+            val analysis = if (mode.needsAnalysis) binder.createAnalysis() else null
+            val capture = if (mode.needsCapture) binder.createCapture() else null
+
+            // 6. 重绑
+            val useCases = listOfNotNull(preview, analysis, capture)
+            val selector = cameraSelector
+            val bindResult = binder.bindToLifecycle(provider, owner, selector, useCases)
+
+            when (bindResult) {
+                is BindResult.Failure -> {
+                    // 绑定失败：清理半绑定资源
+                    cleanupBoundResources()
+                    return@withLock Result.failure(bindResult.error)
                 }
-
-                // 1. 停止旧分析器
-                frameAnalyzer?.stop()
-                frameAnalyzer = null
-
-                // 2. 关闭旧 Executor
-                analysisExecutor?.shutdownNow()
-                analysisExecutor = null
-
-                // 3. 根据新模式构建 UseCase
-                val preview = previewUseCase ?: run {
-                    // 重建 Preview（理论上不应发生）
-                    Preview.Builder()
-                        .setResolutionSelector(resolutionSelector)
-                        .build()
-                }
-
-                val analysis = if (mode.needsAnalysis) {
-                    buildAnalysisUseCase()
-                } else null
-
-                val capture = if (mode.needsCapture) {
-                    buildCaptureUseCase()
-                } else null
-
-                // 4. 重绑
-                provider.unbindAll()
-                val useCases = listOfNotNull(preview, analysis, capture)
-                val camera = provider.bindToLifecycle(
-                    owner, CameraSelector.DEFAULT_BACK_CAMERA, *useCases.toTypedArray()
-                )
-
-                // 连续自动对焦
-                try {
-                    Camera2CameraControl.from(camera.cameraControl).addCaptureRequestOptions(
-                        CaptureRequestOptions.Builder()
-                            .setCaptureRequestOption(
-                                android.hardware.camera2.CaptureRequest.CONTROL_AF_MODE,
-                                android.hardware.camera2.CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO
+                is BindResult.Success -> {
+                    // 连续自动对焦
+                    try {
+                        val cam = bindResult.camera as? Camera
+                        if (cam != null) {
+                            Camera2CameraControl.from(cam.cameraControl).addCaptureRequestOptions(
+                                CaptureRequestOptions.Builder()
+                                    .setCaptureRequestOption(
+                                        android.hardware.camera2.CaptureRequest.CONTROL_AF_MODE,
+                                        android.hardware.camera2.CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO
+                                    )
+                                    .build()
                             )
-                            .build()
-                    )
-                } catch (_: Exception) { /* 静默降级 */ }
+                        }
+                    } catch (_: Exception) { /* 静默降级 */ }
 
-                // 5. 保存新引用
-                previewUseCase = preview
-                analysisUseCase = analysis
-                imageCapture = capture
-                cameraControl = camera.cameraControl
-                _cameraInfo = camera.cameraInfo
-                currentCamera = camera
-                currentMode = mode
+                    // 保存新引用
+                    previewUseCase = preview
+                    analysisUseCase = analysis
+                    imageCapture = capture
+                    currentCamera = bindResult.camera
+                    currentMode = mode
 
-                // 获取流信息
-                val resInfo = analysis?.resolutionInfo ?: capture?.resolutionInfo
-                if (resInfo != null) {
-                    _streamResolution = resInfo.resolution
-                    _streamRotation = resInfo.rotationDegrees
-                }
-
-                // 创建新 Executor
-                if (analysis != null) {
-                    analysisExecutor = Executors.newSingleThreadExecutor {
-                        Thread(it, "camera-analysis-${mode.name.lowercase()}")
+                    // 流信息
+                    val resInfo = binder.getResolutionInfo(analysis ?: capture ?: preview)
+                    if (resInfo != null) {
+                        _streamResolution = resInfo.first
+                        _streamRotation = resInfo.second
                     }
+
+                    // 新 Executor
+                    if (analysis != null) {
+                        analysisExecutor = Executors.newSingleThreadExecutor {
+                            Thread(it, "camera-analysis-${mode.name.lowercase()}")
+                        }
+                    }
+
+                    // 设置分析器回调
+                    if (analysis != null && frameAnalyzer != null) {
+                        attachAnalyzerToUseCase(analysis, frameAnalyzer!!)
+                    }
+
+                    // 新 observer
+                    setupCameraStateObserver(bindResult.camera, owner)
+
+                    Result.success(Unit)
                 }
-
-                // 监控 Camera 状态
-                observeCameraState(camera, owner)
-
-                Result.success(Unit)
-            } catch (e: Exception) {
-                _error = e.message ?: "模式切换失败"
-                _cameraStateFlow.value = CameraStateType.ERROR
-                Result.failure(e)
             }
+        } catch (e: Exception) {
+            _error = e.message ?: "模式切换失败"
+            _cameraStateFlow.value = CameraStateType.ERROR
+            cleanupBoundResources()
+            Result.failure(e)
         }
     }
 
     /**
      * 断开连接（页面暂时离开）
      *
-     * 停止分析器、关闭 Executor、unbindAll、清空引用。
+     * suspend 操作，mutex 内完成所有清理。
      * 不标记 isReleased，可再次 connect。
      */
-    fun disconnect() {
+    suspend fun disconnect(): Unit = mutex.withLock {
         releaseInternal()
     }
 
     /**
      * 永久释放
      *
-     * 与 disconnect 相同的清理逻辑，但标记 isReleased = true。
-     * 之后 connect/switchMode 返回失败。
+     * suspend 操作，mutex 内完成所有清理。
+     * 标记 isReleased = true，之后 connect/switchMode 返回失败。
      */
-    fun release() {
+    suspend fun release(): Unit = mutex.withLock {
         isReleased = true
         releaseInternal()
     }
@@ -352,44 +554,38 @@ class CameraController private constructor(private val context: Context) {
     /**
      * 设置帧分析器
      *
-     * 替换当前分析器（如果有旧的，先调用 stop()）。
-     * 必须在 connect/switchMode 之后调用，且模式需要 Analysis。
+     * mutex 内完成替换。
+     * CameraController 拥有 ImageProxy，在 finally 中关闭。
+     * FrameAnalyzer.analyze() 不负责 close。
      */
-    fun setFrameAnalyzer(analyzer: FrameAnalyzer) {
+    suspend fun setFrameAnalyzer(analyzer: FrameAnalyzer): Unit = mutex.withLock {
         // 停止旧分析器
         frameAnalyzer?.stop()
-
         frameAnalyzer = analyzer
 
-        // 如果 Analysis UseCase 已存在，设置实际的 analyzer 回调
+        // 设置回调
         val analysis = analysisUseCase
-        val executor = analysisExecutor
-        if (analysis != null && executor != null) {
-            analysis.setAnalyzer(executor) { imageProxy ->
-                try {
-                    analyzer.analyze(imageProxy)
-                } catch (e: Exception) {
-                    // 分析器异常不应崩溃相机，ImageProxy 关闭由分析器负责
-                    android.util.Log.e("CameraController", "分析器异常", e)
-                }
-            }
+        if (analysis != null && analysisExecutor != null) {
+            attachAnalyzerToUseCase(analysis, analyzer)
         }
     }
 
     /**
      * 移除帧分析器
+     *
+     * mutex 内完成清理。
      */
-    fun clearFrameAnalyzer() {
+    suspend fun clearFrameAnalyzer(): Unit = mutex.withLock {
         frameAnalyzer?.stop()
         frameAnalyzer = null
-        analysisUseCase?.clearAnalyzer()
+        analysisUseCase?.let { binder.clearAnalyzer(it) }
     }
 
     /**
      * 拍照
      */
     suspend fun takePhoto(outputFile: File): Result<File> {
-        val capture = imageCapture ?: return Result.failure(
+        val capture = imageCapture as? ImageCapture ?: return Result.failure(
             IllegalStateException("ImageCapture 未初始化（当前模式: $currentMode）")
         )
 
@@ -439,47 +635,56 @@ class CameraController private constructor(private val context: Context) {
     }
 
     /** 最大变焦倍率 */
-    fun maxZoom(): Float = _cameraInfo?.zoomState?.value?.maxZoomRatio ?: 1f
+    fun maxZoom(): Float = cameraControl?.let {
+        (it as? CameraControl)?.let { ctrl ->
+            (currentCamera as? Camera)?.cameraInfo?.zoomState?.value?.maxZoomRatio
+        }
+    } ?: 1f
 
-    /** 当前模式 */
+    /** 当前模式（mutex 外读取，可能与锁内状态有短暂不一致） */
     fun currentMode(): CameraMode = currentMode
 
     /** 是否已永久释放 */
     fun isReleased(): Boolean = isReleased
 
-    /** 是否已连接（有 CameraProvider） */
-    fun isConnected(): Boolean = cameraProvider != null && !isReleased
+    /** 是否已连接 */
+    fun isConnected(): Boolean = isConnected && !isReleased
 
-    // ─── 内部方法 ───
-
-    /**
-     * 构建 ImageAnalysis UseCase
-     */
-    private fun buildAnalysisUseCase(): ImageAnalysis {
-        return ImageAnalysis.Builder()
-            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-            .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888)
-            .setResolutionSelector(resolutionSelector)
-            .build()
-    }
+    // ─── 内部方法（必须在 mutex 内调用） ───
 
     /**
-     * 构建 ImageCapture UseCase
-     */
-    private fun buildCaptureUseCase(): ImageCapture {
-        return ImageCapture.Builder()
-            .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
-            .setResolutionSelector(resolutionSelector)
-            .build()
-    }
-
-    /**
-     * 监控 Camera 状态
+     * 将分析器回调附加到 ImageAnalysis UseCase
      *
-     * 每次调用前先移除旧 observer（通过 CameraX 的 observe 自动管理）。
+     * CameraController 拥有 ImageProxy，在 finally 中关闭。
+     * FrameAnalyzer.analyze() 不负责 close。
      */
-    private fun observeCameraState(camera: Camera, lifecycleOwner: LifecycleOwner) {
-        camera.cameraInfo.cameraState.observe(lifecycleOwner) { state ->
+    private fun attachAnalyzerToUseCase(analysis: Any, analyzer: FrameAnalyzer) {
+        val executor = analysisExecutor ?: return
+        binder.setAnalyzer(analysis, executor) { imageProxy ->
+            val proxy = imageProxy as? androidx.camera.core.ImageProxy ?: return@setAnalyzer
+            try {
+                analyzer.analyze(proxy)
+            } catch (e: Exception) {
+                android.util.Log.e("CameraController", "分析器异常", e)
+            } finally {
+                // CameraController 拥有 ImageProxy，始终关闭
+                proxy.close()
+            }
+        }
+    }
+
+
+    /**
+     * 设置 Camera 状态观察
+     *
+     * 先移除旧 observer，再添加新的。保存引用以便后续移除。
+     */
+    private fun setupCameraStateObserver(camera: Any, lifecycleOwner: LifecycleOwner) {
+        // 移除旧 observer
+        removeCameraStateObserver()
+
+        val cameraInfo = binder.getCameraInfo(camera) ?: return
+        val observer = Observer<androidx.camera.core.CameraState> { state ->
             val stateType = when (state.type) {
                 androidx.camera.core.CameraState.Type.PENDING_OPEN -> CameraStateType.PENDING_OPEN
                 androidx.camera.core.CameraState.Type.OPEN -> CameraStateType.OPEN
@@ -494,38 +699,72 @@ class CameraController private constructor(private val context: Context) {
                 _cameraStateFlow.value = CameraStateType.ERROR
             }
         }
+
+        binder.observeCameraState(cameraInfo, lifecycleOwner, observer)
+        cameraStateObserver = observer
+        observedCameraInfo = cameraInfo
     }
 
     /**
-     * 清理已绑定的资源（不 unbindAll，仅清空引用）
+     * 移除 Camera 状态观察
+     */
+    private fun removeCameraStateObserver() {
+        val observer = cameraStateObserver
+        val info = observedCameraInfo
+        if (observer != null && info != null) {
+            try {
+                binder.removeCameraStateObserver(info, observer)
+            } catch (_: Exception) {
+                // 忽略移除失败（可能 Camera 已销毁）
+            }
+        }
+        cameraStateObserver = null
+        observedCameraInfo = null
+    }
+
+    /**
+     * 清理已绑定的资源（mutex 内调用）
+     *
+     * 包括：停止分析器、关闭 Executor、移除 observer、清空所有引用。
+     * 不调用 provider.unbindAll()，由调用方决定是否需要。
      */
     private fun cleanupBoundResources() {
+        // 停止分析器
         frameAnalyzer?.stop()
         frameAnalyzer = null
+
+        // 关闭 Executor
         analysisExecutor?.shutdownNow()
         analysisExecutor = null
-        analysisUseCase?.clearAnalyzer()
+
+        // 断开 UseCase 回调
+        analysisUseCase?.let { binder.clearAnalyzer(it) }
+
+        // 移除 observer
+        removeCameraStateObserver()
+
+        // 清空引用
         analysisUseCase = null
         imageCapture = null
         previewUseCase = null
         cameraControl = null
-        _cameraInfo = null
         currentCamera = null
         _streamResolution = null
         _streamRotation = 0
         _isActive = false
         _cameraStateFlow.value = null
         _error = null
+        isConnected = false
     }
 
     /**
-     * 内部释放逻辑
+     * 内部释放逻辑（mutex 内调用）
      */
     private fun releaseInternal() {
-        cameraProvider?.unbindAll()
+        cameraProvider?.let { binder.unbindAll(it) }
         cleanupBoundResources()
         cameraProvider = null
-        currentLifecycleOwner = null
+        lifecycleOwnerRef = null
         currentMode = CameraMode.IDLE
     }
 }

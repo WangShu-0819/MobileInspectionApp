@@ -19,6 +19,7 @@ mlkitBarcode = "17.3.0"
 mlkitText = "16.0.1"
 zxing = "3.5.2"
 junit = "4.13.2"
+mockito = "5.14.2"
 androidx-test-ext = "1.2.1"
 androidx-test-espresso = "3.6.1"
 apache-poi = "5.2.3"
@@ -48,6 +49,7 @@ androidx-room-compiler = { group = "androidx.room", name = "room-compiler", vers
 androidx-room-testing = { group = "androidx.room", name = "room-testing", version.ref = "room-testing" }
 
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
 
 kotlin-test = { group = "org.jetbrains.kotlin", name = "kotlin-test", version.ref = "kotlin-test" }
 

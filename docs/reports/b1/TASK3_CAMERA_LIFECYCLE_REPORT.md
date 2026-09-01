@@ -1,213 +1,110 @@
-# Task 3 报告：CameraController 模式与生命周期
+# Task 3：CameraController 模式与生命周期 — 整改报告
 
-**执行时间**：2026-09-01
-**执行人**：Agent
-**状态**：✅ 真机验收完成
-
----
-
-## 一、修改文件清单
-
-### 新增文件
-
-| 文件 | 说明 |
-|------|------|
-| `camera/CameraMode.kt` | 相机模式枚举 + UseCase 需求配置（needsAnalysis/needsCapture） |
-| `camera/CameraStateType.kt` | 相机状态枚举（从 CameraController.kt 拆出） |
-| `camera/FrameAnalyzer.kt` | 帧分析器接口 + TestCountingAnalyzer 测试实现 |
-| `camera/CameraControllerTest.kt` | 单元测试：模式配置、分析器行为、状态枚举 |
-
-### 重写文件
-
-| 文件 | 说明 |
-|------|------|
-| `camera/CameraController.kt` | Mutex 串行保护、switchMode 重绑、disconnect/release 分离、资源清理 |
+> 状态：🔄 整改中
+> 日期：2026-09-01
+> 关联需求：tasks/todo.md → Task 3
 
 ---
 
-## 二、核心架构变更
+## 一、整改内容
 
-### 2.1 CameraMode 枚举
+### 1. 统一并发边界
+
+**问题**：原实现中 `disconnect()`/`release()` 是非 suspend 函数，绕过 Mutex；`setFrameAnalyzer()`/`clearFrameAnalyzer()` 也不经过 Mutex。
+
+**修复**：
+- 所有公共方法（`connect`/`switchMode`/`disconnect`/`release`/`setFrameAnalyzer`/`clearFrameAnalyzer`）统一经过同一 `Mutex` 串行执行
+- `disconnect()` 和 `release()` 改为 `suspend fun`
+- `isReleased`/`currentMode` 检查在锁内完成
+- 绑定失败时清理半绑定资源
+
+### 2. ImageProxy 所有权
+
+**问题**：原实现中 `FrameAnalyzer.analyze()` 负责关闭 `ImageProxy`，违反所有权原则。
+
+**修复**：
+- `CameraController` 拥有 `ImageProxy`，在 `finally` 中关闭
+- `FrameAnalyzer.analyze()` 不调用 `image.close()`
+- 更新 `FrameAnalyzer.kt` 注释和 `TestCountingAnalyzer`
+
+### 3. 引用和 Observer 管理
+
+**问题**：原实现持有强引用 `LifecycleOwner`，Observer 未跟踪/移除导致累积。
+
+**修复**：
+- `LifecycleOwner` 使用 `WeakReference` 保存
+- 保存 `CameraState` `Observer` 实例引用
+- 每次重绑/断开/释放前显式 `removeObserver`
+- `surfaceProvider` 也使用 `WeakReference` 保存
+
+### 4. 可注入测试架构
+
+**问题**：原测试无法验证并发行为和资源协调。
+
+**修复**：
+- 提取 `CameraBinder` 接口，抽象所有 CameraX 交互
+- `RealCameraBinder` 实现生产逻辑
+- `FakeCameraBinder` 实现测试逻辑（可控延迟、失败注入）
+- 30 个单元测试覆盖：状态机、并发串行化、资源清理、Observer 管理、UseCase 配置、20 次 round-trip 压力测试
+
+---
+
+## 二、架构变更
+
+### CameraBinder 接口
 
 ```kotlin
-enum class CameraMode(
-    val needsAnalysis: Boolean,
-    val needsCapture: Boolean
-) {
-    IDLE(false, false),
-    INSPECTION(true, true),
-    DPM_SCAN(true, false),
-    STAMP_OCR(true, true),
-    TEMPLATE_CAPTURE(false, true);
+interface CameraBinder {
+    fun hasCameraPermission(): Boolean
+    fun getProvider(): Any?
+    fun hasBackCamera(provider: Any): Boolean
+    fun createPreview(surfaceProvider: Any): Any
+    fun createAnalysis(): Any
+    fun createCapture(): Any
+    fun bindToLifecycle(...): BindResult
+    fun unbindAll(provider: Any)
+    fun getCameraInfo(camera: Any): Any?
+    fun observeCameraState(...)
+    fun removeCameraStateObserver(...)
+    fun setAnalyzer(useCase: Any, executor: ExecutorService, callback: (Any) -> Unit)
+    fun clearAnalyzer(useCase: Any)
+    fun getResolutionInfo(useCase: Any): Pair<Size, Int>?
 }
 ```
 
-每个模式声明是否需要 ImageAnalysis 和 ImageCapture。CameraController 根据配置构建和绑定 UseCase。
-
-### 2.2 FrameAnalyzer 接口
-
-```kotlin
-interface FrameAnalyzer {
-    fun analyze(image: ImageProxy)  // 所有路径必须关闭 image
-    fun stop()                      // 清理内部资源
-}
-```
-
-- 实现者负责在 analyze() 的所有路径（包括异常）关闭 ImageProxy
-- CameraController 在 switchMode/disconnect/release 前调用 stop()
-- TestCountingAnalyzer 用于验证互斥和资源释放
-
-### 2.3 switchMode() 串行重绑
-
-```kotlin
-suspend fun switchMode(mode: CameraMode): Result<Unit> {
-    return switchMutex.withLock {
-        // 1. 停止旧分析器 → frameAnalyzer.stop()
-        // 2. 关闭旧 Executor → analysisExecutor.shutdownNow()
-        // 3. 构建新 UseCase（根据 mode.needsAnalysis/needsCapture）
-        // 4. provider.unbindAll()
-        // 5. provider.bindToLifecycle(preview + analysis + capture)
-        // 6. 保存新引用、更新状态
-    }
-}
-```
-
-### 2.4 disconnect() vs release()
-
-| 方法 | 用途 | isReleased | 可再次 connect |
-|------|------|-----------|---------------|
-| `disconnect()` | 页面暂时离开 | false | ✅ |
-| `release()` | 永久释放 | true | ❌ |
-
-### 2.5 资源清理链
+### 状态机流转
 
 ```
-cleanupBoundResources():
-  frameAnalyzer.stop() → null
-  analysisExecutor.shutdownNow() → null
-  analysisUseCase.clearAnalyzer() → null
-  imageCapture / previewUseCase / cameraControl / cameraInfo → null
-  _isActive = false, _cameraStateFlow = null, _error = null
+IDLE → connect() → INSPECTION/DPM_SCAN/STAMP_OCR/TEMPLATE_CAPTURE
+任意模式 → switchMode() → 新模式（Mutex 内串行）
+任意模式 → disconnect() → IDLE（可恢复）
+任意模式 → release() → 永久释放
 ```
 
 ---
 
 ## 三、测试覆盖
 
-### 单元测试（21 个）
-
-| 测试 | 验证点 |
-|------|--------|
-| testIdleMode_noAnalysis_noCapture | IDLE 模式不创建 UseCase |
-| testInspectionMode_needsAnalysisAndCapture | INSPECTION 需要两者 |
-| testDpmScanMode_needsAnalysisOnly | DPM_SCAN 只需要 Analysis |
-| testStampOcrMode_needsAnalysisAndCapture | STAMP_OCR 需要两者 |
-| testTemplateCaptureMode_needsCaptureOnly | TEMPLATE_CAPTURE 只需要 Capture |
-| testAllModes_coverExpected | 5 种模式完整 |
-| testAnalyzer_countsAnalyzeCalls | 计数器初始为 0 |
-| testAnalyzer_stopIncrementsStopCount | stop() 计数正确 |
-| testAnalyzer_throwOnAnalyze_flag | 异常标志可设置 |
-| testAnalyzer_errorCount_initial | 错误计数初始为 0 |
-| testCameraStateType_allValues | 4 种状态完整 |
-| + ContentRectCalculatorTest 10 个 | Task 2 已有 |
-
-### 真机验证
-
-| 测试 | 次数 | 结果 |
-|------|------|------|
-| Tab 往返 | 10 次 | ✅ 无黑屏、无重复绑定 |
-| 前后台切换 | 10 次 | ✅ 无崩溃、无 Executor 错误 |
-| 相机初始化 | 每次启动 | ✅ CameraState.OPEN + contentRect |
+| 测试类别 | 数量 | 说明 |
+|---------|------|------|
+| 基础状态 | 5 | 初始状态、connect、release |
+| 模式切换 | 4 | 成功切换、相同模式、未连接、所有模式 round-trip |
+| 并发串行化 | 4 | connect+switchMode、2x switchMode、switchMode+disconnect、switchMode+release |
+| 资源清理 | 4 | disconnect、release、connect 失败、switchMode 失败 |
+| Observer 管理 | 4 | connect 设置、switchMode 替换、disconnect 移除、多次不累积 |
+| 分析器管理 | 3 | 设置、清除、异常时 ImageProxy 仍关闭 |
+| Executor 管理 | 1 | switchMode 关闭旧 Executor |
+| UseCase 配置 | 4 | INSPECTION、DPM_SCAN、TEMPLATE_CAPTURE、STAMP_OCR |
+| 压力测试 | 1 | 20 次模式 round-trip |
+| **总计** | **30** | |
 
 ---
 
-## 四、编译验证
+## 四、待完成
 
-```
-:testDebugUnitTest          — BUILD SUCCESSFUL (21/21 通过)
-:app:compileDebugKotlin     — BUILD SUCCESSFUL
-:app:assembleDebug          — BUILD SUCCESSFUL
-```
-
----
-
-## 五、APK 信息
-
-| 项目 | 值 |
-|------|-----|
-| **APK 路径** | `./app/build/outputs/apk/debug/app-debug.apk` |
-| **构建时间** | 2026-09-01 12:39 |
-| **文件大小** | 170M |
-| **SHA-256** | `5085b466597af0c8a08ba243cbf4f2ee06209d57781ca555eecec69042c5124d` |
-| **设备型号** | HONOR YAL-AL10 |
-| **设备序列号** | ERLDU20429005890 |
-| **安装时间** | 2026-09-01 12:39:52 |
-
----
-
-## 六、验收状态
-
-### 编译与构建
-
-- ✅ `:app:testDebugUnitTest`：21/21 通过
-- ✅ `:app:compileDebugKotlin`：BUILD SUCCESSFUL
-- ✅ `:app:assembleDebug`：BUILD SUCCESSFUL
-
-### 功能验收
-
-| 验收项 | 状态 | 说明 |
-|--------|------|------|
-| switchMode 串行 | ✅ | Mutex 保护，停止旧资源后重绑 |
-| UseCase 互斥 | ✅ | unbindAll 后只绑定新模式的 UseCase |
-| 分析器互斥 | ✅ | 旧 analyzer.stop() → 新 analyzer |
-| Executor 唯一 | ✅ | shutdownNow() 后创建新 Executor |
-| disconnect 可恢复 | ✅ | 不标记 isReleased |
-| release 不可复用 | ✅ | 标记 isReleased，connect 返回失败 |
-| 无强引用 | ✅ | 不持有 Activity/PreviewView |
-| ImageProxy 关闭 | ✅ | FrameAnalyzer 接口约束 |
-
-### 真机验收
-
-| 项目 | 结果 | 日志证据 |
-|------|------|----------|
-| Tab 往返 10 次 | ✅ | 无 Camera already in use |
-| 前后台 10 次 | ✅ | 无 RejectedExecutionException |
-| 相机初始化 | ✅ | CameraState.OPEN + contentRect 779x1039 |
-| 无黑屏 | ✅ | 截图验证 |
-| 无 ImageProxy 泄漏 | ✅ | logcat 无泄漏警告 |
-
-### ADB 日志摘要
-
-```
-CameraPreview: PreviewView size: 1080x1039
-CameraPreview: contentRect: 779 x 1039
-CameraStateMachine: CameraState{type=OPEN, error=null}
-LiveInspection: Camera ready
-```
-
-无 forbidden patterns：
-- ❌ Camera already in use
-- ❌ RejectedExecutionException
-- ❌ ImageProxy leak
-- ❌ FATAL EXCEPTION
-
----
-
-## 七、代码结构
-
-```
-com.wearable.inspection.mobile.camera
-├── CameraController.kt    # 单例 + Mutex + switchMode + disconnect/release
-├── CameraMode.kt          # 枚举 + UseCase 配置
-├── CameraStateType.kt     # 状态枚举
-├── CameraError.kt         # 错误类型 sealed class
-└── FrameAnalyzer.kt       # 分析器接口 + TestCountingAnalyzer
-```
-
----
-
-## 八、下一步
-
-- ⏸️ **暂停等待 Task 3 真机验收**
-- 📋 验收通过后，继续 **Task 4：真实拍照与存储**
-- 🚫 **不得开始**：Task 5、B2
+- [ ] 真机验收：5 种模式 round-trip 20 次
+- [ ] 真机验收：Tab 切换 10 次
+- [ ] 真机验收：前后台切换 10 次
+- [ ] logcat 验证：无 Camera already in use / RejectedExecutionException / ImageProxy leak / duplicate observer / closed Executor
+- [ ] assembleDebug + 安装 + SHA-256
+- [ ] Git commit

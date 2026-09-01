@@ -35,7 +35,7 @@
 
 ## Task 3：CameraController 模式与生命周期
 
-状态：✅ 真机验收完成（HONOR YAL-AL10, ERLDU20429005890）。Task 4 禁止开始。
+状态：🔄 整改中 — 统一并发边界、ImageProxy 所有权、Observer 管理、可注入测试架构。Task 4 禁止开始。
 
 - [x] CameraMode 枚举：IDLE/INSPECTION/DPM_SCAN/STAMP_OCR/TEMPLATE_CAPTURE + UseCase 需求配置
 - [x] switchMode() 串行 Mutex 保护：停止旧分析器 → 关闭旧 Executor → unbindAll → 构建新 UseCase → 重绑
