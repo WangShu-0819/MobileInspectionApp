@@ -350,6 +350,9 @@ class CameraController private constructor(
 
         try {
             // ─── 步骤 1-7：清理旧资源 ───
+            // 0. 使在途拍照请求失效
+            invalidateCaptureRequest()
+
             // 1. 标记旧连接进入关闭状态
             val oldSession = activeSession
             activeSession = null
@@ -484,6 +487,9 @@ class CameraController private constructor(
      * 确保 CameraX 不残留任何 UseCase。
      */
     private fun performFullRollback(provider: Any) {
+        // 使在途拍照请求失效
+        invalidateCaptureRequest()
+
         // unbindAll
         binder.unbindAll(provider)
 
@@ -542,6 +548,9 @@ class CameraController private constructor(
                 ?: return@withLock Result.failure(IllegalStateException("CameraProvider 丢失"))
             val owner = lifecycleOwnerRef?.get()
                 ?: return@withLock Result.failure(IllegalStateException("LifecycleOwner 已失效"))
+
+            // 0. 使在途拍照请求失效
+            invalidateCaptureRequest()
 
             // 1. 停止旧分析器 + 断开 UseCase 回调
             frameAnalyzer?.stop()
@@ -725,51 +734,91 @@ class CameraController private constructor(
     )
 
     // ─── 拍照并发保护 ───
+    // captureRequestId: 当前活跃的拍照请求标识
+    // disconnect/switchMode 时递增使旧请求失效
+    @Volatile
+    private var captureRequestId: Long = 0L
+
     @Volatile
     private var isCapturing = false
 
     /**
+     * 使当前拍照请求失效
+     *
+     * 在 disconnect/switchMode/release 时调用，使在途回调忽略结果。
+     * 必须在 mutex 内调用。
+     */
+    private fun invalidateCaptureRequest() {
+        captureRequestId++
+        isCapturing = false
+    }
+
+    /**
      * 会话安全拍照
      *
-     * 在 mutex 外使用 AtomicBoolean 防止并发点击，
-     * 在拍照回调中验证 session 仍然活跃。
+     * 设计约束：
+     * 1. mutex 内完成状态检查和 token 创建，释放 mutex 后调用 takePicture
+     * 2. 回调完成时重新进入 mutex 核对 token 和 sessionId
+     * 3. disconnect/switchMode 使旧 token 失效
+     * 4. 协程取消、旧会话回调、错误路径删除临时文件
+     * 5. 所有路径恢复 isCapturing 且只恢复对应请求
      *
      * @param sessionId 当前活跃会话 ID
      * @param outputFile 目标文件（应为临时文件）
      * @return 成功时返回文件，失败时返回异常
      */
-    suspend fun takePhoto(sessionId: String, outputFile: File): Result<File> = mutex.withLock {
-        // 前置检查
-        if (isReleased) {
-            return@withLock Result.failure(IllegalStateException("CameraController 已永久释放"))
+    suspend fun takePhoto(sessionId: String, outputFile: File): Result<File> {
+        // ─── 阶段 1：mutex 内完成状态检查和 token 创建 ───
+        val requestId = mutex.withLock {
+            // 前置检查
+            if (isReleased) {
+                return@withLock -1L // 特殊值表示立即失败
+            }
+
+            if (activeSession?.sessionId != sessionId) {
+                return@withLock -1L
+            }
+
+            if (!isConnected) {
+                return@withLock -1L
+            }
+
+            if (_cameraStateFlow.value != CameraStateType.OPEN) {
+                return@withLock -1L
+            }
+
+            if (!currentMode.needsCapture) {
+                return@withLock -1L
+            }
+
+            if (imageCapture == null) {
+                return@withLock -1L
+            }
+
+            // 并发保护：只允许一个拍照请求
+            if (isCapturing) {
+                return@withLock -1L
+            }
+
+            // 创建唯一 request token
+            val requestId = ++captureRequestId
+            isCapturing = true
+            requestId
         }
 
-        if (activeSession?.sessionId != sessionId) {
-            return@withLock Result.failure(IllegalStateException("会话已过期"))
-        }
-
-        if (!isConnected) {
-            return@withLock Result.failure(IllegalStateException("相机未连接"))
-        }
-
-        if (_cameraStateFlow.value != CameraStateType.OPEN) {
-            return@withLock Result.failure(IllegalStateException("相机未就绪"))
-        }
-
-        if (!currentMode.needsCapture) {
-            return@withLock Result.failure(IllegalStateException("当前模式不支持拍照: $currentMode"))
+        // 检查是否立即失败
+        if (requestId <= 0L) {
+            return Result.failure(IllegalStateException("拍照前置条件不满足"))
         }
 
         val capture = imageCapture as? ImageCapture
-            ?: return@withLock Result.failure(IllegalStateException("ImageCapture 未初始化"))
+            ?: run {
+                isCapturing = false
+                return Result.failure(IllegalStateException("ImageCapture 未初始化"))
+            }
 
-        // 并发保护：只允许一个拍照请求
-        if (isCapturing) {
-            return@withLock Result.failure(IllegalStateException("拍照进行中"))
-        }
-        isCapturing = true
-
-        try {
+        // ─── 阶段 2：mutex 外执行异步拍照 ───
+        return try {
             outputFile.parentFile?.mkdirs()
 
             val result = suspendCancellableCoroutine<File?> { cont ->
@@ -780,14 +829,17 @@ class CameraController private constructor(
                     object : ImageCapture.OnImageSavedCallback {
                         override fun onImageSaved(output: ImageCapture.OutputFileResults) {
                             if (cont.isActive) {
-                                // 再次验证 session 仍然活跃
-                                if (activeSession?.sessionId == sessionId &&
-                                    outputFile.exists() &&
-                                    outputFile.length() > 0L
-                                ) {
+                                // ─── 阶段 3：回调时重新验证 ───
+                                // 检查 request token 和 sessionId
+                                val valid = captureRequestId == requestId &&
+                                        activeSession?.sessionId == sessionId &&
+                                        outputFile.exists() &&
+                                        outputFile.length() > 0L
+
+                                if (valid) {
                                     cont.resume(outputFile)
                                 } else {
-                                    // session 已过期或文件无效，清理
+                                    // session 已过期、token 失效或文件无效，清理
                                     outputFile.delete()
                                     cont.resume(null)
                                 }
@@ -803,6 +855,11 @@ class CameraController private constructor(
                         }
                     }
                 )
+
+                // 协程取消时清理
+                cont.invokeOnCancellation {
+                    outputFile.delete()
+                }
             }
 
             if (result != null) {
@@ -814,7 +871,10 @@ class CameraController private constructor(
             outputFile.delete()
             Result.failure(e)
         } finally {
-            isCapturing = false
+            // 只恢复对应请求的 isCapturing
+            if (captureRequestId == requestId) {
+                isCapturing = false
+            }
         }
     }
 
@@ -930,6 +990,9 @@ class CameraController private constructor(
      * 不调用 provider.unbindAll()，由调用方决定是否需要。
      */
     private fun cleanupBoundResources() {
+        // 使在途拍照请求失效
+        invalidateCaptureRequest()
+
         // 停止分析器
         frameAnalyzer?.stop()
         frameAnalyzer = null
@@ -963,6 +1026,9 @@ class CameraController private constructor(
      * 内部释放逻辑（mutex 内调用）
      */
     private fun releaseInternal() {
+        // 使在途拍照请求失效
+        invalidateCaptureRequest()
+
         cameraProvider?.let { binder.unbindAll(it) }
         cleanupBoundResources()
         cameraProvider = null

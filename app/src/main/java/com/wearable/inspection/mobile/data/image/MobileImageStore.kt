@@ -27,9 +27,15 @@ data class StoredImageResult(
  * 职责：
  * 1. 临时 JPEG 文件生成
  * 2. JPEG 可解码和 EXIF 方向校验
- * 3. 原子移动到正式路径
- * 4. 失败清理临时文件
+ * 3. 原子移动到正式路径（使用 .part 中间文件）
+ * 4. 失败清理临时文件和 .part 文件
  * 5. 路径合法性检查
+ *
+ * 文件事务流程：
+ * 1. 生成唯一临时文件 → 2. 校验临时文件 → 3. 复制到 .part 文件 →
+ * 4. 校验 .part 文件 → 5. 重命名为最终文件（原子操作）
+ *
+ * 任何失败都会清理 .part 和临时文件。
  */
 class MobileImageStore(private val context: Context) {
 
@@ -39,6 +45,8 @@ class MobileImageStore(private val context: Context) {
 
         private const val TEMP_PREFIX = "capture_"
         private const val TEMP_SUFFIX = ".tmp.jpg"
+
+        private const val PART_SUFFIX = ".part"
 
         private const val CAPTURE_FILE_PATTERN = "capture_%s_%s.jpg"
     }
@@ -51,6 +59,8 @@ class MobileImageStore(private val context: Context) {
 
     /**
      * 生成唯一临时文件路径
+     *
+     * 使用时间戳 + UUID 确保不可冲突。
      */
     fun generateTempFile(): File {
         val ts = SimpleDateFormat("yyyyMMdd_HHmmss_SSS", Locale.US).format(Date())
@@ -89,33 +99,38 @@ class MobileImageStore(private val context: Context) {
             return null
         }
 
-        val options = BitmapFactory.Options().apply {
-            inJustDecodeBounds = true
-        }
-        BitmapFactory.decodeFile(file.absolutePath, options)
+        return try {
+            val options = BitmapFactory.Options().apply {
+                inJustDecodeBounds = true
+            }
+            BitmapFactory.decodeFile(file.absolutePath, options)
 
-        if (options.outWidth <= 0 || options.outHeight <= 0) {
-            return null
-        }
+            if (options.outWidth <= 0 || options.outHeight <= 0) {
+                return null
+            }
 
-        val orientation = try {
-            val exif = ExifInterface(file.absolutePath)
-            exif.getAttributeInt(
-                ExifInterface.TAG_ORIENTATION,
+            val orientation = try {
+                val exif = ExifInterface(file.absolutePath)
+                exif.getAttributeInt(
+                    ExifInterface.TAG_ORIENTATION,
+                    ExifInterface.ORIENTATION_NORMAL
+                )
+            } catch (_: Exception) {
                 ExifInterface.ORIENTATION_NORMAL
+            }
+
+            StoredImageResult(
+                finalPath = file.absolutePath,
+                sizeBytes = file.length(),
+                width = options.outWidth,
+                height = options.outHeight,
+                orientation = orientation,
+                capturedAt = System.currentTimeMillis()
             )
         } catch (_: Exception) {
-            ExifInterface.ORIENTATION_NORMAL
+            // 解码失败（无效数据、损坏文件等）
+            null
         }
-
-        return StoredImageResult(
-            finalPath = file.absolutePath,
-            sizeBytes = file.length(),
-            width = options.outWidth,
-            height = options.outHeight,
-            orientation = orientation,
-            capturedAt = System.currentTimeMillis()
-        )
     }
 
     // ========== 原子移动 ==========
@@ -133,23 +148,68 @@ class MobileImageStore(private val context: Context) {
     /**
      * 原子移动临时文件到正式路径
      *
-     * 使用 renameTo；如果失败（跨文件系统），回退到复制+删除。
+     * 流程：
+     * 1. 生成唯一最终文件名
+     * 2. 检查最终文件是否已存在（不覆盖）
+     * 3. 复制到 .part 中间文件
+     * 4. 校验 .part 文件有效性
+     * 5. 重命名 .part → 最终文件（原子操作）
+     * 6. 删除临时文件
+     *
+     * 失败时清理 .part 和临时文件。
+     *
+     * @return 最终文件，失败返回 null
      */
     fun atomicMoveToFinal(tempFile: File): File? {
         if (!tempFile.exists()) return null
 
         val finalFile = File(getCapturesDir(), generateFinalFileName())
+        val partFile = File(finalFile.absolutePath + PART_SUFFIX)
 
-        return if (tempFile.renameTo(finalFile)) {
-            finalFile
-        } else {
-            try {
-                tempFile.copyTo(finalFile, overwrite = true)
+        try {
+            // 检查最终文件是否已存在（不覆盖）
+            if (finalFile.exists()) {
                 tempFile.delete()
-                finalFile
+                return null
+            }
+
+            // 复制到 .part 文件
+            tempFile.copyTo(partFile, overwrite = false)
+
+            // 校验 .part 文件
+            if (!partFile.exists() || partFile.length() == 0L) {
+                cleanupFiles(partFile, tempFile)
+                return null
+            }
+
+            // 重命名 .part → 最终文件（原子操作）
+            if (!partFile.renameTo(finalFile)) {
+                cleanupFiles(partFile, tempFile)
+                return null
+            }
+
+            // 删除临时文件
+            tempFile.delete()
+
+            return finalFile
+        } catch (e: Exception) {
+            // 任何失败都清理
+            cleanupFiles(partFile, tempFile)
+            return null
+        }
+    }
+
+    /**
+     * 清理文件（忽略删除失败）
+     */
+    private fun cleanupFiles(vararg files: File) {
+        files.forEach { file ->
+            try {
+                if (file.exists()) {
+                    file.delete()
+                }
             } catch (_: Exception) {
-                finalFile.delete()
-                null
+                // 忽略删除失败
             }
         }
     }
@@ -158,11 +218,14 @@ class MobileImageStore(private val context: Context) {
      * 完整的拍照存储流程
      *
      * 1. 校验临时文件
-     * 2. 原子移动到正式路径
+     * 2. 原子移动到正式路径（使用 .part 中间文件）
      * 3. 返回结果
      */
     fun storeCapturedImage(tempFile: File): StoredImageResult? {
-        val validation = validateJpeg(tempFile) ?: return null
+        val validation = validateJpeg(tempFile) ?: run {
+            tempFile.delete()
+            return null
+        }
         val finalFile = atomicMoveToFinal(tempFile) ?: return null
         return validateJpeg(finalFile)
     }
@@ -201,6 +264,16 @@ class MobileImageStore(private val context: Context) {
             dir.listFiles()?.filter { it.isFile && it.length() > 0 } ?: emptyList()
         } else {
             emptyList()
+        }
+    }
+
+    /**
+     * 清理 .part 残留文件
+     */
+    fun cleanPartFiles() {
+        val dir = getCapturesDir()
+        if (dir.exists()) {
+            dir.listFiles()?.filter { it.name.endsWith(PART_SUFFIX) }?.forEach { it.delete() }
         }
     }
 }

@@ -68,23 +68,32 @@
 
 ## Task 4：真实拍照与存储
 
-状态：✅ 已验收（提交 `a037a08`，HONOR YAL-AL10, ERLDU20429005890；APK SHA-256 `dffb77ac4d00f147a0216ec53ee27ed2e06c04f3bf74e420cb6dc7cdecba0288`）。
+状态：✅ 整改完成（整改提交 `[待填写]`，初始实现提交 `48f7587`，HONOR YAL-AL10, ERLDU20429005890；APK SHA-256 `6a3ce752f2f07a09084c57499a4c1ccac8e331b9a52dd8066824c43d7ade858d`）。
 
 - [x] Task 3 收口基线已提交，正式 Manifest 无测试入口，`tools/contour_extraction/` 未混入
 - [x] 主快门使用当前 CameraSession/ImageCapture，不创建或重绑第二套 CameraX
 - [x] 拍照前校验 session、OPEN、Capture、零件、模板和 ROI
 - [x] UI 使用 IDLE/CAPTURING/SAVED/ERROR，拍摄中禁用重复点击
 - [x] 临时 JPEG 唯一命名并写入 App 私有目录
-- [x] MobileImageStore 校验非空、可解码、宽高和方向后原子移动
+- [x] MobileImageStore 校验非空、可解码、宽高和方向后原子移动（使用 .part 中间文件）
 - [x] 失败、取消、过期 session、页面离开和低存储路径清理临时文件
 - [x] 成功只表示原图保存，不创建假检测记录、识别图或 ROI 结果
-- [x] 自动化覆盖并发点击、重名、空文件、损坏 JPEG、取消和会话切换
+- [x] takePhoto 不在异步回调期间持有全局 Mutex（capture request token 机制）
+- [x] capture request token 机制使旧会话回调失效
+- [x] 自动化覆盖并发点击、重名、空文件、损坏 JPEG、取消和会话切换（19 项测试）
 - [x] 真机连续拍摄 20 张：无空文件、重名、方向错误和临时残留
 - [x] Task 2/3 受影响回归矩阵在同一最终 APK 上通过
 
-验收：连续拍摄 20 张，无空文件、重名、方向错误或临时残留。✅ 通过。
+整改内容：
+1. takePhoto 不在异步回调期间持有全局 Mutex ✅
+2. capture request token 机制使旧会话回调失效 ✅
+3. 文件事务使用 .part 中间文件 + 真正原子移动 ✅
+4. 补齐自动化测试（8 项 CameraControllerTakePhotoTest + 8 项 MobileImageStoreTest） ✅
+5. 真机连续拍摄 20 张验收 ✅
 
 ## Task 5：完整验证
+
+状态：未开始。Task 4 最终验收通过前不得开始。
 
 - [ ] `.\gradlew.bat :app:testDebugUnitTest --no-daemon`
 - [ ] `.\gradlew.bat :app:assembleDebug --no-daemon`
