@@ -2,7 +2,49 @@
 
 **目标**：将 Wearable Inspection 旧工程中的功能迁移到 MobileInspectionApp（新工程）
 **创建时间**：2026-08-31
-**状态**：📋 审计阶段（未开始迁移）
+**状态**：B1 已完成；B2 Task 1 迁移审计进行中
+
+> 当前状态与执行边界以根目录 `AGENTS.md`、`tasks/todo.md` 和 `tasks/plan.md` 为准。本文件中标为“历史目标”的 B0/B1 内容只保留审计背景，不得据此重新创建 `SharedCameraSession`、`PhoneCameraController` 或第二套 CameraX。
+
+## 0. B2 Task 1 当前迁移结论
+
+### 0.1 已确认的新工程基线
+
+- B1 已完成唯一 `CameraController`、`CameraMode`、`FrameAnalyzer`、真实 `CameraPreview`、会话安全拍照和 `MobileImageStore`；B2 必须在这些生产实现上增量接线。
+- `CameraMode.DPM_SCAN` 已定义为 `Preview + ImageAnalysis`，不需要也不得绑定 `ImageCapture`。
+- 新工程已经声明 ML Kit Barcode Scanning 与 ZXing Core 依赖，不重复引入同类扫码 SDK。
+- `LiveInspectionScreen` 的“扫一扫”图标语义已存在，但点击行为仍是 TODO；B2 Task 1 负责接入真实扫码路由。
+- `ScanImportBottomSheet.kt` 当前无生产引用，却残留“扫一扫/导入”和 DPM 相册码图识别文案。B2 Task 1 实现提交必须删除该文件，不能仅隐藏入口。
+
+### 0.2 固定产品边界
+
+- 只识别 `DATA_MATRIX`，不兼容普通 QR Code。
+- “扫一扫”只进入手机相机实时扫码，不提供相册选择、码图导入、相关权限、回调或隐藏路由。
+- B2 Task 1 使用 ML Kit `DATA_MATRIX` 主解码、ZXing `DataMatrixReader` 兜底；两者都失败时返回未识别，不伪造结果。
+- 本 Task 不实现未知码绑定、已绑定码切件、冲突处理、OCR、模板、轮廓、ROI 或检测算法。
+- OpenCV 预处理、帧质量门控、中心对焦增强、`ImportedDpmScanner` 和网格重建延后到 B2 Task 3 评估，不整类复制旧 `DpmAnalyzer`。
+
+### 0.3 代码级迁移表
+
+| 旧文件 | 旧职责 | 新文件 | 本 Task 复用 | 本 Task 排除 | 对应测试 |
+|---|---|---|---|---|---|
+| `camera/DpmAnalyzer.kt` | 多阶段实时 DPM 解码、节流、防抖、对焦和网格兜底 | `mobile/dpm/DpmFrameAnalyzer.kt`、`mobile/dpm/DpmDecodePipeline.kt` | DATA_MATRIX 限定、解码短路、节流和响应门思想 | QR Code、OpenCV、网格重建、Debug 大量落盘、数据库写入 | 主解码成功、兜底、双失败、空结果、停止后不回调 |
+| `camera/DpmAnalyzer.kt` 中 `DpmRespondGate` | 同码防连扫、换码立即响应、离开视野后重新武装 | `mobile/dpm/DpmResultGate.kt` | 可注入时钟和纯 Kotlin 状态机 | 旧页面弹窗和切件回调 | 同码抑制、换码、miss 后重扫、stop/reset |
+| `camera/DpmPreprocessor.kt` | OpenCV 多策略二值化和增强 | B2 Task 3 再定 | 无 | 本 Task 全部排除 | Task 3 专项测试 |
+| `camera/DpmFrameQuality.kt` | 清晰度、亮度等帧质量门控 | B2 Task 3 再定 | 无 | 本 Task 全部排除 | Task 3 专项测试 |
+| `camera/DpmGridGate.kt`、`DpmGridReconstructor.kt` | 重型网格任务门控与重建 | B2 Task 3 再评估 | 无 | 本 Task 全部排除 | 性能、取消和超时测试 |
+| `vision/dpm/imported/*` | 第三方/导入式 DPM 网格扫描 | B2 Task 3 再评估 | 无 | 本 Task 全部排除 | 性能与准确率基准 |
+| `ui/shared/CameraSessionViewModel.kt` 的 DPM 部分 | 扫码模式、事件流和相机切换 | 现有 `CameraController` + B2 扫码 ViewModel | 模式进入/退出和事件流思想 | 旧 VideoSource、Leion、USB、后台服务 | 页面往返、会话恢复、无重复绑定 |
+| 旧扫码 UI | 实时取景、扫描区域和结果反馈 | `ui/feature/dpm/DpmScanScreen.kt` | 实时预览、扫描状态、取消操作 | 相册导入、普通 QR、绑定/切件 | Compose/UIAutomator 与真机扫码 |
+
+### 0.4 B2 Task 1 实现顺序
+
+1. 删除未引用的 `ScanImportBottomSheet.kt`，全仓确认不存在 DPM 相册导入入口或路由。
+2. 建立可注入的 ML Kit/ZXing 解码适配边界和纯 Kotlin 结果门。
+3. 实现 `DpmFrameAnalyzer`，复用唯一 `CameraController` 的 `DPM_SCAN` 模式。
+4. 新增扫码页面和导航，把现场采集“扫一扫”TODO 接通。
+5. 完成 JVM 测试、CameraX 累积回归和真机 Data Matrix 扫描验收。
+6. 更新本表实际新文件路径和迁移状态，提交报告后暂停，不进入 B2 Task 2。
 
 ---
 
