@@ -18,7 +18,7 @@
 - [x] Task 1：审计活跃页面并归档未引用旧 Screen
 - [x] Task 2：接入真实 CameraPreview，完成权限、状态、画幅与 content rect（真机提交 `28d692d`）
 - [x] Task 3：完成 CameraController 模式重绑、互斥与生命周期（真机验收完成）
-- [ ] **当前 Task 4：完成真实 ImageCapture 与 MobileImageStore**
+- [ ] **当前 Task 4：真实 ImageCapture 与 MobileImageStore 收口及最终验收**
 - [ ] 完成自动化和真机验收
 
 ### 已验收 Task 2：CameraPreview 状态与画幅
@@ -52,19 +52,19 @@ Task 2 已完成并通过真机验收，证据位于 `docs/reports/b1/evidence/t
 
 Task 3 已完成。其权限、画幅、contentRect、会话互斥和生命周期能力继续作为后续累积门禁。
 
-### 当前 Task 4：真实拍照与存储
+### 当前 Task 4：真实拍照与存储收口
 
 执行顺序：
 
 1. **收口基线**：先提交 Task 3 遗留的 Manifest/测试 Activity 清理和控制文档，不把 `tools/contour_extraction/` 混入 Task 4。
 2. **现状审计**：读取 `CameraController.takePhoto()`、`MobileImageStore`、现场主快门和数据库接口，列出可复用能力、缺口与所有权；不另建 CameraX Controller。
-3. **会话安全快门**：拍照 API 接收 active sessionId，在锁内确认当前模式需要 Capture、session 匹配且相机 OPEN；快门并发只允许一个进行中的请求。
-4. **文件事务**：生成唯一临时 JPEG，ImageCapture 写入后校验非空/可解码/宽高/EXIF，再由 MobileImageStore 原子移动；异常、取消、页面离开和低存储失败全部清理临时文件。
+3. **会话安全快门**：拍照 API 接收 active sessionId，确认当前模式需要 Capture、session 匹配且相机 OPEN；Controller 层必须实现 fail-fast single-flight，快照进行中时第二个请求立即失败，不得等待前一个请求完成后再次进入。
+4. **文件事务**：生成唯一临时 JPEG，ImageCapture 写入后校验非空/可解码/宽高/EXIF，再由 MobileImageStore 移动到正式目录；审计并确认移动操作的原子性语义。异常、取消、页面离开、过期 session、低存储以及取消后的迟到 CameraX callback 都不得留下临时文件或半成品正式文件。
 5. **UI 状态机**：接通现场主快门，提供 IDLE/CAPTURING/SAVED/ERROR；拍摄中禁用按钮，成功仅表示原图已保存，不能显示检测成功。
-6. **测试**：生产文件事务、重名、空文件、损坏 JPEG、取消、过期 session、并发点击、模式切换和清理路径均有测试。
+6. **测试**：新增并实际运行 Task 4 专项测试，覆盖生产文件事务、目标重名、空文件、损坏 JPEG、EXIF、取消、取消后迟到 callback、过期 session、并发快门、模式切换、存储失败和临时文件清理；测试必须调用生产实现，不得复制一套测试版逻辑。
 7. **真机验收**：连续拍摄 20 张，核对文件数、唯一名、非零大小、可解码、方向、临时目录为空；重跑 FIT_CENTER、Tab/前后台和禁止日志检查。
 
-Task 4 交付物：`docs/reports/b1/TASK4_CAPTURE_STORAGE_REPORT.md`、`docs/reports/b1/evidence/task4/`、20 张样例清单和校验摘要、当前 APK 信息、更新后的 `tasks/todo.md`。完成后暂停等待验收，禁止进入 Task 5。
+Task 4 交付物：`docs/reports/b1/TASK4_CAPTURE_STORAGE_REPORT.md`、`docs/reports/b1/evidence/task4/`、20 张真实 CameraX 拍照清单和机器校验摘要、Task 4 专项自动化测试结果、当前最终 APK 信息、更新后的 `tasks/todo.md`。全部完成后暂停等待验收，禁止自行进入 Task 5。
 
 ### Checkpoint：B1
 

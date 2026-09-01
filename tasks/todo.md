@@ -68,7 +68,7 @@
 
 ## Task 4：真实拍照与存储
 
-状态：✅ 整改完成（整改提交 `[待填写]`，初始实现提交 `48f7587`，HONOR YAL-AL10, ERLDU20429005890；APK SHA-256 `6a3ce752f2f07a09084c57499a4c1ccac8e331b9a52dd8066824c43d7ade858d`）。
+状态：✅ 整改完成（整改提交 `566acaea`，初始实现提交 `48f7587`，HONOR YAL-AL10, ERLDU20429005890；APK SHA-256 `6a3ce752f2f07a09084c57499a4c1ccac8e331b9a52dd8066824c43d7ade858d`）。
 
 - [x] Task 3 收口基线已提交，正式 Manifest 无测试入口，`tools/contour_extraction/` 未混入
 - [x] 主快门使用当前 CameraSession/ImageCapture，不创建或重绑第二套 CameraX
