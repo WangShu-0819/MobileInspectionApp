@@ -150,9 +150,9 @@ testImplementation("org.robolectric:robolectric:4.13")
 |------|------|
 | 旧测试（CameraControllerTest） | 50 |
 | 旧测试（ContentRectCalculatorTest） | 6 |
-| 新增测试（CameraControllerTakePhotoTest） | 8 |
+| 新增测试（CameraControllerTakePhotoTest） | 17 |
 | 新增测试（MobileImageStoreTest） | 8 |
-| **总计** | **72** |
+| **总计** | **81** |
 
 ## 五、结论
 
@@ -162,8 +162,10 @@ testImplementation("org.robolectric:robolectric:4.13")
 1. takePhoto 不在异步回调期间持有全局 Mutex ✅
 2. capture request token 机制使旧会话回调失效 ✅
 3. 文件事务使用 .part 中间文件 + 真正原子移动 ✅
-4. 补齐自动化测试（16 项新增） ✅
+4. 补齐自动化测试（25 项新增） ✅
 5. 真机连续拍摄 20 张验收 ✅
+6. CaptureExecutor 可注入接口支持异步行为测试 ✅
+7. runTest + advanceUntilIdle() 异步测试策略 ✅
 
 **验收结果**：
 - 编译成功

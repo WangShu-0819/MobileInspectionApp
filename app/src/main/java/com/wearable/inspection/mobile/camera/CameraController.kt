@@ -31,6 +31,29 @@ import java.util.concurrent.Executors
 import kotlin.coroutines.resume
 
 /**
+ * 拍照执行器接口
+ *
+ * 抽象 ImageCapture.takePicture()，使 CameraController 的异步拍照逻辑可测试。
+ * 生产环境使用 RealCaptureExecutor，测试使用 FakeCaptureExecutor。
+ */
+interface CaptureExecutor {
+    /**
+     * 执行拍照
+     *
+     * @param capture ImageCapture 实例
+     * @param outputOptions 输出文件选项
+     * @param executor 回调执行器
+     * @param callback 拍照结果回调
+     */
+    fun takePicture(
+        capture: Any,
+        outputOptions: Any,
+        executor: java.util.concurrent.Executor,
+        callback: Any
+    )
+}
+
+/**
  * 相机绑定操作的结果
  *
  * 用于测试可注入的相机绑定边界。
@@ -251,7 +274,8 @@ data class CameraSession(
  */
 class CameraController private constructor(
     private val context: Context,
-    private val binder: CameraBinder
+    private val binder: CameraBinder,
+    private val captureExecutor: CaptureExecutor? = null
 ) {
 
     companion object {
@@ -267,9 +291,13 @@ class CameraController private constructor(
             }
         }
 
-        /** 仅测试用：注入自定义 binder 创建实例 */
-        fun createForTest(context: Context, binder: CameraBinder): CameraController {
-            return CameraController(context, binder)
+        /** 仅测试用：注入自定义 binder 和 captureExecutor 创建实例 */
+        fun createForTest(
+            context: Context,
+            binder: CameraBinder,
+            captureExecutor: CaptureExecutor? = null
+        ): CameraController {
+            return CameraController(context, binder, captureExecutor)
         }
     }
 
@@ -811,7 +839,7 @@ class CameraController private constructor(
             return Result.failure(IllegalStateException("拍照前置条件不满足"))
         }
 
-        val capture = imageCapture as? ImageCapture
+        val capture = imageCapture
             ?: run {
                 isCapturing = false
                 return Result.failure(IllegalStateException("ImageCapture 未初始化"))
@@ -823,38 +851,56 @@ class CameraController private constructor(
 
             val result = suspendCancellableCoroutine<File?> { cont ->
                 val outputOptions = ImageCapture.OutputFileOptions.Builder(outputFile).build()
-                capture.takePicture(
-                    outputOptions,
-                    ContextCompat.getMainExecutor(context),
-                    object : ImageCapture.OnImageSavedCallback {
-                        override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                            if (cont.isActive) {
-                                // ─── 阶段 3：回调时重新验证 ───
-                                // 检查 request token 和 sessionId
-                                val valid = captureRequestId == requestId &&
-                                        activeSession?.sessionId == sessionId &&
-                                        outputFile.exists() &&
-                                        outputFile.length() > 0L
+                val callback = object : ImageCapture.OnImageSavedCallback {
+                    override fun onImageSaved(output: ImageCapture.OutputFileResults) {
+                        if (cont.isActive) {
+                            // ─── 阶段 3：回调时重新验证 ───
+                            // 检查 request token 和 sessionId
+                            val valid = captureRequestId == requestId &&
+                                    activeSession?.sessionId == sessionId &&
+                                    outputFile.exists() &&
+                                    outputFile.length() > 0L
 
-                                if (valid) {
-                                    cont.resume(outputFile)
-                                } else {
-                                    // session 已过期、token 失效或文件无效，清理
-                                    outputFile.delete()
-                                    cont.resume(null)
-                                }
-                            }
-                        }
-
-                        override fun onError(exception: ImageCaptureException) {
-                            if (cont.isActive) {
-                                // 清理临时文件
+                            if (valid) {
+                                cont.resume(outputFile)
+                            } else {
+                                // session 已过期、token 失效或文件无效，清理
                                 outputFile.delete()
                                 cont.resume(null)
                             }
                         }
                     }
-                )
+
+                    override fun onError(exception: ImageCaptureException) {
+                        if (cont.isActive) {
+                            // 清理临时文件
+                            outputFile.delete()
+                            cont.resume(null)
+                        }
+                    }
+                }
+
+                if (captureExecutor != null) {
+                    // 测试模式：使用注入的 executor
+                    captureExecutor.takePicture(
+                        capture,
+                        outputOptions,
+                        ContextCompat.getMainExecutor(context),
+                        callback
+                    )
+                } else {
+                    // 生产模式：直接调用 ImageCapture
+                    val imageCapture = capture as? ImageCapture
+                    if (imageCapture == null) {
+                        cont.resume(null)
+                    } else {
+                        imageCapture.takePicture(
+                            outputOptions,
+                            ContextCompat.getMainExecutor(context),
+                            callback
+                        )
+                    }
+                }
 
                 // 协程取消时清理
                 cont.invokeOnCancellation {
