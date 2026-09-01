@@ -30,9 +30,11 @@
 
 识别算法以旧工程当前生产实现为行为基线：保留 ZXing `DataMatrixReader` 主解码、中心 ROI、预处理策略轮转、双极性尝试、全图降采样、ML Kit DATA_MATRIX 兜底、帧节流、响应门、连续 miss 对焦和旧版网格兜底。只允许为适配新 `CameraController`、`FrameAnalyzer`、包名和生命周期做必要改造，不得擅自调换解码顺序、删减旧策略或用全新简化算法替代。
 
+B2 Task 1 允许连续完成纯逻辑、OpenCV/网格链、CameraX 分析器、扫码框 ROI、页面导航和真机回归。每个内部检查点必须先测试并创建小提交；检查点通过后可继续下一个，不需要等待用户逐段确认。任一检查点出现测试失败、相机回归、旧样本识别退化或无法确认的算法差异时立即暂停，不得用后续步骤掩盖失败。
+
 不得实现相册码图导入、未知码绑定、自动切件、OCR、模板、轮廓、ROI 或检测算法。不得创建第二套 CameraX；`tools/contour_extraction/` 继续冻结。
 
-完成后提交 `docs/reports/b2/B2_TASK1_DPM_MINIMAL_REPORT.md` 和结构化证据，更新控制文档并暂停等待验收，不得自动进入 B2 Task 2。
+完成整个 Task 1 后提交 `docs/reports/b2/B2_TASK1_DPM_LEGACY_PARITY_REPORT.md` 和结构化证据，更新控制文档并暂停等待验收，不得自动进入 B2 Task 2。
 
 ## 累积回归门禁
 

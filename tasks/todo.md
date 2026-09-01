@@ -1,6 +1,6 @@
 # 当前任务：B2 Task 1 - 旧 DPM 识别链迁移与实时扫码闭环
 
-状态：进行中。提交 `4c522ce7` 已恢复 ZXing 主解码、ML Kit DATA_MATRIX 兜底顺序；当前继续迁移旧 DPM 纯逻辑、预处理与网格链，完成前不得接 CameraX/UI，也不得并行开始 B2 Task 2、OCR、模板、轮廓或 ROI。
+状态：进行中。提交 `4c522ce7` 已恢复 ZXing 主解码、ML Kit DATA_MATRIX 兜底顺序；Agent 可在 Task 1 内按检查点连续完成旧 DPM 算法、CameraX 和扫码 UI，但不得并行开始 B2 Task 2、OCR、模板、轮廓或 ROI。
 
 ## Task 1：整理活跃源码边界
 
@@ -137,11 +137,17 @@ B1 已完成并关闭。
 - [ ] 迁移 `DpmDimensionMode` 的 AUTO/DIM_16/DIM_18/DIM_20、旧候选配额、跨尺寸交错和非法值回退 AUTO
 - [ ] 将尺寸模式真实接入网格重建；默认 AUTO 同时公平尝试 16×16、18×18、20×20，固定模式只尝试所选尺寸
 - [ ] 持久化 DPM 尺寸模式；设置变化只影响后续网格任务，不能中途篡改在途任务快照
+- [ ] 实现 `DpmFrameAnalyzer`，通过现有 `FrameAnalyzer` 接入唯一 CameraController，不创建第二套 CameraX
+- [ ] `DPM_SCAN` 只绑定 Preview + ImageAnalysis，分析结束由 CameraController 统一关闭 ImageProxy
+- [ ] 新增扫码页面和导航，现场采集“扫一扫”进入真实扫码，返回后 INSPECTION 相机恢复
+- [ ] 扫码框基于真实 contentRect 映射到旋转后图像 ROI；ROI 存在时禁止任何框外全图解码
+- [ ] 框外码不响应、框内码可识别、框内外同时存在时只返回框内码
+- [ ] CameraX 页面往返、前后台、权限和资源释放通过 B1 累积回归
 - [ ] 页面退出后释放扫码分析资源，返回现场采集后相机正常恢复
 - [ ] UI 不存在 DPM 相册选择、码图导入或相关权限/路由
 - [ ] 迁移旧 DPM 专项测试，并覆盖解码链、预处理、网格门控、节流、并发、重复抑制、停止和资源释放
 - [ ] 使用同一批现场/打印样本对旧 App 与新 App 做 A/B 对照，记录逐样本结果和响应时间
 - [ ] 真机完成 10 次扫码及 10 次页面往返，识别范围和防连扫行为不得低于旧 App
-- [ ] 更新 `docs/reports/b2/B2_TASK1_DPM_MINIMAL_REPORT.md` 和证据目录
+- [ ] 更新 `docs/reports/b2/B2_TASK1_DPM_LEGACY_PARITY_REPORT.md` 和证据目录
 
 本 Task 不实现未知码绑定、已绑定码切件、冲突处理、OCR、模板、轮廓、ROI 或检测算法。允许的改动仅是解除旧 CameraX/Leion/USB/页面耦合并接入新工程；不得借重构删减旧识别策略。完成后暂停等待验收，不得自动进入 B2 Task 2。

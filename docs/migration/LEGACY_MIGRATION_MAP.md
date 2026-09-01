@@ -43,8 +43,9 @@
 2. 建立可注入的 ML Kit/ZXing 解码适配边界和纯 Kotlin 结果门。
 3. 实现 `DpmFrameAnalyzer`，复用唯一 `CameraController` 的 `DPM_SCAN` 模式。
 4. 新增扫码页面和导航，把现场采集“扫一扫”TODO 接通。
-5. 完成 JVM 测试、CameraX 累积回归和真机 Data Matrix 扫描验收。
-6. 更新本表实际新文件路径和迁移状态，提交报告后暂停，不进入 B2 Task 2。
+5. 接入 `DpmFrameAnalyzer`、唯一 CameraController、扫码页面和扫码框 contentRect/rotation ROI 映射。
+6. 完成 JVM/Instrumented 测试、CameraX 累积回归、真机框内/框外扫描及旧/新 App 同样本 A/B 验收。
+7. 更新本表实际新文件路径和迁移状态，提交报告后暂停，不进入 B2 Task 2。
 
 ---
 

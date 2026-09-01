@@ -94,6 +94,17 @@ B2 Task 1 固定边界：使用唯一 CameraController 的 `DPM_SCAN` 模式，�
 
 验收使用旧 App 与新 App 对同一组现场/打印 Data Matrix 样本做 A/B 对照。新 App 至少保持旧 App 的可识别样本集合、防连扫行为和可接受响应时间；未通过对照前不得以“基础扫码已成功”宣布 DPM 迁移完成。
 
+B2 Task 1 连续执行检查点：
+
+1. 纯 Kotlin 尺寸模式、响应门、网格门、取消和设置快照。
+2. 旧 OpenCV 预处理、质量门控、ImportedDpmScanner 与网格重建。
+3. ZXing/ML Kit 真实适配器与完整旧 DpmAnalyzer 行为组合。
+4. DpmFrameAnalyzer 接入唯一 CameraController 的 DPM_SCAN。
+5. 扫码页面、扫码框 contentRect/rotation ROI 映射和现场采集导航。
+6. 自动化、真机扫码框、CameraX 累积回归及旧/新 App 同样本 A/B 验收。
+
+各检查点通过测试后允许自动继续并分别提交；任一失败立即暂停。整个 Task 1 通过后才等待用户验收，绝不自动进入绑定切件 Task 2。
+
 ### B3：钢印 OCR 迁移
 
 - [ ] 拍照、预处理、离线 OCR、确认和留档
