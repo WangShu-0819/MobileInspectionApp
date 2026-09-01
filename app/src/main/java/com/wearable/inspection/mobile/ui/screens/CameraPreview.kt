@@ -269,6 +269,40 @@ fun CameraPreview(
 }
 
 /**
+ * 统一 FIT_CENTER contentRect 计算
+ *
+ * 公式：
+ * scale = min(viewWidth / rotatedWidth, viewHeight / rotatedHeight)
+ * contentWidth = rotatedWidth * scale
+ * contentHeight = rotatedHeight * scale
+ * left = (viewWidth - contentWidth) / 2
+ * top = (viewHeight - contentHeight) / 2
+ */
+private fun calculateContentRect(
+    viewWidth: Int,
+    viewHeight: Int,
+    rotatedStreamWidth: Int,
+    rotatedStreamHeight: Int
+): Rect {
+    require(viewWidth > 0 && viewHeight > 0) { "PreviewView 尺寸必须大于 0，实际: ${viewWidth}x${viewHeight}" }
+    require(rotatedStreamWidth > 0 && rotatedStreamHeight > 0) { "流尺寸必须大于 0，实际: ${rotatedStreamWidth}x${rotatedStreamHeight}" }
+
+    val scale = minOf(
+        viewWidth.toFloat() / rotatedStreamWidth,
+        viewHeight.toFloat() / rotatedStreamHeight
+    )
+
+    val contentWidth = Math.round(rotatedStreamWidth * scale)
+    val contentHeight = Math.round(rotatedStreamHeight * scale)
+    val left = Math.round((viewWidth - contentWidth) / 2f).coerceAtLeast(0)
+    val top = Math.round((viewHeight - contentHeight) / 2f).coerceAtLeast(0)
+    val right = (left + contentWidth).coerceAtMost(viewWidth)
+    val bottom = (top + contentHeight).coerceAtMost(viewHeight)
+
+    return Rect(left, top, right, bottom)
+}
+
+/**
  * 相机预览内容
  */
 @Composable
@@ -298,44 +332,50 @@ private fun CameraPreviewContent(
         }
 
         // 获取实际流分辨率
-        val streamSize = cameraController.streamResolution ?: android.util.Size(4032, 3024)
+        val streamSize = cameraController.streamResolution ?: return@LaunchedEffect
 
         // 获取流旋转角度
         val rotation = cameraController.streamRotation
 
         // 根据旋转调整流尺寸（90/270 度交换宽高）
-        val adjustedStreamSize = if (rotation == 90 || rotation == 270) {
-            android.util.Size(streamSize.height, streamSize.width)
+        val rotatedWidth = if (rotation == 90 || rotation == 270) {
+            streamSize.height
         } else {
-            streamSize
+            streamSize.width
+        }
+        val rotatedHeight = if (rotation == 90 || rotation == 270) {
+            streamSize.width
+        } else {
+            streamSize.height
         }
 
-        val streamRatio = adjustedStreamSize.width.toFloat() / adjustedStreamSize.height
+        // 使用统一 FIT_CENTER 公式计算 contentRect
+        val rect = calculateContentRect(
+            viewWidth = pvWidth,
+            viewHeight = pvHeight,
+            rotatedStreamWidth = rotatedWidth,
+            rotatedStreamHeight = rotatedHeight
+        )
 
+        // 边界断言（Debug 模式）
         if (BuildConfig.DEBUG) {
-            android.util.Log.d("CameraPreview", "Stream: ${streamSize.width}x${streamSize.height}, rotation: ${rotation}°, adjusted ratio: ${"%.2f".format(streamRatio)}")
-        }
+            assert(rect.left >= 0) { "left 必须 >= 0，实际: ${rect.left}" }
+            assert(rect.top >= 0) { "top 必须 >= 0，实际: ${rect.top}" }
+            assert(rect.right <= pvWidth) { "right 必须 <= viewWidth，实际: ${rect.right} > ${pvWidth}" }
+            assert(rect.bottom <= pvHeight) { "bottom 必须 <= viewHeight，实际: ${rect.bottom} > ${pvHeight}" }
 
-        // 根据 ScaleType.FIT_CENTER 计算 contentRect
-        val previewRatio = pvWidth.toFloat() / pvHeight
+            // 验证 contentRect 比例与旋转后的流比例一致
+            val streamRatio = rotatedWidth.toFloat() / rotatedHeight
+            val contentRectRatio = rect.width().toFloat() / rect.height()
+            val tolerance = 0.01f
+            assert(kotlin.math.abs(streamRatio - contentRectRatio) < tolerance) {
+                "contentRect 比例 (${"%.4f".format(contentRectRatio)}) 应与流比例 (${"%.4f".format(streamRatio)}) 一致"
+            }
 
-        val rect = if (previewRatio > streamRatio) {
-            // 预览更宽，上下留边
-            val contentHeight = (pvWidth / streamRatio).toInt()
-            val top = ((pvHeight - contentHeight) / 2).coerceAtLeast(0)
-            android.graphics.Rect(0, top, pvWidth, (top + contentHeight).coerceAtMost(pvHeight))
-        } else {
-            // 预览更高，左右留边
-            val contentWidth = (pvHeight * streamRatio).toInt()
-            val left = ((pvWidth - contentWidth) / 2).coerceAtLeast(0)
-            android.graphics.Rect(left, 0, (left + contentWidth).coerceAtMost(pvWidth), pvHeight)
+            android.util.Log.d("CameraPreview", "contentRect: ${rect.width()} x ${rect.height()}")
         }
 
         contentRect = rect
-
-        if (BuildConfig.DEBUG) {
-            android.util.Log.d("CameraPreview", "contentRect calculated: ${rect.width()} x ${rect.height()}")
-        }
     }
 
     // 连接相机
