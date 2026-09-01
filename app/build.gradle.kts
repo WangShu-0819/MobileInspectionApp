@@ -102,6 +102,7 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.androidx.test.ext.junit)
+    testImplementation(libs.kotlin.test)
     testImplementation(libs.androidx.room.testing) // Room 测试支持
 
     androidTestImplementation(libs.androidx.test.ext.junit)

@@ -2,292 +2,183 @@
 
 **执行时间**：2026-09-01
 **执行人**：Agent
-**状态**：🔧 整改中（待复验）
+**状态**：🔧 代码收口完成（待真机验收）
 
 ---
 
-## 一、整改说明
+## 一、修改文件清单
 
-**整改原因**：首次验收未通过，共 9 项问题需修正。
-
-**整改完成时间**：2026-09-01（本次提交）
-**整改后 APK**：app-debug.apk
-**APK 构建时间**：2026-09-01 08:06
-**APK 大小**：170M
-**APK SHA-256**：`8245e03e734130f5160dd484229b7ebb27ded4de50f8a0fab35b131eb1a239ea`
-
----
-
-## 二、修改文件清单
-
-### 1.1 核心修改
+### 核心修改
 
 | 文件 | 修改类型 | 说明 |
 |------|---------|------|
-| `app/src/main/java/com/wearable/inspection/mobile/ui/screens/CameraPreview.kt` | **增强** | 添加权限状态管理、调试日志、contentRect 计算、错误重试、系统设置入口 |
-| `app/src/main/java/com/wearable/inspection/mobile/ui/screens/PlaceholderScreens.kt` | **收窄** | 移除 CameraPreviewScreen 占位实现，保留 InspectionResultScreen 和 TemplateDetailScreen |
-| `app/src/main/java/com/wearable/inspection/mobile/camera/CameraController.kt` | **增强** | 添加 cameraInfo 公开只读属性，供 CameraPreview 获取相机信息 |
-
-### 1.2 新增组件
-
-| 组件 | 文件位置 | 职责 |
-|------|---------|------|
-| `CameraPreviewScreen` | CameraPreview.kt:408 | 相机预览页面入口（供 AppNavigation 调用） |
-| `CameraErrorOverlay` | CameraPreview.kt:360 | 相机错误覆盖层（含重试和设置按钮） |
-| `PermissionDeniedDialog` | CameraPreview.kt:455 | 权限被拒绝确认对话框 |
+| `ContentRectCalculator.kt` | **新增** | 生产级 FIT_CENTER 纯函数，不依赖 Android SDK，可直接被单元测试覆盖 |
+| `CameraPreview.kt` | **重构** | 调用生产函数、CameraState 观察驱动 onCameraReady/onCameraError、流信息等待 |
+| `CameraController.kt` | **增强** | 新增 `cameraStateFlow`、`CameraStateType` 枚举；流信息来自 UseCase ResolutionInfo |
+| `ContentRectCalculatorTest.kt` | **重写** | 10 个测试直接调用生产函数，无重复算法 |
+| `build.gradle.kts` | **依赖** | 添加 `kotlin-test` 测试依赖 |
+| `libs.versions.toml` | **依赖** | 添加 `kotlin-test` 版本声明 |
 
 ---
 
-## 二、整改问题清单与状态
+## 二、核心架构变更
 
-| 序号 | 问题描述 | 整改进度 | 备注 |
-|------|---------|---------|------|
-| 1 | CameraController 添加 ResolutionSelector 配置 | ✅ 已完成 | CameraX 1.3.1 API 限制，ResolutionStrategy.Builder 不可用，已添加 TODO 注释并降级使用默认分辨率（见 CameraController.kt:113-120） |
-| 2 | ContentRect 使用实际流分辨率和旋转 | ✅ 已完成 | CameraPreview.kt 已使用 cameraController.streamResolution 和 streamRotation 计算 contentRect，处理 90/270 度旋转 |
-| 3 | onCameraReady 仅在 CameraState.Type.OPEN 时触发 | ✅ 已完成 | CameraController.kt 已实现 CameraState 监听，仅在 OPEN 时设置 _isActive = true |
-| 4 | 权限状态管理修复 | ✅ 已完成 | 添加 hasRequestedPermission 追踪，首次拒绝不立即标记为 PERMANENTLY_DENIED，ON_RESUME 时重新检查 |
-| 5 | 诊断日志输出 | ✅ 已完成 | 输出 PreviewView 尺寸、流分辨率、旋转角度、流比例、contentRect 信息 |
-| 6 | 真机安装与验收测试 | ⏳ 待完成 | APK 已构建，需真机验证四边标记、圆形不变形、权限分支恢复 |
-| 7 | TASK2 报告状态更新 | ✅ 已完成 | 本报告已更新为"整改中"状态 |
-| 8 | tasks/todo.md 更新 | ✅ 已完成 | 已更新 Task 2 状态和完成项 |
-| 9 | 修正 commit | ✅ 已完成 | 本次提交即为整改 commit |
-
----
-
-## 三、已知限制
-
-### ResolutionSelector API 兼容性问题
-
-**问题**：CameraX 1.3.1 版本中，ResolutionStrategy 构造函数为私有，无法直接实例化。
-
-**当前状态**：已降级为使用 CameraX 默认分辨率选择器，暂未强制统一 4:3 画幅。
-
-**影响范围**：Preview、ImageAnalysis、ImageCapture 的流分辨率可能不是严格的 4:3，但 contentRect 计算逻辑已适配实际流比例。
-
-**后续处理**：Task 3 或后续任务中探索其他方式统一画幅，或升级 CameraX 版本。
-
----
-
-## 四、功能实现详情
-
-### 2.1 权限状态管理
-
-实现了完整的权限生命周期：
-
-| 状态 | 触发条件 | 回调 |
-|------|---------|------|
-| `REQUESTING` | 页面进入，权限未授予 | 自动发起权限请求 |
-| `GRANTED` | 用户授予权限 | 连接相机 |
-| `DENIED` | 用户拒绝权限（可再次请求） | `onPermissionDenied()` |
-| `PERMANENTLY_DENIED` | 用户勾选"不再询问" | `onPermissionPermanentlyDenied()` |
-
-**权限恢复机制**：
-- ✅ 临时拒绝（DENIED）：可再次触发权限请求
-- ✅ 永久拒绝（PERMANENTLY_DENIED）：显示错误覆盖层，提供"设置"按钮跳转系统应用设置
-- ✅ 返回应用后：AppNavigation 重新检查权限状态
-
-### 2.2 相机状态连接
-
-CameraPreview 通过 `CameraController.connect()` 建立 CameraX 绑定：
+### 2.1 ContentRectCalculator 生产函数
 
 ```kotlin
-cameraController.connect(
-    lifecycleOwner = lifecycleOwner,
-    surfaceProvider = surfaceProvider,
-    mode = CameraMode.INSPECTION
-).onSuccess {
-    onCameraReady()
-}.onFailure { throwable ->
-    val error = when (throwable) {
-        is SecurityException -> CameraError.PermissionDenied
-        else -> CameraError.Unknown(throwable.message ?: "Unknown error")
+// ContentRectCalculator.kt — 不依赖 Android SDK
+data class ContentRectBounds(val left: Int, val top: Int, val right: Int, val bottom: Int)
+
+internal fun calculateContentRectBounds(
+    viewWidth: Int, viewHeight: Int,
+    rotatedStreamWidth: Int, rotatedStreamHeight: Int
+): ContentRectBounds
+```
+
+- `CameraPreview.kt` 调用 `calculateContentRectBounds()` 后转换为 `android.graphics.Rect`
+- 单元测试直接调用 `calculateContentRectBounds()`，无需复制算法
+- 所有坐标统一 `Math.round()` 四舍五入，不使用 `toInt()` 截断
+
+### 2.2 相机状态观察
+
+**之前**：`connect().onSuccess { onCameraReady() }` — BOUND 即触发就绪
+**之后**：
+
+```kotlin
+// connect() 成功只表示 BOUND，不触发 onCameraReady
+cameraController.connect(...).onFailure { onCameraError(...) }
+
+// 观察 CameraState：仅 OPEN 触发 onCameraReady
+val cameraState by cameraController.cameraStateFlow.collectAsState()
+LaunchedEffect(cameraState) {
+    when (cameraState) {
+        CameraStateType.OPEN -> { if (!hasCalledReady) { hasCalledReady = true; onCameraReady() } }
+        CameraStateType.ERROR -> { onCameraError(CameraError.Unknown(...)) }
+        else -> { /* PENDING_OPEN / CLOSED → 保持加载 */ }
     }
-    onCameraError(error)
 }
 ```
 
-**状态回调**：
-- ✅ `onCameraReady()`：相机成功绑定并进入 ACTIVE 状态
-- ✅ `onCameraError(CameraError)`：相机连接失败或运行时错误
+- `hasCalledReady` 防止重复 OPEN 事件多次调用 `onCameraReady`
+- `CameraController.cameraStateFlow` 是 `StateFlow<CameraStateType?>`
+- 页面离开时 `DisposableEffect` 自动清理
 
-### 2.3 PreviewView 配置
+### 2.3 流信息来源
+
+**之前**：`sensorRotationDegrees`（传感器旋转，非输出流旋转）
+**之后**：`resolutionInfo.rotationDegrees`（UseCase 的实际输出流旋转）
 
 ```kotlin
-PreviewView(context).apply {
-    scaleType = PreviewView.ScaleType.FIT_CENTER  // ✅ 不裁切，保持比例
-    implementationMode = PreviewView.ImplementationMode.COMPATIBLE
+val resInfo = analysis.resolutionInfo ?: capture.resolutionInfo
+if (resInfo != null) {
+    _streamResolution = resInfo.resolution
+    _streamRotation = resInfo.rotationDegrees
 }
+// 为 null 时保持 null，UI 显示等待状态
 ```
 
-**画幅统一**：
-- ✅ `Preview.Builder()`：默认 4:3 优先
-- ✅ `ImageAnalysis.Builder()`：YUV_420_888 格式
-- ✅ `ImageCapture.Builder()`：最小延迟模式
-
-### 2.4 Content Rect 计算
-
-基于 FIT_CENTER 和 4:3 流比例计算真实图像区域：
-
-```kotlin
-val streamRatio = 4f / 3f  // 统一 4:3 画幅
-val previewRatio = pvWidth.toFloat() / pvHeight
-
-val rect = if (previewRatio > streamRatio) {
-    // 预览更宽，上下留边
-    val contentHeight = (pvWidth / streamRatio).toInt()
-    val top = (pvHeight - contentHeight) / 2
-    android.graphics.Rect(0, top, pvWidth, top + contentHeight)
-} else {
-    // 预览更高，左右留边
-    val contentWidth = (pvHeight * streamRatio).toInt()
-    val left = (pvWidth - contentWidth) / 2
-    android.graphics.Rect(left, 0, left + contentWidth, pvHeight)
-}
-```
-
-**输出**（BuildConfig.DEBUG 模式）：
-```
-D/CameraPreview: PreviewView size: 1080x1920
-D/CameraPreview: Stream ratio: 1.33 (4:3)
-D/CameraPreview: contentRect: 1440x1920 at (0, 0), scaleType: FIT_CENTER
-```
-
-### 2.5 错误覆盖层与重试
-
-```kotlin
-CameraErrorOverlay(
-    error = error,
-    onRetry = {
-        cameraError = null
-        // TODO: 重新连接相机（Task 3 实现）
-    },
-    onOpenSettings = if (error == CameraError.PermissionPermanentlyDenied) {
-        { openSystemSettings() }
-    } else null
-)
-```
-
-**错误类型处理**：
-- ✅ `CameraError.PermissionDenied`：显示"重试"按钮
-- ✅ `CameraError.PermissionPermanentlyDenied`：显示"设置"按钮（跳转系统设置）
-- ✅ `CameraError.Unknown`：显示错误信息
-- ✅ `CameraError.NoBackCamera`：显示"无后置相机"错误
-- ✅ `CameraError.CameraTimeout`：显示"启动超时"错误
-- ✅ `CameraError.CameraInUse`：显示"相机被占用"错误
-
-### 2.6 入口收敛
-
-**AppNavigation.kt**：
-```kotlin
-composable(
-    route = Screen.CameraPreview.route,
-    arguments = listOf(navArgument(Screen.CameraPreview.ARG_PART_ID) { type = NavType.StringType })
-) { backStackEntry ->
-    val partId = backStackEntry.arguments?.getString(Screen.CameraPreview.ARG_PART_ID) ?: return@composable
-    CameraPreviewScreen(  // ← 使用 CameraPreview.kt 中的实现
-        partId = partId,
-        onBack = { navController.popBackStack() }
-    )
-}
-```
-
-**PlaceholderScreens.kt**：
-- ❌ 移除 `CameraPreviewScreen`（重复定义）
-- ✅ 保留 `InspectionResultScreen`（检测结果占位）
-- ✅ 保留 `TemplateDetailScreen`（模板详情占位）
+- Preview/ImageAnalysis/ImageCapture 使用统一 `RATIO_4_3_FALLBACK_AUTO_STRATEGY`
+- 流信息为 null 时不计算 ContentRect，显示加载指示器
+- 流信息变化时（cameraState 变化触发 LaunchedEffect 重算）重新计算 ContentRect
 
 ---
 
-## 三、编译验证
+## 三、测试覆盖
 
-```bash
-.\gradlew.bat :app:compileDebugKotlin --no-daemon
-```
+10 个测试直接调用生产函数 `calculateContentRectBounds()`：
 
-**结果**：
-```
-BUILD SUCCESSFUL in 14s
-16 actionable tasks: 2 executed, 14 up-to-date
-```
-
-**警告**（不影响编译）：
-- ⚠️ Deprecation: `Icons.Filled.ArrowBack` → `Icons.AutoMirrored.Filled.ArrowBack`
-- ⚠️ Deprecation: `Divider` → `HorizontalDivider`
-- ⚠️ Deprecation: `LocalLifecycleOwner` → `androidx.lifecycle.compose.LocalLifecycleOwner`
+| 测试 | 场景 | 验证点 |
+|------|------|--------|
+| testLandscapeMode | 1080x600, 4032x3024 | 左右留边, width=800, height=600 |
+| testPortraitMode | 600x1080, 4032x3024 | 上下留边, width=600, height=450 |
+| testSameRatio | 1200x900, 4032x3024 | 无留边, 完全填满 |
+| testWiderStream_inTallerContainer | 720x1280, 1920x1080 | 左右留边, top=438 |
+| testWiderStream_inWiderContainer | 1280x720, 1920x1080 | 同比例, 无留边 |
+| testBoundaries_contentRectWithinPreview | 1080x1920, 4032x3024 | left/top>=0, right<=vw, bottom<=vh |
+| testBoundaries_aspectRatioMatchesStream | 1080x1920, 4032x3024 | contentRect 宽高比 ≈ 流宽高比 |
+| testRotation90 | 3024x4032→4032x3024 | 交换宽高, left=0, top=555 |
+| testRotation270 | 3024x4032→4032x3024 | 交换宽高 |
+| testRotation0 | 4032x3024 | 不交换宽高 |
 
 ---
 
-## 四、APK 信息
+## 四、编译验证
 
-```bash
-.\gradlew.bat :app:assembleDebug --no-daemon
 ```
+:app:testDebugUnitTest      — BUILD SUCCESSFUL (10/10 通过)
+:app:compileDebugKotlin     — BUILD SUCCESSFUL
+:app:assembleDebug          — BUILD SUCCESSFUL
+```
+
+---
+
+## 五、APK 信息
 
 | 项目 | 值 |
 |------|-----|
 | **APK 路径** | `./app/build/outputs/apk/debug/app-debug.apk` |
-| **构建时间** | 2026-09-01 08:06 |
+| **构建时间** | 2026-09-01 11:47 |
 | **文件大小** | 170M |
-| **SHA-256** | `8245e03e734130f5160dd484229b7ebb27ded4de50f8a0fab35b131eb1a239ea` |
+| **SHA-256** | `17bedc47900754ae2ec775706bdf040530bda2933333617bddb803158db974da` |
 
 ---
 
-## 五、验收状态
+## 六、验收状态
 
-### 5.1 编译与构建
+### 编译与构建
 
+- ✅ `:app:testDebugUnitTest`：10/10 通过
 - ✅ `:app:compileDebugKotlin`：BUILD SUCCESSFUL
 - ✅ `:app:assembleDebug`：BUILD SUCCESSFUL
-- ✅ APK 生成路径正确
-- ⏳ **待完成**：真机安装与截图验收
 
-### 5.2 功能验收
+### 功能验收（代码层面）
 
 | 验收项 | 状态 | 说明 |
 |--------|------|------|
-| 权限请求 | ✅ | CameraPreview 自动请求相机权限 |
-| 权限允许 | ✅ | 调用 `CameraController.connect()` 绑定相机 |
-| 权限临时拒绝 | ✅ | 触发 `onPermissionDenied()`，显示错误 |
-| 权限永久拒绝 | ✅ | 触发 `onPermissionPermanentlyDenied()`，提供"设置"按钮 |
-| 错误重试 | ✅ | 错误覆盖层显示"重试"按钮（重试逻辑待 Task 3） |
-| 加载状态 | ✅ | 权限请求中和相机初始化中显示加载指示器 |
+| 权限请求 | ✅ | 自动请求，hasRequestedPermission 追踪 |
+| 权限临时拒绝 | ✅ | ON_RESUME 重新检查，可再次请求 |
+| 权限永久拒绝 | ✅ | 提供"设置"按钮跳转系统设置 |
 | FIT_CENTER | ✅ | PreviewView.ScaleType.FIT_CENTER |
-| 4:3 画幅 | ⚠️ | CameraX 1.3.1 API 限制，ResolutionStrategy.Builder 不可用，已降级使用默认分辨率选择器 |
-| 固定 60/40 | ✅ | 移除了 LiveInspectionScreen 的固定 60/40 布局 |
-| Content Rect | ✅ | 使用实际流分辨率和旋转计算 contentRect，处理 90/270 度旋转 |
-| 调试日志 | ✅ | BuildConfig.DEBUG 控制诊断信息输出 |
+| 4:3 画幅 | ✅ | ResolutionSelector RATIO_4_3_FALLBACK_AUTO_STRATEGY |
+| ContentRect 精度 | ✅ | 生产函数 Math.round()，10 个单元测试覆盖 |
+| ContentRect 比例 | ✅ | 1% 容差断言，Debug 模式 assert |
+| 流信息来源 | ✅ | ResolutionInfo.rotationDegrees（非 sensorRotationDegrees） |
+| 流信息等待 | ✅ | null 时不计算 ContentRect，显示加载 |
+| onCameraReady 触发 | ✅ | 仅 CameraState.OPEN，hasCalledReady 防重复 |
+| onCameraError 触发 | ✅ | CameraState.ERROR + connect 失败 |
+| 加载状态 | ✅ | OPEN 前显示 CircularProgressIndicator |
 
-### 5.3 真机验收待完成
+### 真机验收待完成
 
-| 项目 | 原因 | 归属 Task |
-|------|------|---------|
-| 重试按钮逻辑 | 需要 Task 3 的 switchMode 实现 | Task 3 |
-| 实际流分辨率获取 | resolutionInfo API 兼容性 | Task 3 |
-| 真机安装与截图 | 需要物理设备验证 | Task 5 |
-| 四边测试标记验证 | 需要真机验证 contentRect 准确性 | Task 5 |
-| 圆形不变椭圆验证 | 需要真机验证 FIT_CENTER + 4:3 画幅 | Task 5 |
-| 权限分支恢复验证 | 需要真机验证权限拒绝/永久拒绝/恢复流程 | Task 5 |
+| 项目 | 状态 |
+|------|------|
+| 四边标记完整 | ⏳ 待真机验证 |
+| 圆形不变形 | ⏳ 待真机验证 |
+| 临时拒绝后可再次请求 | ⏳ 待真机验证 |
+| 永久拒绝可进入设置并恢复 | ⏳ 待真机验证 |
+| 初始化状态只在 OPEN 后消失 | ⏳ 待真机验证 |
 
 ---
 
-## 六、代码结构
+## 七、代码结构
 
 ```
 com.wearable.inspection.mobile.ui.screens
+├── ContentRectCalculator.kt  # FIT_CENTER 纯函数（internal，可测试）
 ├── CameraPreview.kt          # 相机预览 + CameraPreviewScreen 入口
-├── PlaceholderScreens.kt     # 仅保留 InspectionResultScreen、TemplateDetailScreen
-├── LiveInspectionScreen.kt   # 现场采集页（待 Task 3 集成 CameraPreview）
-└── ...
+├── PlaceholderScreens.kt     # InspectionResultScreen、TemplateDetailScreen
+└── LiveInspectionScreen.kt   # 现场采集页
 
 com.wearable.inspection.mobile.camera
-├── CameraController.kt       # 单例 CameraX 管理器（已暴露 cameraInfo）
+├── CameraController.kt       # 单例 CameraX 管理器 + cameraStateFlow
+├── CameraStateType.kt        # 枚举（PENDING_OPEN/OPEN/CLOSED/ERROR）
 └── CameraError.kt            # 错误类型 sealed class
 ```
 
 ---
 
-## 七、下一步
+## 八、下一步
 
-- ⏸️ **暂停等待 Task 2 验收**
-- 📋 Task 2 验收后，继续 **Task 3：CameraController 模式与生命周期**
-- 🚫 **不得开始**：Task 4（真实拍照）、Task 5（完整验证）、B2（DPM 迁移）
+- ⏸️ **暂停等待 Task 2 真机验收**
+- 📋 验收通过后，继续 **Task 3：CameraController 模式与生命周期**
+- 🚫 **不得开始**：Task 4、Task 5、B2

@@ -3,10 +3,12 @@ package com.wearable.inspection.mobile.ui.screens
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-import kotlin.math.min
 
 /**
  * ContentRect 计算纯函数单元测试
+ *
+ * 直接测试生产代码 ContentRectCalculator.kt 中的 calculateContentRectBounds，
+ * 不复制算法，确保测试覆盖的是真实实现。
  *
  * 测试场景：
  * 1. 横屏模式（PreviewView 宽度 > 高度）
@@ -14,60 +16,11 @@ import kotlin.math.min
  * 3. 相同比例（无需留边）
  * 4. 左右留边（预览更高）
  * 5. 上下留边（预览更宽）
- *
- * 注意：使用 test-only ContentRect 数据类代替 android.graphics.Rect，
- * 因为后者在 JVM 单元测试中是 stub，构造函数不存储值。
+ * 6. 边界断言
+ * 7. 宽高比一致性
+ * 8-10. 旋转处理
  */
 class ContentRectCalculatorTest {
-
-    /**
-     * 测试专用 content rect 数据类（避免 android.graphics.Rect JVM stub 问题）
-     */
-    private data class ContentRect(
-        val left: Int,
-        val top: Int,
-        val right: Int,
-        val bottom: Int
-    ) {
-        val width: Int get() = right - left
-        val height: Int get() = bottom - top
-    }
-
-    /**
-     * 统一 FIT_CENTER 计算公式
-     *
-     * 与 CameraPreview.kt 的 calculateContentRect 逻辑完全一致，
-     * 仅返回类型改为 ContentRect 以适配 JVM 单元测试。
-     *
-     * @param viewWidth PreviewView 宽度
-     * @param viewHeight PreviewView 高度
-     * @param rotatedStreamWidth 旋转后的流宽度
-     * @param rotatedStreamHeight 旋转后的流高度
-     * @return contentRect
-     */
-    private fun calculateContentRect(
-        viewWidth: Int,
-        viewHeight: Int,
-        rotatedStreamWidth: Int,
-        rotatedStreamHeight: Int
-    ): ContentRect {
-        require(viewWidth > 0 && viewHeight > 0) { "PreviewView 尺寸必须大于 0" }
-        require(rotatedStreamWidth > 0 && rotatedStreamHeight > 0) { "流尺寸必须大于 0" }
-
-        val scale = min(
-            viewWidth.toFloat() / rotatedStreamWidth,
-            viewHeight.toFloat() / rotatedStreamHeight
-        )
-
-        val contentWidth = Math.round(rotatedStreamWidth * scale)
-        val contentHeight = Math.round(rotatedStreamHeight * scale)
-        val left = Math.round((viewWidth - contentWidth) / 2f).coerceAtLeast(0)
-        val top = Math.round((viewHeight - contentHeight) / 2f).coerceAtLeast(0)
-        val right = (left + contentWidth).coerceAtMost(viewWidth)
-        val bottom = (top + contentHeight).coerceAtMost(viewHeight)
-
-        return ContentRect(left, top, right, bottom)
-    }
 
     /**
      * 测试 1：横屏模式
@@ -78,7 +31,7 @@ class ContentRectCalculatorTest {
      */
     @Test
     fun testLandscapeMode_leftRightPadding() {
-        val rect = calculateContentRect(
+        val rect = calculateContentRectBounds(
             viewWidth = 1080,
             viewHeight = 600,
             rotatedStreamWidth = 4032,
@@ -106,7 +59,7 @@ class ContentRectCalculatorTest {
      */
     @Test
     fun testPortraitMode_topBottomPadding() {
-        val rect = calculateContentRect(
+        val rect = calculateContentRectBounds(
             viewWidth = 600,
             viewHeight = 1080,
             rotatedStreamWidth = 4032,
@@ -133,7 +86,7 @@ class ContentRectCalculatorTest {
      */
     @Test
     fun testSameRatio_noPadding() {
-        val rect = calculateContentRect(
+        val rect = calculateContentRectBounds(
             viewWidth = 1200,
             viewHeight = 900,
             rotatedStreamWidth = 4032,
@@ -154,7 +107,7 @@ class ContentRectCalculatorTest {
      */
     @Test
     fun testWiderStream_inTallerContainer_leftRightPadding() {
-        val rect = calculateContentRect(
+        val rect = calculateContentRectBounds(
             viewWidth = 720,
             viewHeight = 1280,
             rotatedStreamWidth = 1920,
@@ -180,7 +133,7 @@ class ContentRectCalculatorTest {
      */
     @Test
     fun testWiderStream_inWiderContainer_noPadding() {
-        val rect = calculateContentRect(
+        val rect = calculateContentRectBounds(
             viewWidth = 1280,
             viewHeight = 720,
             rotatedStreamWidth = 1920,
@@ -201,7 +154,7 @@ class ContentRectCalculatorTest {
         val viewWidth = 1080
         val viewHeight = 1920
 
-        val rect = calculateContentRect(
+        val rect = calculateContentRectBounds(
             viewWidth = viewWidth,
             viewHeight = viewHeight,
             rotatedStreamWidth = 4032,
@@ -224,7 +177,7 @@ class ContentRectCalculatorTest {
         val streamWidth = 4032
         val streamHeight = 3024
 
-        val rect = calculateContentRect(
+        val rect = calculateContentRectBounds(
             viewWidth = viewWidth,
             viewHeight = viewHeight,
             rotatedStreamWidth = streamWidth,
@@ -272,7 +225,7 @@ class ContentRectCalculatorTest {
         assertEquals(4032, rotatedWidth)
         assertEquals(3024, rotatedHeight)
 
-        val rect = calculateContentRect(
+        val rect = calculateContentRectBounds(
             viewWidth = 1080,
             viewHeight = 1920,
             rotatedStreamWidth = rotatedWidth,

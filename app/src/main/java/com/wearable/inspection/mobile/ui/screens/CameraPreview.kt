@@ -62,6 +62,7 @@ import com.wearable.inspection.mobile.R
 import com.wearable.inspection.mobile.camera.CameraController
 import com.wearable.inspection.mobile.camera.CameraError
 import com.wearable.inspection.mobile.camera.CameraMode
+import com.wearable.inspection.mobile.camera.CameraStateType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -268,39 +269,6 @@ fun CameraPreview(
     }
 }
 
-/**
- * 统一 FIT_CENTER contentRect 计算
- *
- * 公式：
- * scale = min(viewWidth / rotatedWidth, viewHeight / rotatedHeight)
- * contentWidth = rotatedWidth * scale
- * contentHeight = rotatedHeight * scale
- * left = (viewWidth - contentWidth) / 2
- * top = (viewHeight - contentHeight) / 2
- */
-private fun calculateContentRect(
-    viewWidth: Int,
-    viewHeight: Int,
-    rotatedStreamWidth: Int,
-    rotatedStreamHeight: Int
-): Rect {
-    require(viewWidth > 0 && viewHeight > 0) { "PreviewView 尺寸必须大于 0，实际: ${viewWidth}x${viewHeight}" }
-    require(rotatedStreamWidth > 0 && rotatedStreamHeight > 0) { "流尺寸必须大于 0，实际: ${rotatedStreamWidth}x${rotatedStreamHeight}" }
-
-    val scale = minOf(
-        viewWidth.toFloat() / rotatedStreamWidth,
-        viewHeight.toFloat() / rotatedStreamHeight
-    )
-
-    val contentWidth = Math.round(rotatedStreamWidth * scale)
-    val contentHeight = Math.round(rotatedStreamHeight * scale)
-    val left = Math.round((viewWidth - contentWidth) / 2f).coerceAtLeast(0)
-    val top = Math.round((viewHeight - contentHeight) / 2f).coerceAtLeast(0)
-    val right = (left + contentWidth).coerceAtMost(viewWidth)
-    val bottom = (top + contentHeight).coerceAtMost(viewHeight)
-
-    return Rect(left, top, right, bottom)
-}
 
 /**
  * 相机预览内容
@@ -314,15 +282,19 @@ private fun CameraPreviewContent(
     onCameraReady: () -> Unit
 ) {
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
 
     // PreviewView 引用和实际图像区域
     var previewView by remember { mutableStateOf<PreviewView?>(null) }
     var contentRect by remember { mutableStateOf<android.graphics.Rect?>(null) }
     var previewViewSize by remember { mutableStateOf<Pair<Int, Int>?>(null) }
+    var hasCalledReady by remember { mutableStateOf(false) }
+
+    // CameraState 状态（用于触发 contentRect 重算和 ready/error 回调）
+    val cameraState by cameraController.cameraStateFlow.collectAsState()
 
     // 计算实际图像显示区域（用于后续 ROI、轮廓和点击对焦）
-    LaunchedEffect(previewViewSize) {
+    // cameraState 作为 key：当相机 OPEN 时 stream info 可用，触发重算
+    LaunchedEffect(previewViewSize, cameraState) {
         val sizePair = previewViewSize ?: return@LaunchedEffect
         val pvWidth = sizePair.first
         val pvHeight = sizePair.second
@@ -331,10 +303,8 @@ private fun CameraPreviewContent(
             android.util.Log.d("CameraPreview", "PreviewView size: ${pvWidth}x${pvHeight}")
         }
 
-        // 获取实际流分辨率
+        // 获取实际流分辨率和旋转（来自 UseCase 的 ResolutionInfo）
         val streamSize = cameraController.streamResolution ?: return@LaunchedEffect
-
-        // 获取流旋转角度
         val rotation = cameraController.streamRotation
 
         // 根据旋转调整流尺寸（90/270 度交换宽高）
@@ -349,13 +319,14 @@ private fun CameraPreviewContent(
             streamSize.height
         }
 
-        // 使用统一 FIT_CENTER 公式计算 contentRect
-        val rect = calculateContentRect(
+        // 使用生产函数计算 contentRect
+        val bounds = calculateContentRectBounds(
             viewWidth = pvWidth,
             viewHeight = pvHeight,
             rotatedStreamWidth = rotatedWidth,
             rotatedStreamHeight = rotatedHeight
         )
+        val rect = Rect(bounds.left, bounds.top, bounds.right, bounds.bottom)
 
         // 边界断言（Debug 模式）
         if (BuildConfig.DEBUG) {
@@ -364,7 +335,6 @@ private fun CameraPreviewContent(
             assert(rect.right <= pvWidth) { "right 必须 <= viewWidth，实际: ${rect.right} > ${pvWidth}" }
             assert(rect.bottom <= pvHeight) { "bottom 必须 <= viewHeight，实际: ${rect.bottom} > ${pvHeight}" }
 
-            // 验证 contentRect 比例与旋转后的流比例一致
             val streamRatio = rotatedWidth.toFloat() / rotatedHeight
             val contentRectRatio = rect.width().toFloat() / rect.height()
             val tolerance = 0.01f
@@ -378,21 +348,18 @@ private fun CameraPreviewContent(
         contentRect = rect
     }
 
-    // 连接相机
+    // 连接相机（connect 成功只表示 BOUND，不触发 onCameraReady）
     LaunchedEffect(previewView, lifecycleOwner) {
         if (previewView == null) return@LaunchedEffect
 
         try {
             val surfaceProvider = previewView!!.surfaceProvider
 
-            // 绑定到生命周期
             cameraController.connect(
                 lifecycleOwner = lifecycleOwner,
                 surfaceProvider = surfaceProvider,
                 mode = CameraMode.INSPECTION
-            ).onSuccess {
-                onCameraReady()
-            }.onFailure { throwable ->
+            ).onFailure { throwable ->
                 val error = when (throwable) {
                     is SecurityException -> CameraError.PermissionDenied
                     else -> CameraError.Unknown(throwable.message ?: "Unknown error")
@@ -401,6 +368,23 @@ private fun CameraPreviewContent(
             }
         } catch (e: Exception) {
             onCameraError(CameraError.Unknown(e.message ?: "Connection failed"))
+        }
+    }
+
+    // 观察 CameraState：仅 OPEN 触发 onCameraReady，ERROR 触发 onCameraError
+    LaunchedEffect(cameraState) {
+        when (cameraState) {
+            CameraStateType.OPEN -> {
+                if (!hasCalledReady) {
+                    hasCalledReady = true
+                    onCameraReady()
+                }
+            }
+            CameraStateType.ERROR -> {
+                val err = cameraController.error
+                onCameraError(CameraError.Unknown(err ?: "Camera error"))
+            }
+            else -> { /* PENDING_OPEN / CLOSED / null → 保持加载状态 */ }
         }
     }
 

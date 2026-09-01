@@ -13,12 +13,27 @@ import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
+import androidx.camera.core.resolutionselector.ResolutionSelector
+import androidx.camera.core.resolutionselector.AspectRatioStrategy
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import java.io.File
+
+/**
+ * 相机状态类型（对应 CameraX CameraState.Type）
+ */
+enum class CameraStateType {
+    PENDING_OPEN,
+    OPEN,
+    CLOSED,
+    ERROR
+}
 
 /**
  * 共享相机控制器（单例）
@@ -68,10 +83,14 @@ class CameraController private constructor(private val context: Context) {
     private var _streamRotation: Int = 0
     val streamRotation: Int get() = _streamRotation
 
-    /** 相机是否活跃 */
+    /** 相机是否活跃（仅 OPEN 状态为 true） */
     @Volatile
     private var _isActive = false
     val isActive: Boolean get() = _isActive
+
+    /** 相机状态流（供 UI 观察 OPEN/CLOSED/ERROR 等状态） */
+    private val _cameraStateFlow = MutableStateFlow<CameraStateType?>(null)
+    val cameraStateFlow: StateFlow<CameraStateType?> = _cameraStateFlow.asStateFlow()
 
     /** 错误信息 */
     @Volatile
@@ -108,26 +127,35 @@ class CameraController private constructor(private val context: Context) {
                 Thread(it, "camera-analysis-${mode.name.lowercase()}")
             }
 
-            // TODO: 添加 ResolutionSelector 以统一 4:3 画幅（需要验证 CameraX 1.3.1 API）
-            // Preview
+            // 4:3 画幅统一选择器
+            val resolutionSelector = ResolutionSelector.Builder()
+                .setAspectRatioStrategy(
+                    AspectRatioStrategy.RATIO_4_3_FALLBACK_AUTO_STRATEGY
+                )
+                .build()
+
+            // Preview（4:3）
             val preview = Preview.Builder()
+                .setResolutionSelector(resolutionSelector)
                 .build().also {
                     it.setSurfaceProvider(surfaceProvider)
                 }
 
-            // ImageAnalysis（KEEP_ONLY_LATEST + YUV_420_888）
+            // ImageAnalysis（KEEP_ONLY_LATEST + YUV_420_888 + 4:3）
             val analysis = ImageAnalysis.Builder()
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888)
+                .setResolutionSelector(resolutionSelector)
                 .build().also {
                     frameAnalyzer?.let { analyzer ->
                         it.setAnalyzer(executor, analyzer)
                     }
                 }
 
-            // ImageCapture（最小延迟模式）
+            // ImageCapture（最小延迟模式 + 4:3）
             val capture = ImageCapture.Builder()
                 .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
+                .setResolutionSelector(resolutionSelector)
                 .build()
 
             // 绑定
@@ -162,22 +190,15 @@ class CameraController private constructor(private val context: Context) {
             cameraControl = camera.cameraControl
             _cameraInfo = camera.cameraInfo
 
-            // 获取实际流分辨率和旋转角度
-            try {
-                _cameraInfo?.let { info ->
-                    // 获取流分辨率（从 ImageAnalysis 或 ImageCapture 获取）
-                    val analysisResolution = analysis.resolutionInfo
-                    val captureResolution = capture.resolutionInfo
-                    _streamResolution = analysisResolution?.resolution ?: captureResolution?.resolution
-
-                    // 获取传感器旋转角度
-                    _streamRotation = info.sensorRotationDegrees
-                }
-            } catch (e: Exception) {
-                // 降级：使用默认 4:3
-                _streamResolution = android.util.Size(4032, 3024)
-                _streamRotation = 0
+            // 获取实际流分辨率和旋转角度（从 UseCase 的 ResolutionInfo 获取）
+            val analysisResInfo = analysis.resolutionInfo
+            val captureResInfo = capture.resolutionInfo
+            val resInfo = analysisResInfo ?: captureResInfo
+            if (resInfo != null) {
+                _streamResolution = resInfo.resolution
+                _streamRotation = resInfo.rotationDegrees
             }
+            // 如果获取失败，保持 null（不降级，UI 显示等待状态）
 
             currentLifecycleOwner = lifecycleOwner
             cameraMode = mode
@@ -186,10 +207,18 @@ class CameraController private constructor(private val context: Context) {
 
             // 监控 Camera 状态，只有 OPEN 才认为就绪
             camera.cameraInfo.cameraState.observe(lifecycleOwner) { state ->
-                val wasActive = _isActive
+                val stateType = when (state.type) {
+                    androidx.camera.core.CameraState.Type.PENDING_OPEN -> CameraStateType.PENDING_OPEN
+                    androidx.camera.core.CameraState.Type.OPEN -> CameraStateType.OPEN
+                    androidx.camera.core.CameraState.Type.CLOSING -> CameraStateType.CLOSED
+                    androidx.camera.core.CameraState.Type.CLOSED -> CameraStateType.CLOSED
+                    else -> null
+                }
                 _isActive = state.type == androidx.camera.core.CameraState.Type.OPEN
+                _cameraStateFlow.value = stateType
                 state.error?.let {
                     _error = "Camera error: ${it.code}"
+                    _cameraStateFlow.value = CameraStateType.ERROR
                 }
             }
 
@@ -217,6 +246,7 @@ class CameraController private constructor(private val context: Context) {
         _streamRotation = 0
         currentLifecycleOwner = null
         _isActive = false
+        _cameraStateFlow.value = null
         _error = null
     }
 
