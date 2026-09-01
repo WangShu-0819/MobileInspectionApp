@@ -16,12 +16,12 @@
 ### B1：共享 CameraX 收口
 
 - [x] Task 1：审计活跃页面并归档未引用旧 Screen
-- [ ] **当前 Task 2：接入真实 CameraPreview，完成权限、状态、画幅与 content rect**
-- [ ] 完成 CameraController 模式重绑
+- [x] Task 2：接入真实 CameraPreview，完成权限、状态、画幅与 content rect（真机提交 `28d692d`）
+- [x] Task 3：完成 CameraController 模式重绑、互斥与生命周期（真机验收完成）
 - [ ] 完成真实 ImageCapture 与 ImageStore
 - [ ] 完成自动化和真机验收
 
-### 当前 Task 2：CameraPreview 状态与画幅
+### 已验收 Task 2：CameraPreview 状态与画幅
 
 执行顺序：
 
@@ -34,7 +34,20 @@
 
 Task 2 交付物：源码改动、更新后的 `tasks/todo.md`、`docs/reports/b1/TASK2_CAMERA_PREVIEW_REPORT.md`、测试命令和结果、APK 路径/时间/大小/SHA-256、真机截图或录屏证据。
 
-Task 2 完成后必须暂停。真实快门和文件落盘属于 Task 4；完整 `switchMode()`、分析器互斥和 release 生命周期属于 Task 3。
+Task 2 已完成并通过真机验收，证据位于 `docs/reports/b1/evidence/task2/`。
+
+### 当前 Task 3：CameraController 模式与生命周期
+
+执行顺序：
+
+1. **状态审计**：画出 connect、switchMode、disconnect、release、生命周期事件和分析器所有权关系，先补测试再调整接口。
+2. **串行切换**：通过 Mutex 或等价串行机制保证 unbind/clear analyzer/bind 原子执行；快速重复请求只保留确定的最终模式。
+3. **资源互斥**：每次切换确认旧 analyzer 停止、旧 Executor 关闭、旧 observer 移除、所有 ImageProxy 关闭，同一时刻只有一组 UseCase。
+4. **生命周期**：页面离开只暂停/解绑，可再次连接；永久 release 清空引用并关闭资源；不得持有 Activity、PreviewView 或已离开的 LifecycleOwner。
+5. **故障恢复**：绑定失败时进入真实错误状态并清理半绑定资源；重试不得产生第二套 CameraProvider/UseCase/Executor。
+6. **验证收口**：自动化覆盖并发切换、重复连接、异常分析器和 release 后行为；真机执行 Tab 10 次、前后台 10 次、模式切换 20 次并检查 logcat。
+
+Task 3 交付物：源码与测试、更新后的 `tasks/todo.md`、`docs/reports/b1/TASK3_CAMERA_LIFECYCLE_REPORT.md`、真机循环日志和当前 APK 信息。完成后暂停等待验收，禁止进入 Task 4。
 
 ### Checkpoint：B1
 

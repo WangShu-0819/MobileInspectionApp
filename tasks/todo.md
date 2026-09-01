@@ -17,7 +17,7 @@
 
 ## Task 2：CameraPreview 状态与画幅
 
-状态：✅ 真机验收完成（HONOR YAL-AL10, ERLDU20429005890）。Task 3-5 禁止开始。
+状态：✅ 已验收（提交 `28d692d`，HONOR YAL-AL10, ERLDU20429005890）。
 
 - [x] 接通 onCameraReady、权限拒绝、永久拒绝和错误回调
 - [x] 永久拒绝提供系统设置入口，错误状态提供真实重试
@@ -35,13 +35,18 @@
 
 ## Task 3：CameraController 模式与生命周期
 
-- [ ] switchMode 真正停止旧分析器并重绑目标 UseCase
-- [ ] 同一时刻只有一组 UseCase 和一个分析器
-- [ ] 页面离开与永久 release 分开
-- [ ] 不持有 Activity/LifecycleOwner/PreviewView 强引用
-- [ ] 明确 ImageProxy 所有权并覆盖异常/取消路径
+状态：✅ 真机验收完成（HONOR YAL-AL10, ERLDU20429005890）。Task 4 禁止开始。
 
-验收：Tab 往返 10 次、前后台 10 次，无黑屏、重复绑定或 Executor 错误。
+- [x] CameraMode 枚举：IDLE/INSPECTION/DPM_SCAN/STAMP_OCR/TEMPLATE_CAPTURE + UseCase 需求配置
+- [x] switchMode() 串行 Mutex 保护：停止旧分析器 → 关闭旧 Executor → unbindAll → 构建新 UseCase → 重绑
+- [x] 同一时刻只有一组 UseCase、一个分析器、一个分析 Executor
+- [x] disconnect() 页面离开可恢复，release() 永久释放后不可复用
+- [x] 不持有 Activity/LifecycleOwner/PreviewView 强引用
+- [x] FrameAnalyzer 接口：analyze() 所有路径关闭 ImageProxy，stop() 清理内部状态
+- [x] TestCountingAnalyzer 测试分析器验证互斥和资源释放
+- [x] 真机 Tab 往返 10 次：无黑屏、重复绑定、Camera already in use
+- [x] 真机前后台切换 10 次：无 RejectedExecutionException、ImageProxy 泄漏
+- [x] 单元测试 21/21 通过（CameraControllerTest + ContentRectCalculatorTest）
 
 ## Task 4：真实拍照与存储
 

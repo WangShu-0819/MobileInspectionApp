@@ -15,23 +15,26 @@
 - 阶段 A：已完成。
 - B0 旧功能迁移审计：已完成，见 `docs/migration/LEGACY_MIGRATION_MAP.md`。
 - B1 Task 1 源码边界整理：已验收，审计提交为 `754ec5b`。
-- B1 共享 CameraX：未完成；当前进入 Task 2，相机权限回调、真实预览接线、完整画幅和诊断信息尚未验收。真实拍照、模式切换和完整真机验收属于后续 Task 3-5。
+- B1 Task 2 相机状态与画幅：已通过真机验收，提交为 `28d692d`；证据位于 `docs/reports/b1/evidence/task2/`。
+- B1 Task 3 CameraController 模式与生命周期：已通过真机验收；证据位于 `docs/reports/b1/evidence/task3/`。
+- B1 共享 CameraX：Task 3 已完成，待用户验收。真实拍照属于 Task 4，完整回归属于 Task 5。
 - B2 DPM 迁移：禁止开始，直到 B1 的全部验收项完成。
 - DPM 只支持手机相机实时扫一扫，不提供相册码图导入。
 
 ## 当前唯一任务
 
-只执行 `tasks/todo.md` 中的 **Task 2：CameraPreview 状态与画幅**。Task 1 已结束；不得顺手开始 Task 3 的模式切换、Task 4 的真实拍照，也不得迁移 DPM、OCR、模板编辑、轮廓算法或 ROI 算法。
+**Task 3 已完成，暂停等待用户验收。** 不得进入 Task 4。验收通过后，执行 `tasks/todo.md` 中的 Task 4：真实拍照与存储。
 
-Task 2 必须形成以下单一闭环：
+Task 3 必须形成以下单一闭环：
 
-1. 用真实 `CameraPreview.kt` 替换导航中的相机占位实现，删除或收窄 `PlaceholderScreens.kt` 中重复的 `CameraPreviewScreen`；不得同时保留两个相机页面入口。
-2. 接通权限请求、允许、临时拒绝、永久拒绝、打开系统设置、初始化中、相机 ACTIVE、失败和重试等真实状态。
-3. 预览使用 `FIT_CENTER`，Preview、ImageAnalysis、ImageCapture 优先选择同一 4:3 画幅；竖屏容器按实际流比例显示，不能被固定 60/40 布局拉伸或裁切。
-4. 计算并输出真实图像 `contentRect`，后续轮廓与 ROI 坐标只能落在该区域；Debug 信息必须受 `BuildConfig.DEBUG` 控制。
-5. 完成编译、单元测试、当前源码 APK 安装和真机截图验收后更新报告，然后暂停等待 Task 2 验收。
+1. 明确 `IDLE/INSPECTION/DPM_SCAN/STAMP_OCR/TEMPLATE_CAPTURE` 模式状态；本轮只验证模式基础设施，不实现各业务算法。
+2. `switchMode()` 必须串行停止旧分析器、清除旧 UseCase、关闭未交接的 ImageProxy，再绑定新模式所需 UseCase；禁止并发重绑。
+3. 同一时刻只能存在一组已绑定 UseCase、一个活动分析器和一个分析 Executor；重复切换不得累积 observer、线程或相机绑定。
+4. 区分页面暂时离开、生命周期 stop 和应用永久 `release()`；Tab 返回后可恢复，永久释放后不得复用已关闭 Executor。
+5. CameraController 不得长期强引用 Activity、LifecycleOwner 或 PreviewView；所有 ImageProxy 在成功、异常、取消和模式切换路径都必须关闭。
+6. 完成单元/集成测试与真机循环：Tab 往返 10 次、前后台 10 次、模式往返至少 20 次，无黑屏、重复绑定、Camera already in use、Executor rejected 或 ImageProxy 泄漏。
 
-Task 2 不要求快门产出 JPEG；按钮可以明确显示“后续任务接入”，但不得伪造拍照成功、检测成功或相机就绪状态。
+Task 3 不接入真实 DPM/OCR 分析器，不产出 JPEG，不创建检测记录。允许使用可计数的测试分析器验证互斥和资源释放，但不得伪造成业务识别结果。
 
 完成声明必须基于当前源码生成的新 APK。以下都不算完成证据：单个类能编译、旧 APK 能启动、UI 有按钮、代码中保留 TODO、报告写着“核心完成”。
 
