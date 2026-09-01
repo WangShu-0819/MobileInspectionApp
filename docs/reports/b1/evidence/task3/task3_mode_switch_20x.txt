@@ -1,0 +1,150 @@
+--------- beginning of main
+--------- beginning of system
+09-01 13:35:33.078 18776 18776 I CameraModeTest: ========== 相机模式切换测试开始 ==========
+09-01 13:35:33.078 18776 18776 D CameraModeTest: 状态: 初始连接中...
+09-01 13:35:33.279 18776 18776 I CameraModeTest: 初始连接成功，模式: INSPECTION
+09-01 13:35:34.284 18776 18776 D CameraModeTest: 状态: 第 1/20 轮...
+09-01 13:35:34.284 18776 18776 I CameraModeTest: --- 第 1 轮 ---
+09-01 13:35:34.307 18776 18776 I CameraModeTest:   ✓ DPM_SCAN → currentMode=DPM_SCAN, isActive=true
+09-01 13:35:34.880 18776 18776 I CameraModeTest:   ✓ STAMP_OCR → currentMode=STAMP_OCR, isActive=true
+09-01 13:35:35.393 18776 18776 I CameraModeTest:   ✓ TEMPLATE_CAPTURE → currentMode=TEMPLATE_CAPTURE, isActive=true
+09-01 13:35:35.906 18776 18776 I CameraModeTest:   ✓ IDLE → currentMode=IDLE, isActive=true
+09-01 13:35:36.486 18776 18776 I CameraModeTest:   ✓ INSPECTION → currentMode=INSPECTION, isActive=false
+09-01 13:35:36.988 18776 18776 D CameraModeTest: 状态: 第 2/20 轮...
+09-01 13:35:36.988 18776 18776 I CameraModeTest: --- 第 2 轮 ---
+09-01 13:35:37.003 18776 18776 I CameraModeTest:   ✓ DPM_SCAN → currentMode=DPM_SCAN, isActive=true
+09-01 13:35:37.578 18776 18776 I CameraModeTest:   ✓ STAMP_OCR → currentMode=STAMP_OCR, isActive=true
+09-01 13:35:38.093 18776 18776 I CameraModeTest:   ✓ TEMPLATE_CAPTURE → currentMode=TEMPLATE_CAPTURE, isActive=true
+09-01 13:35:38.604 18776 18776 I CameraModeTest:   ✓ IDLE → currentMode=IDLE, isActive=false
+09-01 13:35:39.177 18776 18776 I CameraModeTest:   ✓ INSPECTION → currentMode=INSPECTION, isActive=true
+09-01 13:35:39.678 18776 18776 D CameraModeTest: 状态: 第 3/20 轮...
+09-01 13:35:39.678 18776 18776 I CameraModeTest: --- 第 3 轮 ---
+09-01 13:35:39.690 18776 18776 I CameraModeTest:   ✓ DPM_SCAN → currentMode=DPM_SCAN, isActive=true
+09-01 13:35:40.267 18776 18776 I CameraModeTest:   ✓ STAMP_OCR → currentMode=STAMP_OCR, isActive=true
+09-01 13:35:40.777 18776 18776 I CameraModeTest:   ✓ TEMPLATE_CAPTURE → currentMode=TEMPLATE_CAPTURE, isActive=false
+09-01 13:35:41.283 18776 18776 I CameraModeTest:   ✓ IDLE → currentMode=IDLE, isActive=true
+09-01 13:35:41.865 18776 18776 I CameraModeTest:   ✓ INSPECTION → currentMode=INSPECTION, isActive=true
+09-01 13:35:42.367 18776 18776 D CameraModeTest: 状态: 第 4/20 轮...
+09-01 13:35:42.367 18776 18776 I CameraModeTest: --- 第 4 轮 ---
+09-01 13:35:42.379 18776 18776 I CameraModeTest:   ✓ DPM_SCAN → currentMode=DPM_SCAN, isActive=true
+09-01 13:35:42.966 18776 18776 I CameraModeTest:   ✓ STAMP_OCR → currentMode=STAMP_OCR, isActive=false
+09-01 13:35:43.475 18776 18776 I CameraModeTest:   ✓ TEMPLATE_CAPTURE → currentMode=TEMPLATE_CAPTURE, isActive=true
+09-01 13:35:43.983 18776 18776 I CameraModeTest:   ✓ IDLE → currentMode=IDLE, isActive=true
+09-01 13:35:44.564 18776 18776 I CameraModeTest:   ✓ INSPECTION → currentMode=INSPECTION, isActive=true
+09-01 13:35:45.065 18776 18776 D CameraModeTest: 状态: 第 5/20 轮...
+09-01 13:35:45.065 18776 18776 I CameraModeTest: --- 第 5 轮 ---
+09-01 13:35:45.079 18776 18776 I CameraModeTest:   ✓ DPM_SCAN → currentMode=DPM_SCAN, isActive=true
+09-01 13:35:45.654 18776 18776 I CameraModeTest:   ✓ STAMP_OCR → currentMode=STAMP_OCR, isActive=false
+09-01 13:35:46.164 18776 18776 I CameraModeTest:   ✓ TEMPLATE_CAPTURE → currentMode=TEMPLATE_CAPTURE, isActive=true
+09-01 13:35:46.671 18776 18776 I CameraModeTest:   ✓ IDLE → currentMode=IDLE, isActive=true
+09-01 13:35:47.249 18776 18776 I CameraModeTest:   ✓ INSPECTION → currentMode=INSPECTION, isActive=true
+09-01 13:35:47.750 18776 18776 D CameraModeTest: 状态: 第 6/20 轮...
+09-01 13:35:47.750 18776 18776 I CameraModeTest: --- 第 6 轮 ---
+09-01 13:35:47.763 18776 18776 I CameraModeTest:   ✓ DPM_SCAN → currentMode=DPM_SCAN, isActive=false
+09-01 13:35:48.332 18776 18776 I CameraModeTest:   ✓ STAMP_OCR → currentMode=STAMP_OCR, isActive=true
+09-01 13:35:48.844 18776 18776 I CameraModeTest:   ✓ TEMPLATE_CAPTURE → currentMode=TEMPLATE_CAPTURE, isActive=true
+09-01 13:35:49.359 18776 18776 I CameraModeTest:   ✓ IDLE → currentMode=IDLE, isActive=true
+09-01 13:35:49.950 18776 18776 I CameraModeTest:   ✓ INSPECTION → currentMode=INSPECTION, isActive=true
+09-01 13:35:50.452 18776 18776 D CameraModeTest: 状态: 第 7/20 轮...
+09-01 13:35:50.452 18776 18776 I CameraModeTest: --- 第 7 轮 ---
+09-01 13:35:50.461 18776 18776 I CameraModeTest:   ✓ DPM_SCAN → currentMode=DPM_SCAN, isActive=true
+09-01 13:35:51.040 18776 18776 I CameraModeTest:   ✓ STAMP_OCR → currentMode=STAMP_OCR, isActive=true
+09-01 13:35:51.551 18776 18776 I CameraModeTest:   ✓ TEMPLATE_CAPTURE → currentMode=TEMPLATE_CAPTURE, isActive=true
+09-01 13:35:52.065 18776 18776 I CameraModeTest:   ✓ IDLE → currentMode=IDLE, isActive=true
+09-01 13:35:52.641 18776 18776 I CameraModeTest:   ✓ INSPECTION → currentMode=INSPECTION, isActive=false
+09-01 13:35:53.143 18776 18776 D CameraModeTest: 状态: 第 8/20 轮...
+09-01 13:35:53.143 18776 18776 I CameraModeTest: --- 第 8 轮 ---
+09-01 13:35:53.154 18776 18776 I CameraModeTest:   ✓ DPM_SCAN → currentMode=DPM_SCAN, isActive=true
+09-01 13:35:53.726 18776 18776 I CameraModeTest:   ✓ STAMP_OCR → currentMode=STAMP_OCR, isActive=true
+09-01 13:35:54.235 18776 18776 I CameraModeTest:   ✓ TEMPLATE_CAPTURE → currentMode=TEMPLATE_CAPTURE, isActive=true
+09-01 13:35:54.742 18776 18776 I CameraModeTest:   ✓ IDLE → currentMode=IDLE, isActive=false
+09-01 13:35:55.328 18776 18776 I CameraModeTest:   ✓ INSPECTION → currentMode=INSPECTION, isActive=true
+09-01 13:35:55.830 18776 18776 D CameraModeTest: 状态: 第 9/20 轮...
+09-01 13:35:55.830 18776 18776 I CameraModeTest: --- 第 9 轮 ---
+09-01 13:35:55.842 18776 18776 I CameraModeTest:   ✓ DPM_SCAN → currentMode=DPM_SCAN, isActive=true
+09-01 13:35:56.426 18776 18776 I CameraModeTest:   ✓ STAMP_OCR → currentMode=STAMP_OCR, isActive=true
+09-01 13:35:56.935 18776 18776 I CameraModeTest:   ✓ TEMPLATE_CAPTURE → currentMode=TEMPLATE_CAPTURE, isActive=true
+09-01 13:35:57.443 18776 18776 I CameraModeTest:   ✓ IDLE → currentMode=IDLE, isActive=false
+09-01 13:35:58.030 18776 18776 I CameraModeTest:   ✓ INSPECTION → currentMode=INSPECTION, isActive=true
+09-01 13:35:58.531 18776 18776 D CameraModeTest: 状态: 第 10/20 轮...
+09-01 13:35:58.532 18776 18776 I CameraModeTest: --- 第 10 轮 ---
+09-01 13:35:58.541 18776 18776 I CameraModeTest:   ✓ DPM_SCAN → currentMode=DPM_SCAN, isActive=true
+09-01 13:35:59.132 18776 18776 I CameraModeTest:   ✓ STAMP_OCR → currentMode=STAMP_OCR, isActive=true
+09-01 13:35:59.642 18776 18776 I CameraModeTest:   ✓ TEMPLATE_CAPTURE → currentMode=TEMPLATE_CAPTURE, isActive=false
+09-01 13:36:00.148 18776 18776 I CameraModeTest:   ✓ IDLE → currentMode=IDLE, isActive=true
+09-01 13:36:00.729 18776 18776 I CameraModeTest:   ✓ INSPECTION → currentMode=INSPECTION, isActive=true
+09-01 13:36:01.230 18776 18776 D CameraModeTest: 状态: 第 11/20 轮...
+09-01 13:36:01.230 18776 18776 I CameraModeTest: --- 第 11 轮 ---
+09-01 13:36:01.242 18776 18776 I CameraModeTest:   ✓ DPM_SCAN → currentMode=DPM_SCAN, isActive=true
+09-01 13:36:01.831 18776 18776 I CameraModeTest:   ✓ STAMP_OCR → currentMode=STAMP_OCR, isActive=true
+09-01 13:36:02.340 18776 18776 I CameraModeTest:   ✓ TEMPLATE_CAPTURE → currentMode=TEMPLATE_CAPTURE, isActive=false
+09-01 13:36:02.845 18776 18776 I CameraModeTest:   ✓ IDLE → currentMode=IDLE, isActive=true
+09-01 13:36:03.419 18776 18776 I CameraModeTest:   ✓ INSPECTION → currentMode=INSPECTION, isActive=true
+09-01 13:36:03.921 18776 18776 D CameraModeTest: 状态: 第 12/20 轮...
+09-01 13:36:03.921 18776 18776 I CameraModeTest: --- 第 12 轮 ---
+09-01 13:36:03.930 18776 18776 I CameraModeTest:   ✓ DPM_SCAN → currentMode=DPM_SCAN, isActive=true
+09-01 13:36:04.504 18776 18776 I CameraModeTest:   ✓ STAMP_OCR → currentMode=STAMP_OCR, isActive=false
+09-01 13:36:05.013 18776 18776 I CameraModeTest:   ✓ TEMPLATE_CAPTURE → currentMode=TEMPLATE_CAPTURE, isActive=true
+09-01 13:36:05.519 18776 18776 I CameraModeTest:   ✓ IDLE → currentMode=IDLE, isActive=true
+09-01 13:36:06.104 18776 18776 I CameraModeTest:   ✓ INSPECTION → currentMode=INSPECTION, isActive=true
+09-01 13:36:06.605 18776 18776 D CameraModeTest: 状态: 第 13/20 轮...
+09-01 13:36:06.605 18776 18776 I CameraModeTest: --- 第 13 轮 ---
+09-01 13:36:06.615 18776 18776 I CameraModeTest:   ✓ DPM_SCAN → currentMode=DPM_SCAN, isActive=true
+09-01 13:36:07.189 18776 18776 I CameraModeTest:   ✓ STAMP_OCR → currentMode=STAMP_OCR, isActive=false
+09-01 13:36:07.697 18776 18776 I CameraModeTest:   ✓ TEMPLATE_CAPTURE → currentMode=TEMPLATE_CAPTURE, isActive=true
+09-01 13:36:08.203 18776 18776 I CameraModeTest:   ✓ IDLE → currentMode=IDLE, isActive=true
+09-01 13:36:08.784 18776 18776 I CameraModeTest:   ✓ INSPECTION → currentMode=INSPECTION, isActive=true
+09-01 13:36:09.286 18776 18776 D CameraModeTest: 状态: 第 14/20 轮...
+09-01 13:36:09.286 18776 18776 I CameraModeTest: --- 第 14 轮 ---
+09-01 13:36:09.296 18776 18776 I CameraModeTest:   ✓ DPM_SCAN → currentMode=DPM_SCAN, isActive=false
+09-01 13:36:09.873 18776 18776 I CameraModeTest:   ✓ STAMP_OCR → currentMode=STAMP_OCR, isActive=true
+09-01 13:36:10.382 18776 18776 I CameraModeTest:   ✓ TEMPLATE_CAPTURE → currentMode=TEMPLATE_CAPTURE, isActive=true
+09-01 13:36:10.894 18776 18776 I CameraModeTest:   ✓ IDLE → currentMode=IDLE, isActive=true
+09-01 13:36:11.470 18776 18776 I CameraModeTest:   ✓ INSPECTION → currentMode=INSPECTION, isActive=true
+09-01 13:36:11.970 18776 18776 D CameraModeTest: 状态: 第 15/20 轮...
+09-01 13:36:11.970 18776 18776 I CameraModeTest: --- 第 15 轮 ---
+09-01 13:36:11.979 18776 18776 I CameraModeTest:   ✓ DPM_SCAN → currentMode=DPM_SCAN, isActive=true
+09-01 13:36:12.554 18776 18776 I CameraModeTest:   ✓ STAMP_OCR → currentMode=STAMP_OCR, isActive=true
+09-01 13:36:13.062 18776 18776 I CameraModeTest:   ✓ TEMPLATE_CAPTURE → currentMode=TEMPLATE_CAPTURE, isActive=true
+09-01 13:36:13.568 18776 18776 I CameraModeTest:   ✓ IDLE → currentMode=IDLE, isActive=true
+09-01 13:36:14.148 18776 18776 I CameraModeTest:   ✓ INSPECTION → currentMode=INSPECTION, isActive=false
+09-01 13:36:14.648 18776 18776 D CameraModeTest: 状态: 第 16/20 轮...
+09-01 13:36:14.649 18776 18776 I CameraModeTest: --- 第 16 轮 ---
+09-01 13:36:14.661 18776 18776 I CameraModeTest:   ✓ DPM_SCAN → currentMode=DPM_SCAN, isActive=true
+09-01 13:36:15.244 18776 18776 I CameraModeTest:   ✓ STAMP_OCR → currentMode=STAMP_OCR, isActive=true
+09-01 13:36:15.753 18776 18776 I CameraModeTest:   ✓ TEMPLATE_CAPTURE → currentMode=TEMPLATE_CAPTURE, isActive=true
+09-01 13:36:16.263 18776 18776 I CameraModeTest:   ✓ IDLE → currentMode=IDLE, isActive=true
+09-01 13:36:16.846 18776 18776 I CameraModeTest:   ✓ INSPECTION → currentMode=INSPECTION, isActive=true
+09-01 13:36:17.348 18776 18776 D CameraModeTest: 状态: 第 17/20 轮...
+09-01 13:36:17.348 18776 18776 I CameraModeTest: --- 第 17 轮 ---
+09-01 13:36:17.357 18776 18776 I CameraModeTest:   ✓ DPM_SCAN → currentMode=DPM_SCAN, isActive=true
+09-01 13:36:17.939 18776 18776 I CameraModeTest:   ✓ STAMP_OCR → currentMode=STAMP_OCR, isActive=true
+09-01 13:36:18.448 18776 18776 I CameraModeTest:   ✓ TEMPLATE_CAPTURE → currentMode=TEMPLATE_CAPTURE, isActive=true
+09-01 13:36:18.953 18776 18776 I CameraModeTest:   ✓ IDLE → currentMode=IDLE, isActive=false
+09-01 13:36:19.530 18776 18776 I CameraModeTest:   ✓ INSPECTION → currentMode=INSPECTION, isActive=true
+09-01 13:36:20.031 18776 18776 D CameraModeTest: 状态: 第 18/20 轮...
+09-01 13:36:20.031 18776 18776 I CameraModeTest: --- 第 18 轮 ---
+09-01 13:36:20.044 18776 18776 I CameraModeTest:   ✓ DPM_SCAN → currentMode=DPM_SCAN, isActive=true
+09-01 13:36:20.628 18776 18776 I CameraModeTest:   ✓ STAMP_OCR → currentMode=STAMP_OCR, isActive=true
+09-01 13:36:21.138 18776 18776 I CameraModeTest:   ✓ TEMPLATE_CAPTURE → currentMode=TEMPLATE_CAPTURE, isActive=true
+09-01 13:36:21.644 18776 18776 I CameraModeTest:   ✓ IDLE → currentMode=IDLE, isActive=false
+09-01 13:36:22.227 18776 18776 I CameraModeTest:   ✓ INSPECTION → currentMode=INSPECTION, isActive=true
+09-01 13:36:22.729 18776 18776 D CameraModeTest: 状态: 第 19/20 轮...
+09-01 13:36:22.729 18776 18776 I CameraModeTest: --- 第 19 轮 ---
+09-01 13:36:22.739 18776 18776 I CameraModeTest:   ✓ DPM_SCAN → currentMode=DPM_SCAN, isActive=true
+09-01 13:36:23.326 18776 18776 I CameraModeTest:   ✓ STAMP_OCR → currentMode=STAMP_OCR, isActive=true
+09-01 13:36:23.835 18776 18776 I CameraModeTest:   ✓ TEMPLATE_CAPTURE → currentMode=TEMPLATE_CAPTURE, isActive=false
+09-01 13:36:24.340 18776 18776 I CameraModeTest:   ✓ IDLE → currentMode=IDLE, isActive=true
+09-01 13:36:24.925 18776 18776 I CameraModeTest:   ✓ INSPECTION → currentMode=INSPECTION, isActive=true
+09-01 13:36:25.426 18776 18776 D CameraModeTest: 状态: 第 20/20 轮...
+09-01 13:36:25.426 18776 18776 I CameraModeTest: --- 第 20 轮 ---
+09-01 13:36:25.437 18776 18776 I CameraModeTest:   ✓ DPM_SCAN → currentMode=DPM_SCAN, isActive=true
+09-01 13:36:26.021 18776 18776 I CameraModeTest:   ✓ STAMP_OCR → currentMode=STAMP_OCR, isActive=false
+09-01 13:36:26.530 18776 18776 I CameraModeTest:   ✓ TEMPLATE_CAPTURE → currentMode=TEMPLATE_CAPTURE, isActive=true
+09-01 13:36:27.042 18776 18776 I CameraModeTest:   ✓ IDLE → currentMode=IDLE, isActive=true
+09-01 13:36:27.623 18776 18776 I CameraModeTest:   ✓ INSPECTION → currentMode=INSPECTION, isActive=true
+09-01 13:36:28.125 18776 18776 I CameraModeTest: 连接已断开
+09-01 13:36:28.125 18776 18776 I CameraModeTest: ========== 测试结果 ==========
+09-01 13:36:28.125 18776 18776 I CameraModeTest: 通过: 100, 失败: 0
+09-01 13:36:28.125 18776 18776 I CameraModeTest: ========== 测试完成 ==========
+09-01 13:36:28.126 18776 18776 D CameraModeTest: 状态: 测试完成: 100 通过, 0 失败

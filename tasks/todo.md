@@ -35,7 +35,7 @@
 
 ## Task 3：CameraController 模式与生命周期
 
-状态：🔄 整改中 — 统一并发边界、ImageProxy 所有权、Observer 管理、可注入测试架构。Task 4 禁止开始。
+状态：🔄 整改通过，真机验收中 — 统一并发边界、ImageProxy 所有权、Observer 管理、可注入测试架构。Task 4 禁止开始。
 
 - [x] CameraMode 枚举：IDLE/INSPECTION/DPM_SCAN/STAMP_OCR/TEMPLATE_CAPTURE + UseCase 需求配置
 - [x] switchMode() 串行 Mutex 保护：停止旧分析器 → 关闭旧 Executor → unbindAll → 构建新 UseCase → 重绑
@@ -44,9 +44,11 @@
 - [x] 不持有 Activity/LifecycleOwner/PreviewView 强引用
 - [x] FrameAnalyzer 接口：analyze() 所有路径关闭 ImageProxy，stop() 清理内部状态
 - [x] TestCountingAnalyzer 测试分析器验证互斥和资源释放
-- [x] 真机 Tab 往返 10 次：无黑屏、重复绑定、Camera already in use
-- [x] 真机前后台切换 10 次：无 RejectedExecutionException、ImageProxy 泄漏
-- [x] 单元测试 21/21 通过（CameraControllerTest + ContentRectCalculatorTest）
+- [x] 真机模式 round-trip 20 次：100 次切换全部成功，0 失败（HONOR YAL-AL10, ERLDU20429005890）
+- [x] logcat 禁止模式检查：8 项全部 0 次匹配
+- [ ] 真机 Tab 往返 10 次：无黑屏、重复绑定、Camera already in use
+- [ ] 真机前后台切换 10 次：无 RejectedExecutionException、ImageProxy 泄漏
+- [x] 单元测试 30/30 通过（CameraControllerTest，含并发/压力测试）
 
 ## Task 4：真实拍照与存储
 
