@@ -1,6 +1,6 @@
 # 当前任务：B2 Task 1 - 旧 DPM 识别链迁移与实时扫码闭环
 
-状态：回归整改中。提交 `0c8e045e` 按过期指令实现了 ML Kit 主解码、ZXing 兜底的简化管线，与最终确认的旧 DPM 生产基线相反；修正前不得接 CameraX/UI，也不得并行开始 B2 Task 2、OCR、模板、轮廓或 ROI。
+状态：进行中。提交 `4c522ce7` 已恢复 ZXing 主解码、ML Kit DATA_MATRIX 兜底顺序；当前继续迁移旧 DPM 纯逻辑、预处理与网格链，完成前不得接 CameraX/UI，也不得并行开始 B2 Task 2、OCR、模板、轮廓或 ROI。
 
 ## Task 1：整理活跃源码边界
 
@@ -125,8 +125,8 @@ B1 已完成并关闭。
 
 ## B2 Task 1：旧 DPM 识别链迁移与实时扫码闭环
 
-- [ ] 整改 `0c8e045e`：移除 ML Kit 主解码/ZXing 兜底假设，恢复旧版 ZXing 主解码 → ML Kit DATA_MATRIX 兜底顺序
-- [ ] 将含糊的 `PrimaryDecoder/FallbackDecoder` 改为按实现命名的 ZXing/ML Kit 接口，防止再次接反
+- [x] 整改 `0c8e045e`：提交 `4c522ce7` 已恢复旧版 ZXing 主解码 → ML Kit DATA_MATRIX 兜底顺序
+- [x] 将含糊的 `PrimaryDecoder/FallbackDecoder` 改为 `DpmZxingDecoder/DpmMlKitDecoder`
 - [ ] 按旧文件、旧职责、新文件、复用内容、去除耦合和迁移测试更新迁移表
 - [ ] “扫一扫”进入真实 `CameraMode.DPM_SCAN`，只绑定 Preview + ImageAnalysis
 - [ ] 使用独立 `DpmFrameAnalyzer`，共享唯一 CameraController
@@ -134,6 +134,9 @@ B1 已完成并关闭。
 - [ ] 迁移中心 ROI、全图降采样、DpmPreprocessor 策略轮转和正常/反转双极性尝试
 - [ ] 迁移 DpmRespondGate、帧节流、single-flight、连续 miss 对焦和 stop 后不回调
 - [ ] 迁移 DpmGridGate、DpmGridReconstructor、ImportedDpmScanner，并保留旧版取消、冷却和超时边界
+- [ ] 迁移 `DpmDimensionMode` 的 AUTO/DIM_16/DIM_18/DIM_20、旧候选配额、跨尺寸交错和非法值回退 AUTO
+- [ ] 将尺寸模式真实接入网格重建；默认 AUTO 同时公平尝试 16×16、18×18、20×20，固定模式只尝试所选尺寸
+- [ ] 持久化 DPM 尺寸模式；设置变化只影响后续网格任务，不能中途篡改在途任务快照
 - [ ] 页面退出后释放扫码分析资源，返回现场采集后相机正常恢复
 - [ ] UI 不存在 DPM 相册选择、码图导入或相关权限/路由
 - [ ] 迁移旧 DPM 专项测试，并覆盖解码链、预处理、网格门控、节流、并发、重复抑制、停止和资源释放
