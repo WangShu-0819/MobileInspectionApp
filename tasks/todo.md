@@ -1,6 +1,6 @@
 # 当前任务：B2 Task 1 - 旧 DPM 识别链迁移与实时扫码闭环
 
-状态：进行中。B1 已完成并获用户确认进入 B2；不得并行开始 B2 Task 2、OCR、模板、轮廓或 ROI。
+状态：回归整改中。提交 `0c8e045e` 按过期指令实现了 ML Kit 主解码、ZXing 兜底的简化管线，与最终确认的旧 DPM 生产基线相反；修正前不得接 CameraX/UI，也不得并行开始 B2 Task 2、OCR、模板、轮廓或 ROI。
 
 ## Task 1：整理活跃源码边界
 
@@ -125,6 +125,8 @@ B1 已完成并关闭。
 
 ## B2 Task 1：旧 DPM 识别链迁移与实时扫码闭环
 
+- [ ] 整改 `0c8e045e`：移除 ML Kit 主解码/ZXing 兜底假设，恢复旧版 ZXing 主解码 → ML Kit DATA_MATRIX 兜底顺序
+- [ ] 将含糊的 `PrimaryDecoder/FallbackDecoder` 改为按实现命名的 ZXing/ML Kit 接口，防止再次接反
 - [ ] 按旧文件、旧职责、新文件、复用内容、去除耦合和迁移测试更新迁移表
 - [ ] “扫一扫”进入真实 `CameraMode.DPM_SCAN`，只绑定 Preview + ImageAnalysis
 - [ ] 使用独立 `DpmFrameAnalyzer`，共享唯一 CameraController
