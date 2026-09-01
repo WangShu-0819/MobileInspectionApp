@@ -226,6 +226,17 @@ class RealCameraBinder(private val context: Context) : CameraBinder {
 }
 
 /**
+ * 相机会话标识
+ *
+ * 每次 connect 创建唯一会话，disconnect 必须携带匹配的 sessionId 才能解绑。
+ * 防止旧页面延迟 disconnect 错误解绑新页面的相机。
+ */
+data class CameraSession(
+    val sessionId: String = java.util.UUID.randomUUID().toString(),
+    val createdAt: Long = System.currentTimeMillis()
+)
+
+/**
  * 共享相机控制器（单例）
  *
  * 设计约束：
@@ -235,6 +246,8 @@ class RealCameraBinder(private val context: Context) : CameraBinder {
  * - CameraController 拥有 ImageProxy，在 finally 中关闭；FrameAnalyzer 不负责 close。
  * - LifecycleOwner 使用 WeakReference 保存，失效时返回错误并清理。
  * - 每次重绑前显式 removeObserver，防止累积。
+ * - connect 必须先 unbindAll 再绑定，防止 UseCase 累积。
+ * - disconnect 必须携带 sessionId，只解绑当前活跃会话。
  */
 class CameraController private constructor(
     private val context: Context,
@@ -283,6 +296,9 @@ class CameraController private constructor(
     private var isReleased = false
     private var isConnected = false
 
+    // ─── 会话管理 ───
+    private var activeSession: CameraSession? = null
+
     // ─── 流信息 ───
     private var _streamResolution: android.util.Size? = null
     val streamResolution: android.util.Size? get() = _streamResolution
@@ -314,13 +330,15 @@ class CameraController private constructor(
      * 连接相机
      *
      * 所有状态检查和资源变更在 mutex 内完成。
-     * 如果已连接，先清理再重连。
+     * **关键**：必须先 unbindAll 再绑定，防止 UseCase 累积。
+     *
+     * @return 成功时返回 CameraSession，失败时返回异常
      */
     suspend fun connect(
         lifecycleOwner: LifecycleOwner,
         surfaceProvider: Preview.SurfaceProvider,
         mode: CameraMode = CameraMode.INSPECTION
-    ): Result<Unit> = mutex.withLock {
+    ): Result<CameraSession> = mutex.withLock {
         // 前置检查
         if (isReleased) {
             return@withLock Result.failure(IllegalStateException("CameraController 已永久释放"))
@@ -331,8 +349,45 @@ class CameraController private constructor(
         }
 
         try {
-            // 清理旧资源（包括 removeObserver）
-            cleanupBoundResources()
+            // ─── 步骤 1-7：清理旧资源 ───
+            // 1. 标记旧连接进入关闭状态
+            val oldSession = activeSession
+            activeSession = null
+            isConnected = false
+
+            // 2. 移除旧 CameraState observer
+            removeCameraStateObserver()
+
+            // 3. clearAnalyzer
+            analysisUseCase?.let { binder.clearAnalyzer(it) }
+
+            // 4. stop 旧 FrameAnalyzer
+            frameAnalyzer?.stop()
+            frameAnalyzer = null
+
+            // 5. shutdownNow 旧 Executor
+            analysisExecutor?.shutdownNow()
+            analysisExecutor = null
+
+            // 6. 对旧 cameraProvider 执行 unbindAll()
+            cameraProvider?.let { binder.unbindAll(it) }
+
+            // 7. 清空旧 UseCase 和流信息引用
+            previewUseCase = null
+            analysisUseCase = null
+            imageCapture = null
+            currentCamera = null
+            cameraControl = null
+            lifecycleOwnerRef = null
+            surfaceProviderRef = null
+            currentMode = CameraMode.IDLE
+            _streamResolution = null
+            _streamRotation = 0
+            _isActive = false
+            _cameraStateFlow.value = null
+            _error = null
+
+            // ─── 步骤 8：创建并绑定新 UseCase ───
 
             // 获取 provider
             val provider = binder.getProvider()
@@ -341,6 +396,9 @@ class CameraController private constructor(
             if (!binder.hasBackCamera(provider)) {
                 return@withLock Result.failure(IllegalStateException("未找到后置相机"))
             }
+
+            // 创建新会话
+            val newSession = CameraSession()
 
             // 构建 UseCase（通过 binder 创建，测试可注入）
             val preview = binder.createPreview(surfaceProvider)
@@ -354,7 +412,8 @@ class CameraController private constructor(
 
             when (bindResult) {
                 is BindResult.Failure -> {
-                    cleanupBoundResources()
+                    // 绑定失败：完整回滚
+                    performFullRollback(provider)
                     return@withLock Result.failure(bindResult.error)
                 }
                 is BindResult.Success -> {
@@ -383,6 +442,7 @@ class CameraController private constructor(
                     surfaceProviderRef = WeakReference(surfaceProvider)
                     currentMode = mode
                     isConnected = true
+                    activeSession = newSession
                     _isActive = false
                     _error = null
 
@@ -408,14 +468,55 @@ class CameraController private constructor(
                     // 观察 Camera 状态
                     setupCameraStateObserver(bindResult.camera, lifecycleOwner)
 
-                    Result.success(Unit)
+                    Result.success(newSession)
                 }
             }
         } catch (e: Exception) {
-            _error = e.message ?: "相机连接失败"
+            _error = "相机启动失败"
             cleanupBoundResources()
             Result.failure(e)
         }
+    }
+
+    /**
+     * 绑定失败时的完整回滚
+     *
+     * 确保 CameraX 不残留任何 UseCase。
+     */
+    private fun performFullRollback(provider: Any) {
+        // unbindAll
+        binder.unbindAll(provider)
+
+        // removeObserver
+        removeCameraStateObserver()
+
+        // clearAnalyzer
+        analysisUseCase?.let { binder.clearAnalyzer(it) }
+
+        // shutdownNow Executor
+        analysisExecutor?.shutdownNow()
+        analysisExecutor = null
+
+        // stop FrameAnalyzer
+        frameAnalyzer?.stop()
+        frameAnalyzer = null
+
+        // 清空所有引用
+        previewUseCase = null
+        analysisUseCase = null
+        imageCapture = null
+        currentCamera = null
+        cameraControl = null
+        activeSession = null
+        lifecycleOwnerRef = null
+        surfaceProviderRef = null
+        currentMode = CameraMode.IDLE
+        _streamResolution = null
+        _streamRotation = 0
+        _isActive = false
+        _cameraStateFlow.value = CameraStateType.ERROR
+        _error = "相机启动失败"
+        isConnected = false
     }
 
     /**
@@ -423,12 +524,13 @@ class CameraController private constructor(
      *
      * mutex 内完成所有状态检查和资源变更。
      * 相同模式返回成功不做重绑。
+     * 只操作当前活跃会话。
      */
     suspend fun switchMode(mode: CameraMode): Result<Unit> = mutex.withLock {
         if (isReleased) {
             return@withLock Result.failure(IllegalStateException("CameraController 已永久释放"))
         }
-        if (!isConnected) {
+        if (!isConnected || activeSession == null) {
             return@withLock Result.failure(IllegalStateException("相机未连接"))
         }
         if (currentMode == mode) {
@@ -470,8 +572,8 @@ class CameraController private constructor(
 
             when (bindResult) {
                 is BindResult.Failure -> {
-                    // 绑定失败：清理半绑定资源
-                    cleanupBoundResources()
+                    // 绑定失败：完整回滚
+                    performFullRollback(provider)
                     return@withLock Result.failure(bindResult.error)
                 }
                 is BindResult.Success -> {
@@ -523,7 +625,7 @@ class CameraController private constructor(
                 }
             }
         } catch (e: Exception) {
-            _error = e.message ?: "模式切换失败"
+            _error = "模式切换失败"
             _cameraStateFlow.value = CameraStateType.ERROR
             cleanupBoundResources()
             Result.failure(e)
@@ -535,6 +637,28 @@ class CameraController private constructor(
      *
      * suspend 操作，mutex 内完成所有清理。
      * 不标记 isReleased，可再次 connect。
+     *
+     * **关键**：必须携带 sessionId，只解绑当前活跃会话。
+     * 旧页面延迟 disconnect 遇到新 session 时只能忽略。
+     *
+     * @param sessionId 由 connect 返回的会话标识
+     * @return true 表示成功解绑，false 表示 sessionId 不匹配（被忽略）
+     */
+    suspend fun disconnect(sessionId: String): Boolean = mutex.withLock {
+        // 检查 sessionId 是否匹配当前活跃会话
+        if (activeSession?.sessionId != sessionId) {
+            // sessionId 不匹配，说明是旧页面的延迟 disconnect，忽略
+            return@withLock false
+        }
+
+        releaseInternal()
+        return@withLock true
+    }
+
+    /**
+     * 无 sessionId 的 disconnect（仅用于测试或紧急清理）
+     *
+     * 生产代码应使用 disconnect(sessionId)。
      */
     suspend fun disconnect(): Unit = mutex.withLock {
         releaseInternal()
@@ -550,6 +674,13 @@ class CameraController private constructor(
         isReleased = true
         releaseInternal()
     }
+
+    /**
+     * 获取当前活跃会话
+     *
+     * 用于 CameraPreview 保存 sessionId。
+     */
+    fun getActiveSession(): CameraSession? = activeSession
 
     /**
      * 设置帧分析器
@@ -749,6 +880,7 @@ class CameraController private constructor(
         previewUseCase = null
         cameraControl = null
         currentCamera = null
+        activeSession = null
         _streamResolution = null
         _streamRotation = 0
         _isActive = false

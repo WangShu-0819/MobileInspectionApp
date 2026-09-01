@@ -333,6 +333,146 @@ class CameraControllerTest {
         assertTrue(controller.isConnected())
         assertEquals(1, fakeBinder.observerCount)
     }
+
+    // ─── 会话管理测试 ───
+
+    @Test
+    fun `connect 返回有效的 sessionId`() = runTest {
+        val result = controller.connect(fakeLifecycleOwner, FakeSurfaceProvider())
+        assertTrue(result.isSuccess)
+        val session = result.getOrNull()!!
+        assertNotNull(session.sessionId)
+        assertTrue(session.sessionId.isNotEmpty())
+    }
+
+    @Test
+    fun `connect 后 getActiveSession 返回相同会话`() = runTest {
+        val result = controller.connect(fakeLifecycleOwner, FakeSurfaceProvider())
+        val session = result.getOrNull()!!
+        assertEquals(session.sessionId, controller.getActiveSession()?.sessionId)
+    }
+
+    @Test
+    fun `disconnect 匹配 sessionId 成功解绑`() = runTest {
+        val result = controller.connect(fakeLifecycleOwner, FakeSurfaceProvider())
+        val session = result.getOrNull()!!
+        val disconnected = controller.disconnect(session.sessionId)
+        assertTrue(disconnected)
+        assertFalse(controller.isConnected())
+        assertNull(controller.getActiveSession())
+    }
+
+    @Test
+    fun `disconnect 不匹配 sessionId 被忽略`() = runTest {
+        val result = controller.connect(fakeLifecycleOwner, FakeSurfaceProvider())
+        val session = result.getOrNull()!!
+        val disconnected = controller.disconnect("invalid-session-id")
+        assertFalse(disconnected)
+        assertTrue(controller.isConnected())
+        assertEquals(session.sessionId, controller.getActiveSession()?.sessionId)
+    }
+
+    @Test
+    fun `connect - connect 第二次 unbind 后才执行 bind`() = runTest {
+        val result1 = controller.connect(fakeLifecycleOwner, FakeSurfaceProvider())
+        val session1 = result1.getOrNull()!!
+        val bindCountAfterFirst = fakeBinder.bindCount
+
+        val result2 = controller.connect(fakeLifecycleOwner, FakeSurfaceProvider())
+        val session2 = result2.getOrNull()!!
+
+        // 第二次 connect 应该先 unbind 再 bind
+        assertTrue(fakeBinder.unbindCount > 0)
+        assertTrue(fakeBinder.bindCount > bindCountAfterFirst)
+        assertNotEquals(session1.sessionId, session2.sessionId)
+    }
+
+    @Test
+    fun `old disconnect 晚于 connect session2 不被解绑`() = runTest {
+        val result1 = controller.connect(fakeLifecycleOwner, FakeSurfaceProvider())
+        val session1 = result1.getOrNull()!!
+
+        val result2 = controller.connect(fakeLifecycleOwner, FakeSurfaceProvider())
+        val session2 = result2.getOrNull()!!
+
+        // 旧页面延迟 disconnect
+        val disconnected = controller.disconnect(session1.sessionId)
+        assertFalse(disconnected)
+
+        // session2 仍然活跃
+        assertTrue(controller.isConnected())
+        assertEquals(session2.sessionId, controller.getActiveSession()?.sessionId)
+    }
+
+    @Test
+    fun `connect 与 disconnect 并发 - 最终状态确定`() = runTest {
+        fakeBinder.bindDelayMs = 50
+
+        val result1 = controller.connect(fakeLifecycleOwner, FakeSurfaceProvider())
+        val session1 = result1.getOrNull()!!
+
+        val job1 = launch(Dispatchers.Default) { controller.connect(fakeLifecycleOwner, FakeSurfaceProvider()) }
+        val job2 = launch(Dispatchers.Default) { controller.disconnect(session1.sessionId) }
+
+        joinAll(job1, job2)
+
+        // 最终状态应该是确定的（要么连接，要么断开）
+        val isConnected = controller.isConnected()
+        val activeSession = controller.getActiveSession()
+        if (isConnected) {
+            assertNotNull(activeSession)
+        } else {
+            assertNull(activeSession)
+        }
+    }
+
+    @Test
+    fun `bind 失败 - 所有资源和 session 清空`() = runTest {
+        controller.connect(fakeLifecycleOwner, FakeSurfaceProvider())
+        fakeBinder.shouldFailBind = true
+
+        val result = controller.connect(fakeLifecycleOwner, FakeSurfaceProvider())
+        assertTrue(result.isFailure)
+        assertFalse(controller.isConnected())
+        assertNull(controller.getActiveSession())
+        assertEquals(0, fakeBinder.observerCount)
+    }
+
+    @Test
+    fun `连续 10 次页面进入离开 - 绑定组数量始终合理`() = runTest {
+        // INSPECTION 模式会绑定 3 个 UseCase（Preview + Analysis + Capture）
+        val expectedMaxUseCases = 3
+        repeat(10) {
+            val result = controller.connect(fakeLifecycleOwner, FakeSurfaceProvider())
+            val session = result.getOrNull()!!
+            assertTrue("第 ${it + 1} 次连接失败", controller.isConnected())
+
+            // 每次绑定后检查当前绑定的 UseCase 数量
+            val currentBound = fakeBinder.lastBoundUseCases?.size ?: 0
+            assertTrue("第 ${it + 1} 次绑定后 UseCase 数量应为 $expectedMaxUseCases，实际: $currentBound",
+                currentBound == expectedMaxUseCases)
+
+            val disconnected = controller.disconnect(session.sessionId)
+            assertTrue("第 ${it + 1} 次断开失败", disconnected)
+            assertFalse(controller.isConnected())
+        }
+        // FakeCameraBinder 中绑定组数量始终合理
+        assertTrue("最大绑定 UseCase 数量应为 $expectedMaxUseCases，实际: ${fakeBinder.maxBoundUseCases}",
+            fakeBinder.maxBoundUseCases == expectedMaxUseCases)
+    }
+
+    @Test
+    fun `每次新绑定前断言旧 useCases 数量为 0`() = runTest {
+        controller.connect(fakeLifecycleOwner, FakeSurfaceProvider())
+        val bindCountAfterFirst = fakeBinder.bindCount
+
+        controller.connect(fakeLifecycleOwner, FakeSurfaceProvider())
+
+        // 第二次绑定前应该先 unbind
+        assertTrue(fakeBinder.unbindCount > 0)
+        // 确保绑定计数增加
+        assertTrue(fakeBinder.bindCount > bindCountAfterFirst)
+    }
 }
 
 // ─── Test Fakes ───
@@ -347,9 +487,14 @@ class FakeCameraBinder : CameraBinder {
     var hasPermission = true
 
     var bindCount = 0; private set
+    var unbindCount = 0; private set
     var observerCount = 0; private set
     var lastBoundUseCases: List<Any>? = null; private set
     var lastBoundExecutor: java.util.concurrent.ExecutorService? = null; private set
+
+    // 追踪最大绑定 UseCase 数量
+    var maxBoundUseCases: Int = 0; private set
+    private var currentBoundUseCases: Int = 0
 
     private val observers = mutableMapOf<Any, MutableList<Observer<CameraState>>>()
     private var lastAnalyzerCallback: ((Any) -> Unit)? = null
@@ -369,10 +514,16 @@ class FakeCameraBinder : CameraBinder {
         if (bindDelayMs > 0) Thread.sleep(bindDelayMs)
         bindCount++
         lastBoundUseCases = useCases
+        currentBoundUseCases = useCases.size
+        maxBoundUseCases = maxOf(maxBoundUseCases, currentBoundUseCases)
         return BindResult.Success("FakeCamera")
     }
 
-    override fun unbindAll(provider: Any) {}
+    override fun unbindAll(provider: Any) {
+        unbindCount++
+        currentBoundUseCases = 0
+        lastBoundUseCases = null
+    }
 
     override fun getCameraInfo(camera: Any): Any = "FakeCameraInfo"
 

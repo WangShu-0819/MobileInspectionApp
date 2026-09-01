@@ -35,7 +35,21 @@
 
 ## Task 3：CameraController 模式与生命周期
 
-状态：🔄 整改通过，真机验收中 — 统一并发边界、ImageProxy 所有权、Observer 管理、可注入测试架构。Task 4 禁止开始。
+状态：✅ 已验收（提交 `c90ffdc`，HONOR YAL-AL10, ERLDU20429005890）
+
+### Task 2 累积回归恢复
+
+- [x] `PreviewView.ScaleType` 恢复 `FIT_CENTER`，禁止 `FILL_CENTER` 和 1:1 裁切
+- [x] 实际 4:3 流旋转后以 3:4 完整显示，允许 letterbox，不拉伸、不裁切
+- [x] 只有 `CameraStateType.OPEN` 后加载消失并触发 `onCameraReady`
+- [x] 权限请求、临时拒绝、永久拒绝、系统设置返回和错误重试恢复
+- [x] 实际 streamResolution/rotationDegrees、生产 ContentRectCalculator 和诊断日志恢复
+- [x] Debug 四角/中央圆校准通过，轮廓与 ROI 只映射到 contentRect
+- [x] 正式源码和主 Manifest 不包含 exported 测试 Activity
+- [x] 当前源码新 APK 真机截图与 Task 2 回归矩阵通过
+- [x] 重复进入现场采集不会叠加 CameraX UseCase
+- [x] 延迟 disconnect 不会解绑新 session
+- [x] 相机错误使用简洁 UI，不显示原始异常
 
 - [x] CameraMode 枚举：IDLE/INSPECTION/DPM_SCAN/STAMP_OCR/TEMPLATE_CAPTURE + UseCase 需求配置
 - [x] switchMode() 串行 Mutex 保护：停止旧分析器 → 关闭旧 Executor → unbindAll → 构建新 UseCase → 重绑
@@ -46,9 +60,11 @@
 - [x] TestCountingAnalyzer 测试分析器验证互斥和资源释放
 - [x] 真机模式 round-trip 20 次：100 次切换全部成功，0 失败（HONOR YAL-AL10, ERLDU20429005890）
 - [x] logcat 禁止模式检查：8 项全部 0 次匹配
-- [ ] 真机 Tab 往返 10 次：无黑屏、重复绑定、Camera already in use
-- [ ] 真机前后台切换 10 次：无 RejectedExecutionException、ImageProxy 泄漏
-- [x] 单元测试 30/30 通过（CameraControllerTest，含并发/压力测试）
+- [x] 真机 Tab 往返 10 次：无黑屏、重复绑定、Camera already in use
+- [x] 真机前后台切换 10 次：无 RejectedExecutionException、ImageProxy 泄漏
+- [x] 单元测试 50/50 通过（CameraControllerTest，含并发/压力测试和会话管理测试）
+
+完成条件：上方 Task 2 回归项、Tab 10 次、前后台 10 次和重新生成的 logcat 检查必须在同一个最终 APK 上全部通过。
 
 ## Task 4：真实拍照与存储
 

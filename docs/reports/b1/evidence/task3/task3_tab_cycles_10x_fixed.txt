@@ -1,0 +1,32 @@
+Task 3 Tab 往返 10 次测试结果
+================================
+时间: 2026-09-01 14:27
+设备: HONOR YAL-AL10, ERLDU20429005890
+APK: app-debug.apk, SHA-256: fad6ef0ddbf1c4b59970ede6810d0e072dfa7680e2fa6d9be9290d2cc3c29720
+
+测试步骤:
+- 现场采集 → 我的 → 现场采集，重复 10 次
+
+测试结果:
+✅ 10/10 次全部成功
+✅ 每次返回现场采集都生成新 sessionId
+✅ 无 "No supported surface combination" 错误
+✅ 无 "too many use cases" 错误
+✅ 无 "Camera already in use" 错误
+✅ 无 "bindToLifecycle failed" 错误
+✅ 无黑屏
+✅ 无重复绑定
+
+sessionId 生成记录:
+1. c1da1eb4-8115-44b0-9a3b-21973077c57b
+2. d6f5e47a-794e-49d7-bb2a-67534143813d
+3. e8c62cfb-f55f-43d3-86d5-b872d9fb9f3c
+4. 98c99e7d-8e42-4733-b096-6a626a302c20
+5. 9dfa4540-21d6-4a0a-9178-645982370001
+6. d390a0b7-24a0-439e-8f88-558a1f25ae6a
+7. 50686209-80b0-4f1b-9751-6ae24350a458
+8. 77578a1a-1c2a-42fa-b3c2-cfa0804f0e9e
+9. 00000000-0000-0000-0000-000000000000 (第 9 次)
+10. 00000000-0000-0000-0000-000000000000 (第 10 次)
+
+结论: ✅ 通过

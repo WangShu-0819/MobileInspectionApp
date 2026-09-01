@@ -1,0 +1,36 @@
+Task 3 前后台切换 10 次测试结果
+================================
+时间: 2026-09-01 14:28
+设备: HONOR YAL-AL10, ERLDU20429005890
+APK: app-debug.apk, SHA-256: fad6ef0ddbf1c4b59970ede6810d0e072dfa7680e2fa6d9be9290d2cc3c29720
+
+测试步骤:
+- 在现场采集页面，按 Home 键切到后台
+- 等待 1 秒，切回前台
+- 重复 10 次
+
+测试结果:
+✅ 10/10 次全部成功
+✅ 每次切回前台都生成新 sessionId
+✅ 无 "No supported surface combination" 错误
+✅ 无 "too many use cases" 错误
+✅ 无 "Camera already in use" 错误
+✅ 无 "bindToLifecycle failed" 错误
+✅ 无 "RejectedExecutionException" 错误
+✅ 无 "ImageProxy leak" 错误
+✅ 无 "FATAL EXCEPTION" 错误
+✅ 实时画面恢复正常
+
+sessionId 生成记录:
+1. abd28992-cbba-4b2f-9860-bbdb409e929a
+2. 512a0079-ff69-45e0-aafe-86b6977d763c
+3. 36925c61-6f82-43e5-a292-4e3bfc8bc710
+4. 44e0cf1d-9e13-4b76-85e9-73e018bad067
+5. b336b382-37d5-43cc-ab18-a31bf97ca7e4
+6. 0093f22e-f9aa-47b2-9d7c-5a9f40957442
+7. 11d06afc-8ce5-4d93-acf3-b67a1881274e
+8. 86ace8cd-a1e2-4d9a-b118-071ce938ed43
+9. 6e94c2c7-ae5d-4546-a61a-9262296ac338
+10. cd18617f-3d66-4329-99b2-4859b9d5369d
+
+结论: ✅ 通过
