@@ -3,12 +3,12 @@ package com.wearable.inspection.mobile.dpm
 import android.graphics.Bitmap
 
 /**
- * DPM 兜底解码器接口（ZXing DataMatrixReader）
+ * ZXing DataMatrixReader 解码器接口
  *
- * 主解码器无结果时调用。
- * 只处理 DATA_MATRIX 格式。
+ * 用于 DPM 主解码。实现者使用 ZXing DataMatrixReader 解码 DATA_MATRIX。
+ * 只返回 DATA_MATRIX 格式结果，其他格式返回 null。
  */
-interface DpmFallbackDecoder {
+interface DpmZxingDecoder {
     /**
      * 同步解码
      *

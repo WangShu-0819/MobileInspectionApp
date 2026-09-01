@@ -28,9 +28,9 @@ enum class BarcodeFormat {
  * 解码来源
  */
 enum class DecodeSource {
-    /** ML Kit Barcode Scanning 主解码 */
-    ML_KIT,
+    /** ZXing DataMatrixReader 主解码 */
+    ZXING,
 
-    /** ZXing DataMatrixReader 兜底解码 */
-    ZXING
+    /** ML Kit Barcode Scanning 兜底解码 */
+    ML_KIT
 }

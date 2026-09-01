@@ -3,12 +3,12 @@ package com.wearable.inspection.mobile.dpm
 import android.graphics.Bitmap
 
 /**
- * DPM 主解码器接口（ML Kit）
+ * ML Kit Barcode Scanning 解码器接口
  *
- * 实现者使用 ML Kit Barcode Scanning 解码 DATA_MATRIX。
- * 只返回 DATA_MATRIX 格式结果，其他格式返回 null。
+ * 用于 DPM 兜底解码。ZXing 无结果、空白或异常时调用。
+ * 实现者只配置 FORMAT_DATA_MATRIX，不处理 QR Code。
  */
-interface DpmPrimaryDecoder {
+interface DpmMlKitDecoder {
     /**
      * 同步解码
      *
