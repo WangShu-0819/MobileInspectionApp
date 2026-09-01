@@ -1,4 +1,4 @@
-# 当前任务：B2 Task 1 - DPM 迁移审计与实时扫码最小闭环
+# 当前任务：B2 Task 1 - 旧 DPM 识别链迁移与实时扫码闭环
 
 状态：进行中。B1 已完成并获用户确认进入 B2；不得并行开始 B2 Task 2、OCR、模板、轮廓或 ROI。
 
@@ -123,17 +123,20 @@
 
 B1 已完成并关闭。
 
-## B2 Task 1：DPM 迁移审计与实时扫码最小闭环
+## B2 Task 1：旧 DPM 识别链迁移与实时扫码闭环
 
 - [ ] 按旧文件、旧职责、新文件、复用内容、去除耦合和迁移测试更新迁移表
 - [ ] “扫一扫”进入真实 `CameraMode.DPM_SCAN`，只绑定 Preview + ImageAnalysis
 - [ ] 使用独立 `DpmFrameAnalyzer`，共享唯一 CameraController
-- [ ] ML Kit 仅识别 DATA_MATRIX，失败时使用 ZXing Data Matrix 兜底
-- [ ] 实现帧节流、single-flight、重复结果抑制和 stop 后不回调
+- [ ] 按旧顺序迁移 ZXing DataMatrixReader 主解码和 ML Kit DATA_MATRIX 兜底，不调换主备关系
+- [ ] 迁移中心 ROI、全图降采样、DpmPreprocessor 策略轮转和正常/反转双极性尝试
+- [ ] 迁移 DpmRespondGate、帧节流、single-flight、连续 miss 对焦和 stop 后不回调
+- [ ] 迁移 DpmGridGate、DpmGridReconstructor、ImportedDpmScanner，并保留旧版取消、冷却和超时边界
 - [ ] 页面退出后释放扫码分析资源，返回现场采集后相机正常恢复
 - [ ] UI 不存在 DPM 相册选择、码图导入或相关权限/路由
-- [ ] 自动化测试覆盖解码链、节流、并发、重复抑制、停止和资源释放
-- [ ] 真机使用真实或打印 Data Matrix 完成 10 次扫码及 10 次页面往返
+- [ ] 迁移旧 DPM 专项测试，并覆盖解码链、预处理、网格门控、节流、并发、重复抑制、停止和资源释放
+- [ ] 使用同一批现场/打印样本对旧 App 与新 App 做 A/B 对照，记录逐样本结果和响应时间
+- [ ] 真机完成 10 次扫码及 10 次页面往返，识别范围和防连扫行为不得低于旧 App
 - [ ] 更新 `docs/reports/b2/B2_TASK1_DPM_MINIMAL_REPORT.md` 和证据目录
 
-本 Task 不实现未知码绑定、已绑定码切件、冲突处理、OCR、模板、轮廓、ROI 或检测算法。完成后暂停等待验收，不得自动进入 B2 Task 2。
+本 Task 不实现未知码绑定、已绑定码切件、冲突处理、OCR、模板、轮廓、ROI 或检测算法。允许的改动仅是解除旧 CameraX/Leion/USB/页面耦合并接入新工程；不得借重构删减旧识别策略。完成后暂停等待验收，不得自动进入 B2 Task 2。

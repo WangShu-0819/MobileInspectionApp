@@ -20,15 +20,17 @@
 - B1 Task 4 真实拍照与存储：已验收，整改提交链为 `48f7587` → `566acaea` → `3a04b658`；真机 APK SHA-256 为 `6a3ce752f2f07a09084c57499a4c1ccac8e331b9a52dd8066824c43d7ade858d`；自动化测试 81/81 通过；证据位于 `docs/reports/b1/evidence/task4/`。
 - B1 Task 5 完整验证：已验收；最终补充提交为 `b7c4c08e`；APK SHA-256 为 `235f8aa8c4d65b365a93bff021041e43dca86d5eb4b121ba9d13ebd3f436768f`；JVM 78/78、Instrumented 20/20 通过；冷启动 10 次、Tab 10 轮、前后台 10 次、日志门禁 12 项全部通过；证据位于 `docs/reports/b1/evidence/task5/`。
 - B1 技术验收完成，用户已确认进入 B2。
-- B2 DPM 迁移：当前执行 Task 1，只做迁移审计与实时扫码最小闭环。
+- B2 DPM 迁移：当前执行 Task 1，以旧工程已验证可用的 DPM 识别链为基线完成忠实迁移与实时扫码闭环。
 - DPM 只支持手机相机实时扫一扫，不提供相册码图导入。
 - DPM 入口：顶部扫码图标 contentDescription 为"扫一扫"，只进入实时 DPM 扫描；OCR 图标 contentDescription 为"OCR 钢印"；模板样本相册导入属于"我的 > 模板配置"。
 
 ## 当前唯一任务
 
-执行 **B2 Task 1：DPM 迁移审计与实时扫码最小闭环**。先核对 `docs/migration/LEGACY_MIGRATION_MAP.md` 和旧工程真实源码，再迁移到新工程；旧工程保持只读。
+执行 **B2 Task 1：旧 DPM 识别链迁移与实时扫码闭环**。先核对 `docs/migration/LEGACY_MIGRATION_MAP.md` 和旧工程真实源码，再迁移到新工程；旧工程保持只读。
 
-本 Task 只接通 `CameraMode.DPM_SCAN`、实时 `Preview + ImageAnalysis`、DATA_MATRIX 解码链、节流与重复结果抑制。不得实现相册码图导入、未知码绑定、自动切件、OCR、模板、轮廓、ROI 或检测算法。不得创建第二套 CameraX；`tools/contour_extraction/` 继续冻结。
+识别算法以旧工程当前生产实现为行为基线：保留 ZXing `DataMatrixReader` 主解码、中心 ROI、预处理策略轮转、双极性尝试、全图降采样、ML Kit DATA_MATRIX 兜底、帧节流、响应门、连续 miss 对焦和旧版网格兜底。只允许为适配新 `CameraController`、`FrameAnalyzer`、包名和生命周期做必要改造，不得擅自调换解码顺序、删减旧策略或用全新简化算法替代。
+
+不得实现相册码图导入、未知码绑定、自动切件、OCR、模板、轮廓、ROI 或检测算法。不得创建第二套 CameraX；`tools/contour_extraction/` 继续冻结。
 
 完成后提交 `docs/reports/b2/B2_TASK1_DPM_MINIMAL_REPORT.md` 和结构化证据，更新控制文档并暂停等待验收，不得自动进入 B2 Task 2。
 

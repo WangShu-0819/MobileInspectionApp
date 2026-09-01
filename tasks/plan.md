@@ -84,11 +84,13 @@ Task 4 已完成全部验收项：会话安全快门、capture request token 机
 
 ### B2：DPM 迁移
 
-- [ ] **当前 Task 1：迁移审计与实时扫码最小闭环**
+- [ ] **当前 Task 1：旧 DPM 识别链迁移与实时扫码闭环**
 - [ ] Task 2：未知码绑定、已绑定码切件和冲突处理
-- [ ] Task 3：工业预处理、质量门控、对焦与专项回归
+- [ ] Task 3：同样本对照回归、性能诊断与参数优化
 
-B2 Task 1 固定边界：使用唯一 CameraController 的 `DPM_SCAN` 模式，以 ML Kit DATA_MATRIX 为主、ZXing Data Matrix 为兜底；具备帧节流、single-flight、停止后不回调和重复结果抑制。“扫一扫”只进入实时扫码，不提供 DPM 相册选图、码图导入或对应权限/路由。
+B2 Task 1 固定边界：使用唯一 CameraController 的 `DPM_SCAN` 模式，忠实迁移旧工程已经可用的生产识别链。顺序固定为中心 ROI/全图的 ZXing `DataMatrixReader` 主解码（含旧预处理策略与双极性尝试）→ ML Kit DATA_MATRIX 兜底 → 满足旧门控条件时执行网格重建兜底；同时保留帧节流、single-flight、响应门、连续 miss 对焦、取消和停止后不回调。“扫一扫”只进入实时扫码，不提供 DPM 相册选图、码图导入或对应权限/路由。
+
+验收使用旧 App 与新 App 对同一组现场/打印 Data Matrix 样本做 A/B 对照。新 App 至少保持旧 App 的可识别样本集合、防连扫行为和可接受响应时间；未通过对照前不得以“基础扫码已成功”宣布 DPM 迁移完成。
 
 ### B3：钢印 OCR 迁移
 

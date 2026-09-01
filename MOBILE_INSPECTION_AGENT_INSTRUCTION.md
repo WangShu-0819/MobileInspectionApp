@@ -25,7 +25,7 @@
 现有项目已有可迁移资产：
 
 - CameraX 手机拍照、实时帧分析、对焦、变焦、闪光灯和预览
-- DPM/Data Matrix 扫码及其工业图像预处理、ZXing 兜底
+- DPM/Data Matrix 扫码及其工业图像预处理、ZXing 主解码与 ML Kit 兜底
 - 钢印 OCR、ROI 裁剪、预处理、结果确认和留档
 - 零件、视角、模板样本、匹配结果、采集记录的 Room 数据层
 - 模板样本拍摄、相册导入、模板包导入/导出
@@ -404,7 +404,7 @@ inspection_<part>_<timestamp>.zip
 
 必须迁移以下已存在的手机端能力：
 
-1. **DPM/Data Matrix 扫码**：手机相机实时扫码、ML Kit Barcode、ZXing Data Matrix 兜底、工业图像预处理、帧质量门控、对焦、节流、防抖、重复结果抑制、按 `dpmCode` 切换零件和未知码绑定；不实现相册码图导入。
+1. **DPM/Data Matrix 扫码**：以旧工程已验证可用的生产实现为行为基线，保留 ZXing Data Matrix 主解码、中心 ROI/全图路径、工业图像预处理策略轮转、双极性尝试、ML Kit DATA_MATRIX 兜底、网格重建、帧质量门控、对焦、节流、防抖和重复结果抑制，再迁移按 `dpmCode` 切换零件和未知码绑定；不实现相册码图导入。
 2. **钢印 OCR**：手机拍照、OCR ROI 裁剪、图像预处理、离线 ML Kit Text Recognition、行聚类、字符候选融合、格式解析、目录校验、`EXACT/NEED_CONFIRMATION/FAILED` 状态、人工编辑确认及原始值/确认值同时留档。
 3. **模板样本**：CameraX 拍摄、系统相册/SAF 导入、EXIF 方向处理、复制到私有目录、样本缩略图、删除、重拍、排序、多样本管理、模板包导入/导出、旧模板包向新模型显式转换。
 4. **零件与记录基础能力**：零件增删改、DPM 绑定、模板/视角按零件隔离、OCR 确认记录、图片查看和文件生命周期管理。
@@ -449,12 +449,12 @@ B1 真机验收：
 #### B2. 零件管理与 DPM 扫码迁移
 
 1. 完成零件创建、编辑、删除、选择和 DPM 绑定。
-2. 迁移旧工程的 `DpmAnalyzer`、`DpmPreprocessor`、`DpmFrameQuality`、`DpmGridGate/DpmGridReconstructor`、`ImportedDpmScanner` 及相应测试；保持 ML Kit + ZXing Data Matrix 兜底链路。
+2. 忠实迁移旧工程的 `DpmAnalyzer`、`DpmPreprocessor`、`DpmFrameQuality`、`DpmRespondGate`、`DpmGridGate/DpmGridReconstructor`、`ImportedDpmScanner` 及相应测试；保持旧版 ZXing 主解码 → ML Kit DATA_MATRIX 兜底 → 受门控网格重建的顺序和默认参数。除解除 CameraX/Leion/USB/页面耦合外，不得先删减旧算法再以“后续优化”替代迁移。
 3. “扫一扫”直接进入相机实时扫描，不提供相册选择或码图导入入口。
 4. 已绑定码显示匹配零件并确认切换；未知码允许绑定当前零件；重复绑定提示冲突，不静默覆盖。
 5. 保留连续失败对焦、处理间隔、结果防抖和重复弹窗抑制。
 
-验收：使用真实 DPM/Data Matrix 实物或打印样本完成手机相机实时识别；扫码能切换零件；未知码能绑定；连续扫描不会重复写库或反复弹窗；迁移的 DPM 专项测试通过；界面不存在 DPM 相册导入入口。
+验收：使用同一组真实 DPM/Data Matrix 实物或打印样本对旧 App 与新 App 做逐样本 A/B 对照；新 App 至少保持旧 App 的可识别样本集合、防连扫行为和可接受响应时间。扫码能切换零件；未知码能绑定；连续扫描不会重复写库或反复弹窗；迁移的 DPM 专项测试通过；界面不存在 DPM 相册导入入口。不得用“理论上达到或超过”代替同样本实测。
 
 #### B3. 钢印 OCR 迁移
 

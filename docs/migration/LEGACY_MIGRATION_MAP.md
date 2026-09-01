@@ -20,9 +20,9 @@
 
 - 只识别 `DATA_MATRIX`，不兼容普通 QR Code。
 - “扫一扫”只进入手机相机实时扫码，不提供相册选择、码图导入、相关权限、回调或隐藏路由。
-- B2 Task 1 使用 ML Kit `DATA_MATRIX` 主解码、ZXing `DataMatrixReader` 兜底；两者都失败时返回未识别，不伪造结果。
+- B2 Task 1 保持旧工程顺序：ZXing `DataMatrixReader` 主解码，ML Kit 仅限定 `DATA_MATRIX` 作为兜底，满足旧门控条件时再执行网格重建；不得调换主备关系。
 - 本 Task 不实现未知码绑定、已绑定码切件、冲突处理、OCR、模板、轮廓、ROI 或检测算法。
-- OpenCV 预处理、帧质量门控、中心对焦增强、`ImportedDpmScanner` 和网格重建延后到 B2 Task 3 评估，不整类复制旧 `DpmAnalyzer`。
+- OpenCV 预处理、帧质量门控、中心对焦、`ImportedDpmScanner` 和网格重建均属于旧版有效识别链，随 B2 Task 1 迁移；只解除旧设备和页面耦合，不删减旧默认策略。Task 3 负责同样本回归后的性能诊断和参数优化。
 
 ### 0.3 代码级迁移表
 
@@ -30,10 +30,10 @@
 |---|---|---|---|---|---|
 | `camera/DpmAnalyzer.kt` | 多阶段实时 DPM 解码、节流、防抖、对焦和网格兜底 | `mobile/dpm/DpmFrameAnalyzer.kt`、`mobile/dpm/DpmDecodePipeline.kt` | DATA_MATRIX 限定、解码短路、节流和响应门思想 | QR Code、OpenCV、网格重建、Debug 大量落盘、数据库写入 | 主解码成功、兜底、双失败、空结果、停止后不回调 |
 | `camera/DpmAnalyzer.kt` 中 `DpmRespondGate` | 同码防连扫、换码立即响应、离开视野后重新武装 | `mobile/dpm/DpmResultGate.kt` | 可注入时钟和纯 Kotlin 状态机 | 旧页面弹窗和切件回调 | 同码抑制、换码、miss 后重扫、stop/reset |
-| `camera/DpmPreprocessor.kt` | OpenCV 多策略二值化和增强 | B2 Task 3 再定 | 无 | 本 Task 全部排除 | Task 3 专项测试 |
-| `camera/DpmFrameQuality.kt` | 清晰度、亮度等帧质量门控 | B2 Task 3 再定 | 无 | 本 Task 全部排除 | Task 3 专项测试 |
-| `camera/DpmGridGate.kt`、`DpmGridReconstructor.kt` | 重型网格任务门控与重建 | B2 Task 3 再评估 | 无 | 本 Task 全部排除 | 性能、取消和超时测试 |
-| `vision/dpm/imported/*` | 第三方/导入式 DPM 网格扫描 | B2 Task 3 再评估 | 无 | 本 Task 全部排除 | 性能与准确率基准 |
+| `camera/DpmPreprocessor.kt` | OpenCV 多策略二值化和增强 | `mobile/dpm/DpmPreprocessor.kt` | 旧策略、顺序、默认参数和 Debug 配额边界 | 仅移除旧包名/页面耦合 | 迁移旧预处理测试与同样本回归 |
+| `camera/DpmFrameQuality.kt` | 清晰度、亮度等帧质量门控 | `mobile/dpm/DpmFrameQuality.kt` | 旧指标和阈值 | 无依据的重新调参 | 迁移旧质量门控测试 |
+| `camera/DpmGridGate.kt`、`DpmGridReconstructor.kt` | 重型网格任务门控与重建 | `mobile/dpm/DpmGridGate.kt`、`mobile/dpm/DpmGridReconstructor.kt` | 旧 miss 门槛、冷却、会话代数、取消和超时 | 阻塞相机分析线程 | 迁移旧测试并补取消/超时测试 |
+| `vision/dpm/imported/*` | 第三方/导入式 DPM 网格扫描 | `mobile/dpm/imported/*` | 旧扫描控制、尺寸模式和实际使用实现 | 与 DPM 相册导入无关的 UI/文件入口 | 迁移旧测试与性能基准 |
 | `ui/shared/CameraSessionViewModel.kt` 的 DPM 部分 | 扫码模式、事件流和相机切换 | 现有 `CameraController` + B2 扫码 ViewModel | 模式进入/退出和事件流思想 | 旧 VideoSource、Leion、USB、后台服务 | 页面往返、会话恢复、无重复绑定 |
 | 旧扫码 UI | 实时取景、扫描区域和结果反馈 | `ui/feature/dpm/DpmScanScreen.kt` | 实时预览、扫描状态、取消操作 | 相册导入、普通 QR、绑定/切件 | Compose/UIAutomator 与真机扫码 |
 
