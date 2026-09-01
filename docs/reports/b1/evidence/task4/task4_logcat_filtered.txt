@@ -1,0 +1,315 @@
+09-01 15:03:39.263  5784  5784 D CameraPreview: 连接成功，sessionId: c6aa6cdc-c17b-484a-81b9-961d9620ea5b
+09-01 15:03:39.277  1580  2842 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:03:39.282  1580  2842 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:03:39.303  1580  2842 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:03:39.354  5784  5784 D CameraPreview: 连接成功，sessionId: d1ace519-55f2-494f-ac90-aea2c8089b87
+09-01 15:03:39.368  1580  2842 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:03:39.370  1580  2842 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:03:39.401  5784  5784 D CameraPreview: === 画幅诊断 ===
+09-01 15:03:39.401  5784  5784 D CameraPreview: PreviewView: 1080x1039
+09-01 15:03:39.401  5784  5784 D CameraPreview: 流尺寸: 640x480
+09-01 15:03:39.401  5784  5784 D CameraPreview: 旋转: 90°
+09-01 15:03:39.401  5784  5784 D CameraPreview: 旋转后: 480x640
+09-01 15:03:39.401  5784  5784 D CameraPreview: contentRect: Rect(151, 0 - 930, 1039)
+09-01 15:03:39.403  1580  2833 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:03:40.079  1580  2833 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:03:42.612  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:03:42.628  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:03:44.966  1580  2050 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:03:44.974  1580  2050 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:03:45.031  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:03:45.084  5784  5784 D CameraPreview: 连接成功，sessionId: 9887233b-1ecc-4d41-a026-0f45c0328ecc
+09-01 15:03:45.096  1580  2050 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:03:45.098  1580  2050 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:03:45.123  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:03:45.167  5784  5784 D CameraPreview: 连接成功，sessionId: 6b39d392-54bf-47dd-a6e1-a784a6577dd5
+09-01 15:03:45.177  1580  2833 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:03:45.181  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:03:45.198  1580  2842 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:03:45.205  5784  5784 D CameraPreview: === 画幅诊断 ===
+09-01 15:03:45.205  5784  5784 D CameraPreview: PreviewView: 1080x1039
+09-01 15:03:45.205  5784  5784 D CameraPreview: 流尺寸: 640x480
+09-01 15:03:45.205  5784  5784 D CameraPreview: 旋转: 90°
+09-01 15:03:45.205  5784  5784 D CameraPreview: 旋转后: 480x640
+09-01 15:03:45.206  5784  5784 D CameraPreview: contentRect: Rect(151, 0 - 930, 1039)
+09-01 15:03:45.507  1580  2842 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:03:48.469  1580  2842 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:03:48.481  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:03:50.818  1580  2842 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:03:50.824  1580  2842 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:03:50.871  1580  2833 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:03:50.930  5784  5784 D CameraPreview: 连接成功，sessionId: 23d3451d-e449-43f2-8fd9-be62918c3b77
+09-01 15:03:50.941  1580  2833 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:03:50.946  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:03:50.960  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:03:51.010  5784  5784 D CameraPreview: 连接成功，sessionId: c1d4dc7b-d40a-47df-941f-87a9ea6cbcd4
+09-01 15:03:51.028  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:03:51.032  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:03:51.046  1580  2833 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:03:51.056  5784  5784 D CameraPreview: === 画幅诊断 ===
+09-01 15:03:51.056  5784  5784 D CameraPreview: PreviewView: 1080x1039
+09-01 15:03:51.056  5784  5784 D CameraPreview: 流尺寸: 640x480
+09-01 15:03:51.056  5784  5784 D CameraPreview: 旋转: 90°
+09-01 15:03:51.056  5784  5784 D CameraPreview: 旋转后: 480x640
+09-01 15:03:51.056  5784  5784 D CameraPreview: contentRect: Rect(151, 0 - 930, 1039)
+09-01 15:03:51.344  1580  2842 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:36.009  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:36.018  1580  2842 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:37.265  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:37.279  1580  6859 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:37.313  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:37.375  5784  5784 D CameraPreview: 连接成功，sessionId: b8d593d3-7c93-420e-b556-2600898ab07e
+09-01 15:05:37.390  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:37.392  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:37.404  1580  6859 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:37.449  5784  5784 D CameraPreview: 连接成功，sessionId: 6617f788-7fa5-4d2a-9d93-d67e1ff2b1eb
+09-01 15:05:37.462  1580  6859 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:37.465  1580  6859 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:37.479  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:37.486  5784  5784 D CameraPreview: === 画幅诊断 ===
+09-01 15:05:37.486  5784  5784 D CameraPreview: PreviewView: 1080x1039
+09-01 15:05:37.486  5784  5784 D CameraPreview: 流尺寸: 640x480
+09-01 15:05:37.486  5784  5784 D CameraPreview: 旋转: 90°
+09-01 15:05:37.486  5784  5784 D CameraPreview: 旋转后: 480x640
+09-01 15:05:37.486  5784  5784 D CameraPreview: contentRect: Rect(151, 0 - 930, 1039)
+09-01 15:05:37.805  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:39.774  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:39.788  1580  2842 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:41.113  1580  2842 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:41.129  1580  2842 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:41.158  1580  6859 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:41.210  5784  5784 D CameraPreview: 连接成功，sessionId: cadccda0-4b5d-44be-957f-6697eb4125eb
+09-01 15:05:41.223  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:41.225  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:41.239  1580  6859 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:41.283  5784  5784 D CameraPreview: 连接成功，sessionId: 952fa7d8-ee12-414a-a5d2-eb93fefdaf01
+09-01 15:05:41.300  1580  6859 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:41.304  1580  6859 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:41.311  1580  6859 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:41.335  5784  5784 D CameraPreview: === 画幅诊断 ===
+09-01 15:05:41.335  5784  5784 D CameraPreview: PreviewView: 1080x1039
+09-01 15:05:41.335  5784  5784 D CameraPreview: 流尺寸: 640x480
+09-01 15:05:41.335  5784  5784 D CameraPreview: 旋转: 90°
+09-01 15:05:41.335  5784  5784 D CameraPreview: 旋转后: 480x640
+09-01 15:05:41.335  5784  5784 D CameraPreview: contentRect: Rect(151, 0 - 930, 1039)
+09-01 15:05:41.640  1580  6859 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:43.617  1580  6859 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:43.627  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:44.933  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:44.944  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:44.986  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:45.037  5784  5784 D CameraPreview: 连接成功，sessionId: ce000cca-b96e-4372-a3cd-7968403e16b1
+09-01 15:05:45.055  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:45.058  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:45.069  1580  6859 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:45.108  5784  5784 D CameraPreview: 连接成功，sessionId: 88bdd573-22ca-43e4-aa2e-677c818ba7b2
+09-01 15:05:45.124  1580  6859 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:45.126  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:45.137  1580  6859 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:45.150  5784  5784 D CameraPreview: === 画幅诊断 ===
+09-01 15:05:45.150  5784  5784 D CameraPreview: PreviewView: 1080x1039
+09-01 15:05:45.150  5784  5784 D CameraPreview: 流尺寸: 640x480
+09-01 15:05:45.150  5784  5784 D CameraPreview: 旋转: 90°
+09-01 15:05:45.150  5784  5784 D CameraPreview: 旋转后: 480x640
+09-01 15:05:45.150  5784  5784 D CameraPreview: contentRect: Rect(151, 0 - 930, 1039)
+09-01 15:05:45.469  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:47.450  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:47.462  1580  6859 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:48.794  1580  6859 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:48.797  1580  6859 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:48.835  1580  6859 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:48.886  5784  5784 D CameraPreview: 连接成功，sessionId: b1b84360-ac0b-4c94-bd97-386f6ea2c657
+09-01 15:05:48.909  1580  6859 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:48.913  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:48.926  1580  6859 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:48.963  5784  5784 D CameraPreview: 连接成功，sessionId: 94132cce-8a28-4420-afcb-4c58d9f0a03d
+09-01 15:05:48.974  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:48.976  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:48.991  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:48.998  5784  5784 D CameraPreview: === 画幅诊断 ===
+09-01 15:05:48.998  5784  5784 D CameraPreview: PreviewView: 1080x1039
+09-01 15:05:48.998  5784  5784 D CameraPreview: 流尺寸: 640x480
+09-01 15:05:48.998  5784  5784 D CameraPreview: 旋转: 90°
+09-01 15:05:48.998  5784  5784 D CameraPreview: 旋转后: 480x640
+09-01 15:05:48.998  5784  5784 D CameraPreview: contentRect: Rect(151, 0 - 930, 1039)
+09-01 15:05:49.327  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:51.281  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:51.291  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:52.603  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:52.607  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:52.644  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:52.705  5784  5784 D CameraPreview: 连接成功，sessionId: d9b7523a-0535-48a3-9be5-a207b27cf3bb
+09-01 15:05:52.721  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:52.725  1580  2842 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:52.736  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:52.775  5784  5784 D CameraPreview: 连接成功，sessionId: 92754e57-8c02-451c-aa8f-20c12a0a8edd
+09-01 15:05:52.783  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:52.786  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:52.799  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:52.814  5784  5784 D CameraPreview: === 画幅诊断 ===
+09-01 15:05:52.814  5784  5784 D CameraPreview: PreviewView: 1080x1039
+09-01 15:05:52.814  5784  5784 D CameraPreview: 流尺寸: 640x480
+09-01 15:05:52.814  5784  5784 D CameraPreview: 旋转: 90°
+09-01 15:05:52.814  5784  5784 D CameraPreview: 旋转后: 480x640
+09-01 15:05:52.814  5784  5784 D CameraPreview: contentRect: Rect(151, 0 - 930, 1039)
+09-01 15:05:53.132  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:55.139  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:55.155  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:56.460  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:56.464  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:56.494  1580  2842 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:56.544  5784  5784 D CameraPreview: 连接成功，sessionId: cd86f2d2-cbd9-4cdc-bf90-6651232f05c3
+09-01 15:05:56.556  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:56.558  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:56.571  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:56.615  5784  5784 D CameraPreview: 连接成功，sessionId: 26b5ee9a-c8f8-4b1f-8202-94a6fe0d8ca2
+09-01 15:05:56.625  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:56.629  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:56.638  1580  2842 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:56.662  5784  5784 D CameraPreview: === 画幅诊断 ===
+09-01 15:05:56.662  5784  5784 D CameraPreview: PreviewView: 1080x1039
+09-01 15:05:56.662  5784  5784 D CameraPreview: 流尺寸: 640x480
+09-01 15:05:56.662  5784  5784 D CameraPreview: 旋转: 90°
+09-01 15:05:56.662  5784  5784 D CameraPreview: 旋转后: 480x640
+09-01 15:05:56.662  5784  5784 D CameraPreview: contentRect: Rect(151, 0 - 930, 1039)
+09-01 15:05:56.988  1580  2842 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:58.941  1580  6859 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:05:58.951  1580  6859 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:00.268  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:00.272  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:00.309  1580  2842 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:00.357  5784  5784 D CameraPreview: 连接成功，sessionId: 4ece1dcb-5da0-49cf-99f1-78a57999c9da
+09-01 15:06:00.370  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:00.373  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:00.388  1580  6859 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:00.434  5784  5784 D CameraPreview: 连接成功，sessionId: 33d2e699-46cd-4f1b-846c-81603404e08e
+09-01 15:06:00.444  1580  6859 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:00.447  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:00.459  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:00.477  5784  5784 D CameraPreview: === 画幅诊断 ===
+09-01 15:06:00.477  5784  5784 D CameraPreview: PreviewView: 1080x1039
+09-01 15:06:00.477  5784  5784 D CameraPreview: 流尺寸: 640x480
+09-01 15:06:00.477  5784  5784 D CameraPreview: 旋转: 90°
+09-01 15:06:00.477  5784  5784 D CameraPreview: 旋转后: 480x640
+09-01 15:06:00.477  5784  5784 D CameraPreview: contentRect: Rect(151, 0 - 930, 1039)
+09-01 15:06:00.796  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:02.763  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:02.771  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:04.090  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:04.093  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:04.122  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:04.179  5784  5784 D CameraPreview: 连接成功，sessionId: a31c9396-532b-4203-a3ec-17e892d2df7f
+09-01 15:06:04.189  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:04.193  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:04.209  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:04.255  5784  5784 D CameraPreview: 连接成功，sessionId: b505d8f7-737c-4f69-9a17-1fe4a0b18a51
+09-01 15:06:04.265  1580  6859 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:04.267  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:04.286  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:04.293  5784  5784 D CameraPreview: === 画幅诊断 ===
+09-01 15:06:04.293  5784  5784 D CameraPreview: PreviewView: 1080x1039
+09-01 15:06:04.293  5784  5784 D CameraPreview: 流尺寸: 640x480
+09-01 15:06:04.293  5784  5784 D CameraPreview: 旋转: 90°
+09-01 15:06:04.293  5784  5784 D CameraPreview: 旋转后: 480x640
+09-01 15:06:04.293  5784  5784 D CameraPreview: contentRect: Rect(151, 0 - 930, 1039)
+09-01 15:06:04.611  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:06.641  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:06.651  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:07.923  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:07.937  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:07.962  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:08.015  5784  5784 D CameraPreview: 连接成功，sessionId: 8f0b5fea-8686-4470-9604-01771f39caea
+09-01 15:06:08.027  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:08.031  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:08.045  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:08.091  5784  5784 D CameraPreview: 连接成功，sessionId: ef78907c-8432-46e8-9a2c-a8b4aae25229
+09-01 15:06:08.101  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:08.105  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:08.117  1580  6859 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:08.142  5784  5784 D CameraPreview: === 画幅诊断 ===
+09-01 15:06:08.142  5784  5784 D CameraPreview: PreviewView: 1080x1039
+09-01 15:06:08.142  5784  5784 D CameraPreview: 流尺寸: 640x480
+09-01 15:06:08.142  5784  5784 D CameraPreview: 旋转: 90°
+09-01 15:06:08.142  5784  5784 D CameraPreview: 旋转后: 480x640
+09-01 15:06:08.142  5784  5784 D CameraPreview: contentRect: Rect(151, 0 - 930, 1039)
+09-01 15:06:08.451  1580  6859 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:10.463  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:10.475  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:11.731  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:11.756  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:11.780  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:11.835  5784  5784 D CameraPreview: 连接成功，sessionId: 5b9b2fed-2cbb-4fa5-b7ce-9b61fcaaf172
+09-01 15:06:11.853  1580  6859 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:11.856  1580  6859 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:11.871  1580  6859 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:11.909  5784  5784 D CameraPreview: 连接成功，sessionId: 509275fa-a215-4f83-b8ee-65399b500f42
+09-01 15:06:11.919  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:11.922  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:11.934  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:11.956  5784  5784 D CameraPreview: === 画幅诊断 ===
+09-01 15:06:11.956  5784  5784 D CameraPreview: PreviewView: 1080x1039
+09-01 15:06:11.956  5784  5784 D CameraPreview: 流尺寸: 640x480
+09-01 15:06:11.956  5784  5784 D CameraPreview: 旋转: 90°
+09-01 15:06:11.956  5784  5784 D CameraPreview: 旋转后: 480x640
+09-01 15:06:11.956  5784  5784 D CameraPreview: contentRect: Rect(151, 0 - 930, 1039)
+09-01 15:06:12.264  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:43.251  1580  2842 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:43.321  1580  2842 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:43.327  1580  2842 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:43.329  1580  2842 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:43.329  1580  2842 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:43.882  1580  2412 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:46.756  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:46.776  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:46.911  1580  2843 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:46.914  1580  2843 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:46.967  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:47.419  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:50.464  1580  2842 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:50.479  1580  2706 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:50.648  1580  2050 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:50.654  1580  2050 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:50.666  1580  6859 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:51.148  1580  6859 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:54.205  1580  2412 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:54.223  1580  2412 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:54.317  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:54.328  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:54.360  1580  2706 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:54.881  1580  2706 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:57.736  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:57.749  1580  7234 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:57.900  1580  2833 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:57.902  1580  2833 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:57.930  1580  2050 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:06:58.450  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:07:01.601  1580  2842 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:07:01.610  1580  2842 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:07:01.718  1580  2706 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:07:01.720  1580  2706 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:07:01.749  1580  2833 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:07:02.251  1580  2833 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:07:05.164  1580  2412 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:07:05.184  1580  2842 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:07:05.275  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:07:05.289  1580  2842 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:07:05.313  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:07:05.824  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:07:08.740  1580  2842 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:07:08.759  1580  2050 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:07:08.791  1580  2706 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:07:08.795  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:07:08.812  1580  2833 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:07:09.398  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:07:12.225  1580  2706 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:07:12.255  1580  2706 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:07:12.279  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:07:12.290  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:07:12.315  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:07:12.883  1580  2412 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:07:15.725  1580  2843 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:07:15.743  1580  2833 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:07:15.808  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:07:15.827  1580  1658 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:07:15.874  1580  2833 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-01 15:07:16.406  1580  2833 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService

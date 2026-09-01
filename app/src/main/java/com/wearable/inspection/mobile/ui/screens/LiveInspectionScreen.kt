@@ -39,6 +39,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -47,6 +48,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -80,8 +82,23 @@ import com.wearable.inspection.mobile.ui.theme.DividerColor
 import com.wearable.inspection.mobile.ui.theme.PlaceholderColor
 import com.wearable.inspection.mobile.ui.theme.BackgroundVariant1
 import androidx.compose.ui.platform.LocalContext
-import com.wearable.inspection.mobile.camera.CameraError
 import com.wearable.inspection.mobile.BuildConfig
+import com.wearable.inspection.mobile.camera.CameraController
+import com.wearable.inspection.mobile.camera.CameraError
+import com.wearable.inspection.mobile.camera.CameraStateType
+import com.wearable.inspection.mobile.data.image.MobileImageStore
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+
+/**
+ * 拍照 UI 状态
+ */
+enum class CaptureUiState {
+    IDLE,       // 空闲，可拍照
+    CAPTURING,  // 拍摄中，禁用按钮
+    SAVED,      // 已保存，短暂显示后回到 IDLE
+    ERROR       // 出错，显示错误信息，可重试
+}
 
 /**
  * 现场采集页（上实时 + 下模板）
@@ -98,11 +115,81 @@ fun LiveInspectionScreen(
     onOpenTemplates: () -> Unit,
     onViewRecord: (Long) -> Unit
 ) {
+    val context = LocalContext.current
     val inspectionState by viewModel.inspectionState.collectAsState()
     val customColors = LocalCustomColors.current
+    val coroutineScope = rememberCoroutineScope()
+
+    // 相机会话
+    var sessionId by remember { mutableStateOf<String?>(null) }
+
+    // 拍照状态
+    var captureState by remember { mutableStateOf(CaptureUiState.IDLE) }
+    var captureError by remember { mutableStateOf<String?>(null) }
+    var savedPath by remember { mutableStateOf<String?>(null) }
+
+    // CameraController 和 ImageStore
+    val cameraController = remember { CameraController.getInstance(context) }
+    val imageStore = remember { MobileImageStore(context) }
+
+    // CameraState
+    val cameraState by cameraController.cameraStateFlow.collectAsState()
 
     // 拍照确认对话框状态
     var showCaptureConfirm by remember { mutableStateOf(false) }
+
+    // 拍照函数
+    val onCapture: () -> Unit = {
+        val currentSessionId = sessionId
+        if (currentSessionId == null) {
+            captureError = "相机未就绪"
+            captureState = CaptureUiState.ERROR
+        } else if (captureState == CaptureUiState.CAPTURING) {
+            // 已在拍摄中，忽略
+        } else {
+            captureState = CaptureUiState.CAPTURING
+            captureError = null
+            savedPath = null
+
+            coroutineScope.launch {
+                val tempFile = imageStore.generateTempFile()
+                val result = cameraController.takePhoto(currentSessionId, tempFile)
+                result.fold(
+                    onSuccess = { file ->
+                        val storeResult = imageStore.storeCapturedImage(file)
+                        if (storeResult != null) {
+                            savedPath = storeResult.finalPath
+                            captureState = CaptureUiState.SAVED
+                            // 2秒后回到 IDLE
+                            delay(2000)
+                            if (captureState == CaptureUiState.SAVED) {
+                                captureState = CaptureUiState.IDLE
+                            }
+                        } else {
+                            imageStore.deleteTempFile(file)
+                            captureError = "图片保存失败"
+                            captureState = CaptureUiState.ERROR
+                        }
+                    },
+                    onFailure = { error ->
+                        imageStore.deleteTempFile(tempFile)
+                        captureError = "拍照失败"
+                        captureState = CaptureUiState.ERROR
+                        if (BuildConfig.DEBUG) {
+                            android.util.Log.e("LiveInspection", "Capture failed", error)
+                        }
+                    }
+                )
+            }
+        }
+    }
+
+    // 重置拍照状态
+    val onResetCapture: () -> Unit = {
+        captureState = CaptureUiState.IDLE
+        captureError = null
+        savedPath = null
+    }
 
     Scaffold(
         topBar = {
@@ -143,88 +230,42 @@ fun LiveInspectionScreen(
         containerColor = customColors.pageBackground
     ) { paddingValues ->
         Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-            ) {
-                // 上方 60%：实时预览 + 轮廓叠加
-                CameraPreviewSection(
-                    modifier = Modifier.weight(0.6f),
-                    template = inspectionState.selectedTemplate,
-                    rois = inspectionState.rois,
-                    isReady = inspectionState.isTemplateReady
-                )
-
-                // 下方 40%：模板参考 + 信息
-                TemplateReferenceSection(
-                    modifier = Modifier.weight(0.4f),
-                    template = inspectionState.selectedTemplate,
-                    rois = inspectionState.rois,
-                    isReady = inspectionState.isTemplateReady,
-                    onTemplateMissing = onOpenTemplates
-                )
-            }
-        }
-
-    // 拍照确认对话框
-    if (showCaptureConfirm) {
-        ModalBottomSheet(
-            onDismissRequest = { showCaptureConfirm = false },
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Warning,
-                    contentDescription = null,
-                    tint = PendingColor,
-                    modifier = Modifier.size(48.dp)
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = "当前模板未对齐",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    textAlign = TextAlign.Center
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "检测到当前零件与模板存在偏差，继续拍摄可能导致检测结果不准确。是否仍要继续？",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = TextSecondary,
-                    textAlign = TextAlign.Center
-                )
-                Spacer(modifier = Modifier.height(24.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Button(
-                        onClick = { showCaptureConfirm = false },
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = SurfaceWhite,
-                            contentColor = TextPrimary
-                        )
-                    ) {
-                        Text("取消")
-                    }
-                    Button(
-                        onClick = {
-                            showCaptureConfirm = false
-                            // TODO: 执行拍照并保存 alignmentOverride=true
-                        },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text("仍要继续")
+            // 上方 60%：实时预览 + 轮廓叠加
+            CameraPreviewSection(
+                modifier = Modifier.weight(0.6f),
+                template = inspectionState.selectedTemplate,
+                rois = inspectionState.rois,
+                isReady = inspectionState.isTemplateReady,
+                onSessionReady = { id ->
+                    sessionId = id
+                    if (id == null) {
+                        captureState = CaptureUiState.ERROR
+                        captureError = "相机连接失败"
+                    } else {
+                        // 新会话就绪，重置拍照状态
+                        onResetCapture()
                     }
                 }
-                Spacer(modifier = Modifier.height(16.dp))
-            }
+            )
+
+            // 下方 40%：模板参考 + 信息
+            TemplateReferenceSection(
+                modifier = Modifier.weight(0.4f),
+                template = inspectionState.selectedTemplate,
+                rois = inspectionState.rois,
+                isReady = inspectionState.isTemplateReady,
+                captureState = captureState,
+                captureError = captureError,
+                cameraState = cameraState,
+                sessionId = sessionId,
+                onTemplateMissing = onOpenTemplates,
+                onCapture = onCapture,
+                onRetry = onResetCapture
+            )
         }
     }
 }
@@ -239,7 +280,8 @@ private fun CameraPreviewSection(
     modifier: Modifier = Modifier,
     template: InspectionTemplateEntity?,
     rois: List<RoiDefinitionEntity>,
-    isReady: Boolean
+    isReady: Boolean,
+    onSessionReady: (String?) -> Unit = {}
 ) {
     var cameraReady by remember { mutableStateOf(false) }
     var cameraError by remember { mutableStateOf<CameraError?>(null) }
@@ -261,21 +303,25 @@ private fun CameraPreviewSection(
             },
             onCameraError = { error ->
                 cameraError = error
+                onSessionReady(null)
                 if (BuildConfig.DEBUG) {
                     android.util.Log.e("LiveInspection", "Camera error: ${error.message}")
                 }
             },
             onPermissionDenied = {
+                onSessionReady(null)
                 if (BuildConfig.DEBUG) {
                     android.util.Log.w("LiveInspection", "Camera permission denied")
                 }
             },
             onPermissionPermanentlyDenied = {
                 cameraError = CameraError.PermissionPermanentlyDenied
+                onSessionReady(null)
                 if (BuildConfig.DEBUG) {
                     android.util.Log.w("LiveInspection", "Camera permission permanently denied")
                 }
-            }
+            },
+            onSessionReady = onSessionReady
         )
 
         // 轮廓和 ROI 叠加层
@@ -375,8 +421,19 @@ private fun TemplateReferenceSection(
     template: InspectionTemplateEntity?,
     rois: List<RoiDefinitionEntity>,
     isReady: Boolean,
-    onTemplateMissing: () -> Unit
+    captureState: CaptureUiState = CaptureUiState.IDLE,
+    captureError: String? = null,
+    cameraState: CameraStateType? = null,
+    sessionId: String? = null,
+    onTemplateMissing: () -> Unit = {},
+    onCapture: () -> Unit = {},
+    onRetry: () -> Unit = {}
 ) {
+    // 快门是否可用
+    val canCapture = sessionId != null &&
+        cameraState == CameraStateType.OPEN &&
+        captureState == CaptureUiState.IDLE
+
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -420,19 +477,72 @@ private fun TemplateReferenceSection(
             )
         }
 
+        // 拍照状态提示
+        when (captureState) {
+            CaptureUiState.CAPTURING -> {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "拍摄中...",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = TextSecondary
+                    )
+                }
+            }
+            CaptureUiState.SAVED -> {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = null,
+                        tint = PassColor,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "原图已保存",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = PassColor
+                    )
+                }
+            }
+            CaptureUiState.ERROR -> {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = captureError ?: "拍照失败",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = FailColor
+                    )
+                    TextButton(onClick = onRetry) {
+                        Text("重试", color = Primary)
+                    }
+                }
+            }
+            CaptureUiState.IDLE -> { /* 不显示额外内容 */ }
+        }
+
         // 拍照按钮
         Button(
-            onClick = {
-                if (isReady) {
-                    // TODO: 执行拍照
-                } else {
-                    // 显示确认对话框
-                }
-            },
+            onClick = onCapture,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
-            enabled = true, // 始终可用，未对齐时显示确认
+            enabled = canCapture,
             colors = ButtonDefaults.buttonColors(
                 containerColor = Primary,
                 contentColor = Color.White,
@@ -448,7 +558,12 @@ private fun TemplateReferenceSection(
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = if (isReady) "开始检测" else "强制拍照",
+                text = when {
+                    sessionId == null -> "相机未就绪"
+                    cameraState != CameraStateType.OPEN -> "相机初始化中"
+                    captureState == CaptureUiState.CAPTURING -> "拍摄中..."
+                    else -> "拍照"
+                },
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium
             )

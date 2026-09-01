@@ -63,7 +63,8 @@ fun CameraPreview(
     onCameraReady: () -> Unit = {},
     onCameraError: (CameraError) -> Unit = {},
     onPermissionDenied: () -> Unit = {},
-    onPermissionPermanentlyDenied: () -> Unit = {}
+    onPermissionPermanentlyDenied: () -> Unit = {},
+    onSessionReady: (sessionId: String?) -> Unit = {}
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -135,11 +136,13 @@ fun CameraPreview(
         result.fold(
             onSuccess = { session ->
                 currentSessionId = session.sessionId
+                onSessionReady(session.sessionId)
                 if (BuildConfig.DEBUG) {
                     android.util.Log.d("CameraPreview", "连接成功，sessionId: ${session.sessionId}")
                 }
             },
             onFailure = { error ->
+                onSessionReady(null)
                 cameraError = when (error) {
                     is SecurityException -> CameraError.PermissionDenied
                     else -> CameraError.Unknown("相机启动失败")

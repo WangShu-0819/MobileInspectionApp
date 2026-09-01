@@ -713,38 +713,108 @@ class CameraController private constructor(
     }
 
     /**
-     * 拍照
+     * 拍照结果
      */
-    suspend fun takePhoto(outputFile: File): Result<File> {
-        val capture = imageCapture as? ImageCapture ?: return Result.failure(
-            IllegalStateException("ImageCapture 未初始化（当前模式: $currentMode）")
-        )
+    data class CaptureResult(
+        val filePath: String,
+        val sizeBytes: Long,
+        val width: Int,
+        val height: Int,
+        val orientation: Int,
+        val capturedAt: Long
+    )
 
-        outputFile.parentFile?.mkdirs()
+    // ─── 拍照并发保护 ───
+    @Volatile
+    private var isCapturing = false
 
-        return suspendCancellableCoroutine { cont ->
-            val outputOptions = ImageCapture.OutputFileOptions.Builder(outputFile).build()
-            capture.takePicture(
-                outputOptions,
-                ContextCompat.getMainExecutor(context),
-                object : ImageCapture.OnImageSavedCallback {
-                    override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                        if (cont.isActive) {
-                            if (outputFile.exists() && outputFile.length() > 0L) {
-                                cont.resume(Result.success(outputFile))
-                            } else {
-                                cont.resume(Result.failure(IllegalStateException("拍照文件为空")))
+    /**
+     * 会话安全拍照
+     *
+     * 在 mutex 外使用 AtomicBoolean 防止并发点击，
+     * 在拍照回调中验证 session 仍然活跃。
+     *
+     * @param sessionId 当前活跃会话 ID
+     * @param outputFile 目标文件（应为临时文件）
+     * @return 成功时返回文件，失败时返回异常
+     */
+    suspend fun takePhoto(sessionId: String, outputFile: File): Result<File> = mutex.withLock {
+        // 前置检查
+        if (isReleased) {
+            return@withLock Result.failure(IllegalStateException("CameraController 已永久释放"))
+        }
+
+        if (activeSession?.sessionId != sessionId) {
+            return@withLock Result.failure(IllegalStateException("会话已过期"))
+        }
+
+        if (!isConnected) {
+            return@withLock Result.failure(IllegalStateException("相机未连接"))
+        }
+
+        if (_cameraStateFlow.value != CameraStateType.OPEN) {
+            return@withLock Result.failure(IllegalStateException("相机未就绪"))
+        }
+
+        if (!currentMode.needsCapture) {
+            return@withLock Result.failure(IllegalStateException("当前模式不支持拍照: $currentMode"))
+        }
+
+        val capture = imageCapture as? ImageCapture
+            ?: return@withLock Result.failure(IllegalStateException("ImageCapture 未初始化"))
+
+        // 并发保护：只允许一个拍照请求
+        if (isCapturing) {
+            return@withLock Result.failure(IllegalStateException("拍照进行中"))
+        }
+        isCapturing = true
+
+        try {
+            outputFile.parentFile?.mkdirs()
+
+            val result = suspendCancellableCoroutine<File?> { cont ->
+                val outputOptions = ImageCapture.OutputFileOptions.Builder(outputFile).build()
+                capture.takePicture(
+                    outputOptions,
+                    ContextCompat.getMainExecutor(context),
+                    object : ImageCapture.OnImageSavedCallback {
+                        override fun onImageSaved(output: ImageCapture.OutputFileResults) {
+                            if (cont.isActive) {
+                                // 再次验证 session 仍然活跃
+                                if (activeSession?.sessionId == sessionId &&
+                                    outputFile.exists() &&
+                                    outputFile.length() > 0L
+                                ) {
+                                    cont.resume(outputFile)
+                                } else {
+                                    // session 已过期或文件无效，清理
+                                    outputFile.delete()
+                                    cont.resume(null)
+                                }
+                            }
+                        }
+
+                        override fun onError(exception: ImageCaptureException) {
+                            if (cont.isActive) {
+                                // 清理临时文件
+                                outputFile.delete()
+                                cont.resume(null)
                             }
                         }
                     }
+                )
+            }
 
-                    override fun onError(exception: ImageCaptureException) {
-                        if (cont.isActive) {
-                            cont.resume(Result.failure(exception))
-                        }
-                    }
-                }
-            )
+            if (result != null) {
+                Result.success(result)
+            } else {
+                Result.failure(IllegalStateException("拍照失败或会话已过期"))
+            }
+        } catch (e: Exception) {
+            outputFile.delete()
+            Result.failure(e)
+        } finally {
+            isCapturing = false
         }
     }
 
