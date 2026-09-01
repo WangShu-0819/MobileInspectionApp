@@ -22,4 +22,5 @@ sealed class Screen(val route: String) {
     }
     object AppSettings : Screen("app_settings")                    // 应用设置
     object PartManagement : Screen("part_management")              // 零件管理
+    object DpmScan : Screen("dpm_scan")                            // DPM 扫码
 }

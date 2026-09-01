@@ -139,6 +139,15 @@ fun AppRoot() {
                     onBack = { navController.popBackStack() }
                 )
             }
+
+            composable(Screen.DpmScan.route) {
+                DpmScanScreen(
+                    onBack = { navController.popBackStack() },
+                    onResult = { code ->
+                        // 解码结果回调，后续可导航到结果页
+                    }
+                )
+            }
         }
     }
 }
