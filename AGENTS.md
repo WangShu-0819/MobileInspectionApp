@@ -39,7 +39,10 @@
 - 启动后必须用 `pidof com.wearable.inspection.mobile` 和 `dumpsys activity activities` 核对新包进程与前台 Activity。相机权限弹窗期间前台可暂时是系统 PermissionController；处理弹窗后必须重新核对前台为新包。
 - 若前台出现 `com.wearable.inspection`，本轮截图、日志、交互和性能数据全部无效，必须停止旧包并从安装新 APK 开始重做。
 - 旧/新 App A/B 对照必须分别标注 `OLD: com.wearable.inspection` 与 `NEW: com.wearable.inspection.mobile`；每轮启动一方前先停止另一方，证据中记录实际包名、APK SHA-256 和启动组件。
-- `connectedDebugAndroidTest` 成功不能替代主 APK 的显式安装与前台包校验。
+- **Instrumented 测试后强制恢复门禁**：`connectedDebugAndroidTest` 可能在成功、失败或 runner 崩溃后卸载新包，同时让旧包继续保留在设备上。命令返回后必须一律假定 `com.wearable.inspection.mobile` 已被卸载；禁止直接继续截图、交互、性能测试或通过任何图标启动 App。
+- 每次 `connectedDebugAndroidTest` 结束后（无论退出码）都必须重新执行上面的四条命令：停止新旧包、`install -r` 当前主 APK、用完整组件名启动新 App；随后重新执行 `pm list packages`、`pidof com.wearable.inspection.mobile` 和 `dumpsys activity activities`。只有同时确认新包已安装、新包 PID 非空、旧包 PID 为空且前台为新包后，后续证据才有效。
+- 若 instrumented 命令失败，仍先恢复新 App 的安装和前台包，再报告失败并暂停；不得因测试失败跳过恢复步骤，也不得把旧 App 留在运行状态交给用户。
+- `connectedDebugAndroidTest` 成功不能替代主 APK 的显式安装与前台包校验；instrumented 测试期间或之后自动安装的 test APK 也不能作为主 APK 验收对象。
 
 ## 图片证据读取规则
 

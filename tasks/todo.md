@@ -140,6 +140,7 @@ B1 已完成并关闭。
 - [x] CP6 重新统计实际测试用例；Gradle actionable tasks 数量不得冒充测试数量
 - [ ] 新增 DPM 专属 instrumented/UI 测试及真实框内/框外、10 次往返、旧新 App 同样本 A/B 证据（Batch 5 待完成）
 - [ ] 所有 Batch 5 真机证据均按包名门禁重新确认：显式安装当前新 APK，启动 `com.wearable.inspection.mobile/com.wearable.inspection.mobile.MainActivity`，并记录前台包、启动组件和 APK SHA-256；误开 `com.wearable.inspection` 的证据作废
+- [ ] 每次 `connectedDebugAndroidTest` 返回后（成功、失败或崩溃均包括）强制重新停止新旧包、安装主 APK、完整组件启动新 App，并确认新包 PID 非空、旧包 PID 为空、前台属于新包；恢复完成前不得继续任何真机步骤
 - [x] 整改 `0c8e045e`：提交 `4c522ce7` 已恢复旧版 ZXing 主解码 → ML Kit DATA_MATRIX 兜底顺序
 - [x] 将含糊的 `PrimaryDecoder/FallbackDecoder` 改为 `DpmZxingDecoder/DpmMlKitDecoder`
 - [ ] 按旧文件、旧职责、新文件、复用内容、去除耦合和迁移测试更新迁移表
