@@ -1,6 +1,6 @@
-# 当前任务：B2 Task 1 - 旧 DPM 识别链迁移与实时扫码闭环
+# 当前任务：LiveInspectionScreen MVP semantic/UI cleanup → V1-3
 
-状态：验收整改中。提交 `29780897` 的 CP6 报告与生产代码不一致：现场采集入口仍为 TODO、CameraPreview 仍硬连 INSPECTION、扫码框未映射为 scanRoi、帧存在重复旋转风险、旧参数未忠实保留，且没有 DPM 真机扫码/A-B 证据。整改完成前不得进入 B2 Task 2、OCR、模板、轮廓或 ROI。
+B2 Task 1 已 SOFTWARE_COMPLETE / PHYSICAL_ACCEPTANCE_PENDING（物理验收不阻塞后续功能开发）。B2 Task 2 软件层面已完成（提交 `bdf1bd89`）。下一软件阶段：LiveInspectionScreen cleanup → V1-3 post-capture comparison。
 
 ## Task 1：整理活跃源码边界
 
@@ -185,7 +185,7 @@ B1 已完成并关闭。
 
 ## B2 Task 2：旧模板导入 + 模板透明叠加 MVP
 
-**状态**：待开始
+**状态**：**SOFTWARE_COMPLETE**（2026-09-02，提交 `bdf1bd89`）
 
 **产品方向变更**：实时主体轮廓投影、依赖主体轮廓的自动姿态匹配、单应性对齐、ALIGNED/LOST 自动对齐门禁 — 以上能力标记为 **DEFERRED / POST-MVP**，保留代码和工具但不继续阻塞当前 App 交付。
 
@@ -197,39 +197,43 @@ B1 已完成并关闭。
 
 ### V1-1：导入旧模板包
 
-状态：待开始
+状态：✅ 完成（提交 `bdf1bd89`）
 
-- [ ] 检查旧 `extracted_data/template_exports` ZIP 数据结构与字段映射
-- [ ] 创建 `DirectoryTemplateImporter`（薄 adapter，复用 `TemplatePackageImporter.parseManifest()`）
-- [ ] 创建 `TemplateImportService`（事务编排：解析 → 复制图片 → upsert Part → insert Template → insert ROI → 失败回滚）
-- [ ] 适配 `PartEntity` / `InspectionTemplateEntity` / `RoiDefinitionEntity` 字段映射
-- [ ] 成功导入 `template_part_black_1787034342672.zip` 和 `template_part_white_1787367089533.zip`
-- [ ] 导入后零件、模板记录、模板图片文件存在且可解码
-- [ ] 重复导入不产生脏数据
-- [ ] 损坏 ZIP / 缺图 / 非法 JSON / Zip Slip 均有明确错误且不污染数据库
-- [ ] 失败事务回滚，不留下孤儿文件或半条数据库记录
-- [ ] JVM 测试通过
-- [ ] 提交
+- [x] 检查旧 `extracted_data/template_exports` ZIP 数据结构与字段映射
+- [x] 创建 `DirectoryTemplateImporter`（薄 adapter，复用 `TemplatePackageImporter.parseManifest()`）
+- [x] 创建 `TemplateImportService`（事务编排：解析 → 复制图片 → upsert Part → insert Template → 失败回滚）
+- [x] 适配 `PartEntity` / `InspectionTemplateEntity` 字段映射
+- [x] 成功导入模板目录（template.json + images/）
+- [x] 导入后零件、模板记录、模板图片文件存在且可解码
+- [x] 重复导入不产生脏数据（先删除旧模板再重建）
+- [x] 损坏 JSON / 缺图 / 非法字段均有明确错误且不污染数据库
+- [x] 失败事务回滚，不留下孤儿文件
+- [x] JVM 测试 12 项通过（DirectoryTemplateImporterTest）
+- [x] 提交
+
+遗留边界：
+- **Legacy ROI 未迁移**：当前 `TemplateRegionData` 不携带 roi 信息，`roiCount` 始终为 0。`validateRoi()` 验证数据结构但不创建 `RoiDefinitionEntity`。原因：旧 ROI 的 normalized/pixel 语义、source image size、orientation、origin 和 width/height 语义尚未确认。
+- **imageFiles[] 单图策略**：旧模板 schema 的 `imageFiles` 是数组，当前 MVP 仅取第一张有效图片作为 `mainImagePath`。非完整多图片业务语义迁移。
 
 ### V1-2：模板透明叠加 + Alpha Slider
 
-状态：待开始
+状态：✅ 完成（提交 `bdf1bd89`）
 
-- [ ] CameraPreview 增加 `templateImagePath` + `overlayAlpha` 参数
-- [ ] 模板图片覆盖在真实 camera contentRect 内，保持原始纵横比
-- [ ] 不覆盖 FIT_CENTER letterbox 区域
-- [ ] 模板缺失时不绘制 overlay，图片缺失/损坏时显示明确错误不 crash
-- [ ] 模板切换时 overlay 原子更新，不残留旧图
-- [ ] Alpha Slider 范围 0.0f ~ 0.8f，默认 0.45f，显示百分比
-- [ ] Slider 调节实时生效，不触发 CameraX rebind / session 重建
-- [ ] 隐藏/显示模板快捷操作
-- [ ] 默认不绘制自动主体轮廓（DEFERRED）
-- [ ] JVM 测试：alpha clamp、默认值、contentRect 映射、纵横比保持、无模板不绘制、图片缺失错误、模板切换不残留
-- [ ] 提交
+- [x] CameraPreview 增加 `templateImagePath` + `overlayAlpha` 参数
+- [x] 模板图片覆盖在真实 camera contentRect 内，保持原始纵横比
+- [x] 不覆盖 FIT_CENTER letterbox 区域
+- [x] 模板缺失时不绘制 overlay，图片缺失/损坏时显示明确错误不 crash
+- [x] 模板切换时 overlay 原子更新（LaunchedEffect），不残留旧图
+- [x] Alpha Slider 范围 0.0f ~ 0.8f，默认 0.45f，显示"模板透明度 XX%"
+- [x] Slider 调节实时生效，不触发 CameraX rebind / session 重建
+- [x] 隐藏/显示模板快捷操作
+- [x] 默认不绘制自动主体轮廓（DEFERRED）
+- [x] JVM 测试通过（242 项：237 passed / 0 failed / 5 skipped）
+- [x] 提交
 
 ### V1-3：拍后比对（预留结构，本轮不完整实现）
 
-状态：待开始（DEFERRED）
+状态：待开始（下一软件阶段）
 
 - [ ] CaptureComparisonScreen：templateImage + capturedImage
 - [ ] 双图切换 / alpha overlay / blink comparison
@@ -244,3 +248,52 @@ B1 已完成并关闭。
 ### V1-5：结果查看（DEFERRED）
 
 状态：待开始
+
+---
+
+### V1-6：MVP Profile 信息架构简化
+
+状态：✅ 完成（提交 `94e3f5f3`）
+
+- [x] ProfileScreen 简化为 5 个 MVP 入口（模板配置、零件管理、模板包、检测结果、应用设置）
+- [x] 移除硬编码 TemplateStats（partCount=3, templateCount=5, roiCount=12, incompleteItems=2）
+- [x] 使用真实 DB 统计（repository.partCount/templateCount/roiCount）
+- [x] TemplateConfigScreen 从 DB 加载真实模板列表，修复返回导航
+- [x] TemplateDetailScreen 显示真实模板数据（名称、零件、ROI 列表、时间戳）
+- [x] PartManagementScreen 从 DB 加载真实零件列表
+- [x] AppSettingsScreen 移除未生效的假开关（提示音/振动/拍照质量），保留真实 DPM 尺寸模式设置
+- [x] 新增 TemplatePackageScreen：通过 SAF ZIP 选择器接入 TemplatePackageImporter
+- [x] 新增 ResultManagementScreen：空状态 shell
+- [x] 修复 Long→String ID 类型不匹配（TemplateDetail, InspectionResult 路由）
+- [x] 新增 DAO count 方法（TemplateDao.count, RoiDao.count, InspectionSessionDao.count）
+- [x] 所有 enabled clickable row 均有真实 onClick 和 NavHost route
+- [x] ProfileScreen 无 dead click
+- [x] JVM 242 项通过（237 passed / 0 failed / 5 skipped）
+- [x] assembleDebug 成功
+
+遗留边界：
+- 模板包导出功能尚未实现（仅导入已接通）
+- 结果管理页面为空状态 shell（待接入 ResultPackager）
+- LiveInspectionScreen 中仍有 OCR/模板选择器/放大查看等 dead click（下一任务处理）
+
+---
+
+## LiveInspectionScreen cleanup 任务边界（下一代码任务）
+
+### A. OCR 钢印入口
+当前 `onClick = { /* TODO: OCR 钢印 */ }` 为 dead click。后续隐藏/移除，不新增 OCR route。
+
+### B. 模板选择器
+当前 `onClick = { /* TODO: 打开模板选择器 */ }` 为 dead click。后续接入真实 Room/ViewModel 数据或取消 clickable affordance，不得硬编码/建假列表。
+
+### C. 模板参考图片 Card
+当前 `onClick = { /* TODO: 放大查看 */ }` 为 dead click。后续移除无实现的 clickable affordance，不为此创建复杂全屏页面。
+
+### D. hasTemplates 硬编码
+当前 `hasTemplates = true`（line 489），导致"暂无模板 → 前往模板配置"分支不可达。后续改为真实模板数据状态。
+
+### E. 假"已对齐"状态
+当前 OverlayGraphics 绘制"已对齐，可拍摄"（line 403-413），但自动 contour/alignment = DEFERRED。后续改为"模板已就绪 / 可以拍照"等不误导语义。
+
+### F. 固定轮廓 / ROI 占位图形
+当前 OverlayGraphics 绘制固定白色矩形（line 373-378）和绿色 ROI（line 385，使用 PassColor）。后续删除或改为真实 RoiDefinitionEntity + contentRect 映射，不得用固定 rectangle 冒充检测 ROI。

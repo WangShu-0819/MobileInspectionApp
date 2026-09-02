@@ -21,7 +21,7 @@
 - B1 Task 5 完整验证：已验收；最终补充提交为 `b7c4c08e`；APK SHA-256 为 `235f8aa8c4d65b365a93bff021041e43dca86d5eb4b121ba9d13ebd3f436768f`；JVM 78/78、Instrumented 20/20 通过；冷启动 10 次、Tab 10 轮、前后台 10 次、日志门禁 12 项全部通过；证据位于 `docs/reports/b1/evidence/task5/`。
 - B1 技术验收完成，用户已确认进入 B2。
 - B2 DPM 迁移：Task 1 **SOFTWARE_COMPLETE / PHYSICAL_ACCEPTANCE_PENDING**（2026-09-02）。APK SHA-256 `6e2ca7d3f573c1da1af7f9180c23a0dbe8f2f9081eafff5ccf466dcb09c051cc`。JVM 208 项（203 passed / 0 failed / 5 skipped），Instrumented 30/30 passed，冷启动 10/10 passed。4 项物理验收标记为 `PENDING_PHYSICAL_DPM_SAMPLE`。物理验收不阻塞后续非 DPM 功能开发。
-- B2 Task 2：旧模板导入 + 模板透明叠加 MVP — 当前任务。实时轮廓投影/姿态匹配/单应性对齐标记为 DEFERRED / POST-MVP。
+- B2 Task 2：旧模板导入 + 模板透明叠加 MVP — **SOFTWARE_COMPLETE**（2026-09-02）。V1-1 模板导入 MVP（`bdf1bd89`）；V1-2 模板透明叠加 + Alpha Slider（`bdf1bd89`）；V1-6 MVP Profile 信息架构简化（`94e3f5f3`）：ProfileScreen 收缩为 5 个 MVP 入口、移除硬编码 TemplateStats、接真实 DB 统计、TemplatePackageScreen 接通 ZIP 导入、AppSettingsScreen 移除未生效假开关。JVM 242 项（237 passed / 0 failed / 5 skipped）。遗留边界：legacy ROI 未迁移、imageFiles[] 仅取首图、模板包导出未实现。V1-3 拍后比对为下一软件阶段。实时轮廓投影/姿态匹配/单应性对齐继续标记为 DEFERRED / POST-MVP。
 - DPM 只支持手机相机实时扫一扫，不提供相册码图导入。
 - DPM 入口：顶部扫码图标 contentDescription 为"扫一扫"，只进入实时 DPM 扫描；OCR 图标 contentDescription 为"OCR 钢印"；模板样本相册导入属于"我的 > 模板配置"。
 
@@ -54,17 +54,21 @@
 
 ## 当前唯一任务
 
-执行 **B2 Task 2：旧模板导入 + 模板透明叠加 MVP**。产品方向变更：实时轮廓投影/姿态匹配/单应性对齐标记为 DEFERRED / POST-MVP。当前 MVP 路线：模板导入 → ROI 配置 → 模板原图透明叠加辅助取景 → 拍照 → 模板/实拍比对 → ROI 微调 → ROI 检测 → 保存结果。
+B2 Task 2（旧模板导入 + 模板透明叠加 MVP）软件层面已完成（提交 `bdf1bd89`）。当前任务：**LiveInspectionScreen MVP semantic/UI cleanup**，随后进入 V1-3 post-capture template/live-image comparison。
+
+LiveInspection cleanup 边界（只记录，本轮不改源码）：
+- OCR dead entry（`onClick = { /* TODO: OCR 钢印 */ }`）：隐藏/移除，不新增 OCR route
+- Template selector dead click（`onClick = { /* TODO: 打开模板选择器 */ }`）：接入真实数据或取消 clickable affordance
+- Image card dead click（`onClick = { /* TODO: 放大查看 */ }`）：移除无实现的 clickable affordance
+- `hasTemplates = true` 硬编码：改为真实模板数据状态
+- 假"已对齐，可拍摄"状态：改为"模板已就绪 / 可以拍照"等不误导语义
+- 固定白色矩形 / 绿色 ROI 占位图形：删除或改为真实 RoiDefinitionEntity + contentRect 映射
 
 识别算法以旧工程当前生产实现为行为基线：保留 ZXing `DataMatrixReader` 主解码、中心 ROI、预处理策略轮转、双极性尝试、全图降采样、ML Kit DATA_MATRIX 兜底、帧节流、响应门、连续 miss 对焦和旧版网格兜底。只允许为适配新 `CameraController`、`FrameAnalyzer`、包名和生命周期做必要改造，不得擅自调换解码顺序、删减旧策略或用全新简化算法替代。
-
-B2 Task 2 允许连续完成模板导入、透明叠加、alpha slider 和测试。每个内部检查点必须先测试并创建小提交；检查点通过后可继续下一个，不需要等待用户逐段确认。任一检查点出现测试失败或相机回归时立即暂停，不得用后续步骤掩盖失败。
 
 不得实现自动轮廓提取、实时轮廓投影、Homography、SIFT 姿态对齐、自动 ALIGNED 判断、ROI 自动跟踪、新 ROI 检测算法、OCR、TTS、ResultPackager、ForegroundService。不得创建第二套 CameraX；`tools/contour_extraction/` 的算法源码和验证产物继续冻结为 DEFERRED / POST-MVP。
 
 离线 Python 工具统一使用 `D:\ProgramData\anaconda3\envs\dinov2\python.exe`；不得在 `tools/` 下创建 `.venv`、Conda 环境、`site-packages` 或依赖副本。
-
-完成整个 Task 2 后更新控制文档并暂停等待验收，不得自动进入后续 Task。
 
 ## 累积回归门禁
 
