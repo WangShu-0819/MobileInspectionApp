@@ -1071,4 +1071,35 @@ MobileInspectionApp/
 ---
 
 **文档维护**：Claude Code
-**最后更新**：2026-08-31
+**最后更新**：2026-09-02
+
+---
+
+## 11. B2 Task 1 Batch 5 验证状态（2026-09-02）
+
+### 包名门禁
+
+| 项目 | 值 |
+|------|-----|
+| **新包名** | `com.wearable.inspection.mobile` |
+| **启动组件** | `com.wearable.inspection.mobile/com.wearable.inspection.mobile.MainActivity` |
+| **APK SHA-256** | `00357f7c9c38cc1ff3cd36d2ffc9cb8f3cbd3c898dcb1d926a684a67adf28c1b` |
+| **旧包名** | `com.wearable.inspection` |
+| **旧 APK SHA-256** | `6e14a3b4995f90aff0c77e4af6d10f65ce1d482674370bab75806c3ee16d88aa` |
+
+### 已完成验证
+
+- [x] 包名门禁：显式安装、启动组件、前台包校验 ✓
+- [x] DPM 扫码页面：UIAutomator 结构验证 ✓
+- [x] 扫码页面往返 10 次：10/10 通过 ✓
+- [x] 前后台切换 10 次：10/10 通过 ✓
+- [x] Logcat 门禁 8 项：0 违规 ✓
+- [x] 相机生命周期：DPM 退出 → INSPECTION 恢复 ✓
+
+### 待完成（需要物理 DPM 样品）
+
+- [ ] 框内/框外码验证
+- [ ] 10 次真实扫码
+- [ ] 新旧 App A/B 对比
+- [ ] DPM 专属 instrumented/UI 测试
+- [ ] 截图人工视觉复核（mimo-v2.5-pro 无法读取 PNG）

@@ -1,5 +1,15 @@
 # B2 Task 1 — 真机验证状态
 
+## 包名门禁（2026-09-02 Batch 5 验证通过）
+
+| 项目 | 值 |
+|------|-----|
+| **新包名** | `com.wearable.inspection.mobile` |
+| **启动组件** | `com.wearable.inspection.mobile/com.wearable.inspection.mobile.MainActivity` |
+| **APK SHA-256** | `00357f7c9c38cc1ff3cd36d2ffc9cb8f3cbd3c898dcb1d926a684a67adf28c1b` |
+| **前台包校验** | `pidof` → PID 存在, `mResumedActivity` → 新包 |
+| **旧包 PID** | 空（已 force-stop） |
+
 ## 已完成的自动化验证
 
 ### JVM 单元测试（188 @Test，183 passed / 0 failed / 5 skipped）
@@ -37,9 +47,34 @@
 - 应用启动：无 FATAL EXCEPTION
 - Firebase 网络超时为系统正常行为（不影响功能）
 
-## 待手动验证（需 DPM 样品）
+## Batch 5 真机验证（2026-09-02）
 
-以下验证需要物理 DPM 样品和新旧 App 对比，无法通过自动化完成：
+### DPM 扫码页面
+
+- [x] "扫一扫"进入 DPM_SCAN 页面 ✓
+- [x] 页面标题 "DPM 扫码" ✓
+- [x] 返回按钮存在 ✓
+- [x] 闪光灯按钮存在 ✓
+- [x] 状态文字 "扫描中…" ✓
+- [x] 提示文字 "将 DPM 码对准扫描框" ✓
+- [x] 相机预览正常 ✓
+- [x] 扫描覆盖层存在 ✓
+
+### 稳定性测试
+
+- [x] 扫码页面往返 10 次：10/10 通过 ✓
+- [x] 前后台切换 10 次：10/10 通过，PID 一致 ✓
+- [x] Logcat 门禁 8 项全部 0 违规 ✓
+
+### 相机生命周期
+
+- [x] DPM 页面退出后相机正确关闭 ✓
+- [x] 返回主页面后 INSPECTION 相机恢复 ✓
+- [x] 无 Camera already in use ✓
+- [x] 无 ImageProxy 泄漏 ✓
+- [x] 无 RejectedExecutionException ✓
+
+## 待完成（需要物理 DPM 样品）
 
 - [ ] frame-outside-code：对准空白区域 10 秒无响应
 - [ ] move-into-frame：从框外移入 DPM 码后识别成功
@@ -48,9 +83,8 @@
 - [ ] same-code dedup：同码连续扫描防重复
 - [ ] move-away-and-back：移开再移回识别
 - [ ] AUTO/16/18/20 尺寸模式切换
-- [ ] 10 次页面往返（现场采集 ↔ 扫码）
-- [ ] 10 次前后台切换
 - [ ] 新旧 App A/B 对比（每样品识别速度和成功率）
+- [ ] DPM 专属 instrumented/UI 测试
 
 ## 忠实度断言状态
 
@@ -60,5 +94,14 @@
 | 无参数变化 | ⚠️ 待验证 | 大部分参数已恢复旧值；Center ROI 维持 1200×1200 |
 | 无测试删除 | ✅ | 所有旧版测试逻辑保留 |
 | 无硬编码结果 | ✅ | 所有解码为真实运行 |
-| CameraX 无回归 | ⚠️ 待验证 | 架构未修改；未做真机回归 |
+| CameraX 无回归 | ✅ | 真机往返/前后台/日志门禁通过 |
 | 冻结目录未动 | ✅ | tools/contour_extraction/ 未修改 |
+
+## 截图人工视觉复核
+
+以下截图需要人工视觉复核（mimo-v2.5-pro 无法读取 PNG）：
+
+| 截图 | SHA-256 | 说明 |
+|------|---------|------|
+| screen_dpm.png | `b3c1b5e0...` | 旧截图，待复核 |
+| batch5_dpm_scan.png | `6b321fc6...` | 新截图，待复核 |

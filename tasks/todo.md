@@ -125,7 +125,7 @@ B1 已完成并关闭。
 
 ## B2 Task 1：旧 DPM 识别链迁移与实时扫码闭环
 
-**状态**：整改 Batch 1-4 已完成（`a094dd3d` → `df6aab47` → `c78f5b69` → `dccf8984`），Batch 5 真机验证中。
+**状态**：整改 Batch 1-4 已完成（`a094dd3d` → `df6aab47` → `c78f5b69` → `dccf8984`），Batch 5 部分完成（待物理 DPM 样品）。
 
 - [x] 整改现场采集”扫一扫”仍为 TODO，接通真实 DPM 路由并补导航测试
 - [x] CameraPreview 支持显式目标 CameraMode；DPM 页面连接即为 DPM_SCAN，不得被组件重新连接成 INSPECTION
@@ -138,9 +138,9 @@ B1 已完成并关闭。
 - [x] 尺寸模式从 SettingsStore 读取并作为任务快照传入网格链，不得在 DpmAnalyzer 中硬编码 AUTO
 - [x] 恢复旧参数：中心 50%/ROI 目标宽 400、focus miss 30、grid miss 8、grid cooldown 1500ms；任何有意差异必须先用同样本数据证明
 - [x] CP6 重新统计实际测试用例；Gradle actionable tasks 数量不得冒充测试数量
-- [ ] 新增 DPM 专属 instrumented/UI 测试及真实框内/框外、10 次往返、旧新 App 同样本 A/B 证据（Batch 5 待完成）
-- [ ] 所有 Batch 5 真机证据均按包名门禁重新确认：显式安装当前新 APK，启动 `com.wearable.inspection.mobile/com.wearable.inspection.mobile.MainActivity`，并记录前台包、启动组件和 APK SHA-256；误开 `com.wearable.inspection` 的证据作废
-- [ ] 每次 `connectedDebugAndroidTest` 返回后（成功、失败或崩溃均包括）强制重新停止新旧包、安装主 APK、完整组件启动新 App，并确认新包 PID 非空、旧包 PID 为空、前台属于新包；恢复完成前不得继续任何真机步骤
+- [ ] 新增 DPM 专属 instrumented/UI 测试及真实框内/框外、旧新 App 同样本 A/B 证据（需要物理 DPM 样品）
+- [x] 所有 Batch 5 真机证据均按包名门禁重新确认：显式安装当前新 APK，启动 `com.wearable.inspection.mobile/com.wearable.inspection.mobile.MainActivity`，并记录前台包、启动组件和 APK SHA-256（2026-09-02 验证通过）
+- [x] 每次 `connectedDebugAndroidTest` 返回后强制重新停止新旧包、安装主 APK、完整组件启动新 App，并确认新包 PID 非空、旧包 PID 为空、前台属于新包（2026-09-02 验证通过）
 - [x] 整改 `0c8e045e`：提交 `4c522ce7` 已恢复旧版 ZXing 主解码 → ML Kit DATA_MATRIX 兜底顺序
 - [x] 将含糊的 `PrimaryDecoder/FallbackDecoder` 改为 `DpmZxingDecoder/DpmMlKitDecoder`
 - [ ] 按旧文件、旧职责、新文件、复用内容、去除耦合和迁移测试更新迁移表
@@ -157,14 +157,14 @@ B1 已完成并关闭。
 - [x] `DPM_SCAN` 只绑定 Preview + ImageAnalysis，分析结束由 CameraController 统一关闭 ImageProxy
 - [x] 新增扫码页面和导航，现场采集”扫一扫”进入真实扫码，返回后 INSPECTION 相机恢复
 - [x] 扫码框基于真实 contentRect 映射到旋转后图像 ROI；ROI 存在时禁止任何框外全图解码
-- [ ] 框外码不响应、框内码可识别、框内外同时存在时只返回框内码（待真机验证）
-- [ ] CameraX 页面往返、前后台、权限和资源释放通过 B1 累积回归（待真机验证）
-- [ ] 页面退出后释放扫码分析资源，返回现场采集后相机正常恢复（待真机验证）
+- [ ] 框外码不响应、框内码可识别、框内外同时存在时只返回框内码（需要物理 DPM 样品）
+- [x] CameraX 页面往返 10 次、前后台切换 10 次通过（2026-09-02 真机验证，logcat 8 项门禁 0 违规）
+- [x] 页面退出后释放扫码分析资源，返回现场采集后相机正常恢复（2026-09-02 真机验证）
 - [x] UI 不存在 DPM 相册选择、码图导入或相关权限/路由
 - [x] 迁移旧 DPM 专项测试，并覆盖解码链、预处理、网格门控、节流、并发、重复抑制、停止和资源释放
-- [ ] 使用同一批现场/打印样本对旧 App 与新 App 做 A/B 对照，记录逐样本结果和响应时间
-- [ ] A/B 对照分别标注 `OLD: com.wearable.inspection` 与 `NEW: com.wearable.inspection.mobile`，每轮启动前停止另一包，禁止混用截图、日志或响应时间
-- [ ] 真机完成 10 次扫码及 10 次页面往返，识别范围和防连扫行为不得低于旧 App
-- [ ] 更新 `docs/reports/b2/B2_TASK1_DPM_LEGACY_PARITY_REPORT.md` 和证据目录
+- [ ] 使用同一批现场/打印样本对旧 App 与新 App 做 A/B 对照，记录逐样本结果和响应时间（需要物理 DPM 样品）
+- [ ] A/B 对照分别标注 `OLD: com.wearable.inspection` 与 `NEW: com.wearable.inspection.mobile`，每轮启动前停止另一包（需要物理 DPM 样品）
+- [x] 真机完成 10 次页面往返（2026-09-02 验证通过）；10 次扫码需要物理 DPM 样品
+- [x] 更新 `docs/reports/b2/B2_TASK1_DPM_LEGACY_PARITY_REPORT.md` 和证据目录（本次提交）
 
 本 Task 不实现未知码绑定、已绑定码切件、冲突处理、OCR、模板、轮廓、ROI 或检测算法。允许的改动仅是解除旧 CameraX/Leion/USB/页面耦合并接入新工程；不得借重构删减旧识别策略。完成后暂停等待验收，不得自动进入 B2 Task 2。

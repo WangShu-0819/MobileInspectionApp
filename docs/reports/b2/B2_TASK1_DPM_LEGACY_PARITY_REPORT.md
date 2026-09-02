@@ -91,7 +91,18 @@
 
 ---
 
-## CP6: 自动化 & 设备验证（部分完成）
+## CP6: 自动化 & 设备验证（Batch 5 部分完成）
+
+### 包名门禁（2026-09-02 验证通过）
+
+| 项目 | 值 |
+|------|-----|
+| **新包名** | `com.wearable.inspection.mobile` |
+| **启动组件** | `com.wearable.inspection.mobile/com.wearable.inspection.mobile.MainActivity` |
+| **APK SHA-256** | `00357f7c9c38cc1ff3cd36d2ffc9cb8f3cbd3c898dcb1d926a684a67adf28c1b` |
+| **前台包校验** | `pidof` → PID 存在, `mResumedActivity` → 新包 |
+| **旧包名** | `com.wearable.inspection` |
+| **旧 APK SHA-256** | `6e14a3b4995f90aff0c77e4af6d10f65ce1d482674370bab75806c3ee16d88aa` |
 
 ### JVM 单元测试
 
@@ -135,13 +146,46 @@ BUILD SUCCESSFUL in 1m 10s
 
 **测试设备**：HUAWEI YAL-AL10 (Android 10)
 
-### 待完成
+### Batch 5 真机验证结果（2026-09-02）
+
+#### DPM 扫码页面验证
+
+- [x] "扫一扫"进入 DPM_SCAN 页面 ✓
+- [x] 页面标题 "DPM 扫码" ✓
+- [x] 返回按钮、闪光灯按钮存在 ✓
+- [x] 状态文字 "扫描中…"、提示文字 "将 DPM 码对准扫描框" ✓
+- [x] 相机预览正常、扫描覆盖层存在 ✓
+
+#### 稳定性测试
+
+| 测试项 | 结果 | 说明 |
+|--------|------|------|
+| 扫码页面往返 10 次 | 10/10 ✓ | 使用 KEYCODE_BACK 返回 |
+| 前后台切换 10 次 | 10/10 ✓ | PID 保持一致 |
+| Logcat 门禁 8 项 | 0 违规 ✓ | Camera already in use/FATAL/leak 等 |
+
+#### 相机生命周期
+
+- [x] DPM 页面退出后相机正确关闭 ✓
+- [x] 返回主页面后 INSPECTION 相机恢复 ✓
+- [x] 无 Camera already in use / ImageProxy 泄漏 / RejectedExecutionException ✓
+
+#### 截图证据
+
+| 截图 | 大小 | SHA-256 | 说明 |
+|------|------|---------|------|
+| screen_dpm.png | 1,418,202 | `b3c1b5e0...` | 待人工视觉复核 |
+| batch5_dpm_scan.png | 886,322 | `6b321fc6...` | 待人工视觉复核 |
+
+注：mimo-v2.5-pro 无法读取 PNG，截图人工视觉复核待完成。
+
+### 待完成（需要物理 DPM 样品）
 
 - [ ] DPM 专用 instrumented/UI 测试（DPM 页面导航、扫码 UI 状态机）
 - [ ] 真机 DPM 样品测试（frame-outside-code 10s、move-into-frame、same-code dedup 等）
 - [ ] 新旧 App A/B 对比（每样品识别速度和成功率）
 - [ ] 完整参数对比验证
-- [ ] CameraX 回归验证（INSPECTION 模式仍正常）
+- [ ] 框内/框外码验证
 
 ---
 
