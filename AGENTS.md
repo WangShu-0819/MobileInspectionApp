@@ -41,6 +41,13 @@
 - 旧/新 App A/B 对照必须分别标注 `OLD: com.wearable.inspection` 与 `NEW: com.wearable.inspection.mobile`；每轮启动一方前先停止另一方，证据中记录实际包名、APK SHA-256 和启动组件。
 - `connectedDebugAndroidTest` 成功不能替代主 APK 的显式安装与前台包校验。
 
+## 图片证据读取规则
+
+- `mimo-v2.5-pro` 当前不能读取或视觉分析 PNG/JPG 截图；不得再让该模型重复执行 `Read <image path>`，也不得把读取失败写成截图验收通过。
+- 截图视觉复核应改用当前环境中具备图片输入能力的模型或图片查看工具；若执行 Agent 没有可用视觉能力，则收集 UIAutomator XML、前台包名、控件 bounds、截图 SHA-256、logcat 等结构化证据，并明确标记“等待用户人工视觉复核”。
+- 结构化证据只能证明包名、页面层级、控件位置与运行状态，不能替代颜色、裁切、拉伸、遮挡和整体美观度的视觉结论。
+- 图片证据必须同时记录实际文件路径、对应新包 `com.wearable.inspection.mobile`、APK SHA-256 和采集步骤；未通过包名门禁的截图作废。
+
 ## 当前唯一任务
 
 执行 **B2 Task 1：旧 DPM 识别链迁移与实时扫码闭环**。先核对 `docs/migration/LEGACY_MIGRATION_MAP.md` 和旧工程真实源码，再迁移到新工程；旧工程保持只读。
