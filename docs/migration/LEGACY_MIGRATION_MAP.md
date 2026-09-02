@@ -1100,6 +1100,14 @@ MobileInspectionApp/
 
 - [ ] 框内/框外码验证
 - [ ] 10 次真实扫码
-- [ ] 新旧 App A/B 对比
+- [ ] 完整新旧 App A/B 对比（一个同码可用性对照已通过，尚缺逐样本结果和响应时间）
 - [ ] DPM 专属 instrumented/UI 测试
 - [ ] 截图人工视觉复核（mimo-v2.5-pro 无法读取 PNG）
+
+### 真实样品与闪光灯整改补充（2026-09-02）
+
+- [x] DPM 分析器恢复旧 App 的高分辨率请求；设备实际协商为 1440×1080
+- [x] 恢复策略 2 `s2-bright-otsu-dilate` 候选的旧版点阵快速链
+- [x] 使用旧 App 可识别的同一显示设备 DPM 码，新 App 成功识别 `M968942280224B169AH005023044710`
+- [x] CameraController 首次绑定与模式重绑均保存 cameraControl，闪光灯开/关经用户真机复测通过
+- [x] 最终 APK SHA-256：`bf93862c2ece79263ac2ef04f5cd176bcd2d726d0d738a55e0ad31428f5bb062`

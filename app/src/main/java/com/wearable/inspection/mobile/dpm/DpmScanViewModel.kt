@@ -2,6 +2,7 @@ package com.wearable.inspection.mobile.dpm
 
 import android.app.Application
 import android.graphics.Rect
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.wearable.inspection.mobile.camera.CameraController
@@ -20,6 +21,10 @@ import kotlinx.coroutines.launch
  * - stopScan 按 sessionId 清理
  */
 class DpmScanViewModel(application: Application) : AndroidViewModel(application) {
+
+    companion object {
+        private const val TAG = "DpmScanViewModel"
+    }
 
     // ─── DPM 组件 ───
     private var dpmAnalyzer: DpmAnalyzer? = null
@@ -52,6 +57,7 @@ class DpmScanViewModel(application: Application) : AndroidViewModel(application)
         controller: CameraController,
         sessionId: String,
     ) {
+        Log.d(TAG, "startScan: sessionId=$sessionId, controller=$controller")
         val scope = viewModelScope
 
         val rg = DpmRespondGate()
@@ -152,15 +158,23 @@ class DpmScanViewModel(application: Application) : AndroidViewModel(application)
      * 用真实 torchState 更新 UI。
      */
     suspend fun toggleTorch(): Boolean {
-        val controller = boundController ?: return false
-        if (!controller.hasFlashUnit()) return false
+        val controller = boundController ?: run {
+            Log.w(TAG, "toggleTorch: no bound controller")
+            return false
+        }
+        if (!controller.hasFlashUnit()) {
+            Log.w(TAG, "toggleTorch: camera reports no flash unit")
+            return false
+        }
         val current = controller.isTorchOn() ?: _scanState.value.torchOn
+        Log.i(TAG, "toggleTorch: current=$current requested=${!current}")
         val result = controller.setTorch(!current)
         if (result) {
             // 读取真实 torchState 更新 UI（不信任中间状态）
             val realState = controller.isTorchOn() ?: !current
             _scanState.value = _scanState.value.copy(torchOn = realState)
         }
+        Log.i(TAG, "toggleTorch: result=$result real=${controller.isTorchOn()} ui=${_scanState.value.torchOn}")
         return result
     }
 

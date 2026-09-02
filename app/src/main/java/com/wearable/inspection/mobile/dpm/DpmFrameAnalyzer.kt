@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import android.util.Log
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 
@@ -65,8 +66,17 @@ class DpmFrameAnalyzer(
     }
 
     override fun analyze(image: ImageProxy) {
-        if (isStopped) return
-        val bitmap = imageProxyToUprightBitmap(image) ?: return
+        if (isStopped) {
+            Log.w(TAG, "analyze: isStopped=true, skipping frame")
+            return
+        }
+        Log.d(TAG, "analyze: frame received, format=${image.format}, size=${image.width}x${image.height}, rotation=${image.imageInfo.rotationDegrees}")
+        val bitmap = imageProxyToUprightBitmap(image)
+        if (bitmap == null) {
+            Log.w(TAG, "analyze: imageProxyToUprightBitmap returned null")
+            return
+        }
+        Log.d(TAG, "analyze: bitmap converted, size=${bitmap.width}x${bitmap.height}, scanRoi=$scanRoi")
         analyzerScope.launch {
             try {
                 val result = dpmAnalyzer.analyze(
@@ -74,11 +84,12 @@ class DpmFrameAnalyzer(
                     frameRotation = 0, // 已输出 upright Bitmap
                     scanRoi = scanRoi,
                 )
+                Log.d(TAG, "analyze: result status=${result.status}, code=${result.code}, source=${result.source}")
                 if (!isStopped && result.status != DpmAnalyzeStatus.PROCEED) {
                     _results.emit(result)
                 }
-            } catch (_: Exception) {
-                // 分析异常静默降级，不中断帧流
+            } catch (e: Exception) {
+                Log.e(TAG, "analyze: exception during DpmAnalyzer.analyze", e)
             } finally {
                 bitmap.recycle()
             }
@@ -92,6 +103,8 @@ class DpmFrameAnalyzer(
     }
 
     companion object {
+        private const val TAG = "DpmFrameAnalyzer"
+
         /**
          * ImageProxy (YUV_420_888) → upright Bitmap (ARGB_8888)。
          *

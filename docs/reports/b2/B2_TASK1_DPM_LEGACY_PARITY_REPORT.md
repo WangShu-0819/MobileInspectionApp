@@ -199,7 +199,28 @@
 
 ## 7. 待完成项
 
-- [ ] 真机验证：使用同一 DPM 码测试整改后新 App
+- [x] 真机验证：使用旧 App 可识别的同一显示设备 DPM 码测试整改后新 App；识别结果 `M968942280224B169AH005023044710`，来源 `GRID`，用户复测通过
+- [x] 真机闪光灯开/关：修复 CameraController 绑定后未保存 cameraControl；CameraX `enableTorch(true)` Future 成功，真实 `torchState=true`，UI 切换为“关闭闪光灯”，用户完成开/关复测
 - [ ] DpmDimensionMode 从 SettingsStore 真实读取（当前使用默认 AUTO）
 - [ ] 连续 miss 对焦冷却保护（当前依赖自然帧间隔）
-- [ ] 同样本 A/B 对照：旧 App vs 新 App
+- [ ] 完整同样本 A/B 对照（逐样本结果与响应时间）；当前仅完成一个同码识别可用性对照
+- [ ] 框外码不响应、框内外同时存在只返回框内码、10 次真实扫码
+- [ ] DPM 专属 instrumented/UI 测试
+
+## 8. 2026-09-02 真机整改证据
+
+| 项目 | 结果 |
+|---|---|
+| 设备 | HONOR YAL-AL10，`ERLDU20429005890` |
+| 新包 | `com.wearable.inspection.mobile` |
+| 启动组件 | `com.wearable.inspection.mobile/com.wearable.inspection.mobile.MainActivity` |
+| APK SHA-256 | `bf93862c2ece79263ac2ef04f5cd176bcd2d726d0d738a55e0ad31428f5bb062` |
+| APK 大小 | 178,406,958 bytes |
+| DPM 分析流 | 请求 1920×1080，设备实际协商 1440×1080 |
+| DPM 识别 | `Stage1: HIT strategy=2`，来源 `GRID`，用户复测通过 |
+| 闪光灯 | 开灯 Future 成功、真实状态 ON；用户完成开/关复测 |
+| 包名门禁 | 新包 PID 非空、旧包 PID 为空、前台为新包 MainActivity |
+| JVM 回归 | 191 项：186 通过、0 失败、5 跳过 |
+| 构建 | `:app:assembleDebug` BUILD SUCCESSFUL |
+
+本轮识别修复恢复了旧生产链的两个关键行为：DPM 模式请求高分辨率分析流，以及策略 2 的 `s2-bright-otsu-dilate` 候选直接进入点阵重建。闪光灯修复在首次连接与模式重绑两个成功路径均保存 CameraX `cameraControl`。本报告仍不将尚未执行的框外约束、10 次扫码、完整 A/B 和 instrumented 测试标记为通过。

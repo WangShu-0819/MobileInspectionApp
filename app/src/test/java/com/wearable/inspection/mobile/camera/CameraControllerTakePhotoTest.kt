@@ -484,7 +484,7 @@ class FakeCaptureBinder : CameraBinder {
     override fun getProvider(): Any = "FakeProvider"
     override fun hasBackCamera(provider: Any): Boolean = true
     override fun createPreview(surfaceProvider: Any): Any = "FakePreview"
-    override fun createAnalysis(): Any = "FakeAnalysis"
+    override fun createAnalysis(mode: CameraMode): Any = "FakeAnalysis"
     override fun createCapture(): Any = "FakeCapture"
 
     override fun bindToLifecycle(

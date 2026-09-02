@@ -11,6 +11,7 @@ import android.graphics.Rect
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import android.util.Log
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 
@@ -38,6 +39,9 @@ class DpmAnalyzer(
     /** DPM 网格重建尺寸模式提供器（每次提交网格任务时读取快照；默认 AUTO） */
     private val dimensionMode: () -> DpmDimensionMode = { DpmDimensionMode.AUTO },
 ) {
+    companion object {
+        private const val TAG = "DpmAnalyzer"
+    }
 
     @Volatile
     var currentMode: AnalysisMode = AnalysisMode.SCAN
@@ -119,18 +123,24 @@ class DpmAnalyzer(
         scanRoi: Rect? = null,
         scanControl: DpmScanControl? = null,
     ): DpmAnalyzeResult {
+        Log.d(TAG, "analyze: frame=${frame.width}x${frame.height}, roi=$scanRoi, focus=$focusStatus, mode=$currentMode")
         if (focusStatus == FocusStatus.OUT_OF_FOCUS) {
+            Log.d(TAG, "analyze: OUT_OF_FOCUS, returning NO_CODE")
             return DpmAnalyzeResult(status = DpmAnalyzeStatus.NO_CODE)
         }
         if (!analysisRunning.compareAndSet(false, true)) {
+            Log.d(TAG, "analyze: THROTTLED (already running)")
             return DpmAnalyzeResult(status = DpmAnalyzeStatus.THROTTLED)
         }
         try {
             val throttleResult = shouldAllowAnalysis()
             if (throttleResult != DpmAnalyzeStatus.PROCEED) {
+                Log.d(TAG, "analyze: THROTTLED by timing gate")
                 return DpmAnalyzeResult(status = throttleResult)
             }
+            Log.d(TAG, "analyze: starting performMultiStrategyDecode")
             val decodedCode = performMultiStrategyDecode(frame, frameRotation, scanRoi, scanControl)
+            Log.d(TAG, "analyze: decodedCode=$decodedCode")
             return processDecodeResult(decodedCode)
         } finally {
             analysisRunning.set(false)
@@ -171,45 +181,63 @@ class DpmAnalyzer(
         scanControl: DpmScanControl?,
     ): DecodeResult? {
         val strategies = DpmPreprocessor.strategiesForFrame(frameCount++)
+        Log.d(TAG, "performMultiStrategyDecode: frame=${frame.width}x${frame.height}, roi=$scanRoi, strategies=${strategies.size}")
         // ─── 阶段1：ROI 解码 ───
         val roi = cropRoi(frame, scanRoi)
         val roiScaled = scaleToTargetWidth(roi, config.roiTargetWidth)
         val roiGray = bitmapToGray(roiScaled)
         val roiW = roiScaled.width
         val roiH = roiScaled.height
+        Log.d(TAG, "Stage1: ROI ${roi.width}x${roi.height} → scaled ${roiW}x${roiH}")
         try {
             for (strategy in strategies) {
                 if (scanControl?.aborted() == true) break
-                decodeWithStrategy(roiGray, roiW, roiH, strategy, scanControl)?.let { return it }
+                decodeWithStrategy(roiGray, roiW, roiH, strategy, scanControl)?.let {
+                    Log.d(TAG, "Stage1: HIT strategy=$strategy, code=${it.code}")
+                    return it
+                }
             }
         } finally {
             if (roiScaled !== roi) roiScaled.recycle()
             roi.recycle()
         }
+        Log.d(TAG, "Stage1: MISS")
 
         // 扫码框存在时跳过全图兜底（只识别框内码）
-        if (scanRoi != null) return null
+        if (scanRoi != null) {
+            Log.d(TAG, "scanRoi present, skipping full-image stages")
+            return null
+        }
 
         // ─── 阶段2：全图 ZXing（降采样到 SCAN_MAX_EDGE）───
         val scan = downscaleToMaxEdge(frame, SCAN_MAX_EDGE)
         val scanGray = bitmapToGray(scan)
         val scanW = scan.width
         val scanH = scan.height
+        Log.d(TAG, "Stage2: full-image ${frame.width}x${frame.height} → ${scanW}x${scanH}")
         try {
             for (strategy in strategies) {
                 if (scanControl?.aborted() == true) break
-                decodeWithStrategy(scanGray, scanW, scanH, strategy, scanControl)?.let { return it }
+                decodeWithStrategy(scanGray, scanW, scanH, strategy, scanControl)?.let {
+                    Log.d(TAG, "Stage2: HIT strategy=$strategy, code=${it.code}")
+                    return it
+                }
             }
         } finally {
             if (scan !== frame) scan.recycle()
         }
+        Log.d(TAG, "Stage2: MISS")
 
         // ─── 阶段3：ML Kit 全图兜底 ───
+        Log.d(TAG, "Stage3: ML Kit full-image decode")
         mlKitDecoder.decode(frame)?.let {
+            Log.d(TAG, "Stage3: ML Kit HIT, code=${it.rawValue}")
             return DecodeResult(it.rawValue, DecodeSource.ML_KIT)
         }
+        Log.d(TAG, "Stage3: ML Kit MISS")
 
         // ─── 阶段4：网格兜底（异步）───
+        Log.d(TAG, "Stage4: triggering grid decode")
         triggerGridDecode(scanGray, scanW, scanH, scanControl)
         return null
     }
@@ -229,6 +257,17 @@ class DpmAnalyzer(
             // 反色双试
             val inverted = invertBytes(candidate.pixels)
             decodePixels(inverted, candidate.width, candidate.height, candidate.binarizer)?.let { return it }
+            // 旧版 ROI 快速链：策略 2 的亮点候选直接尝试轴对齐点阵重建。
+            if (strategy == DpmPreprocessor.STRATEGY_LASER_ETCHED &&
+                candidate.name == "s2-bright-otsu-dilate"
+            ) {
+                ImportedDpmScanner.decodeDotGridCandidate(
+                    candidate.pixels,
+                    candidate.width,
+                    candidate.height,
+                    dimensionMode().dimensions(),
+                )?.let { return DecodeResult(it.text, DecodeSource.GRID) }
+            }
         }
         return null
     }

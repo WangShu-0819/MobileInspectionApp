@@ -3,6 +3,8 @@ package com.wearable.inspection.mobile.camera
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import android.util.Log
+import android.util.Size
 import androidx.camera.camera2.interop.Camera2CameraControl
 import androidx.camera.camera2.interop.CaptureRequestOptions
 import androidx.camera.core.Camera
@@ -14,6 +16,7 @@ import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
 import androidx.camera.core.resolutionselector.AspectRatioStrategy
 import androidx.camera.core.resolutionselector.ResolutionSelector
+import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
@@ -83,7 +86,7 @@ interface CameraBinder {
     fun createPreview(surfaceProvider: Any): Any
 
     /** 创建 ImageAnalysis UseCase（needsAnalysis 模式） */
-    fun createAnalysis(): Any
+    fun createAnalysis(mode: CameraMode): Any
 
     /** 创建 ImageCapture UseCase（needsCapture 模式） */
     fun createCapture(): Any
@@ -211,11 +214,23 @@ class RealCameraBinder(private val context: Context) : CameraBinder {
             .build().also { it.setSurfaceProvider(surfaceProvider as Preview.SurfaceProvider) }
     }
 
-    override fun createAnalysis(): Any {
+    override fun createAnalysis(mode: CameraMode): Any {
+        val selector = if (mode == CameraMode.DPM_SCAN) {
+            ResolutionSelector.Builder()
+                .setResolutionStrategy(
+                    ResolutionStrategy(
+                        Size(1920, 1080),
+                        ResolutionStrategy.FALLBACK_RULE_CLOSEST_LOWER_THEN_HIGHER,
+                    ),
+                )
+                .build()
+        } else {
+            resolutionSelector
+        }
         return ImageAnalysis.Builder()
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
             .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888)
-            .setResolutionSelector(resolutionSelector)
+            .setResolutionSelector(selector)
             .build()
     }
 
@@ -433,7 +448,7 @@ class CameraController private constructor(
 
             // 构建 UseCase（通过 binder 创建，测试可注入）
             val preview = binder.createPreview(surfaceProvider)
-            val analysis = if (mode.needsAnalysis) binder.createAnalysis() else null
+            val analysis = if (mode.needsAnalysis) binder.createAnalysis(mode) else null
             val capture = if (mode.needsCapture) binder.createCapture() else null
 
             // 绑定
@@ -469,6 +484,7 @@ class CameraController private constructor(
                     analysisUseCase = analysis
                     imageCapture = capture
                     currentCamera = bindResult.camera
+                    cameraControl = (bindResult.camera as? Camera)?.cameraControl
                     lifecycleOwnerRef = WeakReference(lifecycleOwner)
                     surfaceProviderRef = WeakReference(surfaceProvider)
                     currentMode = mode
@@ -599,7 +615,7 @@ class CameraController private constructor(
             val preview = previewUseCase ?: surfaceProviderRef?.get()?.let {
                 binder.createPreview(it)
             } ?: return@withLock Result.failure(IllegalStateException("SurfaceProvider 已失效"))
-            val analysis = if (mode.needsAnalysis) binder.createAnalysis() else null
+            val analysis = if (mode.needsAnalysis) binder.createAnalysis(mode) else null
             val capture = if (mode.needsCapture) binder.createCapture() else null
 
             // 6. 重绑
@@ -634,6 +650,7 @@ class CameraController private constructor(
                     analysisUseCase = analysis
                     imageCapture = capture
                     currentCamera = bindResult.camera
+                    cameraControl = (bindResult.camera as? Camera)?.cameraControl
                     currentMode = mode
 
                     // 流信息
@@ -734,7 +751,10 @@ class CameraController private constructor(
         // 设置回调
         val analysis = analysisUseCase
         if (analysis != null && analysisExecutor != null) {
+            android.util.Log.d("CameraController", "setFrameAnalyzer: attaching analyzer to use case")
             attachAnalyzerToUseCase(analysis, analyzer)
+        } else {
+            android.util.Log.w("CameraController", "setFrameAnalyzer: analysis=$analysis, executor=$analysisExecutor — cannot attach")
         }
     }
 
@@ -942,17 +962,27 @@ class CameraController private constructor(
      * @return true 表示闪光灯状态已成功切换，false 表示失败
      */
     suspend fun setTorch(enabled: Boolean): Boolean {
-        val control = cameraControl ?: return false
-        if (!hasFlashUnit()) return false
+        val control = cameraControl ?: run {
+            Log.w("CameraController", "setTorch($enabled): no cameraControl")
+            return false
+        }
+        if (!hasFlashUnit()) {
+            Log.w("CameraController", "setTorch($enabled): no flash unit")
+            return false
+        }
+        Log.i("CameraController", "setTorch($enabled): requesting")
         return try {
             val future = control.enableTorch(enabled)
             suspendCancellableCoroutine { cont ->
                 future.addListener({
-                    cont.resume(runCatching { future.get() }.isSuccess)
+                    val result = runCatching { future.get() }
+                    Log.i("CameraController", "setTorch($enabled): completed success=${result.isSuccess}, state=${isTorchOn()}")
+                    cont.resume(result.isSuccess)
                 }, ContextCompat.getMainExecutor(context))
                 cont.invokeOnCancellation { future.cancel(true) }
             }
-        } catch (_: Exception) {
+        } catch (error: Exception) {
+            Log.e("CameraController", "setTorch($enabled): failed", error)
             false
         }
     }
