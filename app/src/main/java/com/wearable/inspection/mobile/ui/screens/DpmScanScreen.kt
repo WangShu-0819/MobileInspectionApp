@@ -41,7 +41,6 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
@@ -59,16 +58,17 @@ import com.wearable.inspection.mobile.ui.theme.SurfaceWhite
 import com.wearable.inspection.mobile.ui.theme.TextPrimary
 import com.wearable.inspection.mobile.ui.theme.TextSecondary
 import kotlinx.coroutines.launch
+import kotlin.math.min
 
-/** 扫描框占屏幕比例 */
-private const val SCAN_FRAME_RATIO = 0.6f
+/** 扫描框边长占预览短边的比例。 */
+private const val SCAN_FRAME_RATIO = 0.72f
 
 /**
  * DPM 扫码页面
  *
  * ROI 映射流程：
  * 1. CameraPreview 以 DPM_SCAN 模式连接，onFrameInfo 报告 contentRect + stream 信息
- * 2. ScanOverlay 绘制中心 60% 扫描框，返回屏幕坐标 Rect
+ * 2. ScanOverlay 绘制居中的 1:1 扫描框，返回屏幕坐标 Rect
  * 3. DpmScanRoiMapper 将屏幕 Rect 映射到旋转后 Bitmap 坐标
  * 4. 动态 scanRoi 传给 DpmFrameAnalyzer（随布局/旋转变化更新）
  */
@@ -214,9 +214,9 @@ fun DpmScanScreen(
 }
 
 /**
- * 扫描框覆盖层 — 中心虚线矩形
+ * 扫描框覆盖层：居中正方形、框外遮罩和四角定位线。
  *
- * @param frameRatio 扫描框占屏幕尺寸的比例
+ * @param frameRatio 扫描框边长占预览短边的比例
  * @param onFrameRect 回调扫描框在屏幕坐标系中的 Rect（相对于 Canvas 左上角）
  */
 @Composable
@@ -231,46 +231,44 @@ private fun ScanOverlay(
     Canvas(modifier = modifier) {
         val w = size.width
         val h = size.height
-        val frameW = w * frameRatio
-        val frameH = h * frameRatio
-        val left = (w - frameW) / 2
-        val top = (h - frameH) / 2
+        val frameSize = min(w, h) * frameRatio.coerceIn(0.5f, 0.85f)
+        val left = (w - frameSize) / 2
+        val top = (h - frameSize) / 2
 
         // 回调屏幕坐标 Rect（px）
         onFrameRect(Rect(
             left.toInt(),
             top.toInt(),
-            (left + frameW).toInt(),
-            (top + frameH).toInt(),
+            (left + frameSize).toInt(),
+            (top + frameSize).toInt(),
         ))
 
         // 半透明遮罩
         drawRect(overlayColor, Offset.Zero, Size(w, top))
-        drawRect(overlayColor, Offset(0f, top), Size(left, frameH))
-        drawRect(overlayColor, Offset(left + frameW, top), Size(w - left - frameW, frameH))
-        drawRect(overlayColor, Offset(0f, top + frameH), Size(w, h - top - frameH))
+        drawRect(overlayColor, Offset(0f, top), Size(left, frameSize))
+        drawRect(overlayColor, Offset(left + frameSize, top), Size(w - left - frameSize, frameSize))
+        drawRect(overlayColor, Offset(0f, top + frameSize), Size(w, h - top - frameSize))
 
-        // 虚线扫描框
-        val dashEffect = PathEffect.dashPathEffect(floatArrayOf(20f, 10f), 0f)
+        // 低对比度完整边界负责界定识别区域，四角负责快速对准。
         drawRoundRect(
-            color = frameColor,
+            color = Color.White.copy(alpha = 0.55f),
             topLeft = Offset(left, top),
-            size = Size(frameW, frameH),
-            cornerRadius = CornerRadius(12f, 12f),
-            style = Stroke(width = 3f, pathEffect = dashEffect),
+            size = Size(frameSize, frameSize),
+            cornerRadius = CornerRadius(10f, 10f),
+            style = Stroke(width = 2f),
         )
 
         // 四角实线装饰
-        val cornerLen = 30f
-        val strokeWidth = 4f
+        val cornerLen = 42f
+        val strokeWidth = 6f
         drawLine(frameColor, Offset(left, top + cornerLen), Offset(left, top), strokeWidth)
         drawLine(frameColor, Offset(left, top), Offset(left + cornerLen, top), strokeWidth)
-        drawLine(frameColor, Offset(left + frameW - cornerLen, top), Offset(left + frameW, top), strokeWidth)
-        drawLine(frameColor, Offset(left + frameW, top), Offset(left + frameW, top + cornerLen), strokeWidth)
-        drawLine(frameColor, Offset(left, top + frameH - cornerLen), Offset(left, top + frameH), strokeWidth)
-        drawLine(frameColor, Offset(left, top + frameH), Offset(left + cornerLen, top + frameH), strokeWidth)
-        drawLine(frameColor, Offset(left + frameW - cornerLen, top + frameH), Offset(left + frameW, top + frameH), strokeWidth)
-        drawLine(frameColor, Offset(left + frameW, top + frameH - cornerLen), Offset(left + frameW, top + frameH), strokeWidth)
+        drawLine(frameColor, Offset(left + frameSize - cornerLen, top), Offset(left + frameSize, top), strokeWidth)
+        drawLine(frameColor, Offset(left + frameSize, top), Offset(left + frameSize, top + cornerLen), strokeWidth)
+        drawLine(frameColor, Offset(left, top + frameSize - cornerLen), Offset(left, top + frameSize), strokeWidth)
+        drawLine(frameColor, Offset(left, top + frameSize), Offset(left + cornerLen, top + frameSize), strokeWidth)
+        drawLine(frameColor, Offset(left + frameSize - cornerLen, top + frameSize), Offset(left + frameSize, top + frameSize), strokeWidth)
+        drawLine(frameColor, Offset(left + frameSize, top + frameSize - cornerLen), Offset(left + frameSize, top + frameSize), strokeWidth)
     }
 }
 
