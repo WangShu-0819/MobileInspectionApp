@@ -103,6 +103,8 @@ B2 Task 1 连续执行检查点：
 5. 扫码页面、扫码框 contentRect/rotation ROI 映射和现场采集导航。
 6. 自动化、真机扫码框、CameraX 累积回归及旧/新 App 同样本 A/B 验收。
 
+所有真机检查点先执行 `AGENTS.md` 的“真机包名门禁”。新工程验收只能显式启动 `com.wearable.inspection.mobile/com.wearable.inspection.mobile.MainActivity`；桌面图标、最近任务或旧包 `com.wearable.inspection` 产生的证据无效。旧 App 仅在标注清楚的 A/B 对照轮次中单独启动，并在切换前停止另一包。
+
 各检查点通过测试后允许自动继续并分别提交；任一失败立即暂停。整个 Task 1 通过后才等待用户验收，绝不自动进入绑定切件 Task 2。
 
 ### B3：钢印 OCR 迁移
@@ -123,3 +125,4 @@ B2 Task 1 连续执行检查点：
 | FIT_CENTER 后坐标映射错误 | 高 | 保存 content rect 并用边缘标记测试 |
 | 报告与真实状态冲突 | 中 | 进度只由 todo 验收项决定 |
 | 一次性目录重构破坏构建 | 中 | 按 feature 小批移动并逐次编译 |
+| 新旧 App 共存时误开旧包 | 高 | 完整组件名启动、前台包校验；旧包证据不得计入新工程验收 |

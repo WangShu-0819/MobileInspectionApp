@@ -24,6 +24,23 @@
 - DPM 只支持手机相机实时扫一扫，不提供相册码图导入。
 - DPM 入口：顶部扫码图标 contentDescription 为"扫一扫"，只进入实时 DPM 扫描；OCR 图标 contentDescription 为"OCR 钢印"；模板样本相册导入属于"我的 > 模板配置"。
 
+## 真机包名门禁
+
+- 新工程唯一 applicationId 为 `com.wearable.inspection.mobile`，启动组件为 `com.wearable.inspection.mobile/com.wearable.inspection.mobile.MainActivity`，应用名为“视觉质检”。
+- 旧工程包名 `com.wearable.inspection` 只允许在明确标注的旧/新 App A/B 对照中启动，不得作为新工程构建、安装、截图或验收对象。
+- 每次真机验证前必须先停止两个包，再显式安装并启动新工程：
+  ```powershell
+  adb -s ERLDU20429005890 shell am force-stop com.wearable.inspection
+  adb -s ERLDU20429005890 shell am force-stop com.wearable.inspection.mobile
+  adb -s ERLDU20429005890 install -r app\build\outputs\apk\debug\app-debug.apk
+  adb -s ERLDU20429005890 shell am start -W -n com.wearable.inspection.mobile/com.wearable.inspection.mobile.MainActivity
+  ```
+- 禁止通过桌面图标、最近任务、模糊名称、`monkey` 或省略组件名的 `am start` 作为验收启动方式；这些方式可能打开旧工程。
+- 启动后必须用 `pidof com.wearable.inspection.mobile` 和 `dumpsys activity activities` 核对新包进程与前台 Activity。相机权限弹窗期间前台可暂时是系统 PermissionController；处理弹窗后必须重新核对前台为新包。
+- 若前台出现 `com.wearable.inspection`，本轮截图、日志、交互和性能数据全部无效，必须停止旧包并从安装新 APK 开始重做。
+- 旧/新 App A/B 对照必须分别标注 `OLD: com.wearable.inspection` 与 `NEW: com.wearable.inspection.mobile`；每轮启动一方前先停止另一方，证据中记录实际包名、APK SHA-256 和启动组件。
+- `connectedDebugAndroidTest` 成功不能替代主 APK 的显式安装与前台包校验。
+
 ## 当前唯一任务
 
 执行 **B2 Task 1：旧 DPM 识别链迁移与实时扫码闭环**。先核对 `docs/migration/LEGACY_MIGRATION_MAP.md` 和旧工程真实源码，再迁移到新工程；旧工程保持只读。

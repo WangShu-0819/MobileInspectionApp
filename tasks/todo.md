@@ -139,6 +139,7 @@ B1 已完成并关闭。
 - [x] 恢复旧参数：中心 50%/ROI 目标宽 400、focus miss 30、grid miss 8、grid cooldown 1500ms；任何有意差异必须先用同样本数据证明
 - [x] CP6 重新统计实际测试用例；Gradle actionable tasks 数量不得冒充测试数量
 - [ ] 新增 DPM 专属 instrumented/UI 测试及真实框内/框外、10 次往返、旧新 App 同样本 A/B 证据（Batch 5 待完成）
+- [ ] 所有 Batch 5 真机证据均按包名门禁重新确认：显式安装当前新 APK，启动 `com.wearable.inspection.mobile/com.wearable.inspection.mobile.MainActivity`，并记录前台包、启动组件和 APK SHA-256；误开 `com.wearable.inspection` 的证据作废
 - [x] 整改 `0c8e045e`：提交 `4c522ce7` 已恢复旧版 ZXing 主解码 → ML Kit DATA_MATRIX 兜底顺序
 - [x] 将含糊的 `PrimaryDecoder/FallbackDecoder` 改为 `DpmZxingDecoder/DpmMlKitDecoder`
 - [ ] 按旧文件、旧职责、新文件、复用内容、去除耦合和迁移测试更新迁移表
@@ -161,6 +162,7 @@ B1 已完成并关闭。
 - [x] UI 不存在 DPM 相册选择、码图导入或相关权限/路由
 - [x] 迁移旧 DPM 专项测试，并覆盖解码链、预处理、网格门控、节流、并发、重复抑制、停止和资源释放
 - [ ] 使用同一批现场/打印样本对旧 App 与新 App 做 A/B 对照，记录逐样本结果和响应时间
+- [ ] A/B 对照分别标注 `OLD: com.wearable.inspection` 与 `NEW: com.wearable.inspection.mobile`，每轮启动前停止另一包，禁止混用截图、日志或响应时间
 - [ ] 真机完成 10 次扫码及 10 次页面往返，识别范围和防连扫行为不得低于旧 App
 - [ ] 更新 `docs/reports/b2/B2_TASK1_DPM_LEGACY_PARITY_REPORT.md` 和证据目录
 
