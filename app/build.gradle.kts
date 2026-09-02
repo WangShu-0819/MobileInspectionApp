@@ -84,8 +84,8 @@ dependencies {
 
     // DPM 扫码
     implementation(libs.mlkit.barcode.scanning)
-    // OCR (阶段 D 再引入)
-    // implementation(libs.mlkit.text.recognition)
+    // OCR (ML Kit text recognition for steel stamp OCR)
+    implementation(libs.mlkit.text.recognition)
     // ZXing Data Matrix 兜底
     implementation(libs.zxing.core)
 

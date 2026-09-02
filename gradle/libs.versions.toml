@@ -64,7 +64,7 @@ opencv = { group = "org.opencv", name = "opencv", version.ref = "opencv" }
 opencv-desktop = { group = "org.openpnp", name = "opencv", version.ref = "opencvDesktop" }
 
 mlkit-barcode-scanning = { group = "com.google.mlkit", name = "barcode-scanning", version.ref = "mlkitBarcode" }
-mlkit-text-recognition = { group = "com.google.android.gms", name = "play-services-mlkit-text-recognition", version.ref = "mlkitText" }
+mlkit-text-recognition = { group = "com.google.mlkit", name = "text-recognition", version.ref = "mlkitText" }
 zxing-core = { group = "com.google.zxing", name = "core", version.ref = "zxing" }
 
 junit = { group = "junit", name = "junit", version.ref = "junit" }

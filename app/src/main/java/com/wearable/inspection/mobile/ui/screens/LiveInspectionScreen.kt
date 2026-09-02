@@ -1,5 +1,6 @@
 package com.wearable.inspection.mobile.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -8,23 +9,18 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.DocumentScanner
-import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Photo
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Warning
@@ -56,8 +52,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.text.font.FontWeight
@@ -65,9 +62,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.wearable.inspection.mobile.R
 import com.wearable.inspection.mobile.data.entity.InspectionTemplateEntity
 import com.wearable.inspection.mobile.data.entity.RoiDefinitionEntity
 import com.wearable.inspection.mobile.ui.screens.workbench.WorkbenchViewModel
@@ -75,12 +70,12 @@ import com.wearable.inspection.mobile.ui.screens.workbench.createWorkbenchViewMo
 import com.wearable.inspection.mobile.ui.theme.LocalCustomColors
 import com.wearable.inspection.mobile.ui.theme.PassColor
 import com.wearable.inspection.mobile.ui.theme.FailColor
-import com.wearable.inspection.mobile.ui.theme.PendingColor
 import com.wearable.inspection.mobile.ui.theme.Primary
 import com.wearable.inspection.mobile.ui.theme.SurfaceWhite
 import com.wearable.inspection.mobile.ui.theme.TextPrimary
 import com.wearable.inspection.mobile.ui.theme.TextSecondary
 import com.wearable.inspection.mobile.ui.theme.DividerColor
+import com.wearable.inspection.mobile.ui.theme.PendingColor
 import com.wearable.inspection.mobile.ui.theme.PlaceholderColor
 import com.wearable.inspection.mobile.ui.theme.BackgroundVariant1
 import androidx.compose.ui.platform.LocalContext
@@ -135,6 +130,9 @@ fun LiveInspectionScreen(
     var captureError by remember { mutableStateOf<String?>(null) }
     var savedPath by remember { mutableStateOf<String?>(null) }
 
+    // 模板选择 bottom sheet
+    var showTemplateSheet by remember { mutableStateOf(false) }
+
     // CameraController 和 ImageStore
     val cameraController = remember { CameraController.getInstance(context) }
     val imageStore = remember { MobileImageStore(context) }
@@ -167,10 +165,16 @@ fun LiveInspectionScreen(
                         if (storeResult != null) {
                             savedPath = storeResult.finalPath
                             captureState = CaptureUiState.SAVED
-                            // 2秒后回到 IDLE
-                            delay(2000)
-                            if (captureState == CaptureUiState.SAVED) {
-                                captureState = CaptureUiState.IDLE
+                            // 推进到下一视角
+                            val hasNext = viewModel.advanceToNextView()
+                            if (!hasNext) {
+                                // 所有视角完成，保持 SAVED 状态显示完成提示
+                            } else {
+                                // 1.5秒后回到 IDLE（下一视角已切换）
+                                delay(1500)
+                                if (captureState == CaptureUiState.SAVED) {
+                                    captureState = CaptureUiState.IDLE
+                                }
                             }
                         } else {
                             imageStore.deleteTempFile(file)
@@ -223,14 +227,6 @@ fun LiveInspectionScreen(
                             tint = Primary
                         )
                     }
-                    // OCR 钢印
-                    androidx.compose.material3.IconButton(onClick = { /* TODO: OCR 钢印 */ }) {
-                        androidx.compose.material3.Icon(
-                            imageVector = Icons.Default.DocumentScanner,
-                            contentDescription = "OCR 钢印",
-                            tint = Primary
-                        )
-                    }
                 }
             )
         },
@@ -273,16 +269,41 @@ fun LiveInspectionScreen(
             TemplateReferenceSection(
                 modifier = Modifier.weight(0.4f),
                 template = inspectionState.selectedTemplate,
+                templates = inspectionState.templates,
                 rois = inspectionState.rois,
                 isReady = inspectionState.isTemplateReady,
+                viewIndex = inspectionState.currentViewIndex,
+                totalViews = inspectionState.totalViews,
+                allViewsCaptured = inspectionState.allViewsCaptured,
                 captureState = captureState,
                 captureError = captureError,
                 cameraState = cameraState,
                 sessionId = sessionId,
                 onTemplateMissing = onOpenTemplates,
                 onCapture = onCapture,
-                onRetry = onResetCapture
+                onRetry = onResetCapture,
+                onSelectTemplate = { templateId ->
+                    viewModel.selectTemplate(templateId)
+                },
+                onShowTemplateSheet = { showTemplateSheet = true },
+                onResetViews = {
+                    viewModel.resetViewIndex()
+                    onResetCapture()
+                }
             )
+
+            // 模板选择 Bottom Sheet
+            if (showTemplateSheet) {
+                TemplatePickerSheet(
+                    templates = inspectionState.templates,
+                    selectedTemplate = inspectionState.selectedTemplate,
+                    onSelect = { templateId ->
+                        viewModel.selectTemplate(templateId)
+                        showTemplateSheet = false
+                    },
+                    onDismiss = { showTemplateSheet = false }
+                )
+            }
         }
     }
 }
@@ -362,22 +383,12 @@ private fun OverlayGraphics(
     rois: List<RoiDefinitionEntity>,
     isReady: Boolean
 ) {
-    if (template == null || !isReady) return
+    if (template == null) return
 
-    // V1: 使用 Canvas 绘制轮廓和 ROI
-    // 阶段 B 将实现实际的姿态估计和投影
     androidx.compose.foundation.Canvas(
         modifier = Modifier.fillMaxSize()
     ) {
-        // 绘制轮廓（简化：白色矩形轮廓）
-        drawRect(
-            color = Color.White,
-            style = Stroke(width = 2.dp.toPx()),
-            topLeft = androidx.compose.ui.geometry.Offset(50.dp.toPx(), 50.dp.toPx()),
-            size = androidx.compose.ui.geometry.Size(200.dp.toPx(), 300.dp.toPx())
-        )
-
-        // 绘制 ROI
+        // 绘制 ROI（如果有真实数据）
         rois.forEach { roi ->
             try {
                 val rect = parseNormalizedRect(roi.normalizedRect)
@@ -398,15 +409,15 @@ private fun OverlayGraphics(
             }
         }
 
-        // 对齐状态文字
+        // 模板就绪提示
         if (isReady) {
             drawContext.canvas.nativeCanvas.drawText(
-                "已对齐，可拍摄",
+                "模板已就绪 · 可以拍照",
                 20.dp.toPx(),
                 40.dp.toPx(),
                 android.graphics.Paint().apply {
-                    color = android.graphics.Color.GREEN
-                    textSize = 16.dp.toPx()
+                    color = android.graphics.Color.argb(200, 255, 255, 255)
+                    textSize = 14.dp.toPx()
                     isFakeBoldText = true
                 }
             )
@@ -439,20 +450,28 @@ private fun parseNormalizedRect(json: String): NormalizedRect {
 private fun TemplateReferenceSection(
     modifier: Modifier = Modifier,
     template: InspectionTemplateEntity?,
+    templates: List<InspectionTemplateEntity> = emptyList(),
     rois: List<RoiDefinitionEntity>,
     isReady: Boolean,
+    viewIndex: Int = 0,
+    totalViews: Int = 0,
+    allViewsCaptured: Boolean = false,
     captureState: CaptureUiState = CaptureUiState.IDLE,
     captureError: String? = null,
     cameraState: CameraStateType? = null,
     sessionId: String? = null,
     onTemplateMissing: () -> Unit = {},
     onCapture: () -> Unit = {},
-    onRetry: () -> Unit = {}
+    onRetry: () -> Unit = {},
+    onSelectTemplate: (String) -> Unit = {},
+    onShowTemplateSheet: () -> Unit = {},
+    onResetViews: () -> Unit = {}
 ) {
     // 快门是否可用
     val canCapture = sessionId != null &&
         cameraState == CameraStateType.OPEN &&
-        captureState == CaptureUiState.IDLE
+        captureState == CaptureUiState.IDLE &&
+        !allViewsCaptured
 
     Column(
         modifier = modifier
@@ -461,39 +480,52 @@ private fun TemplateReferenceSection(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // 标题栏
+        // 标题栏 + 视角进度
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "模板参考",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = TextPrimary
-            )
+            Column {
+                Text(
+                    text = "模板参考",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = TextPrimary
+                )
+                if (totalViews > 0) {
+                    Text(
+                        text = "视角 ${viewIndex + 1} / $totalViews",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary
+                    )
+                }
+            }
 
             // 模板选择器
-            if (template != null) {
+            if (templates.size > 1 && template != null) {
                 TemplateSelector(
                     currentTemplate = template,
-                    onClick = { /* TODO: 打开模板选择器 */ }
+                    onClick = onShowTemplateSheet
                 )
             }
         }
 
+        // 全部完成提示
+        if (allViewsCaptured) {
+            AllViewsCapturedCard(onReset = onResetViews)
+        }
         // 模板内容或空状态
-        if (template == null || !isReady) {
+        else if (template == null) {
             TemplateEmptyState(
-                hasTemplates = true, // TODO: 从 ViewModel 获取
+                hasTemplates = templates.isNotEmpty(),
                 onGoToConfig = onTemplateMissing
             )
         } else {
             TemplateContent(
                 template = template,
-                rois = rois,
-                isReady = isReady
+                viewIndex = viewIndex,
+                totalViews = totalViews
             )
         }
 
@@ -531,7 +563,7 @@ private fun TemplateReferenceSection(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "原图已保存",
+                        text = if (allViewsCaptured) "本轮视角采集完成" else "已保存，切换下一视角",
                         style = MaterialTheme.typography.bodyMedium,
                         color = PassColor
                     )
@@ -579,6 +611,7 @@ private fun TemplateReferenceSection(
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = when {
+                    allViewsCaptured -> "采集完成"
                     sessionId == null -> "相机未就绪"
                     cameraState != CameraStateType.OPEN -> "相机初始化中"
                     captureState == CaptureUiState.CAPTURING -> "拍摄中..."
@@ -678,31 +711,47 @@ private fun TemplateEmptyState(
 @Composable
 private fun TemplateContent(
     template: InspectionTemplateEntity,
-    rois: List<RoiDefinitionEntity>,
-    isReady: Boolean
+    viewIndex: Int = 0,
+    totalViews: Int = 0
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // 左侧：模板参考图
+        // 左侧：模板参考图（真实图片）
         Card(
             modifier = Modifier
                 .size(120.dp)
                 .clip(RoundedCornerShape(8.dp)),
-            colors = CardDefaults.cardColors(containerColor = BackgroundVariant1),
-            onClick = { /* TODO: 放大查看 */ }
+            colors = CardDefaults.cardColors(containerColor = BackgroundVariant1)
         ) {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                androidx.compose.material3.Icon(
-                    imageVector = Icons.Default.Photo,
-                    contentDescription = "模板参考图",
-                    tint = PlaceholderColor,
-                    modifier = Modifier.size(32.dp)
-                )
+                val bitmap = remember(template.mainImagePath) {
+                    try {
+                        val opts = android.graphics.BitmapFactory.Options().apply {
+                            inSampleSize = 4 // 降采样缩略图
+                        }
+                        android.graphics.BitmapFactory.decodeFile(template.mainImagePath, opts)
+                    } catch (_: Exception) { null }
+                }
+                if (bitmap != null) {
+                    androidx.compose.foundation.Image(
+                        bitmap = bitmap.asImageBitmap(),
+                        contentDescription = "模板参考图",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.Photo,
+                        contentDescription = "模板参考图",
+                        tint = PlaceholderColor,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
             }
         }
 
@@ -711,50 +760,151 @@ private fun TemplateContent(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // 模板名称和状态
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            // 视角名称
+            Text(
+                text = template.name,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+                color = TextPrimary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+
+            // 视角进度
+            if (totalViews > 0) {
                 Text(
-                    text = template.name,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium,
-                    color = TextPrimary,
-                    modifier = Modifier.weight(1f)
+                    text = "视角 ${viewIndex + 1} / $totalViews",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextSecondary
                 )
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Icon(
-                        imageVector = if (isReady) Icons.Default.CheckCircle else Icons.Default.Error,
-                        contentDescription = "就绪状态",
-                        tint = if (isReady) PassColor else FailColor,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Text(
-                        text = if (isReady) "就绪" else "未就绪",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (isReady) PassColor else FailColor
-                    )
-                }
             }
 
-            // 统计信息
+            // 状态
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                InfoItem(
-                    label = "ROI",
-                    value = "${rois.size} 个"
+                Icon(
+                    imageVector = Icons.Default.CheckCircle,
+                    contentDescription = null,
+                    tint = PassColor,
+                    modifier = Modifier.size(16.dp)
                 )
-                InfoItem(
-                    label = "轮廓",
-                    value = if (template.outlineData != null) "已提取" else "未提取"
+                Text(
+                    text = "模板已就绪",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = PassColor
                 )
+            }
+        }
+    }
+}
+
+/**
+ * 所有视角采集完成提示
+ */
+@Composable
+private fun AllViewsCapturedCard(onReset: () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = BackgroundVariant1),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.CheckCircle,
+                contentDescription = null,
+                tint = PassColor,
+                modifier = Modifier.size(48.dp)
+            )
+            Text(
+                text = "本轮视角采集完成",
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+                color = TextPrimary
+            )
+            Text(
+                text = "所有视角已拍摄完毕",
+                style = MaterialTheme.typography.bodySmall,
+                color = TextSecondary
+            )
+            TextButton(onClick = onReset) {
+                Text("重新采集", color = Primary)
+            }
+        }
+    }
+}
+
+/**
+ * 模板选择 Bottom Sheet
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TemplatePickerSheet(
+    templates: List<InspectionTemplateEntity>,
+    selectedTemplate: InspectionTemplateEntity?,
+    onSelect: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState()
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .padding(bottom = 32.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = "选择视角",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = TextPrimary,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            templates.forEachIndexed { index, tpl ->
+                val isSelected = tpl.id == selectedTemplate?.id
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onSelect(tpl.id) },
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (isSelected) BackgroundVariant1 else SurfaceWhite
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "视角 ${index + 1}：${tpl.name}",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = TextPrimary,
+                            fontWeight = if (isSelected) FontWeight.Medium else FontWeight.Normal
+                        )
+                        if (isSelected) {
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = null,
+                                tint = PassColor,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                }
             }
         }
     }

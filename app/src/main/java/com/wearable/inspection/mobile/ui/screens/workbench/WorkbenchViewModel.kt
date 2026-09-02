@@ -23,7 +23,10 @@ data class InspectionState(
     val selectedTemplate: InspectionTemplateEntity? = null,
     val rois: List<RoiDefinitionEntity> = emptyList(),
     val isTemplateReady: Boolean = false,
-    val stats: TodayStats = TodayStats()
+    val stats: TodayStats = TodayStats(),
+    val currentViewIndex: Int = 0,
+    val totalViews: Int = 0,
+    val allViewsCaptured: Boolean = false
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -55,16 +58,24 @@ class WorkbenchViewModel(
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    // 选中的模板（默认第一个）
+    // 视角采集进度（声明在 selectedTemplate 之前，供 combine 引用）
+    private val _currentViewIndex = MutableStateFlow(0)
+    val currentViewIndex: StateFlow<Int> = _currentViewIndex.asStateFlow()
+
+    private val _allViewsCaptured = MutableStateFlow(false)
+    val allViewsCaptured: StateFlow<Boolean> = _allViewsCaptured.asStateFlow()
+
+    // 选中的模板（由 viewIndex 或手动选择驱动）
     private val _selectedTemplateId = MutableStateFlow<String?>(null)
     val selectedTemplate: StateFlow<InspectionTemplateEntity?> = combine(
         templates,
-        _selectedTemplateId
-    ) { templateList, selectedId ->
+        _selectedTemplateId,
+        _currentViewIndex
+    ) { templateList, selectedId, viewIndex ->
         if (selectedId != null) {
             templateList.find { it.id == selectedId }
         } else {
-            templateList.firstOrNull()
+            templateList.getOrNull(viewIndex) ?: templateList.firstOrNull()
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
@@ -78,15 +89,10 @@ class WorkbenchViewModel(
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    // 检测就绪状态（有模板、有轮廓数据、有 ROI）
-    val isTemplateReady: StateFlow<Boolean> = combine(
-        selectedTemplate,
-        rois
-    ) { template, roiList ->
-        template != null &&
-        template.outlineData != null &&
-        roiList.isNotEmpty()
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+    // 检测就绪状态（有模板即可拍摄；ROI 和 outlineData 为可选增强）
+    val isTemplateReady: StateFlow<Boolean> = selectedTemplate
+        .map { it != null }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     // 今日统计
     val todayStats: StateFlow<TodayStats> = combine(
@@ -120,7 +126,9 @@ class WorkbenchViewModel(
         selectedTemplate,
         rois,
         isTemplateReady,
-        todayStats
+        todayStats,
+        _currentViewIndex,
+        _allViewsCaptured
     ) { args ->
         @Suppress("UNCHECKED_CAST")
         val part = args[0] as PartEntity?
@@ -134,6 +142,10 @@ class WorkbenchViewModel(
         val ready = args[4] as Boolean
         @Suppress("UNCHECKED_CAST")
         val stats = args[5] as TodayStats
+        @Suppress("UNCHECKED_CAST")
+        val viewIndex = args[6] as Int
+        @Suppress("UNCHECKED_CAST")
+        val captured = args[7] as Boolean
 
         InspectionState(
             part = part,
@@ -141,18 +153,50 @@ class WorkbenchViewModel(
             selectedTemplate = template,
             rois = roiList,
             isTemplateReady = ready,
-            stats = stats
+            stats = stats,
+            currentViewIndex = viewIndex,
+            totalViews = templateList.size,
+            allViewsCaptured = captured
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), InspectionState())
 
     fun selectPart(partId: String) {
         settings.selectedPartId = partId
         _selectedPartId.value = partId
-        // 切换零件时清空模板选择，让模板自动选择第一个
+        // 切换零件时清空模板选择和视角进度
         _selectedTemplateId.value = null
+        _currentViewIndex.value = 0
+        _allViewsCaptured.value = false
     }
 
     fun selectTemplate(templateId: String) {
         _selectedTemplateId.value = templateId
+    }
+
+    /**
+     * 拍照成功后推进到下一视角
+     * @return true 如果还有下一视角，false 如果所有视角已完成
+     */
+    fun advanceToNextView(): Boolean {
+        val templateList = templates.value
+        val nextIndex = _currentViewIndex.value + 1
+        return if (nextIndex < templateList.size) {
+            _currentViewIndex.value = nextIndex
+            _selectedTemplateId.value = null // 让 viewIndex 驱动选择
+            _allViewsCaptured.value = false
+            true
+        } else {
+            _allViewsCaptured.value = true
+            false
+        }
+    }
+
+    /**
+     * 重置视角采集进度
+     */
+    fun resetViewIndex() {
+        _currentViewIndex.value = 0
+        _selectedTemplateId.value = null
+        _allViewsCaptured.value = false
     }
 }
