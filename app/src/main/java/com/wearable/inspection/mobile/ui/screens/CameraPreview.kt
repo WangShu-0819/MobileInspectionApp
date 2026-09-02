@@ -60,11 +60,13 @@ import kotlinx.coroutines.launch
 @Composable
 fun CameraPreview(
     modifier: Modifier = Modifier,
+    cameraMode: CameraMode = CameraMode.INSPECTION,
     onCameraReady: () -> Unit = {},
     onCameraError: (CameraError) -> Unit = {},
     onPermissionDenied: () -> Unit = {},
     onPermissionPermanentlyDenied: () -> Unit = {},
-    onSessionReady: (sessionId: String?) -> Unit = {}
+    onSessionReady: (sessionId: String?) -> Unit = {},
+    onConnected: ((CameraController, String) -> Unit)? = null,
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -131,14 +133,15 @@ fun CameraPreview(
         val result = cameraController.connect(
             lifecycleOwner,
             previewView.surfaceProvider,
-            CameraMode.INSPECTION
+            cameraMode,
         )
         result.fold(
             onSuccess = { session ->
                 currentSessionId = session.sessionId
                 onSessionReady(session.sessionId)
+                onConnected?.invoke(cameraController, session.sessionId)
                 if (BuildConfig.DEBUG) {
-                    android.util.Log.d("CameraPreview", "连接成功，sessionId: ${session.sessionId}")
+                    android.util.Log.d("CameraPreview", "连接成功，mode=$cameraMode, sessionId: ${session.sessionId}")
                 }
             },
             onFailure = { error ->

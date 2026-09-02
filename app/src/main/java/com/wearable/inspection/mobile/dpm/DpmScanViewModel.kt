@@ -14,21 +14,22 @@ import kotlinx.coroutines.launch
 /**
  * DPM 扫码 ViewModel — 管理 DpmAnalyzer + DpmFrameAnalyzer 生命周期。
  *
- * 职责：
- * 1. 创建/销毁 DpmAnalyzer（ZXing 主 + ML Kit 兜底）
- * 2. 创建/销毁 DpmFrameAnalyzer 并绑定到 CameraController
- * 3. 收集解码结果并更新 UI 状态
- * 4. 管理扫码模式切换（scanModeActive）
+ * 设计变更（修复竞态）：
+ * - 不再自行 connect/switchMode，由 DpmScanScreen 的 CameraPreview 以 DPM_SCAN 模式连接
+ * - startScan 接收已连接的 CameraController 和 sessionId
+ * - stopScan 按 sessionId 清理
  */
 class DpmScanViewModel(application: Application) : AndroidViewModel(application) {
-
-    private val cameraController = CameraController.getInstance(application)
 
     // ─── DPM 组件 ───
     private var dpmAnalyzer: DpmAnalyzer? = null
     private var dpmFrameAnalyzer: DpmFrameAnalyzer? = null
     private var respondGate: DpmRespondGate? = null
     private var gridGate: DpmGridGate? = null
+
+    // ─── 会话追踪 ───
+    private var boundController: CameraController? = null
+    private var boundSessionId: String? = null
 
     // ─── UI 状态 ───
     private val _scanState = MutableStateFlow(DpmScanState())
@@ -40,11 +41,18 @@ class DpmScanViewModel(application: Application) : AndroidViewModel(application)
     /**
      * 启动 DPM 扫码模式
      *
-     * 创建 DpmAnalyzer + DpmFrameAnalyzer，绑定到 CameraController。
-     * CameraController 应已以 DPM_SCAN 模式连接。
+     * 由 DpmScanScreen 的 CameraPreview.onConnected 回调触发。
+     * 此时 CameraController 已以 DPM_SCAN 模式连接完成。
+     *
+     * @param controller 已连接的 CameraController
+     * @param sessionId 当前相机会话 ID
+     * @param scanRoi 可选的扫描 ROI
      */
-    fun startScan(scanRoi: Rect? = null) {
-        val app = getApplication<Application>()
+    fun startScan(
+        controller: CameraController,
+        sessionId: String,
+        scanRoi: Rect? = null,
+    ) {
         val scope = viewModelScope
 
         val rg = DpmRespondGate()
@@ -70,9 +78,12 @@ class DpmScanViewModel(application: Application) : AndroidViewModel(application)
         )
         dpmFrameAnalyzer = frameAnalyzer
 
-        // 绑定到 CameraController
+        boundController = controller
+        boundSessionId = sessionId
+
+        // 绑定到已连接的 CameraController
         scope.launch {
-            cameraController.setFrameAnalyzer(frameAnalyzer)
+            controller.setFrameAnalyzer(frameAnalyzer)
         }
 
         // 收集结果
@@ -86,18 +97,34 @@ class DpmScanViewModel(application: Application) : AndroidViewModel(application)
     }
 
     /**
-     * 停止扫码
+     * 停止扫码并清理
+     *
+     * 清理 Analyzer、FrameAnalyzer 和状态。
+     * 不负责 disconnect（由 DpmScanScreen 按 sessionId 处理）。
      */
     fun stopScan() {
-        viewModelScope.launch {
-            cameraController.clearFrameAnalyzer()
-        }
+        val controller = boundController
+        val sessionId = boundSessionId
+
+        // 清理 FrameAnalyzer
         dpmFrameAnalyzer?.stop()
         dpmFrameAnalyzer = null
+
+        // 清理 DpmAnalyzer 状态
         dpmAnalyzer?.setScanModeActive(false)
         dpmAnalyzer = null
         respondGate = null
         gridGate = null
+
+        // 从控制器移除分析器
+        if (controller != null && sessionId != null) {
+            viewModelScope.launch {
+                controller.clearFrameAnalyzer()
+            }
+        }
+
+        boundController = null
+        boundSessionId = null
         _scanState.value = DpmScanState()
     }
 
@@ -105,8 +132,9 @@ class DpmScanViewModel(application: Application) : AndroidViewModel(application)
      * 切换闪光灯
      */
     fun toggleTorch(): Boolean {
+        val controller = boundController ?: return false
         val current = _scanState.value.torchOn
-        val result = cameraController.setTorch(!current)
+        val result = controller.setTorch(!current)
         if (result) {
             _scanState.value = _scanState.value.copy(torchOn = !current)
         }

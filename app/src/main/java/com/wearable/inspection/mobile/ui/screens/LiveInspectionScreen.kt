@@ -113,7 +113,8 @@ fun LiveInspectionScreen(
     ),
     onStartInspection: (String) -> Unit,
     onOpenTemplates: () -> Unit,
-    onViewRecord: (Long) -> Unit
+    onViewRecord: (Long) -> Unit,
+    onDpmScan: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val inspectionState by viewModel.inspectionState.collectAsState()
@@ -209,7 +210,7 @@ fun LiveInspectionScreen(
                 ),
                 actions = {
                     // 扫一扫：手机相机实时 DPM 扫码入口
-                    androidx.compose.material3.IconButton(onClick = { /* TODO: 扫一扫 DPM 扫码 */ }) {
+                    androidx.compose.material3.IconButton(onClick = onDpmScan) {
                         androidx.compose.material3.Icon(
                             imageVector = Icons.Default.QrCodeScanner,
                             contentDescription = "扫一扫",

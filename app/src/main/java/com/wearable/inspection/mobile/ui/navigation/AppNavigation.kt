@@ -60,7 +60,10 @@ fun AppRoot() {
                     },
                     onViewRecord = { recordId ->
                         navController.navigate(Screen.InspectionResult.createRoute(recordId))
-                    }
+                    },
+                    onDpmScan = {
+                        navController.navigate(Screen.DpmScan.route)
+                    },
                 )
             }
 

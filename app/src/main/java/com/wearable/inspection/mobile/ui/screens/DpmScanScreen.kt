@@ -1,20 +1,17 @@
 package com.wearable.inspection.mobile.ui.screens
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.FlashOff
 import androidx.compose.material.icons.filled.FlashOn
 import androidx.compose.material.icons.filled.QrCodeScanner
@@ -33,7 +30,10 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
@@ -48,7 +48,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.wearable.inspection.mobile.camera.CameraController
 import com.wearable.inspection.mobile.camera.CameraMode
@@ -62,15 +61,10 @@ import kotlinx.coroutines.launch
 /**
  * DPM 扫码页面
  *
- * UI 结构：
- * - 顶部 AppBar（返回 + 闪光灯）
- * - 相机预览（全屏）
- * - 扫描框覆盖层（中心虚线矩形）
- * - 底部结果卡片（解码文本 + 计数）
- *
- * 生命周期：
- * - onAppear: 切换 CameraController 到 DPM_SCAN 模式，启动 DpmScanViewModel
- * - onDispose: 停止扫码，切回 IDLE 模式
+ * 生命周期（修复竞态）：
+ * 1. CameraPreview 以 DPM_SCAN 模式 connect → 返回 sessionId
+ * 2. onConnected 回调中启动 DpmScanViewModel 并安装 FrameAnalyzer
+ * 3. onDispose 中按 sessionId 清理 Analyzer + disconnect
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -80,28 +74,32 @@ fun DpmScanScreen(
     viewModel: DpmScanViewModel = viewModel(),
 ) {
     val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
     val cameraController = remember { CameraController.getInstance(context) }
     val scanState by viewModel.scanState.collectAsState()
     val lastResult by viewModel.lastResult.collectAsState()
+    val coroutineScope = rememberCoroutineScope()
 
-    // 切换到 DPM_SCAN 模式并启动扫码
-    LaunchedEffect(Unit) {
-        cameraController.switchMode(CameraMode.DPM_SCAN)
-        viewModel.startScan()
-    }
-
-    // 退出时停止扫码
-    DisposableEffect(Unit) {
-        onDispose {
-            viewModel.stopScan()
-        }
-    }
+    // 追踪已连接的会话 ID，用于退出时清理
+    var connectedSessionId by remember { mutableStateOf<String?>(null) }
 
     // 解码结果回调
     LaunchedEffect(lastResult) {
         lastResult?.let { result ->
             onResult(result.rawValue)
+        }
+    }
+
+    // 退出时按 sessionId 清理
+    DisposableEffect(Unit) {
+        onDispose {
+            viewModel.stopScan()
+            val sid = connectedSessionId
+            if (sid != null) {
+                coroutineScope.launch {
+                    cameraController.clearFrameAnalyzer()
+                    cameraController.disconnect(sid)
+                }
+            }
         }
     }
 
@@ -125,7 +123,7 @@ fun DpmScanScreen(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
-                            imageVector = Icons.Default.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "返回"
                         )
                     }
@@ -147,11 +145,14 @@ fun DpmScanScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // 相机预览
+            // 相机预览：以 DPM_SCAN 模式连接，连接完成后再安装分析器
             CameraPreview(
                 modifier = Modifier.fillMaxSize(),
-                onCameraReady = {},
-                onCameraError = {},
+                cameraMode = CameraMode.DPM_SCAN,
+                onConnected = { controller, sessionId ->
+                    connectedSessionId = sessionId
+                    viewModel.startScan(controller = controller, sessionId = sessionId)
+                },
             )
 
             // 扫描框覆盖层
@@ -179,7 +180,7 @@ fun DpmScanScreen(
 private fun ScanOverlay(modifier: Modifier = Modifier) {
     val overlayColor = Color.Black.copy(alpha = 0.4f)
     val frameColor = Primary
-    val frameSize = 0.6f // 占屏幕宽/高的比例
+    val frameSize = 0.6f
 
     Canvas(modifier = modifier) {
         val w = size.width
@@ -208,16 +209,12 @@ private fun ScanOverlay(modifier: Modifier = Modifier) {
         // 四角实线装饰
         val cornerLen = 30f
         val strokeWidth = 4f
-        // 左上
         drawLine(frameColor, Offset(left, top + cornerLen), Offset(left, top), strokeWidth)
         drawLine(frameColor, Offset(left, top), Offset(left + cornerLen, top), strokeWidth)
-        // 右上
         drawLine(frameColor, Offset(left + frameW - cornerLen, top), Offset(left + frameW, top), strokeWidth)
         drawLine(frameColor, Offset(left + frameW, top), Offset(left + frameW, top + cornerLen), strokeWidth)
-        // 左下
         drawLine(frameColor, Offset(left, top + frameH - cornerLen), Offset(left, top + frameH), strokeWidth)
         drawLine(frameColor, Offset(left, top + frameH), Offset(left + cornerLen, top + frameH), strokeWidth)
-        // 右下
         drawLine(frameColor, Offset(left + frameW - cornerLen, top + frameH), Offset(left + frameW, top + frameH), strokeWidth)
         drawLine(frameColor, Offset(left + frameW, top + frameH - cornerLen), Offset(left + frameW, top + frameH), strokeWidth)
     }
@@ -246,7 +243,6 @@ private fun ResultCard(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            // 状态行
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -271,7 +267,6 @@ private fun ResultCard(
                 }
             }
 
-            // 解码结果
             if (lastResult != null) {
                 Text(
                     text = lastResult,
