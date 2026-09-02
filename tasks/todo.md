@@ -1,6 +1,6 @@
 # 当前任务：B2 Task 1 - 旧 DPM 识别链迁移与实时扫码闭环
 
-状态：进行中。提交 `4c522ce7` 已恢复 ZXing 主解码、ML Kit DATA_MATRIX 兜底顺序；Agent 可在 Task 1 内按检查点连续完成旧 DPM 算法、CameraX 和扫码 UI，但不得并行开始 B2 Task 2、OCR、模板、轮廓或 ROI。
+状态：验收整改中。提交 `29780897` 的 CP6 报告与生产代码不一致：现场采集入口仍为 TODO、CameraPreview 仍硬连 INSPECTION、扫码框未映射为 scanRoi、帧存在重复旋转风险、旧参数未忠实保留，且没有 DPM 真机扫码/A-B 证据。整改完成前不得进入 B2 Task 2、OCR、模板、轮廓或 ROI。
 
 ## Task 1：整理活跃源码边界
 
@@ -125,6 +125,18 @@ B1 已完成并关闭。
 
 ## B2 Task 1：旧 DPM 识别链迁移与实时扫码闭环
 
+- [ ] 整改现场采集“扫一扫”仍为 TODO，接通真实 DPM 路由并补导航测试
+- [ ] CameraPreview 支持显式目标 CameraMode；DPM 页面连接即为 DPM_SCAN，不得被组件重新连接成 INSPECTION
+- [ ] 将可见扫码框按真实 contentRect、流旋转映射为动态 scanRoi，禁止以 null/固定中心裁剪冒充框内扫码
+- [ ] 修复 ImageProxy 已旋转 Bitmap 后又把 rotation 传给 DpmAnalyzer 的重复旋转
+- [ ] 修复 YUV_420_888 转换对 Y/UV rowStride、pixelStride 和裁剪矩形的处理，并增加真机/合成测试
+- [ ] stop 必须取消 DPM 专属任务并阻止迟到结果；生产代码不得调用 resetForTest
+- [ ] 网格重建成功结果必须进入统一结果流，不能调用 processDecodeResult 后丢弃返回值
+- [ ] DpmScanResult 保留真实 ZXING/ML_KIT/GRID 来源，不得在 ViewModel 中统一伪写 ZXING
+- [ ] 尺寸模式从 SettingsStore 读取并作为任务快照传入网格链，不得在 DpmAnalyzer 中硬编码 AUTO
+- [ ] 恢复旧参数：中心 50%/ROI 目标宽 400、focus miss 30、grid miss 8、grid cooldown 1500ms；任何有意差异必须先用同样本数据证明
+- [ ] CP6 重新统计实际测试用例；Gradle actionable tasks 数量不得冒充测试数量
+- [ ] 新增 DPM 专属 instrumented/UI 测试及真实框内/框外、10 次往返、旧新 App 同样本 A/B 证据
 - [x] 整改 `0c8e045e`：提交 `4c522ce7` 已恢复旧版 ZXing 主解码 → ML Kit DATA_MATRIX 兜底顺序
 - [x] 将含糊的 `PrimaryDecoder/FallbackDecoder` 改为 `DpmZxingDecoder/DpmMlKitDecoder`
 - [ ] 按旧文件、旧职责、新文件、复用内容、去除耦合和迁移测试更新迁移表
