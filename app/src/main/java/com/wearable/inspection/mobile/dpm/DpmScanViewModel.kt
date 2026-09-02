@@ -5,6 +5,7 @@ import android.graphics.Rect
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.wearable.inspection.mobile.MobileInspectionApp
 import com.wearable.inspection.mobile.camera.CameraController
 import com.wearable.inspection.mobile.camera.CameraMode
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -71,7 +72,7 @@ class DpmScanViewModel(application: Application) : AndroidViewModel(application)
             respondGate = rg,
             gridGate = gg,
             scope = scope,
-            dimensionMode = { DpmDimensionMode.AUTO },  // TODO: 从 SettingsStore 读取
+            dimensionMode = { MobileInspectionApp.settings(application).dpmDimensionMode },
         )
         analyzer.setMode(DpmAnalyzer.AnalysisMode.SCAN)
         analyzer.setScanModeActive(true)
