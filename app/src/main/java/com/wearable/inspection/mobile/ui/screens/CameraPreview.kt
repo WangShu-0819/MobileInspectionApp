@@ -2,18 +2,26 @@ package com.wearable.inspection.mobile.ui.screens
 
 import android.Manifest
 import android.content.Intent
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -72,6 +80,8 @@ data class FrameInfo(
 fun CameraPreview(
     modifier: Modifier = Modifier,
     cameraMode: CameraMode = CameraMode.INSPECTION,
+    templateImagePath: String? = null,
+    overlayAlpha: Float = 0f,
     onCameraReady: () -> Unit = {},
     onCameraError: (CameraError) -> Unit = {},
     onPermissionDenied: () -> Unit = {},
@@ -93,6 +103,34 @@ fun CameraPreview(
     var cameraError by remember { mutableStateOf<CameraError?>(null) }
     var contentRect by remember { mutableStateOf<android.graphics.Rect?>(null) }
     var currentSessionId by remember { mutableStateOf<String?>(null) }
+
+    // 模板叠加图片（原子更新：templateImagePath 变化时重新加载）
+    var templateBitmap by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
+    var templateLoadError by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(templateImagePath) {
+        templateBitmap = null
+        templateLoadError = null
+        if (templateImagePath != null) {
+            try {
+                val file = java.io.File(templateImagePath)
+                if (!file.exists() || file.length() == 0L) {
+                    templateLoadError = "模板图片不存在"
+                } else {
+                    val bmp = BitmapFactory.decodeFile(templateImagePath)
+                    if (bmp == null) {
+                        templateLoadError = "模板图片解码失败"
+                    } else {
+                        templateBitmap = bmp
+                    }
+                }
+            } catch (e: Exception) {
+                templateLoadError = "模板图片加载失败"
+                if (BuildConfig.DEBUG) {
+                    android.util.Log.e("CameraPreview", "Template overlay load failed", e)
+                }
+            }
+        }
+    }
 
     // CameraState 观察
     val cameraState by cameraController.cameraStateFlow.collectAsState()
@@ -272,6 +310,58 @@ fun CameraPreview(
             factory = { previewView },
             modifier = Modifier.fillMaxSize()
         )
+
+        // 模板图片叠加（仅在 contentRect 内绘制，保持原始纵横比）
+        val currentContentRect = contentRect
+        val currentBitmap = templateBitmap
+        if (currentContentRect != null && currentBitmap != null && overlayAlpha > 0f) {
+            val rectWidth = currentContentRect.width().toFloat()
+            val rectHeight = currentContentRect.height().toFloat()
+            if (rectWidth > 0f && rectHeight > 0f) {
+                val bmpWidth = currentBitmap.width.toFloat()
+                val bmpHeight = currentBitmap.height.toFloat()
+                // 保持纵横比，fit inside contentRect
+                val scale = minOf(rectWidth / bmpWidth, rectHeight / bmpHeight)
+                val drawWidth = bmpWidth * scale
+                val drawHeight = bmpHeight * scale
+                // 居中
+                val offsetX = currentContentRect.left + (rectWidth - drawWidth) / 2f
+                val offsetY = currentContentRect.top + (rectHeight - drawHeight) / 2f
+
+                val density = LocalDensity.current
+                with(density) {
+                    androidx.compose.foundation.Image(
+                        bitmap = currentBitmap.asImageBitmap(),
+                        contentDescription = "模板叠加",
+                        modifier = Modifier
+                            .offset(
+                                x = offsetX.toInt().toDp(),
+                                y = offsetY.toInt().toDp(),
+                            )
+                            .size(
+                                width = drawWidth.toInt().toDp(),
+                                height = drawHeight.toInt().toDp(),
+                            )
+                            .alpha(overlayAlpha.coerceIn(0f, 0.8f)),
+                        contentScale = ContentScale.FillBounds,
+                    )
+                }
+            }
+        }
+
+        // 模板加载错误提示（不 crash，仅显示文字）
+        if (templateLoadError != null && templateImagePath != null) {
+            Text(
+                text = templateLoadError!!,
+                color = Color.Red,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 8.dp)
+                    .background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(4.dp))
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
+            )
+        }
 
         // 加载指示器（OPEN 前显示）
         val isOpen = cameraState == CameraStateType.OPEN

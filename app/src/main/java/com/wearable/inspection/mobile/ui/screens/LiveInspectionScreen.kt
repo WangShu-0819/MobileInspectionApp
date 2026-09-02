@@ -35,9 +35,11 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -123,6 +125,10 @@ fun LiveInspectionScreen(
 
     // 相机会话
     var sessionId by remember { mutableStateOf<String?>(null) }
+
+    // 模板叠加控制
+    var overlayAlpha by remember { mutableStateOf(0.45f) }
+    var templateVisible by remember { mutableStateOf(true) }
 
     // 拍照状态
     var captureState by remember { mutableStateOf(CaptureUiState.IDLE) }
@@ -235,12 +241,13 @@ fun LiveInspectionScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // 上方 60%：实时预览 + 轮廓叠加
+            // 上方 60%：实时预览 + 模板叠加
             CameraPreviewSection(
                 modifier = Modifier.weight(0.6f),
                 template = inspectionState.selectedTemplate,
                 rois = inspectionState.rois,
                 isReady = inspectionState.isTemplateReady,
+                overlayAlpha = if (templateVisible) overlayAlpha else 0f,
                 onSessionReady = { id ->
                     sessionId = id
                     if (id == null) {
@@ -251,6 +258,15 @@ fun LiveInspectionScreen(
                         onResetCapture()
                     }
                 }
+            )
+
+            // 模板叠加控制栏
+            TemplateOverlayControls(
+                alpha = overlayAlpha,
+                visible = templateVisible,
+                onAlphaChange = { overlayAlpha = it },
+                onToggleVisibility = { templateVisible = !templateVisible },
+                modifier = Modifier.fillMaxWidth(),
             )
 
             // 下方 40%：模板参考 + 信息
@@ -282,6 +298,7 @@ private fun CameraPreviewSection(
     template: InspectionTemplateEntity?,
     rois: List<RoiDefinitionEntity>,
     isReady: Boolean,
+    overlayAlpha: Float = 0f,
     onSessionReady: (String?) -> Unit = {}
 ) {
     var cameraReady by remember { mutableStateOf(false) }
@@ -293,9 +310,11 @@ private fun CameraPreviewSection(
             .background(Color.Black),
         contentAlignment = Alignment.Center
     ) {
-        // 真实 CameraX 实时预览
+        // 真实 CameraX 实时预览 + 模板叠加
         CameraPreview(
             modifier = Modifier.fillMaxSize(),
+            templateImagePath = template?.mainImagePath,
+            overlayAlpha = overlayAlpha,
             onCameraReady = {
                 cameraReady = true
                 if (BuildConfig.DEBUG) {
@@ -759,6 +778,57 @@ private fun InfoItem(
             text = label,
             style = MaterialTheme.typography.bodySmall,
             color = TextSecondary
+        )
+    }
+}
+
+
+/**
+ * 模板叠加控制栏：透明度 Slider + 显示/隐藏切换
+ *
+ * 范围 0.0f ~ 0.8f，默认 0.45f。
+ * 调节不触发 CameraX rebind。
+ */
+@Composable
+private fun TemplateOverlayControls(
+    alpha: Float,
+    visible: Boolean,
+    onAlphaChange: (Float) -> Unit,
+    onToggleVisibility: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+            .background(SurfaceWhite)
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        // 显示/隐藏按钮
+        IconButton(onClick = onToggleVisibility, modifier = Modifier.size(32.dp)) {
+            Icon(
+                imageVector = if (visible) Icons.Default.Photo else Icons.Default.Close,
+                contentDescription = if (visible) "隐藏模板" else "显示模板",
+                tint = if (visible) Primary else TextSecondary,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+
+        // 透明度标签
+        Text(
+            text = "模板透明度 ${(alpha * 100).toInt()}%",
+            style = MaterialTheme.typography.bodySmall,
+            color = TextSecondary,
+            modifier = Modifier.width(90.dp)
+        )
+
+        // Slider
+        Slider(
+            value = alpha,
+            onValueChange = onAlphaChange,
+            valueRange = 0f..0.8f,
+            modifier = Modifier.weight(1f),
+            enabled = visible,
         )
     }
 }
