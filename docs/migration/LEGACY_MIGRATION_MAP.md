@@ -2,7 +2,9 @@
 
 **目标**：将 Wearable Inspection 旧工程中的功能迁移到 MobileInspectionApp（新工程）
 **创建时间**：2026-08-31
-**状态**：B1 已完成；B2 Task 1 迁移审计进行中
+**状态**：B1 已完成；B2 Task 1 SOFTWARE_COMPLETE / PHYSICAL_ACCEPTANCE_PENDING；V1 功能开发中
+
+> **Contour-based live alignment**: DEFERRED / EXPERIMENTAL。轮廓提取成熟度不足，继续优化会阻塞可交付版本。V1 改为模板原始图片透明叠加 CameraX 实时画面。`tools/contour_extraction/` 工具和数据保留，但不进入 V1 实时现场采集功能。
 
 > 当前状态与执行边界以根目录 `AGENTS.md`、`tasks/todo.md` 和 `tasks/plan.md` 为准。本文件中标为“历史目标”的 B0/B1 内容只保留审计背景，不得据此重新创建 `SharedCameraSession`、`PhoneCameraController` 或第二套 CameraX。
 
@@ -1117,6 +1119,65 @@ MobileInspectionApp/
 
 - [x] DPM 分析器恢复旧 App 的高分辨率请求；设备实际协商为 1440×1080
 - [x] 恢复策略 2 `s2-bright-otsu-dilate` 候选的旧版点阵快速链
+
+---
+
+## 13. 快速迁移模块（2026-09-02）
+
+以下模块按"旧工程成熟实现优先直接移植"原则迁移，不重新设计。
+
+### 13.1 TtsManager
+
+| 维度 | 内容 |
+|------|------|
+| 旧文件 | `tts/TtsManager.kt` |
+| 新文件 | `mobile/tts/TtsManager.kt` |
+| 迁移方式 | 直接复制，改 package |
+| 旧工程耦合 | 无（纯 Android TextToSpeech API） |
+| 修改量 | 零 |
+| 测试 | JVM 验证（初始化/释放逻辑） |
+
+### 13.2 TemplatePackageImporter
+
+| 维度 | 内容 |
+|------|------|
+| 旧文件 | `template/TemplatePackageImporter.kt` |
+| 新文件 | `mobile/template/TemplatePackageImporter.kt` |
+| 迁移方式 | 直接复制，改 package |
+| 旧工程耦合 | 无（纯 JVM ZIP/JSON 解析） |
+| 修改量 | 零（添加 `org.json:json:20231013` testImplementation 替代 AGP stub） |
+| 测试 | `TemplatePackageImporterTest.kt` 全量迁移（17 项） |
+
+### 13.3 ResultPackager
+
+| 维度 | 内容 |
+|------|------|
+| 旧文件 | `result/ResultPackager.kt` |
+| 新文件 | `mobile/result/ResultPackager.kt` |
+| 迁移方式 | 直接复制，改 package |
+| 旧工程耦合 | 无（纯 JVM ZIP 创建） |
+| 修改量 | 零 |
+| 测试 | `ResultPackagerTest.kt` 全量迁移（4 项） |
+
+### 13.4 BatteryOptimizationHelper
+
+| 维度 | 内容 |
+|------|------|
+| 旧文件 | `service/BatteryOptimizationHelper.kt` |
+| 新文件 | `mobile/service/BatteryOptimizationHelper.kt` |
+| 迁移方式 | 直接复制，改 package |
+| 旧工程耦合 | 无（纯 Android PowerManager/Settings API） |
+| 修改量 | 零 |
+| 测试 | 无（纯系统 API 调用，需真机验证） |
+
+### 13.5 InspectionForegroundService
+
+| 维度 | 内容 |
+|------|------|
+| 旧文件 | `service/InspectionForegroundService.kt` |
+| 状态 | ❌ 暂不迁移 |
+| 原因 | 旧服务是 `connectedDevice` 类型，深度耦合 Leion 眼镜、`LeionConnectionState`、`LeionManager`、`WearableApp`；新工程明确排除 G40/Leion/USB |
+| 后续条件 | 仅当手机 CameraX 确实需要息屏/后台持续巡检时，重新基于手机 App 的 CameraX 生命周期设计最薄服务 |
 - [x] 使用旧 App 可识别的同一显示设备 DPM 码，新 App 成功识别 `M968942280224B169AH005023044710`
 - [x] CameraController 首次绑定与模式重绑均保存 cameraControl，闪光灯开/关经用户真机复测通过
 - [x] 最终 APK SHA-256：`bf93862c2ece79263ac2ef04f5cd176bcd2d726d0d738a55e0ad31428f5bb062`
