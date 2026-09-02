@@ -13,14 +13,16 @@ sealed class Screen(val route: String) {
     }
     object InspectionResult : Screen("inspection_result/{sessionId}") {
         const val ARG_SESSION_ID = "sessionId"
-        fun createRoute(sessionId: Long) = "inspection_result/$sessionId"
+        fun createRoute(sessionId: String) = "inspection_result/$sessionId"
     }
     object TemplateConfig : Screen("template_config")              // 模板配置
     object TemplateDetail : Screen("template_detail/{templateId}") {
         const val ARG_TEMPLATE_ID = "templateId"
-        fun createRoute(templateId: Long) = "template_detail/$templateId"
+        fun createRoute(templateId: String) = "template_detail/$templateId"
     }
     object AppSettings : Screen("app_settings")                    // 应用设置
     object PartManagement : Screen("part_management")              // 零件管理
     object DpmScan : Screen("dpm_scan")                            // DPM 扫码
+    object TemplatePackages : Screen("template_packages")          // 模板包
+    object ResultManagement : Screen("result_management")          // 检测结果管理
 }

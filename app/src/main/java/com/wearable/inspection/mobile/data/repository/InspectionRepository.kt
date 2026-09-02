@@ -39,6 +39,12 @@ class InspectionRepository(
     fun observeTemplates(partId: String): Flow<List<InspectionTemplateEntity>> =
         templateDao.observeByPartId(partId)
 
+    fun observeAllTemplates(): Flow<List<InspectionTemplateEntity>> =
+        templateDao.observeAll()
+
+    suspend fun getAllTemplates(): List<InspectionTemplateEntity> =
+        templateDao.getAll()
+
     suspend fun getTemplate(id: String): InspectionTemplateEntity? = templateDao.getById(id)
 
     suspend fun getTemplatesByPart(partId: String): List<InspectionTemplateEntity> =
@@ -109,6 +115,14 @@ class InspectionRepository(
     suspend fun insertRoiRecords(records: List<RoiInspectionRecordEntity>) {
         roiRecordDao.insertAll(records)
     }
+
+    // ---- 统计 ----
+
+    suspend fun partCount(): Int = partDao.count()
+
+    suspend fun templateCount(): Int = templateDao.count()
+
+    suspend fun roiCount(): Int = roiDao.count()
 
     // ---- 工具方法 ----
 

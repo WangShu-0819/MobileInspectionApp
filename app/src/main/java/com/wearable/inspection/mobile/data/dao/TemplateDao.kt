@@ -15,6 +15,12 @@ interface TemplateDao {
     @Query("SELECT * FROM inspection_templates WHERE partId = :partId")
     suspend fun getByPartId(partId: String): List<InspectionTemplateEntity>
 
+    @Query("SELECT * FROM inspection_templates ORDER BY updatedAt DESC")
+    fun observeAll(): Flow<List<InspectionTemplateEntity>>
+
+    @Query("SELECT * FROM inspection_templates ORDER BY updatedAt DESC")
+    suspend fun getAll(): List<InspectionTemplateEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(template: InspectionTemplateEntity)
 
@@ -29,4 +35,7 @@ interface TemplateDao {
 
     @Query("DELETE FROM inspection_templates WHERE partId = :partId")
     suspend fun deleteByPartId(partId: String)
+
+    @Query("SELECT COUNT(*) FROM inspection_templates")
+    suspend fun count(): Int
 }

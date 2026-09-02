@@ -65,7 +65,7 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TraceRecordsScreen(
-    onViewRecord: (Long) -> Unit
+    onViewRecord: (String) -> Unit
 ) {
     val customColors = LocalCustomColors.current
 

@@ -26,4 +26,7 @@ interface InspectionSessionDao {
 
     @Query("SELECT COUNT(*) FROM inspection_sessions WHERE partId = :partId")
     suspend fun countByPartId(partId: String): Int
+
+    @Query("SELECT COUNT(*) FROM inspection_sessions")
+    suspend fun count(): Int
 }

@@ -14,22 +14,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.CleaningServices
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.FolderOpen
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.InstallMobile
-import androidx.compose.material.icons.filled.NotificationImportant
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
@@ -37,50 +31,73 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.wearable.inspection.mobile.BuildConfig
+import com.wearable.inspection.mobile.MobileInspectionApp
 import com.wearable.inspection.mobile.ui.theme.LocalCustomColors
-import com.wearable.inspection.mobile.ui.theme.PassColor
-import com.wearable.inspection.mobile.ui.theme.PendingColor
 import com.wearable.inspection.mobile.ui.theme.Primary
 import com.wearable.inspection.mobile.ui.theme.DividerColor
 import com.wearable.inspection.mobile.ui.theme.SurfaceWhite
 import com.wearable.inspection.mobile.ui.theme.TextPrimary
 import com.wearable.inspection.mobile.ui.theme.TextSecondary
 import com.wearable.inspection.mobile.ui.theme.PlaceholderColor
-import com.wearable.inspection.mobile.ui.theme.BackgroundVariant1
-import com.wearable.inspection.mobile.ui.theme.BackgroundVariant1
 
 /**
- * 我的页面
- * 采用台账式纵向分组，不虚构账号或云同步
+ * 我的页面 — MVP 简化版
+ *
+ * 结构：
+ * 检测配置
+ *   模板配置
+ *   零件管理
+ * 数据
+ *   模板包
+ *   检测结果
+ * 设置
+ *   应用设置
+ * 关于
+ *   版本信息
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
     onOpenTemplateConfig: () -> Unit,
     onOpenPartManagement: () -> Unit,
+    onOpenTemplatePackages: () -> Unit,
+    onOpenResultManagement: () -> Unit,
     onOpenSettings: () -> Unit
 ) {
     val customColors = LocalCustomColors.current
+    val context = LocalContext.current
+    val repository = remember { MobileInspectionApp.repository(context) }
 
-    // TODO: 从数据库获取实际统计数据
-    val stats = TemplateStats(
-        partCount = 3,
-        templateCount = 5,
-        roiCount = 12,
-        incompleteItems = 2
-    )
+    // 从数据库获取真实统计
+    var partCount by remember { mutableIntStateOf(0) }
+    var templateCount by remember { mutableIntStateOf(0) }
+    var roiCount by remember { mutableIntStateOf(0) }
+    var statsLoaded by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        partCount = repository.partCount()
+        templateCount = repository.templateCount()
+        roiCount = repository.roiCount()
+        statsLoaded = true
+    }
 
     LazyColumn(
         modifier = Modifier
@@ -90,9 +107,9 @@ fun ProfileScreen(
             .padding(top = 16.dp, bottom = 8.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        // 1. 顶部品牌区
+        // 1. 顶部标题
         item {
-            BrandHeader()
+            ProfileHeader()
         }
 
         // 2. 检测配置
@@ -103,82 +120,54 @@ fun ProfileScreen(
                     ProfileItem(
                         icon = Icons.Default.PhotoLibrary,
                         title = "模板配置",
-                        subtitle = "${stats.partCount} 个零件 · ${stats.templateCount} 个模板 · ${stats.roiCount} 个 ROI",
-                        badge = if (stats.incompleteItems > 0) "${stats.incompleteItems} 项待完善" else null,
-                        badgeColor = PendingColor,
+                        subtitle = if (statsLoaded) {
+                            "$partCount 个零件 · $templateCount 个模板 · $roiCount 个 ROI"
+                        } else {
+                            "加载中…"
+                        },
                         onClick = onOpenTemplateConfig
                     ),
                     ProfileItem(
-                        icon = Icons.Default.CameraAlt,
+                        icon = Icons.Default.Build,
                         title = "零件管理",
-                        subtitle = "创建、编辑、删除零件",
+                        subtitle = "创建、编辑零件",
                         onClick = onOpenPartManagement
-                    ),
-                    ProfileItem(
-                        icon = Icons.Default.Settings,
-                        title = "默认检测参数",
-                        subtitle = "阈值及预处理配置",
-                        onClick = { /* TODO */ }
                     )
                 )
             )
         }
 
-        // 3. 数据管理
+        // 3. 数据
         item {
             ProfileSection(
-                title = "数据管理",
+                title = "数据",
                 items = listOf(
                     ProfileItem(
                         icon = Icons.Default.FolderOpen,
-                        title = "模板包导入/导出",
-                        subtitle = "备份与迁移",
-                        onClick = { /* TODO */ }
+                        title = "模板包",
+                        subtitle = "导入模板数据",
+                        onClick = onOpenTemplatePackages
                     ),
                     ProfileItem(
                         icon = Icons.Default.Description,
-                        title = "结果包管理",
-                        subtitle = "导出与清理",
-                        onClick = { /* TODO */ }
-                    ),
-                    ProfileItem(
-                        icon = Icons.Default.Storage,
-                        title = "存储空间",
-                        subtitle = "查看使用情况",
-                        onClick = { /* TODO */ }
-                    ),
-                    ProfileItem(
-                        icon = Icons.Default.CleaningServices,
-                        title = "数据清理",
-                        subtitle = "清除缓存与临时文件",
-                        onClick = { /* TODO */ }
+                        title = "检测结果",
+                        subtitle = "查看与导出结果",
+                        onClick = onOpenResultManagement
                     )
                 )
             )
         }
 
-        // 4. 应用设置
+        // 4. 设置
         item {
             ProfileSection(
-                title = "应用设置",
+                title = "设置",
                 items = listOf(
                     ProfileItem(
-                        icon = Icons.Default.CameraAlt,
-                        title = "相机与图像质量",
-                        subtitle = "拍照质量与对焦模式",
+                        icon = Icons.Default.Settings,
+                        title = "应用设置",
+                        subtitle = "相机、DPM、诊断",
                         onClick = onOpenSettings
-                    ),
-                    ProfileItem(
-                        icon = Icons.Default.NotificationImportant,
-                        title = "提示音与振动",
-                        subtitle = "检测反馈设置",
-                        onClick = { /* TODO */ }
-                    ),
-                    ProfileItem(
-                        icon = Icons.Default.Info,
-                        title = "权限与诊断",
-                        subtitle = "权限状态与版本信息",
-                        onClick = { /* TODO */ }
                     )
                 )
             )
@@ -196,44 +185,23 @@ fun ProfileScreen(
 }
 
 @Composable
-private fun BrandHeader() {
-    val customColors = LocalCustomColors.current
-
+private fun ProfileHeader() {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+            .padding(vertical = 12.dp),
+        horizontalAlignment = Alignment.Start,
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        // App 图标
-        Box(
-            modifier = Modifier
-                .size(72.dp)
-                .clip(CircleShape)
-                .background(Primary),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = Icons.Default.CheckCircle,
-                contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.size(40.dp)
-            )
-        }
-
-        // 应用名称
         Text(
-            text = "视觉质检",
+            text = "我的",
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.SemiBold,
             fontSize = 22.sp,
             color = TextPrimary
         )
-
-        // 副标题
         Text(
-            text = "现场工作台 · 离线可用",
+            text = "视觉质检 · 离线可用",
             style = MaterialTheme.typography.bodySmall,
             color = TextSecondary
         )
@@ -278,12 +246,10 @@ private fun ProfileSection(
     }
 }
 
-data class ProfileItem(
+private data class ProfileItem(
     val icon: ImageVector,
     val title: String,
     val subtitle: String,
-    val badge: String? = null,
-    val badgeColor: Color = PendingColor,
     val onClick: () -> Unit
 )
 
@@ -327,29 +293,12 @@ private fun ProfileItemRow(item: ProfileItem) {
             }
         }
 
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            if (item.badge != null) {
-                Text(
-                    text = item.badge,
-                    style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.Medium,
-                    color = item.badgeColor,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(item.badgeColor.copy(alpha = 0.1f))
-                        .padding(horizontal = 8.dp, vertical = 2.dp)
-                )
-            }
-            Icon(
-                imageVector = Icons.Default.ArrowForward,
-                contentDescription = null,
-                tint = DividerColor,
-                modifier = Modifier.size(20.dp)
-            )
-        }
+        Icon(
+            imageVector = Icons.Default.ArrowForward,
+            contentDescription = null,
+            tint = DividerColor,
+            modifier = Modifier.size(20.dp)
+        )
     }
 }
 
@@ -367,12 +316,6 @@ private fun VersionInfo() {
             textAlign = TextAlign.Center
         )
         Text(
-            text = "构建时间：2026-08-31",
-            style = MaterialTheme.typography.bodySmall,
-            color = PlaceholderColor,
-            textAlign = TextAlign.Center
-        )
-        Text(
             text = "数据仅保存在本机",
             style = MaterialTheme.typography.bodySmall,
             color = PlaceholderColor,
@@ -380,11 +323,3 @@ private fun VersionInfo() {
         )
     }
 }
-
-// 数据模型
-data class TemplateStats(
-    val partCount: Int,
-    val templateCount: Int,
-    val roiCount: Int,
-    val incompleteItems: Int
-)

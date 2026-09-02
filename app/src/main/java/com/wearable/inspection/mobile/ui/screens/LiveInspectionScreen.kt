@@ -115,7 +115,7 @@ fun LiveInspectionScreen(
     ),
     onStartInspection: (String) -> Unit,
     onOpenTemplates: () -> Unit,
-    onViewRecord: (Long) -> Unit,
+    onViewRecord: (String) -> Unit,
     onDpmScan: () -> Unit = {},
 ) {
     val context = LocalContext.current

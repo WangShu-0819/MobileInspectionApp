@@ -83,6 +83,12 @@ fun AppRoot() {
                     onOpenPartManagement = {
                         navController.navigate(Screen.PartManagement.route)
                     },
+                    onOpenTemplatePackages = {
+                        navController.navigate(Screen.TemplatePackages.route)
+                    },
+                    onOpenResultManagement = {
+                        navController.navigate(Screen.ResultManagement.route)
+                    },
                     onOpenSettings = {
                         navController.navigate(Screen.AppSettings.route)
                     }
@@ -92,6 +98,7 @@ fun AppRoot() {
             // 二级页面
             composable(Screen.TemplateConfig.route) {
                 TemplateConfigScreen(
+                    onBack = { navController.popBackStack() },
                     onTemplateClick = { templateId ->
                         navController.navigate(Screen.TemplateDetail.createRoute(templateId))
                     }
@@ -110,6 +117,18 @@ fun AppRoot() {
                 )
             }
 
+            composable(Screen.TemplatePackages.route) {
+                TemplatePackageScreen(
+                    onBack = { navController.popBackStack() }
+                )
+            }
+
+            composable(Screen.ResultManagement.route) {
+                ResultManagementScreen(
+                    onBack = { navController.popBackStack() }
+                )
+            }
+
             composable(
                 route = Screen.CameraPreview.route,
                 arguments = listOf(navArgument(Screen.CameraPreview.ARG_PART_ID) { type = NavType.StringType })
@@ -123,9 +142,9 @@ fun AppRoot() {
 
             composable(
                 route = Screen.InspectionResult.route,
-                arguments = listOf(navArgument(Screen.InspectionResult.ARG_SESSION_ID) { type = NavType.LongType })
+                arguments = listOf(navArgument(Screen.InspectionResult.ARG_SESSION_ID) { type = NavType.StringType })
             ) { backStackEntry ->
-                val sessionId = backStackEntry.arguments?.getLong(Screen.InspectionResult.ARG_SESSION_ID) ?: return@composable
+                val sessionId = backStackEntry.arguments?.getString(Screen.InspectionResult.ARG_SESSION_ID) ?: return@composable
                 InspectionResultScreen(
                     sessionId = sessionId,
                     onBack = { navController.popBackStack() }
@@ -134,9 +153,9 @@ fun AppRoot() {
 
             composable(
                 route = Screen.TemplateDetail.route,
-                arguments = listOf(navArgument(Screen.TemplateDetail.ARG_TEMPLATE_ID) { type = NavType.LongType })
+                arguments = listOf(navArgument(Screen.TemplateDetail.ARG_TEMPLATE_ID) { type = NavType.StringType })
             ) { backStackEntry ->
-                val templateId = backStackEntry.arguments?.getLong(Screen.TemplateDetail.ARG_TEMPLATE_ID) ?: return@composable
+                val templateId = backStackEntry.arguments?.getString(Screen.TemplateDetail.ARG_TEMPLATE_ID) ?: return@composable
                 TemplateDetailScreen(
                     templateId = templateId,
                     onBack = { navController.popBackStack() }

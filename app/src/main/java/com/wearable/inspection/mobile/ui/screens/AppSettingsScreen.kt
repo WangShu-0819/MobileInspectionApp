@@ -1,7 +1,6 @@
 package com.wearable.inspection.mobile.ui.screens
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,40 +11,42 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.NotificationImportant
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Vibration
+import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.wearable.inspection.mobile.BuildConfig
+import com.wearable.inspection.mobile.MobileInspectionApp
+import com.wearable.inspection.mobile.dpm.DpmDimensionMode
 import com.wearable.inspection.mobile.ui.theme.LocalCustomColors
 import com.wearable.inspection.mobile.ui.theme.Primary
 import com.wearable.inspection.mobile.ui.theme.SurfaceWhite
@@ -53,10 +54,11 @@ import com.wearable.inspection.mobile.ui.theme.TextPrimary
 import com.wearable.inspection.mobile.ui.theme.TextSecondary
 import com.wearable.inspection.mobile.ui.theme.DividerColor
 import com.wearable.inspection.mobile.ui.theme.PlaceholderColor
-import com.wearable.inspection.mobile.ui.theme.BackgroundVariant1
 
 /**
  * 应用设置页面
+ *
+ * 只展示已生效的真实设置，不展示未接入业务的开关。
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,6 +66,11 @@ fun AppSettingsScreen(
     onBack: () -> Unit
 ) {
     val customColors = LocalCustomColors.current
+    val context = LocalContext.current
+    val settings = remember { MobileInspectionApp.settings(context) }
+
+    var dpmMode by remember { mutableStateOf(settings.dpmDimensionMode) }
+    var dpmMenuExpanded by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -101,67 +108,79 @@ fun AppSettingsScreen(
                 .padding(top = 16.dp, bottom = 8.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            // 1. 相机与图像质量
+            // 1. DPM 设置
             item {
                 SettingsSection(
-                    title = "相机与图像质量",
+                    title = "DPM 扫码",
                     items = listOf(
-                        SettingItem.SwitchItem(
-                            icon = Icons.Default.CameraAlt,
-                            title = "拍照质量",
-                            subtitle = "使用高质量图像（文件更大）",
-                            checked = true,
-                            onCheckedChange = { /* TODO */ }
-                        ),
                         SettingItem.InfoItem(
-                            icon = Icons.Default.Info,
-                            title = "相机分辨率",
-                            subtitle = "1920 × 1080",
-                            onClick = { /* TODO */ }
+                            icon = Icons.Default.QrCode,
+                            title = "网格重建尺寸",
+                            subtitle = dpmMode.label,
+                            onClick = { dpmMenuExpanded = true }
                         )
                     )
                 )
             }
 
-            // 2. 提示音与振动
+            // DPM 尺寸模式下拉菜单
+            item {
+                Box {
+                    DropdownMenu(
+                        expanded = dpmMenuExpanded,
+                        onDismissRequest = { dpmMenuExpanded = false }
+                    ) {
+                        DpmDimensionMode.entries.forEach { mode ->
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        text = mode.label,
+                                        fontWeight = if (mode == dpmMode) FontWeight.Bold else FontWeight.Normal,
+                                        color = if (mode == dpmMode) Primary else TextPrimary
+                                    )
+                                },
+                                onClick = {
+                                    dpmMode = mode
+                                    settings.dpmDimensionMode = mode
+                                    dpmMenuExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+
+            // 2. 相机信息（只读）
             item {
                 SettingsSection(
-                    title = "提示音与振动",
+                    title = "相机",
                     items = listOf(
-                        SettingItem.SwitchItem(
-                            icon = Icons.Default.NotificationImportant,
-                            title = "提示音",
-                            subtitle = "检测完成时播放提示音",
-                            checked = true,
-                            onCheckedChange = { /* TODO */ }
-                        ),
-                        SettingItem.SwitchItem(
-                            icon = Icons.Default.Vibration,
-                            title = "振动反馈",
-                            subtitle = "检测完成时振动",
-                            checked = true,
-                            onCheckedChange = { /* TODO */ }
+                        SettingItem.InfoItem(
+                            icon = Icons.Default.CameraAlt,
+                            title = "预览分辨率",
+                            subtitle = "由设备自动协商",
+                            onClick = { /* 只读 */ }
                         )
                     )
                 )
             }
 
-            // 3. 权限与诊断
+            // 3. 版本与诊断
             item {
                 SettingsSection(
-                    title = "权限与诊断",
+                    title = "版本与诊断",
                     items = listOf(
-                        SettingItem.InfoItem(
-                            icon = Icons.Default.CameraAlt,
-                            title = "相机权限",
-                            subtitle = "已授权",
-                            onClick = { /* TODO */ }
-                        ),
                         SettingItem.InfoItem(
                             icon = Icons.Default.Info,
                             title = "应用版本",
-                            subtitle = "v1.0.0 (Build 2026-08-31)",
-                            onClick = { /* TODO */ }
+                            subtitle = "v${BuildConfig.VERSION_NAME} (${BuildConfig.BUILD_TYPE})",
+                            onClick = { /* 只读 */ }
+                        ),
+                        SettingItem.InfoItem(
+                            icon = Icons.Default.Info,
+                            title = "包名",
+                            subtitle = context.packageName,
+                            onClick = { /* 只读 */ }
                         )
                     )
                 )
@@ -199,9 +218,6 @@ private fun SettingsSection(
             Column {
                 items.forEachIndexed { index, item ->
                     when (item) {
-                        is SettingItem.SwitchItem -> {
-                            SwitchSettingRow(item = item)
-                        }
                         is SettingItem.InfoItem -> {
                             InfoSettingRow(item = item)
                         }
@@ -219,76 +235,13 @@ private fun SettingsSection(
     }
 }
 
-sealed class SettingItem {
-    data class SwitchItem(
-        val icon: ImageVector,
-        val title: String,
-        val subtitle: String,
-        val checked: Boolean,
-        val onCheckedChange: (Boolean) -> Unit
-    ) : SettingItem()
-
+private sealed class SettingItem {
     data class InfoItem(
         val icon: ImageVector,
         val title: String,
         val subtitle: String,
         val onClick: () -> Unit
     ) : SettingItem()
-}
-
-@Composable
-private fun SwitchSettingRow(item: SettingItem.SwitchItem) {
-    val checkedState = remember { mutableStateOf(item.checked) }
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.weight(1f)
-        ) {
-            Icon(
-                imageVector = item.icon,
-                contentDescription = null,
-                tint = Primary,
-                modifier = Modifier.size(24.dp)
-            )
-            Column(
-                verticalArrangement = Arrangement.spacedBy(2.dp)
-            ) {
-                Text(
-                    text = item.title,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium,
-                    color = TextPrimary
-                )
-                Text(
-                    text = item.subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = TextSecondary
-                )
-            }
-        }
-
-        Switch(
-            checked = checkedState.value,
-            onCheckedChange = {
-                checkedState.value = it
-                item.onCheckedChange(it)
-            },
-            colors = androidx.compose.material3.SwitchDefaults.colors(
-                checkedThumbColor = Color.White,
-                checkedTrackColor = Primary,
-                uncheckedThumbColor = DividerColor,
-                uncheckedTrackColor = BackgroundVariant1
-            )
-        )
-    }
 }
 
 @Composable
@@ -330,12 +283,5 @@ private fun InfoSettingRow(item: SettingItem.InfoItem) {
                 )
             }
         }
-
-        Icon(
-            imageVector = Icons.Default.ArrowBack,
-            contentDescription = null,
-            tint = DividerColor,
-            modifier = Modifier.size(20.dp)
-        )
     }
 }

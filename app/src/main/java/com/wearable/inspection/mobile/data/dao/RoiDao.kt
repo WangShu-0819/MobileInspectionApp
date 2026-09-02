@@ -35,4 +35,7 @@ interface RoiDao {
 
     @Query("SELECT COUNT(*) FROM roi_definitions WHERE templateId = :templateId")
     suspend fun countByTemplateId(templateId: String): Int
+
+    @Query("SELECT COUNT(*) FROM roi_definitions")
+    suspend fun count(): Int
 }
