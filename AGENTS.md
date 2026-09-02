@@ -20,7 +20,8 @@
 - B1 Task 4 真实拍照与存储：已验收，整改提交链为 `48f7587` → `566acaea` → `3a04b658`；真机 APK SHA-256 为 `6a3ce752f2f07a09084c57499a4c1ccac8e331b9a52dd8066824c43d7ade858d`；自动化测试 81/81 通过；证据位于 `docs/reports/b1/evidence/task4/`。
 - B1 Task 5 完整验证：已验收；最终补充提交为 `b7c4c08e`；APK SHA-256 为 `235f8aa8c4d65b365a93bff021041e43dca86d5eb4b121ba9d13ebd3f436768f`；JVM 78/78、Instrumented 20/20 通过；冷启动 10 次、Tab 10 轮、前后台 10 次、日志门禁 12 项全部通过；证据位于 `docs/reports/b1/evidence/task5/`。
 - B1 技术验收完成，用户已确认进入 B2。
-- B2 DPM 迁移：Task 1 整改中，从 commit `731e1a55` 开始 5 批次整改。Batch 1-4 已完成（入口/ROI/帧生命周期/参数），Batch 5 真机验证进行中。整改提交链：`a094dd3d` → `df6aab47` → `c78f5b69` → `dccf8984`。JVM 188/183/5，Instrumented 20/20。待完成：DPM instrumented 测试、真机样品测试、A/B 对比。
+- B2 DPM 迁移：Task 1 **SOFTWARE_COMPLETE / PHYSICAL_ACCEPTANCE_PENDING**（2026-09-02）。APK SHA-256 `6e2ca7d3f573c1da1af7f9180c23a0dbe8f2f9081eafff5ccf466dcb09c051cc`。JVM 208 项（203 passed / 0 failed / 5 skipped），Instrumented 30/30 passed，冷启动 10/10 passed。4 项物理验收标记为 `PENDING_PHYSICAL_DPM_SAMPLE`。物理验收不阻塞后续非 DPM 功能开发。
+- B2 Task 2：旧模板导入 + 模板透明叠加 MVP — 当前任务。实时轮廓投影/姿态匹配/单应性对齐标记为 DEFERRED / POST-MVP。
 - DPM 只支持手机相机实时扫一扫，不提供相册码图导入。
 - DPM 入口：顶部扫码图标 contentDescription 为"扫一扫"，只进入实时 DPM 扫描；OCR 图标 contentDescription 为"OCR 钢印"；模板样本相册导入属于"我的 > 模板配置"。
 
@@ -53,17 +54,17 @@
 
 ## 当前唯一任务
 
-执行 **B2 Task 1：旧 DPM 识别链迁移与实时扫码闭环**。先核对 `docs/migration/LEGACY_MIGRATION_MAP.md` 和旧工程真实源码，再迁移到新工程；旧工程保持只读。
+执行 **B2 Task 2：旧模板导入 + 模板透明叠加 MVP**。产品方向变更：实时轮廓投影/姿态匹配/单应性对齐标记为 DEFERRED / POST-MVP。当前 MVP 路线：模板导入 → ROI 配置 → 模板原图透明叠加辅助取景 → 拍照 → 模板/实拍比对 → ROI 微调 → ROI 检测 → 保存结果。
 
 识别算法以旧工程当前生产实现为行为基线：保留 ZXing `DataMatrixReader` 主解码、中心 ROI、预处理策略轮转、双极性尝试、全图降采样、ML Kit DATA_MATRIX 兜底、帧节流、响应门、连续 miss 对焦和旧版网格兜底。只允许为适配新 `CameraController`、`FrameAnalyzer`、包名和生命周期做必要改造，不得擅自调换解码顺序、删减旧策略或用全新简化算法替代。
 
-B2 Task 1 允许连续完成纯逻辑、OpenCV/网格链、CameraX 分析器、扫码框 ROI、页面导航和真机回归。每个内部检查点必须先测试并创建小提交；检查点通过后可继续下一个，不需要等待用户逐段确认。任一检查点出现测试失败、相机回归、旧样本识别退化或无法确认的算法差异时立即暂停，不得用后续步骤掩盖失败。
+B2 Task 2 允许连续完成模板导入、透明叠加、alpha slider 和测试。每个内部检查点必须先测试并创建小提交；检查点通过后可继续下一个，不需要等待用户逐段确认。任一检查点出现测试失败或相机回归时立即暂停，不得用后续步骤掩盖失败。
 
-不得实现相册码图导入、未知码绑定、自动切件、OCR、模板、轮廓、ROI 或检测算法。不得创建第二套 CameraX；`tools/contour_extraction/` 的算法源码和验证产物继续冻结。
+不得实现自动轮廓提取、实时轮廓投影、Homography、SIFT 姿态对齐、自动 ALIGNED 判断、ROI 自动跟踪、新 ROI 检测算法、OCR、TTS、ResultPackager、ForegroundService。不得创建第二套 CameraX；`tools/contour_extraction/` 的算法源码和验证产物继续冻结为 DEFERRED / POST-MVP。
 
 离线 Python 工具统一使用 `D:\ProgramData\anaconda3\envs\dinov2\python.exe`；不得在 `tools/` 下创建 `.venv`、Conda 环境、`site-packages` 或依赖副本。
 
-完成整个 Task 1 后提交 `docs/reports/b2/B2_TASK1_DPM_LEGACY_PARITY_REPORT.md` 和结构化证据，更新控制文档并暂停等待验收，不得自动进入 B2 Task 2。
+完成整个 Task 2 后更新控制文档并暂停等待验收，不得自动进入后续 Task。
 
 ## 累积回归门禁
 

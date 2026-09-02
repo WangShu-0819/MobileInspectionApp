@@ -80,13 +80,13 @@ Task 4 已完成全部验收项：会话安全快门、capture request token 机
 - [x] `tasks/todo.md` 的 B1 验收全部通过
 - [x] 用户确认进入 B2
 
-用户已确认进入 B2。当前只推进 Task 1；后续绑定、切件和工业预处理增强必须等待 Task 1 验收。
+用户已确认进入 B2。B2 Task 1 软件层面已完成，物理验收不阻塞后续功能开发。
 
 ### B2：DPM 迁移
 
 - [x] **Task 1：旧 DPM 识别链迁移与实时扫码闭环** — **SOFTWARE_COMPLETE / PHYSICAL_ACCEPTANCE_PENDING**（2026-09-02）。APK SHA-256 `6e2ca7d3f573c1da1af7f9180c23a0dbe8f2f9081eafff5ccf466dcb09c051cc`。JVM 208 项（203 passed / 0 failed / 5 skipped），Instrumented 30/30 passed，冷启动 10/10 passed。4 项物理验收标记为 `PENDING_PHYSICAL_DPM_SAMPLE`。
-- [ ] Task 2：未知码绑定、已绑定码切件和冲突处理
-- [ ] Task 3：同样本对照回归、性能诊断与参数优化
+- [ ] Task 2：旧模板导入 + 模板透明叠加 MVP（当前任务）
+- [ ] Task 3：未知码绑定、已绑定码切件和冲突处理
 
 B2 Task 1 固定边界：使用唯一 CameraController 的 `DPM_SCAN` 模式，忠实迁移旧工程已经可用的生产识别链。顺序固定为中心 ROI/全图的 ZXing `DataMatrixReader` 主解码（含旧预处理策略与双极性尝试）→ ML Kit DATA_MATRIX 兜底 → 满足旧门控条件时执行网格重建兜底；同时保留帧节流、single-flight、响应门、连续 miss 对焦、取消和停止后不回调。“扫一扫”只进入实时扫码，不提供 DPM 相册选图、码图导入或对应权限/路由。
 
@@ -113,16 +113,26 @@ B2 Task 1 连续执行检查点：
 
 ### V1 可交付闭环（当前优先目标）
 
-**Contour-based live alignment**: DEFERRED / EXPERIMENTAL。轮廓提取成熟度不足，继续优化会阻塞可交付版本。V1 改为模板原始图片透明叠加 CameraX 实时画面。
+**Contour-based live alignment**: DEFERRED / POST-MVP。轮廓提取成熟度不足，继续优化会阻塞可交付版本。V1 改为模板原始图片透明叠加 CameraX 实时画面。`tools/contour_extraction/` 工具和数据保留但不进入 V1。
 
-V1 数据流闭环：
+V1 MVP 数据流闭环：
+
+```
+模板导入/拍摄 → ROI 配置 → 模板原图透明叠加辅助现场取景 → 拍照 → 模板/实拍双图比对 → 本次 ROI 微调 → ROI 检测 → 保存结果
+```
 
 1. [ ] **导入旧模板包**：TemplatePackageImporter 解析 template_exports ZIP → PartEntity / InspectionTemplateEntity / RoiDefinitionEntity / 模板图片文件
-2. [ ] **模板透明叠加**：CameraX live preview + selected inspection template image overlay，保持正确宽高比，opacity slider (0f..1f)，写入 SettingsStore
-3. [ ] **InspectionCompareScreen**：拍照后显示模板 vs 实拍，切换/叠加/opacity/zoom/pan/ROI overlay
-4. [ ] **ROI 人工微调**：拖动矩形 + resize handles，区分模板 ROI vs session ROI
+2. [ ] **模板透明叠加**：CameraX live preview + selected inspection template image overlay，保持正确宽高比，opacity slider (0f~0.8f, 默认 0.45f)
+3. [ ] **拍后比对**：CaptureComparisonScreen — 模板 vs 实拍，切换/叠加/opacity，区分 templateRoi vs sessionRoi
+4. [ ] **ROI 人工微调**：拖动矩形 + resize handles，当前 session ROI 不覆盖模板 RoiDefinitionEntity
 5. [ ] **ROI → Detector → Result**：crop ROI bitmap → AlgorithmRegistry → detector → per-ROI result → persist
 6. [ ] **结果查看**：Overall PASS/FAIL，per-ROI name/algorithm/PASS/FAIL/score/error
+
+DEFERRED / POST-MVP（不阻塞 V1 交付）：
+- 实时主体轮廓提取与投影
+- 依赖主体轮廓的自动姿态匹配（SIFT/单应性）
+- ALIGNED/LOST 自动对齐结果作为拍照门禁
+- ROI 自动跟踪
 
 ## Risks
 
