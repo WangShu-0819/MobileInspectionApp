@@ -125,39 +125,41 @@ B1 已完成并关闭。
 
 ## B2 Task 1：旧 DPM 识别链迁移与实时扫码闭环
 
-- [ ] 整改现场采集“扫一扫”仍为 TODO，接通真实 DPM 路由并补导航测试
-- [ ] CameraPreview 支持显式目标 CameraMode；DPM 页面连接即为 DPM_SCAN，不得被组件重新连接成 INSPECTION
-- [ ] 将可见扫码框按真实 contentRect、流旋转映射为动态 scanRoi，禁止以 null/固定中心裁剪冒充框内扫码
-- [ ] 修复 ImageProxy 已旋转 Bitmap 后又把 rotation 传给 DpmAnalyzer 的重复旋转
-- [ ] 修复 YUV_420_888 转换对 Y/UV rowStride、pixelStride 和裁剪矩形的处理，并增加真机/合成测试
-- [ ] stop 必须取消 DPM 专属任务并阻止迟到结果；生产代码不得调用 resetForTest
-- [ ] 网格重建成功结果必须进入统一结果流，不能调用 processDecodeResult 后丢弃返回值
-- [ ] DpmScanResult 保留真实 ZXING/ML_KIT/GRID 来源，不得在 ViewModel 中统一伪写 ZXING
-- [ ] 尺寸模式从 SettingsStore 读取并作为任务快照传入网格链，不得在 DpmAnalyzer 中硬编码 AUTO
-- [ ] 恢复旧参数：中心 50%/ROI 目标宽 400、focus miss 30、grid miss 8、grid cooldown 1500ms；任何有意差异必须先用同样本数据证明
-- [ ] CP6 重新统计实际测试用例；Gradle actionable tasks 数量不得冒充测试数量
-- [ ] 新增 DPM 专属 instrumented/UI 测试及真实框内/框外、10 次往返、旧新 App 同样本 A/B 证据
+**状态**：整改 Batch 1-4 已完成（`a094dd3d` → `df6aab47` → `c78f5b69` → `dccf8984`），Batch 5 真机验证中。
+
+- [x] 整改现场采集”扫一扫”仍为 TODO，接通真实 DPM 路由并补导航测试
+- [x] CameraPreview 支持显式目标 CameraMode；DPM 页面连接即为 DPM_SCAN，不得被组件重新连接成 INSPECTION
+- [x] 将可见扫码框按真实 contentRect、流旋转映射为动态 scanRoi，禁止以 null/固定中心裁剪冒充框内扫码
+- [x] 修复 ImageProxy 已旋转 Bitmap 后又把 rotation 传给 DpmAnalyzer 的重复旋转
+- [x] 修复 YUV_420_888 转换对 Y/UV rowStride、pixelStride 和裁剪矩形的处理，并增加真机/合成测试
+- [x] stop 必须取消 DPM 专属任务并阻止迟到结果；生产代码不得调用 resetForTest
+- [x] 网格重建成功结果必须进入统一结果流，不能调用 processDecodeResult 后丢弃返回值
+- [x] DpmScanResult 保留真实 ZXING/ML_KIT/GRID 来源，不得在 ViewModel 中统一伪写 ZXING
+- [x] 尺寸模式从 SettingsStore 读取并作为任务快照传入网格链，不得在 DpmAnalyzer 中硬编码 AUTO
+- [x] 恢复旧参数：中心 50%/ROI 目标宽 400、focus miss 30、grid miss 8、grid cooldown 1500ms；任何有意差异必须先用同样本数据证明
+- [x] CP6 重新统计实际测试用例；Gradle actionable tasks 数量不得冒充测试数量
+- [ ] 新增 DPM 专属 instrumented/UI 测试及真实框内/框外、10 次往返、旧新 App 同样本 A/B 证据（Batch 5 待完成）
 - [x] 整改 `0c8e045e`：提交 `4c522ce7` 已恢复旧版 ZXing 主解码 → ML Kit DATA_MATRIX 兜底顺序
 - [x] 将含糊的 `PrimaryDecoder/FallbackDecoder` 改为 `DpmZxingDecoder/DpmMlKitDecoder`
 - [ ] 按旧文件、旧职责、新文件、复用内容、去除耦合和迁移测试更新迁移表
-- [ ] “扫一扫”进入真实 `CameraMode.DPM_SCAN`，只绑定 Preview + ImageAnalysis
-- [ ] 使用独立 `DpmFrameAnalyzer`，共享唯一 CameraController
-- [ ] 按旧顺序迁移 ZXing DataMatrixReader 主解码和 ML Kit DATA_MATRIX 兜底，不调换主备关系
-- [ ] 迁移中心 ROI、全图降采样、DpmPreprocessor 策略轮转和正常/反转双极性尝试
-- [ ] 迁移 DpmRespondGate、帧节流、single-flight、连续 miss 对焦和 stop 后不回调
-- [ ] 迁移 DpmGridGate、DpmGridReconstructor、ImportedDpmScanner，并保留旧版取消、冷却和超时边界
-- [ ] 迁移 `DpmDimensionMode` 的 AUTO/DIM_16/DIM_18/DIM_20、旧候选配额、跨尺寸交错和非法值回退 AUTO
-- [ ] 将尺寸模式真实接入网格重建；默认 AUTO 同时公平尝试 16×16、18×18、20×20，固定模式只尝试所选尺寸
-- [ ] 持久化 DPM 尺寸模式；设置变化只影响后续网格任务，不能中途篡改在途任务快照
-- [ ] 实现 `DpmFrameAnalyzer`，通过现有 `FrameAnalyzer` 接入唯一 CameraController，不创建第二套 CameraX
-- [ ] `DPM_SCAN` 只绑定 Preview + ImageAnalysis，分析结束由 CameraController 统一关闭 ImageProxy
-- [ ] 新增扫码页面和导航，现场采集“扫一扫”进入真实扫码，返回后 INSPECTION 相机恢复
-- [ ] 扫码框基于真实 contentRect 映射到旋转后图像 ROI；ROI 存在时禁止任何框外全图解码
-- [ ] 框外码不响应、框内码可识别、框内外同时存在时只返回框内码
-- [ ] CameraX 页面往返、前后台、权限和资源释放通过 B1 累积回归
-- [ ] 页面退出后释放扫码分析资源，返回现场采集后相机正常恢复
-- [ ] UI 不存在 DPM 相册选择、码图导入或相关权限/路由
-- [ ] 迁移旧 DPM 专项测试，并覆盖解码链、预处理、网格门控、节流、并发、重复抑制、停止和资源释放
+- [x] “扫一扫”进入真实 `CameraMode.DPM_SCAN`，只绑定 Preview + ImageAnalysis
+- [x] 使用独立 `DpmFrameAnalyzer`，共享唯一 CameraController
+- [x] 按旧顺序迁移 ZXing DataMatrixReader 主解码和 ML Kit DATA_MATRIX 兜底，不调换主备关系
+- [x] 迁移中心 ROI、全图降采样、DpmPreprocessor 策略轮转和正常/反转双极性尝试
+- [x] 迁移 DpmRespondGate、帧节流、single-flight、连续 miss 对焦和 stop 后不回调
+- [x] 迁移 DpmGridGate、DpmGridReconstructor、ImportedDpmScanner，并保留旧版取消、冷却和超时边界
+- [x] 迁移 `DpmDimensionMode` 的 AUTO/DIM_16/DIM_18/DIM_20、旧候选配额、跨尺寸交错和非法值回退 AUTO
+- [x] 将尺寸模式真实接入网格重建；默认 AUTO 同时公平尝试 16×16、18×18、20×20，固定模式只尝试所选尺寸
+- [x] 持久化 DPM 尺寸模式；设置变化只影响后续网格任务，不能中途篡改在途任务快照
+- [x] 实现 `DpmFrameAnalyzer`，通过现有 `FrameAnalyzer` 接入唯一 CameraController，不创建第二套 CameraX
+- [x] `DPM_SCAN` 只绑定 Preview + ImageAnalysis，分析结束由 CameraController 统一关闭 ImageProxy
+- [x] 新增扫码页面和导航，现场采集”扫一扫”进入真实扫码，返回后 INSPECTION 相机恢复
+- [x] 扫码框基于真实 contentRect 映射到旋转后图像 ROI；ROI 存在时禁止任何框外全图解码
+- [ ] 框外码不响应、框内码可识别、框内外同时存在时只返回框内码（待真机验证）
+- [ ] CameraX 页面往返、前后台、权限和资源释放通过 B1 累积回归（待真机验证）
+- [ ] 页面退出后释放扫码分析资源，返回现场采集后相机正常恢复（待真机验证）
+- [x] UI 不存在 DPM 相册选择、码图导入或相关权限/路由
+- [x] 迁移旧 DPM 专项测试，并覆盖解码链、预处理、网格门控、节流、并发、重复抑制、停止和资源释放
 - [ ] 使用同一批现场/打印样本对旧 App 与新 App 做 A/B 对照，记录逐样本结果和响应时间
 - [ ] 真机完成 10 次扫码及 10 次页面往返，识别范围和防连扫行为不得低于旧 App
 - [ ] 更新 `docs/reports/b2/B2_TASK1_DPM_LEGACY_PARITY_REPORT.md` 和证据目录

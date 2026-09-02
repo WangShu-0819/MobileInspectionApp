@@ -20,7 +20,7 @@
 | CP3 | 真实解码器 + 组装版 DpmAnalyzer | `caf69811` | ✅ |
 | CP4 | CameraX 帧分析器集成 | `3b6b547d` | ✅ |
 | CP5 | 扫码 UI 与导航 | `8f0dcb4d` | ✅ |
-| CP6 | 自动化 & 设备验证 | 本次 | ✅ |
+| CP6 | 自动化 & 设备验证 | 本次 | ⚠️ 部分完成 |
 
 ---
 
@@ -60,10 +60,11 @@
 | `DpmAnalyzer.kt` | `camera/DpmAnalyzer.kt` | 组装版：ZXing 主→ML Kit 兜底、策略轮转、200ms 节流、单飞、漏检对焦回调、网格异步 |
 
 **关键参数保留**：
-- 中心 ROI：1200×1200
-- 下缩放阈值：1800×1800，因子 3
-- 漏检触发：missTriggerCount=6
-- 节流：success 1000ms/3000ms，fail 100ms/200ms
+- 中心 ROI：1200×1200（旧版 0.5×min(w,h)，待 A/B 验证）
+- 缩放目标：roiTargetWidth=400（旧版 DPM_ROI_TARGET_WIDTH=400）
+- 漏检触发：missTriggerCount=30（旧版 MISS_STREAK_TO_FOCUS=30）
+- 节流：attemptIntervalMs=200（旧版 ATTEMPT_INTERVAL_MS=200）
+- 网格：gridMissThreshold=8（旧版 MISS_STREAK_TO_GRID=8）、gridCooldownMs=1500
 
 **测试覆盖**：4 项 ZXing 解码测试 + 7 项 DpmAnalyzer 测试（含可注入时钟）
 
@@ -90,15 +91,38 @@
 
 ---
 
-## CP6: 自动化 & 设备验证
+## CP6: 自动化 & 设备验证（部分完成）
 
 ### JVM 单元测试
 
 ```
 ./gradlew :app:testDebugUnitTest
-BUILD SUCCESSFUL in 24s
-30 actionable tasks: 6 executed, 24 up-to-date
+188 tests — 183 passed, 0 failed, 5 skipped (Robolectric SDK 限制)
+17 test suites, BUILD SUCCESSFUL
 ```
+
+**每类测试计数（@Test 注解数）：**
+
+| 测试类 | @Test 数 | 通过 | 跳过 | 备注 |
+|--------|----------|------|------|------|
+| CameraControllerTakePhotoTest | 17 | 17 | 0 | |
+| CameraControllerTest | 40 | 40 | 0 | |
+| MobileImageStoreTest | 11 | 11 | 0 | |
+| ContentRectCalculatorTest | 10 | 10 | 0 | |
+| DpmAnalyzerTest | 7 | 7 | 0 | missTriggerCount=30 已修正 |
+| DpmDecodePipelineTest | 8 | 8 | 0 | |
+| DpmDimensionModeTest | 11 | 11 | 0 | |
+| DpmDumpBudgetTest | 6 | 6 | 0 | |
+| DpmFrameAnalyzerTest | 3 | 3 | 0 | |
+| DpmFrameQualityTest | 8 | 8 | 0 | |
+| DpmGridGateTest | 7 | 7 | 0 | |
+| DpmPreprocessorTest | 16 | 16 | 0 | OpenCV 渲染验证 |
+| DpmRespondGateTest | 9 | 9 | 0 | |
+| DpmScanControlTest | 5 | 5 | 0 | |
+| DpmScanRoiMapperTest | 9 | 9 | 0 | |
+| DpmScannerTest | 17 | 12 | 5 | 跳过：外部 dump 文件缺失 |
+| ZxingDataMatrixDecoderTest | 4 | 4 | 0 | |
+| **总计** | **188** | **183** | **5** | |
 
 ### Android 设备测试
 
@@ -110,6 +134,14 @@ BUILD SUCCESSFUL in 1m 10s
 ```
 
 **测试设备**：HUAWEI YAL-AL10 (Android 10)
+
+### 待完成
+
+- [ ] DPM 专用 instrumented/UI 测试（DPM 页面导航、扫码 UI 状态机）
+- [ ] 真机 DPM 样品测试（frame-outside-code 10s、move-into-frame、same-code dedup 等）
+- [ ] 新旧 App A/B 对比（每样品识别速度和成功率）
+- [ ] 完整参数对比验证
+- [ ] CameraX 回归验证（INSPECTION 模式仍正常）
 
 ---
 
@@ -164,12 +196,14 @@ BUILD SUCCESSFUL in 1m 10s
 
 ## 忠实度断言
 
-1. **无算法省略**：所有旧版预处理策略（4 种）、网格重建（旋转+正向+九宫格×变体）、解码器（ZXing+ML Kit）均完整迁移
-2. **无参数放松**：所有阈值、配额、超时参数完全保留旧版默认值
+1. **无算法省略** [待验证]：旧版预处理策略（4 种）、网格重建、解码器（ZXing+ML Kit）已迁移；完整 A/B 对比尚未执行
+2. **无参数放松** [待验证]：大部分阈值已恢复旧版值（roiTargetWidth=400, attemptIntervalMs=200, missTriggerCount=30, gridMissThreshold=8, gridCooldownMs=1500）；Center ROI 维持 1200×1200（非旧版 0.5×min(w,h)）；完整参数对比尚未执行
 3. **无测试删除**：所有旧版测试逻辑保留，新增测试覆盖新架构
 4. **无硬编码结果**：所有解码均为真实运行，未硬编码任何返回值
-5. **CameraX 无回归**：CameraController 单例架构未修改，DPM_SCAN 模式正常工作
+5. **CameraX 无回归** [待验证]：CameraController 单例架构未修改，DPM_SCAN 模式接入完成；真机回归测试尚未执行
 6. **冻结目录未动**：`tools/contour_extraction/` 保持冻结状态
+
+> ⚠️ 标记 [待验证] 的断言需要真机 DPM 样品测试和 A/B 对比才能确认。
 
 ---
 
