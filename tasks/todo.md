@@ -125,7 +125,16 @@ B1 已完成并关闭。
 
 ## B2 Task 1：旧 DPM 识别链迁移与实时扫码闭环
 
-**状态**：整改 Batch 1-4 已完成（`a094dd3d` → `df6aab47` → `c78f5b69` → `dccf8984`），Batch 5 部分完成（待物理 DPM 样品）。
+**状态**：真实样品识别与闪光灯回归整改中。用户真机确认：同一 DPM 码由另一设备显示时，旧 App 可识别，新 App 不可识别；新 App DPM 页右上角闪光灯按钮点击后无实际效果。源码审计发现以下回归缺陷（2026-09-02）：
+1. 新版缺少旧版全图 ZXing 兜底阶段（旧版 ROI 失败后还有全图降采样1280 → 预处理 → ZXing）
+2. 新版缺少旧版 ML Kit 全图兜底阶段（旧版全图 ZXing 失败后还有原图 ML Kit 直接解码）
+3. 中心 ROI 使用固定1200×1200像素而非旧版50%比例（1280×1707帧上旧版裁640×854，新版裁1280×1200）
+4. DpmScanViewModel 创建 DpmGridGate(missThreshold=5, cooldownMs=3000) 而非旧版基线8/1500ms
+5. DpmAnalyzer.triggerGridDecode 硬编码 DpmDimensionMode.AUTO，未从 SettingsStore 读取
+6. gridGate.onMiss() 从未被调用，网格门控 miss 计数永远为0，网格兜底永远不会触发
+7. CameraController.setTorch() 只检查 enableTorch() 是否同步抛异常，未检查 hasFlashUnit、未等待异步结果、未读取真实 torchState
+
+整改完成前不得进入 B2 Task 2。
 
 - [x] 整改现场采集”扫一扫”仍为 TODO，接通真实 DPM 路由并补导航测试
 - [x] CameraPreview 支持显式目标 CameraMode；DPM 页面连接即为 DPM_SCAN，不得被组件重新连接成 INSPECTION
@@ -135,8 +144,8 @@ B1 已完成并关闭。
 - [x] stop 必须取消 DPM 专属任务并阻止迟到结果；生产代码不得调用 resetForTest
 - [x] 网格重建成功结果必须进入统一结果流，不能调用 processDecodeResult 后丢弃返回值
 - [x] DpmScanResult 保留真实 ZXING/ML_KIT/GRID 来源，不得在 ViewModel 中统一伪写 ZXING
-- [x] 尺寸模式从 SettingsStore 读取并作为任务快照传入网格链，不得在 DpmAnalyzer 中硬编码 AUTO
-- [x] 恢复旧参数：中心 50%/ROI 目标宽 400、focus miss 30、grid miss 8、grid cooldown 1500ms；任何有意差异必须先用同样本数据证明
+- [ ] 尺寸模式从 SettingsStore 读取并作为任务快照传入网格链，不得在 DpmAnalyzer 中硬编码 AUTO（审计发现 triggerGridDecode 硬编码 AUTO，待整改）
+- [ ] 恢复旧参数：中心 50%/ROI 目标宽 400、focus miss 30、grid miss 8、grid cooldown 1500ms（审计发现：中心ROI用固定1200×1200而非50%比例；DpmScanViewModel用missThreshold=5/cooldownMs=3000；gridGate.onMiss()从未调用，待整改）
 - [x] CP6 重新统计实际测试用例；Gradle actionable tasks 数量不得冒充测试数量
 - [ ] 新增 DPM 专属 instrumented/UI 测试及真实框内/框外、旧新 App 同样本 A/B 证据（需要物理 DPM 样品）
 - [x] 所有 Batch 5 真机证据均按包名门禁重新确认：显式安装当前新 APK，启动 `com.wearable.inspection.mobile/com.wearable.inspection.mobile.MainActivity`，并记录前台包、启动组件和 APK SHA-256（2026-09-02 验证通过）
@@ -147,7 +156,7 @@ B1 已完成并关闭。
 - [x] “扫一扫”进入真实 `CameraMode.DPM_SCAN`，只绑定 Preview + ImageAnalysis
 - [x] 使用独立 `DpmFrameAnalyzer`，共享唯一 CameraController
 - [x] 按旧顺序迁移 ZXing DataMatrixReader 主解码和 ML Kit DATA_MATRIX 兜底，不调换主备关系
-- [x] 迁移中心 ROI、全图降采样、DpmPreprocessor 策略轮转和正常/反转双极性尝试
+- [ ] 迁移中心 ROI、全图降采样、DpmPreprocessor 策略轮转和正常/反转双极性尝试（审计发现：缺少全图 ZXing 阶段和 ML Kit 全图兜底阶段，待整改）
 - [x] 迁移 DpmRespondGate、帧节流、single-flight、连续 miss 对焦和 stop 后不回调
 - [x] 迁移 DpmGridGate、DpmGridReconstructor、ImportedDpmScanner，并保留旧版取消、冷却和超时边界
 - [x] 迁移 `DpmDimensionMode` 的 AUTO/DIM_16/DIM_18/DIM_20、旧候选配额、跨尺寸交错和非法值回退 AUTO

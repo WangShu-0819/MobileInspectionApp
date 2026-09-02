@@ -164,7 +164,7 @@ fun DpmScanScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { viewModel.toggleTorch() }) {
+                    IconButton(onClick = { coroutineScope.launch { viewModel.toggleTorch() } }) {
                         Icon(
                             imageVector = if (scanState.torchOn) Icons.Default.FlashOn else Icons.Default.FlashOff,
                             contentDescription = if (scanState.torchOn) "关闭闪光灯" else "开启闪光灯"

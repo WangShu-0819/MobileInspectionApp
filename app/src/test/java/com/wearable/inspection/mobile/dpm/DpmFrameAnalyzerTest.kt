@@ -58,7 +58,7 @@ class DpmFrameAnalyzerTest {
                 override suspend fun decode(bitmap: Bitmap): DpmScanResult? = null
             },
             respondGate = DpmRespondGate(),
-            gridGate = DpmGridGate(missThreshold = 5, cooldownMs = 3000L),
+            gridGate = DpmGridGate(missThreshold = 8, cooldownMs = 1500L),  // 旧版基线
             scope = TestScope(StandardTestDispatcher()),
             clock = fakeClock,
         )

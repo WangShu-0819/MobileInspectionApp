@@ -55,7 +55,7 @@ class DpmScanViewModel(application: Application) : AndroidViewModel(application)
         val scope = viewModelScope
 
         val rg = DpmRespondGate()
-        val gg = DpmGridGate(missThreshold = 5, cooldownMs = 3000L)
+        val gg = DpmGridGate(missThreshold = 8, cooldownMs = 1500L)  // 旧版基线：MISS_STREAK_TO_GRID=8, GRID_COOLDOWN_MS=1500
         respondGate = rg
         gridGate = gg
 
@@ -65,6 +65,7 @@ class DpmScanViewModel(application: Application) : AndroidViewModel(application)
             respondGate = rg,
             gridGate = gg,
             scope = scope,
+            dimensionMode = { DpmDimensionMode.AUTO },  // TODO: 从 SettingsStore 读取
         )
         analyzer.setMode(DpmAnalyzer.AnalysisMode.SCAN)
         analyzer.setScanModeActive(true)
@@ -108,11 +109,19 @@ class DpmScanViewModel(application: Application) : AndroidViewModel(application)
      * 停止扫码并清理
      *
      * 清理 Analyzer、FrameAnalyzer 和状态。
+     * 确保关闭闪光灯并复位 UI。
      * 不负责 disconnect（由 DpmScanScreen 按 sessionId 处理）。
      */
     fun stopScan() {
         val controller = boundController
         val sessionId = boundSessionId
+
+        // 关闭闪光灯（异步尽力而为）
+        if (controller != null) {
+            viewModelScope.launch {
+                controller.setTorch(false)
+            }
+        }
 
         // 清理 FrameAnalyzer
         dpmFrameAnalyzer?.stop()
@@ -137,14 +146,20 @@ class DpmScanViewModel(application: Application) : AndroidViewModel(application)
     }
 
     /**
-     * 切换闪光灯
+     * 切换闪光灯（suspend，等待 CameraX 异步结果）
+     *
+     * 检查 hasFlashUnit，等待 enableTorch 异步完成，
+     * 用真实 torchState 更新 UI。
      */
-    fun toggleTorch(): Boolean {
+    suspend fun toggleTorch(): Boolean {
         val controller = boundController ?: return false
-        val current = _scanState.value.torchOn
+        if (!controller.hasFlashUnit()) return false
+        val current = controller.isTorchOn() ?: _scanState.value.torchOn
         val result = controller.setTorch(!current)
         if (result) {
-            _scanState.value = _scanState.value.copy(torchOn = !current)
+            // 读取真实 torchState 更新 UI（不信任中间状态）
+            val realState = controller.isTorchOn() ?: !current
+            _scanState.value = _scanState.value.copy(torchOn = realState)
         }
         return result
     }

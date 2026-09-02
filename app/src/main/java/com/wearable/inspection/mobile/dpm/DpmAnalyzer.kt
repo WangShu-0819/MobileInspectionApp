@@ -17,14 +17,14 @@ import java.util.concurrent.atomic.AtomicLong
 /**
  * 组装版 DpmAnalyzer — 从旧版 Wearable Inspection 的 camera/DpmAnalyzer.kt 迁移。
  *
- * 核心算法忠实保留：
- * - ZXing 主解码 + ML Kit 兜底
- * - 4 种预处理策略轮转（普通极性 + 反色双试）
- * - 中心 ROI 裁切（默认 1200×1200，↓2/3，stride=5）
- * - 200ms 节流（逐次追踪 success / FAIL_SHORT_DELAY_MS / FAIL_LONG_DELAY_MS）
- * - 单飞分析（AtomicBoolean）
- * - 漏检触发自动对焦回调
- * - 栅格触发（DpmGridGate 门控 + DpmScanControl 截止时间 + 异步执行）
+ * 核心算法忠实保留旧版顺序与短路语义：
+ * 1. ROI 原始/预处理 ZXing 主解码（中心 50% 或 scanRoi → 缩放到400px → 策略轮转）
+ * 2. 无扫码框约束时才允许全图 ZXing（长边>1280 降采样 → 同策略预处理）
+ * 3. ML Kit DATA_MATRIX 兜底（无扫码框时对原图直接解码）
+ * 4. 满足旧门控条件时才执行网格兜底（异步）
+ * 5. 扫码框存在时禁止框外全图识别
+ *
+ * 每个 ZXing 阶段内部：正常极性 + 反色双试；命中但响应门拦截时不响应、继续后续阶段。
  */
 class DpmAnalyzer(
     private val config: DpmAnalyzerConfig = DpmAnalyzerConfig(),
@@ -35,6 +35,8 @@ class DpmAnalyzer(
     private val scope: CoroutineScope,
     private val clock: DpmClock = SystemDpmClock(),
     private val onLensRefocusNeeded: () -> Unit = {},
+    /** DPM 网格重建尺寸模式提供器（每次提交网格任务时读取快照；默认 AUTO） */
+    private val dimensionMode: () -> DpmDimensionMode = { DpmDimensionMode.AUTO },
 ) {
 
     @Volatile
@@ -153,71 +155,131 @@ class DpmAnalyzer(
      */
     private data class DecodeResult(val code: String, val source: DecodeSource)
 
+    /**
+     * 旧版4阶段解码流程（忠实保留顺序与短路语义）：
+     * 1. ROI（中心 50% 或 scanRoi）→ 缩放到400px → 预处理策略 → ZXing/ML Kit
+     * 2. 无扫码框时：全图降采样（长边>1280）→ 同策略预处理 → ZXing
+     * 3. 无扫码框时：ML Kit 全图兜底
+     * 4. 无扫码框时：网格兜底（异步）
+     *
+     * 扫码框存在时禁止框外全图识别（只解码框内区域）。
+     */
     private suspend fun performMultiStrategyDecode(
         frame: Bitmap,
         frameRotation: Int,
         scanRoi: Rect?,
         scanControl: DpmScanControl?,
     ): DecodeResult? {
-        val processingFrame = applyFrameTransforms(frame, frameRotation, scanRoi)
-        val gray = bitmapToGray(processingFrame)
-        val w = processingFrame.width
-        val h = processingFrame.height
         val strategies = DpmPreprocessor.strategiesForFrame(frameCount++)
-        for (strategy in strategies) {
-            if (scanControl?.aborted() == true) break
-            val candidates = DpmPreprocessor.preprocess(gray, w, h, strategy)
-            for (candidate in candidates) {
+        // ─── 阶段1：ROI 解码 ───
+        val roi = cropRoi(frame, scanRoi)
+        val roiScaled = scaleToTargetWidth(roi, config.roiTargetWidth)
+        val roiGray = bitmapToGray(roiScaled)
+        val roiW = roiScaled.width
+        val roiH = roiScaled.height
+        try {
+            for (strategy in strategies) {
                 if (scanControl?.aborted() == true) break
-                // 正常极性
-                decodePixels(candidate.pixels, candidate.width, candidate.height, candidate.binarizer)?.let { return it }
-                // 反色双试
-                val inverted = invertBytes(candidate.pixels)
-                decodePixels(inverted, candidate.width, candidate.height, candidate.binarizer)?.let { return it }
+                decodeWithStrategy(roiGray, roiW, roiH, strategy, scanControl)?.let { return it }
             }
+        } finally {
+            if (roiScaled !== roi) roiScaled.recycle()
+            roi.recycle()
         }
-        triggerGridDecode(gray, w, h, scanControl)
+
+        // 扫码框存在时跳过全图兜底（只识别框内码）
+        if (scanRoi != null) return null
+
+        // ─── 阶段2：全图 ZXing（降采样到 SCAN_MAX_EDGE）───
+        val scan = downscaleToMaxEdge(frame, SCAN_MAX_EDGE)
+        val scanGray = bitmapToGray(scan)
+        val scanW = scan.width
+        val scanH = scan.height
+        try {
+            for (strategy in strategies) {
+                if (scanControl?.aborted() == true) break
+                decodeWithStrategy(scanGray, scanW, scanH, strategy, scanControl)?.let { return it }
+            }
+        } finally {
+            if (scan !== frame) scan.recycle()
+        }
+
+        // ─── 阶段3：ML Kit 全图兜底 ───
+        mlKitDecoder.decode(frame)?.let {
+            return DecodeResult(it.rawValue, DecodeSource.ML_KIT)
+        }
+
+        // ─── 阶段4：网格兜底（异步）───
+        triggerGridDecode(scanGray, scanW, scanH, scanControl)
         return null
     }
 
+    /**
+     * 单策略完整解码尝试：灰度 → 预处理 → 逐候选 ZXing+ML Kit（正常极性+反色双试）。
+     * 返回第一个成功结果，null = 全部候选双极性均未识别。
+     */
+    private suspend fun decodeWithStrategy(
+        gray: IntArray, w: Int, h: Int, strategy: Int, scanControl: DpmScanControl?,
+    ): DecodeResult? {
+        val candidates = DpmPreprocessor.preprocess(gray, w, h, strategy)
+        for (candidate in candidates) {
+            if (scanControl?.aborted() == true) break
+            // 正常极性
+            decodePixels(candidate.pixels, candidate.width, candidate.height, candidate.binarizer)?.let { return it }
+            // 反色双试
+            val inverted = invertBytes(candidate.pixels)
+            decodePixels(inverted, candidate.width, candidate.height, candidate.binarizer)?.let { return it }
+        }
+        return null
+    }
+
+    /**
+     * 单候选单极性 ZXing 解码（旧版：ML Kit 不在候选级别调用，仅全图阶段3兜底）。
+     */
     private suspend fun decodePixels(pixels: ByteArray, w: Int, h: Int, binarizer: DpmBinarizer): DecodeResult? {
         val bitmap = grayBytesToBitmap(pixels, w, h)
         zxingDecoder.decode(bitmap)?.let { return DecodeResult(it.rawValue, DecodeSource.ZXING) }
-        mlKitDecoder.decode(bitmap)?.let { return DecodeResult(it.rawValue, DecodeSource.ML_KIT) }
         return null
     }
 
-    private fun applyFrameTransforms(frame: Bitmap, frameRotation: Int, scanRoi: Rect?): Bitmap {
-        var result = if (scanRoi != null && !scanRoi.isEmpty) {
+    /**
+     * 裁切 ROI：scanRoi 存在时裁切框内区域；否则裁切中心 CENTER_ROI_RATIO 区域。
+     * 与旧版 cropCenter(bitmap, CENTER_ROI_RATIO) / cropNormalized(bitmap, scanRoi) 一致。
+     */
+    private fun cropRoi(frame: Bitmap, scanRoi: Rect?): Bitmap {
+        if (scanRoi != null && !scanRoi.isEmpty) {
             val clamped = clampRect(scanRoi, frame.width, frame.height)
-            createBitmap(frame, clamped.left, clamped.top, clamped.width(), clamped.height())
-        } else {
-            cropCenterRegion(frame, config.centerRoiWidth, config.centerRoiHeight)
+            return createBitmap(frame, clamped.left, clamped.top, clamped.width(), clamped.height())
         }
-        if (frameRotation != 0) {
-            result = rotateBitmap(result, frameRotation.toFloat())
-        }
-        // 旧版 DPM_ROI_TARGET_WIDTH=400：ROI 预处理前缩放到 400px（保持宽高比）
-        if (result.width > config.roiTargetWidth) {
-            val scale = config.roiTargetWidth.toFloat() / result.width
-            result = Bitmap.createScaledBitmap(result, config.roiTargetWidth, (result.height * scale).toInt(), true)
-        }
-        return result
+        // 旧版 CENTER_ROI_RATIO=0.5f：中心 50% 区域
+        val cropW = (frame.width * config.centerCropRatio).toInt().coerceIn(1, frame.width)
+        val cropH = (frame.height * config.centerCropRatio).toInt().coerceIn(1, frame.height)
+        val left = (frame.width - cropW) / 2
+        val top = (frame.height - cropH) / 2
+        return createBitmap(frame, left, top, cropW, cropH)
     }
 
-    private fun cropCenterRegion(bitmap: Bitmap, roiW: Int, roiH: Int): Bitmap {
-        val maxW = minOf(roiW, bitmap.width)
-        val maxH = minOf(roiH, bitmap.height)
-        val left = (bitmap.width - maxW) / 2
-        val top = (bitmap.height - maxH) / 2
-        return createBitmap(bitmap, left, top, maxW, maxH)
+    /** 缩放到目标宽度（保持宽高比），与旧版 DPM_ROI_TARGET_WIDTH=400 一致 */
+    private fun scaleToTargetWidth(bitmap: Bitmap, targetWidth: Int): Bitmap {
+        if (bitmap.width <= targetWidth) return bitmap
+        val scale = targetWidth.toFloat() / bitmap.width
+        return Bitmap.createScaledBitmap(bitmap, targetWidth, (bitmap.height * scale).toInt().coerceAtLeast(1), true)
     }
 
-    private fun downscaleBitmap(bitmap: Bitmap, divisor: Int): Bitmap {
-        val w = bitmap.width / divisor
-        val h = bitmap.height / divisor
-        if (w <= 0 || h <= 0) return bitmap
-        return Bitmap.createScaledBitmap(bitmap, w, h, true)
+    /**
+     * 全图降采样（长边 > maxEdge 时等比缩放），与旧版 SCAN_MAX_EDGE=1280 一致。
+     * 返回原图或新 Bitmap（调用方负责回收新 Bitmap）。
+     */
+    private fun downscaleToMaxEdge(bitmap: Bitmap, maxEdge: Int): Bitmap {
+        val longEdge = maxOf(bitmap.width, bitmap.height)
+        if (longEdge <= maxEdge) return bitmap
+        val scale = maxEdge.toFloat() / longEdge
+        return Bitmap.createScaledBitmap(
+            bitmap,
+            (bitmap.width * scale).toInt().coerceAtLeast(1),
+            (bitmap.height * scale).toInt().coerceAtLeast(1),
+            true,
+        )
     }
 
     private fun rotateBitmap(bitmap: Bitmap, degrees: Float): Bitmap {
@@ -272,7 +334,7 @@ class DpmAnalyzer(
         gridExecutionJob?.cancel()
         gridExecutionJob = scope.launch {
             try {
-                val result = DpmGridReconstructor.reconstruct(gray, w, h, DpmDimensionMode.AUTO, scanControl)
+                val result = DpmGridReconstructor.reconstruct(gray, w, h, dimensionMode(), scanControl)
                 result?.let { code ->
                     if (gridGate.belongsToCurrentSession(generationSnap)) {
                         // 网格解码结果：绕过响应门直接响应，source=GRID
@@ -328,6 +390,7 @@ class DpmAnalyzer(
         respondGate.onResponded(code)
         throttleLastSuccessMs.set(now)
         missCount = 0
+        gridGate.onHit()  // 旧版：命中复位网格 miss 计数
         return DpmAnalyzeResult(
             status = DpmAnalyzeStatus.DECODED,
             code = code,
@@ -338,6 +401,7 @@ class DpmAnalyzer(
 
     private fun handleMiss(now: Long): DpmAnalyzeResult {
         respondGate.onMiss()
+        gridGate.onMiss()  // 旧版：miss 累计网格门控计数
         throttleLastFailMs.set(now)
         missCount++
         if (missCount >= config.missTriggerCount) {
@@ -358,9 +422,8 @@ class DpmAnalyzer(
  * 旧版来源：camera/DpmAnalyzer.kt companion object 常量。
  */
 data class DpmAnalyzerConfig(
-    /** 旧版 CENTER_ROI_RATIO=0.5f → 中心 50% 区域（默认1200×1200） */
-    val centerRoiWidth: Int = 1200,
-    val centerRoiHeight: Int = 1200,
+    /** 旧版 CENTER_ROI_RATIO=0.5f → 中心 50% 区域 */
+    val centerCropRatio: Float = 0.5f,
     /** 旧版 DPM_ROI_TARGET_WIDTH=400 → ROI 预处理前缩放到 400px */
     val roiTargetWidth: Int = 400,
     /** 旧版 ATTEMPT_INTERVAL_MS=200 */
@@ -390,3 +453,5 @@ private const val SCAN_SUCCESS_HOLD_MS = 3000L
 /** 旧版 ATTEMPT_INTERVAL_MS=200 的 miss 端细分 */
 private const val FAIL_SHORT_DELAY_MS = 100L
 private const val FAIL_LONG_DELAY_MS = 200L
+/** 旧版全图阶段长边上限（超限降采样，控制 ZXing tryHarder 成本） */
+private const val SCAN_MAX_EDGE = 1280

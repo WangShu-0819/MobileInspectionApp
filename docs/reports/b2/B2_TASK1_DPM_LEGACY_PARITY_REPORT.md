@@ -1,259 +1,205 @@
-# B2 Task 1: DPM Legacy Pipeline Migration — Parity Report
+# B2 Task 1 DPM 旧版行为对等报告
 
-## 概述
+**日期**：2026-09-02
+**状态**：回归整改中（撤销此前"新旧处理链一致"断言）
+**触发原因**：用户真机确认同一 DPM 码旧 App 可识别、新 App 不可识别；闪光灯无效
 
-从旧版 Wearable Inspection 项目迁移 DPM（Direct Part Mark）扫码流水线到新版 MobileInspectionApp 架构（CameraX）。
+## 1. 审计发现的回归缺陷
 
-**迁移范围**：纯解码流水线（无相册导入、无 QR Code、无 OCR/模板/轮廓/ROI/检测算法）
+### 1.1 解码链缺陷（导致识别失败）
 
-**源仓库**：`D:\study\Textile_defects\Wearable Inspection\Wearable Inspection`
-**目标仓库**：`MobileInspectionApp`（基于 CameraX 单例 CameraController）
+| # | 缺陷 | 旧版行为 | 新版行为（整改前） | 影响 | 整改方式 |
+|---|------|---------|-------------------|------|---------|
+| 1 | 缺少全图 ZXing 阶段 | ROI 失败后降采样到1280 → 预处理 → ZXing | 无此阶段 | 码在画面边缘或 ROI 裁切不当时无法识别 | 已恢复：阶段2 全图降采样 + 同策略预处理 |
+| 2 | 缺少 ML Kit 全图兜底 | 全图 ZXing 失败后对原图直接 ML Kit | ML Kit 仅在预处理候选上调用 | 模糊/透视码场景 ZXing 解不了时无兜底 | 已恢复：阶段3 ML Kit 直接解原图 |
+| 3 | 中心 ROI 尺寸错误 | CENTER_ROI_RATIO=0.5f → 中心50%（1280×1707帧上640×854） | centerRoiWidth=1200, centerRoiHeight=1200（1280×1707帧上1280×1200） | ROI 过大，可能包含干扰区域；缩放到400px后码可能被过度缩小 | 已恢复：使用 centerCropRatio=0.5f |
+| 4 | DpmGridGate 参数错误 | missThreshold=8, cooldownMs=1500 | missThreshold=5, cooldownMs=3000 | 网格兜底触发过早（5帧 vs 8帧）且冷却过长（3s vs 1.5s） | 已修复：改为8/1500 |
+| 5 | gridGate.onMiss() 从未调用 | 每帧 miss 累计网格门控计数 | 只调用 respondGate.onMiss() | 网格门控 miss 计数永远为0，网格兜底永远不会触发 | 已修复：handleMiss 中调用 gridGate.onMiss() |
+| 6 | DpmDimensionMode 硬编码 AUTO | 从 SettingsStore 读取，作为任务快照传入 | triggerGridDecode 硬编码 DpmDimensionMode.AUTO | 用户设置的固定尺寸模式不生效 | 已修复：通过 dimensionMode() lambda 读取 |
+| 7 | ML Kit 每候选调用 | ML Kit 仅在阶段3全图调用一次 | decodePixels 中每个候选都调用 ML Kit | 不必要的性能开销；语义不一致 | 已修复：decodePixels 仅调用 ZXing |
 
----
+### 1.2 闪光灯缺陷
 
-## 检查点总览
+| # | 缺陷 | 旧版行为 | 新版行为（整改前） | 整改方式 |
+|---|------|---------|-------------------|---------|
+| 1 | 无 hasFlashUnit 检查 | 检查 camera.cameraInfo.hasFlashUnit() | 不检查 | 已添加 hasFlashUnit() |
+| 2 | 不等待异步结果 | enableTorch() 返回 ListenableFuture，旧版也不等待 | 同上，但用户报告"无实际效果" | 已改为 suspend，等待 ListenableFuture 完成 |
+| 3 | 不读取真实 torchState | 旧版也不读取，但有 torchSupported StateFlow | UI 直接翻转 torchOn，不核实 | 已添加 isTorchOn() 读取 CameraX torchState |
+| 4 | 退出页面不关 torch | 旧版 disconnect 时关闭 | 不关闭 | 已在 cleanupBoundResources 和 stopScan 中关闭 |
 
-| 检查点 | 内容 | 提交哈希 | 状态 |
-|--------|------|----------|------|
-| CP1 | 纯 Kotlin 控制逻辑 | `b35efc1d` | ✅ |
-| CP2 | OpenCV 预处理 & 网格链 | `e08a9740` | ✅ |
-| CP3 | 真实解码器 + 组装版 DpmAnalyzer | `caf69811` | ✅ |
-| CP4 | CameraX 帧分析器集成 | `3b6b547d` | ✅ |
-| CP5 | 扫码 UI 与导航 | `8f0dcb4d` | ✅ |
-| CP6 | 自动化 & 设备验证 | 本次 | ⚠️ 部分完成 |
+## 2. 旧/新行为逐项对照表
 
----
+### 2.1 帧节流
 
-## CP1: 纯 Kotlin 控制逻辑（5 文件，38 测试）
+| 项目 | 旧代码位置 | 新代码位置 | 是否一致 | 整改方式 |
+|------|-----------|-----------|---------|---------|
+| 节流间隔 | DpmAnalyzer.shouldProcess(): ATTEMPT_INTERVAL_MS=200 | DpmAnalyzer.shouldAllowAnalysis(): 多级节流 | ⚠️ 不同机制 | 保持新版多级节流（更精细） |
+| 节流时机 | 外部调用 shouldProcess() → detect() | analyze() 内部 | ✅ 功能等价 | 无需整改 |
 
-| 文件 | 旧版来源 | 忠实度 |
-|------|----------|--------|
-| `DpmDimensionMode.kt` | `camera/DpmDimensionMode.kt` | 参数完全保留：AUTO/DIM_16/DIM_18/DIM_20，配额 Top8+4/Top24+12 |
-| `DpmGridGate.kt` | `camera/DpmGridGate.kt` | 会话代数、missStreak、canSubmit 条件一致 |
-| `DpmDumpBudget.kt` | `camera/DpmDumpBudget.kt` | 线程安全、DEFAULT_MAX_FRAME_SETS=30 |
-| `DpmScanControl.kt` | `camera/DpmScanControl.kt` | 协作截止 + 取消锁存，abortReason 枚举 |
-| `DpmRespondGate.kt` | `camera/DpmRespondGate.kt` | REARM_MISSES=10、MAX_HOLD_RESPOND_MS=5000 |
+### 2.2 Single-flight
 
-**测试覆盖**：38 项 JVM 单测全部通过
+| 项目 | 旧代码位置 | 新代码位置 | 是否一致 | 整改方式 |
+|------|-----------|-----------|---------|---------|
+| 并发保护 | 无显式 single-flight（依赖外部节流） | AtomicBoolean analysisRunning | ✅ 新版更严格 | 保持 |
 
----
+### 2.3 Upright Rotation
 
-## CP2: OpenCV 预处理 & 网格链（4 文件，OpenCV 桌面测试）
+| 项目 | 旧代码位置 | 新代码位置 | 是否一致 | 整改方式 |
+|------|-----------|-----------|---------|---------|
+| 旋转 | CameraXVideoSource.analyze 已旋转 | DpmFrameAnalyzer.imageProxyToUprightBitmap | ✅ 一致 | 无需整改 |
 
-| 文件 | 旧版来源 | 忠实度 |
-|------|----------|--------|
-| `DpmPreprocessor.kt` | `camera/DpmPreprocessor.kt` | 4 策略完全保留：针打/反色/激光蚀刻/CLAHE 灰度 |
-| `DpmFrameQuality.kt` | `camera/DpmFrameQuality.kt` | 过曝/欠曝/动态范围/纹理阈值一致 |
-| `DpmGridReconstructor.kt` | `camera/DpmGridReconstructor.kt` | 薄包装委托 ImportedDpmScanner |
-| `ImportedDpmScanner.kt` | Python 参考实现 | ~1850 行完整移植：网格候选/旋转网格/九宫格×变体 |
+### 2.4 扫码 ROI
 
-**测试覆盖**：OpenCV 渲染 + 解码验证、质量门控测试、扫描器全链测试
+| 项目 | 旧代码位置 | 新代码位置 | 是否一致 | 整改方式 |
+|------|-----------|-----------|---------|---------|
+| ROI 类型 | RectF 归一化0..1 | Rect 像素坐标 | ✅ 功能等价 | 无需整改 |
+| 框内约束 | scanRoi!=null → 只解码该区域 | scanRoi!=null → 只解码该区域 | ✅ 一致 | 无需整改 |
 
----
+### 2.5 中心 50% ROI
 
-## CP3: 真实解码器 + 组装版 DpmAnalyzer（3 文件，11 测试）
+| 项目 | 旧代码位置 | 新代码位置 | 是否一致 | 整改方式 |
+|------|-----------|-----------|---------|---------|
+| 裁切比例 | CENTER_ROI_RATIO=0.5f → cropCenter() | centerCropRatio=0.5f → cropRoi() | ✅ 已修复 | 已从固定1200×1200改为50%比例 |
 
-| 文件 | 旧版来源 | 忠实度 |
-|------|----------|--------|
-| `ZxingDataMatrixDecoder.kt` | `camera/DpmZxingDecoder` 实现 | TRY_HARDER、双二值化器 + 反色双试 |
-| `MlKitDataMatrixDecoder.kt` | `camera/DpmMlKitDecoder` 实现 | FORMAT_DATA_MATRIX、600ms 超时 |
-| `DpmAnalyzer.kt` | `camera/DpmAnalyzer.kt` | 组装版：ZXing 主→ML Kit 兜底、策略轮转、200ms 节流、单飞、漏检对焦回调、网格异步 |
+### 2.6 ROI 目标宽 400
 
-**关键参数保留**：
-- 中心 ROI：1200×1200（旧版 0.5×min(w,h)，待 A/B 验证）
-- 缩放目标：roiTargetWidth=400（旧版 DPM_ROI_TARGET_WIDTH=400）
-- 漏检触发：missTriggerCount=30（旧版 MISS_STREAK_TO_FOCUS=30）
-- 节流：attemptIntervalMs=200（旧版 ATTEMPT_INTERVAL_MS=200）
-- 网格：gridMissThreshold=8（旧版 MISS_STREAK_TO_GRID=8）、gridCooldownMs=1500
+| 项目 | 旧代码位置 | 新代码位置 | 是否一致 | 整改方式 |
+|------|-----------|-----------|---------|---------|
+| 目标宽度 | DPM_ROI_TARGET_WIDTH=400 | config.roiTargetWidth=400 | ✅ 一致 | 无需整改 |
 
-**测试覆盖**：4 项 ZXing 解码测试 + 7 项 DpmAnalyzer 测试（含可注入时钟）
+### 2.7 原始 ROI ZXing
 
----
+| 项目 | 旧代码位置 | 新代码位置 | 是否一致 | 整改方式 |
+|------|-----------|-----------|---------|---------|
+| 快速解码 | 无独立阶段（旧版也是预处理后 ZXing） | 无独立阶段 | ✅ 一致 | 无需整改 |
 
-## CP4: CameraX 帧分析器集成（1 文件，3 测试）
+注：旧版 `detect()` 中 `decodeWithStrategy()` 直接调用 `DpmPreprocessor.preprocess()`，没有"原始 ROI ZXing"独立阶段。
 
-| 文件 | 说明 |
-|------|------|
-| `DpmFrameAnalyzer.kt` | 实现 FrameAnalyzer 接口，ImageProxy→Bitmap 转换，委托 DpmAnalyzer，SharedFlow 发射结果 |
+### 2.8 预处理策略轮转
 
-**测试覆盖**：接口实现验证、stop 安全性、results 流可达性
+| 项目 | 旧代码位置 | 新代码位置 | 是否一致 | 整改方式 |
+|------|-----------|-----------|---------|---------|
+| 轮转方式 | frameCount % 4 → 单策略 | frameCount % 4 → 单策略 | ✅ 一致 | 无需整改 |
+| 策略种类 | 4种：针撞/反色/激光/CLAHE | 同上 | ✅ 一致 | 无需整改 |
 
----
+### 2.9 正常/反转双极性
 
-## CP5: 扫码 UI 与导航（2 文件 + 路由注册）
+| 项目 | 旧代码位置 | 新代码位置 | 是否一致 | 整改方式 |
+|------|-----------|-----------|---------|---------|
+| 双试 | decodePixels(candidate, inverted=false) + decodePixels(candidate, inverted=true) | 同上 | ✅ 一致 | 无需整改 |
 
-| 文件 | 说明 |
-|------|------|
-| `DpmScanViewModel.kt` | 管理 DpmAnalyzer + DpmFrameAnalyzer 生命周期，收集结果 |
-| `DpmScanScreen.kt` | Compose 扫码页面：CameraPreview + 扫描框覆盖层 + 结果卡片 |
+### 2.10 全图降采样
 
-**路由**：`Screen.DpmScan` → `AppNavigation` 注册
+| 项目 | 旧代码位置 | 新代码位置 | 是否一致 | 整改方式 |
+|------|-----------|-----------|---------|---------|
+| 长边上限 | SCAN_MAX_EDGE=1280 | SCAN_MAX_EDGE=1280 | ✅ 已恢复 | 已添加 downscaleToMaxEdge() |
 
----
+### 2.11 全图 ZXing
 
-## CP6: 自动化 & 设备验证（Batch 5 部分完成）
+| 项目 | 旧代码位置 | 新代码位置 | 是否一致 | 整改方式 |
+|------|-----------|-----------|---------|---------|
+| 阶段存在 | 有（stage2：全图降采样 → 预处理 → ZXing） | 无（整改前） | ✅ 已恢复 | 已添加阶段2 |
 
-### 包名门禁（2026-09-02 验证通过）
+### 2.12 ML Kit DATA_MATRIX 兜底
 
-| 项目 | 值 |
-|------|-----|
-| **新包名** | `com.wearable.inspection.mobile` |
-| **启动组件** | `com.wearable.inspection.mobile/com.wearable.inspection.mobile.MainActivity` |
-| **APK SHA-256** | `00357f7c9c38cc1ff3cd36d2ffc9cb8f3cbd3c898dcb1d926a684a67adf28c1b` |
-| **前台包校验** | `pidof` → PID 存在, `mResumedActivity` → 新包 |
-| **旧包名** | `com.wearable.inspection` |
-| **旧 APK SHA-256** | `6e14a3b4995f90aff0c77e4af6d10f65ce1d482674370bab75806c3ee16d88aa` |
+| 项目 | 旧代码位置 | 新代码位置 | 是否一致 | 整改方式 |
+|------|-----------|-----------|---------|---------|
+| 阶段位置 | stage3：全图 ML Kit 直接解码 | 阶段3：全图 ML Kit 直接解码 | ✅ 已恢复 | 已从每候选调用改为阶段3全图调用 |
+| 格式配置 | FORMAT_DATA_MATRIX + FORMAT_QR_CODE | FORMAT_DATA_MATRIX only | ⚠️ 有意差异 | 产品边界：只识别 DATA_MATRIX |
 
-### JVM 单元测试
+### 2.13 连续 miss 对焦
+
+| 项目 | 旧代码位置 | 新代码位置 | 是否一致 | 整改方式 |
+|------|-----------|-----------|---------|---------|
+| 阈值 | MISS_STREAK_TO_FOCUS=30 | config.missTriggerCount=30 | ✅ 一致 | 无需整改 |
+| 冷却 | FOCUS_REQUEST_COOLDOWN_MS=5000 | 无冷却（但 miss 阈值30帧≈6s 自然冷却） | ⚠️ 轻微差异 | 可接受，后续优化 |
+
+### 2.14 网格触发阈值与冷却
+
+| 项目 | 旧代码位置 | 新代码位置 | 是否一致 | 整改方式 |
+|------|-----------|-----------|---------|---------|
+| miss 阈值 | MISS_STREAK_TO_GRID=8 | missThreshold=8 | ✅ 已修复 | 从5改为8 |
+| 冷却 | GRID_COOLDOWN_MS=1500 | cooldownMs=1500 | ✅ 已修复 | 从3000改为1500 |
+| miss 累计 | gridGate.onMiss() 每帧调用 | gridGate.onMiss() 每帧调用 | ✅ 已修复 | 已添加调用 |
+
+### 2.15 DpmDimensionMode
+
+| 项目 | 旧代码位置 | 新代码位置 | 是否一致 | 整改方式 |
+|------|-----------|-----------|---------|---------|
+| 读取方式 | lambda: dimensionMode = { settings.get() } | lambda: dimensionMode = { DpmDimensionMode.AUTO } | ⚠️ TODO | 已接通 lambda，待 SettingsStore 集成 |
+| 硬编码 | 无 | 无（通过 lambda 传入） | ✅ 已修复 | 从硬编码 AUTO 改为 lambda |
+
+### 2.16 重复响应门
+
+| 项目 | 旧代码位置 | 新代码位置 | 是否一致 | 整改方式 |
+|------|-----------|-----------|---------|---------|
+| DpmRespondGate | DpmAnalyzer 内部类 | 独立类 DpmRespondGate | ✅ 一致 | 无需整改 |
+| REARM_MISSES | 10 | 10 | ✅ 一致 | 无需整改 |
+| MAX_HOLD_RESPOND_MS | 5000 | 5000 | ✅ 一致 | 无需整改 |
+
+### 2.17 stop/取消/迟到回调
+
+| 项目 | 旧代码位置 | 新代码位置 | 是否一致 | 整改方式 |
+|------|-----------|-----------|---------|---------|
+| stop 行为 | setScanModeActive(false) + cancel gridJob | stop() cancelChildren + isStopped | ✅ 功能等价 | 无需整改 |
+| 迟到回调 | generation 比对 | generation 比对 + isStopped | ✅ 一致 | 无需整改 |
+
+## 3. 整改后解码链（与旧版一致）
 
 ```
-./gradlew :app:testDebugUnitTest
-188 tests — 183 passed, 0 failed, 5 skipped (Robolectric SDK 限制)
-17 test suites, BUILD SUCCESSFUL
+帧输入 (upright Bitmap)
+  │
+  ├─ 扫码框存在？──是──→ 裁切框内区域 → 缩放到400px → 预处理策略 → ZXing → 成功？→ 响应门 → 返回
+  │                                                          ↓ 失败
+  │                                                     (跳过全图阶段)
+  │
+  └─ 无扫码框 ──→ 裁切中心50% → 缩放到400px → 预处理策略 → ZXing → 成功？→ 响应门 → 返回
+                                              ↓ 失败
+                                         全图降采样1280 → 同策略预处理 → ZXing → 成功？→ 响应门 → 返回
+                                              ↓ 失败
+                                         ML Kit 全图兜底 → 成功？→ 响应门 → 返回
+                                              ↓ 失败
+                                         网格兜底（异步）→ 绕过响应门 → 返回
+                                              ↓ 失败
+                                         miss 累计 → 对焦请求 / 网格触发
 ```
 
-**每类测试计数（@Test 注解数）：**
+## 4. 闪光灯整改后行为
 
-| 测试类 | @Test 数 | 通过 | 跳过 | 备注 |
-|--------|----------|------|------|------|
-| CameraControllerTakePhotoTest | 17 | 17 | 0 | |
-| CameraControllerTest | 40 | 40 | 0 | |
-| MobileImageStoreTest | 11 | 11 | 0 | |
-| ContentRectCalculatorTest | 10 | 10 | 0 | |
-| DpmAnalyzerTest | 7 | 7 | 0 | missTriggerCount=30 已修正 |
-| DpmDecodePipelineTest | 8 | 8 | 0 | |
-| DpmDimensionModeTest | 11 | 11 | 0 | |
-| DpmDumpBudgetTest | 6 | 6 | 0 | |
-| DpmFrameAnalyzerTest | 3 | 3 | 0 | |
-| DpmFrameQualityTest | 8 | 8 | 0 | |
-| DpmGridGateTest | 7 | 7 | 0 | |
-| DpmPreprocessorTest | 16 | 16 | 0 | OpenCV 渲染验证 |
-| DpmRespondGateTest | 9 | 9 | 0 | |
-| DpmScanControlTest | 5 | 5 | 0 | |
-| DpmScanRoiMapperTest | 9 | 9 | 0 | |
-| DpmScannerTest | 17 | 12 | 5 | 跳过：外部 dump 文件缺失 |
-| ZxingDataMatrixDecoderTest | 4 | 4 | 0 | |
-| **总计** | **188** | **183** | **5** | |
+1. **开启**：检查 hasFlashUnit → suspend 等待 enableTorch 异步完成 → 读取真实 torchState 更新 UI
+2. **关闭**：同上，enableTorch(false)
+3. **页面退出**：stopScan 中异步关闭 torch + CameraController cleanupBoundResources 同步关闭
+4. **相机会话切换**：cleanupBoundResources 同步关闭
+5. **设备不支持**：hasFlashUnit()=false → toggleTorch 返回 false → UI 不翻转
+6. **异步失败**：enableTorch 的 ListenableFuture 失败 → 返回 false → UI 不翻转
 
-### Android 设备测试
+## 5. DPM_data 样本元数据
 
-```
-./gradlew :app:connectedDebugAndroidTest
-Starting 20 tests on YAL-AL10 - 10
-20/20 completed. (0 skipped) (0 failed)
-BUILD SUCCESSFUL in 1m 10s
-```
+| 文件名 | 尺寸 | 大小 | SHA-256 |
+|--------|------|------|---------|
+| 45eb098523e21fa461e135dac8f7b678_720.jpg | 1280×1707 | 211,367 | 0ebe300af580a3f39f140eb589415686652e711b7f4196d60ea002fd315e73fb |
+| 5ba81f191dc78bb60cf267eb9af10a54_720.jpg | 1280×1707 | 202,953 | 120d235d3ce9caab178da8aefb333d7a17dbefd2744d6773ec08be40d7218391 |
+| 5fd53ffd01341e9dc10e4e977b804fad_720.jpg | 1280×1707 | 201,603 | 01f1cc9783b34450c8a836905dbccee6b4ce8cb27659306aa370614ca563404a |
+| 87879f06a1081dabfc34836fd92760ab_720.jpg | 1280×1707 | 213,043 | 4a64eab5d65a0e52b1415909957f2b1de8058b0d5745dcdfe261eed3519f0a86 |
+| a0a3e4f3ca567188aec2020ecacbc160.jpg | 3000×4000 | 3,532,738 | f3641bd0d8630de7c76606e98613830270387d9a66146da6f0f06c29bed39108 |
+| c7f8366cd8452f313279c2b88a77eccf_720.jpg | 1280×1707 | 189,445 | 4d812796c0c4176ac58d9376835e8e2809aae71101a65b81c14dd40ac0267c21 |
 
-**测试设备**：HUAWEI YAL-AL10 (Android 10)
+## 6. 离线解码基线（纯 ZXing，无 OpenCV 预处理）
 
-### Batch 5 真机验证结果（2026-09-02）
+| 样本 | 全图 ZXing | 中心50% ROI+400px ZXing |
+|------|-----------|------------------------|
+| 45eb09... | NO_RESULT | NO_RESULT |
+| 5ba81f... | NO_RESULT | NO_RESULT |
+| 5fd53f... | NO_RESULT | NO_RESULT |
+| 87879f... | NO_RESULT | NO_RESULT |
+| a0a3e4... | NO_RESULT | NO_RESULT |
+| c7f836... | NO_RESULT | NO_RESULT |
 
-#### DPM 扫码页面验证
+注：纯 ZXing 对工业 DPM 码（针打/激光蚀刻/低对比）识别率极低，需 OpenCV 预处理（DpmPreprocessor）才能解码。此基线仅验证测试基础设施可用。
 
-- [x] "扫一扫"进入 DPM_SCAN 页面 ✓
-- [x] 页面标题 "DPM 扫码" ✓
-- [x] 返回按钮、闪光灯按钮存在 ✓
-- [x] 状态文字 "扫描中…"、提示文字 "将 DPM 码对准扫描框" ✓
-- [x] 相机预览正常、扫描覆盖层存在 ✓
+## 7. 待完成项
 
-#### 稳定性测试
-
-| 测试项 | 结果 | 说明 |
-|--------|------|------|
-| 扫码页面往返 10 次 | 10/10 ✓ | 使用 KEYCODE_BACK 返回 |
-| 前后台切换 10 次 | 10/10 ✓ | PID 保持一致 |
-| Logcat 门禁 8 项 | 0 违规 ✓ | Camera already in use/FATAL/leak 等 |
-
-#### 相机生命周期
-
-- [x] DPM 页面退出后相机正确关闭 ✓
-- [x] 返回主页面后 INSPECTION 相机恢复 ✓
-- [x] 无 Camera already in use / ImageProxy 泄漏 / RejectedExecutionException ✓
-
-#### 截图证据
-
-| 截图 | 大小 | SHA-256 | 说明 |
-|------|------|---------|------|
-| screen_dpm.png | 1,418,202 | `b3c1b5e0...` | 待人工视觉复核 |
-| batch5_dpm_scan.png | 886,322 | `6b321fc6...` | 待人工视觉复核 |
-
-注：mimo-v2.5-pro 无法读取 PNG，截图人工视觉复核待完成。
-
-### 待完成（需要物理 DPM 样品）
-
-- [ ] DPM 专用 instrumented/UI 测试（DPM 页面导航、扫码 UI 状态机）
-- [ ] 真机 DPM 样品测试（frame-outside-code 10s、move-into-frame、same-code dedup 等）
-- [ ] 新旧 App A/B 对比（每样品识别速度和成功率）
-- [ ] 完整参数对比验证
-- [ ] 框内/框外码验证
-
----
-
-## 文件清单
-
-### 新增文件（16 文件）
-
-| # | 文件 | 行数 |
-|---|------|------|
-| 1 | `dpm/DpmDimensionMode.kt` | ~80 |
-| 2 | `dpm/DpmGridGate.kt` | ~83 |
-| 3 | `dpm/DpmDumpBudget.kt` | ~50 |
-| 4 | `dpm/DpmScanControl.kt` | ~55 |
-| 5 | `dpm/DpmRespondGate.kt` | ~95 |
-| 6 | `dpm/DpmPreprocessor.kt` | ~326 |
-| 7 | `dpm/DpmFrameQuality.kt` | ~65 |
-| 8 | `dpm/DpmGridReconstructor.kt` | ~71 |
-| 9 | `dpm/ImportedDpmScanner.kt` | ~1850 |
-| 10 | `dpm/ZxingDataMatrixDecoder.kt` | ~80 |
-| 11 | `dpm/MlKitDataMatrixDecoder.kt` | ~50 |
-| 12 | `dpm/DpmAnalyzer.kt` | ~310 |
-| 13 | `dpm/DpmFrameAnalyzer.kt` | ~130 |
-| 14 | `dpm/DpmScanViewModel.kt` | ~120 |
-| 15 | `ui/screens/DpmScanScreen.kt` | ~260 |
-| 16 | `vision/OpenCvTestSupport.kt` | ~58 |
-
-### 测试文件（9 文件）
-
-| # | 文件 | 测试数 |
-|---|------|--------|
-| 1 | `DpmDimensionModeTest.kt` | 11 |
-| 2 | `DpmGridGateTest.kt` | 7 |
-| 3 | `DpmDumpBudgetTest.kt` | 6 |
-| 4 | `DpmScanControlTest.kt` | 5 |
-| 5 | `DpmRespondGateTest.kt` | 9 |
-| 6 | `DpmPreprocessorTest.kt` | OpenCV 渲染验证 |
-| 7 | `DpmFrameQualityTest.kt` | 质量门控测试 |
-| 8 | `DpmScannerTest.kt` | 扫描器全链测试 |
-| 9 | `ZxingDataMatrixDecoderTest.kt` | 4 |
-| 10 | `DpmAnalyzerTest.kt` | 7 |
-| 11 | `DpmFrameAnalyzerTest.kt` | 3 |
-
-### 修改文件（3 文件）
-
-| 文件 | 变更 |
-|------|------|
-| `app/build.gradle.kts` | 添加 `testImplementation(libs.opencv.desktop)` |
-| `ui/navigation/Screen.kt` | 添加 `DpmScan` 路由 |
-| `ui/navigation/AppNavigation.kt` | 注册 `DpmScanScreen` |
-
----
-
-## 忠实度断言
-
-1. **无算法省略** [待验证]：旧版预处理策略（4 种）、网格重建、解码器（ZXing+ML Kit）已迁移；完整 A/B 对比尚未执行
-2. **无参数放松** [待验证]：大部分阈值已恢复旧版值（roiTargetWidth=400, attemptIntervalMs=200, missTriggerCount=30, gridMissThreshold=8, gridCooldownMs=1500）；Center ROI 维持 1200×1200（非旧版 0.5×min(w,h)）；完整参数对比尚未执行
-3. **无测试删除**：所有旧版测试逻辑保留，新增测试覆盖新架构
-4. **无硬编码结果**：所有解码均为真实运行，未硬编码任何返回值
-5. **CameraX 无回归** [待验证]：CameraController 单例架构未修改，DPM_SCAN 模式接入完成；真机回归测试尚未执行
-6. **冻结目录未动**：`tools/contour_extraction/` 保持冻结状态
-
-> ⚠️ 标记 [待验证] 的断言需要真机 DPM 样品测试和 A/B 对比才能确认。
-
----
-
-## 已知差异
-
-1. **包名**：从 `com.wearable.inspection.camera` 迁移到 `com.wearable.inspection.mobile.dpm`
-2. **协程替代线程**：旧版使用 `ExecutorService` + `Future`，新版使用 `CoroutineScope` + `Job`
-3. **时钟可注入**：`DpmAnalyzer` 接受 `DpmClock` 接口，测试使用 `FakeDpmClock` 替代 `System.currentTimeMillis()`
-4. **DpmRespondGate 替代 DpmResultGate**：旧版 `DpmResultGate` 重命名为 `DpmRespondGate`，功能完全一致
+- [ ] 真机验证：使用同一 DPM 码测试整改后新 App
+- [ ] DpmDimensionMode 从 SettingsStore 真实读取（当前使用默认 AUTO）
+- [ ] 连续 miss 对焦冷却保护（当前依赖自然帧间隔）
+- [ ] 同样本 A/B 对照：旧 App vs 新 App

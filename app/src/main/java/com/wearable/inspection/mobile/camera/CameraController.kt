@@ -924,12 +924,46 @@ class CameraController private constructor(
         }
     }
 
+    // ─── 闪光灯 ───
+
+    /** 设备是否支持闪光灯 */
+    fun hasFlashUnit(): Boolean {
+        return (currentCamera as? Camera)?.cameraInfo?.hasFlashUnit() == true
+    }
+
     /**
-     * 设置闪光灯
+     * 设置闪光灯（suspend，等待 CameraX 异步结果）。
+     *
+     * 检查：
+     * 1. 相机已连接且未释放
+     * 2. 设备有闪光灯硬件
+     * 3. enableTorch() 的 ListenableFuture 成功完成
+     *
+     * @return true 表示闪光灯状态已成功切换，false 表示失败
      */
-    fun setTorch(enabled: Boolean): Boolean {
+    suspend fun setTorch(enabled: Boolean): Boolean {
         val control = cameraControl ?: return false
-        return runCatching { control.enableTorch(enabled) }.isSuccess
+        if (!hasFlashUnit()) return false
+        return try {
+            val future = control.enableTorch(enabled)
+            suspendCancellableCoroutine { cont ->
+                future.addListener({
+                    cont.resume(runCatching { future.get() }.isSuccess)
+                }, ContextCompat.getMainExecutor(context))
+                cont.invokeOnCancellation { future.cancel(true) }
+            }
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    /**
+     * 获取当前真实 torch 状态（CameraX torchState 观察）。
+     * 返回 null 表示相机未连接或状态未知。
+     */
+    fun isTorchOn(): Boolean? {
+        val cam = currentCamera as? Camera ?: return null
+        return cam.cameraInfo.torchState.value == androidx.camera.core.TorchState.ON
     }
 
     /**
@@ -1032,10 +1066,13 @@ class CameraController private constructor(
     /**
      * 清理已绑定的资源（mutex 内调用）
      *
-     * 包括：停止分析器、关闭 Executor、移除 observer、清空所有引用。
+     * 包括：关闭闪光灯、停止分析器、关闭 Executor、移除 observer、清空所有引用。
      * 不调用 provider.unbindAll()，由调用方决定是否需要。
      */
     private fun cleanupBoundResources() {
+        // 关闭闪光灯（同步尽力而为，不阻塞清理）
+        runCatching { cameraControl?.enableTorch(false) }
+
         // 使在途拍照请求失效
         invalidateCaptureRequest()
 
