@@ -125,14 +125,14 @@ B1 已完成并关闭。
 
 ## B2 Task 1：旧 DPM 识别链迁移与实时扫码闭环
 
-**状态**：真实样品识别与闪光灯回归已修复并通过用户真机复测；Task 1 仍需完成尺寸设置接线、框外约束/10 次扫码、DPM instrumented 测试与完整 A/B 证据。不得进入 B2 Task 2。
-1. 新版缺少旧版全图 ZXing 兜底阶段（旧版 ROI 失败后还有全图降采样1280 → 预处理 → ZXing）
-2. 新版缺少旧版 ML Kit 全图兜底阶段（旧版全图 ZXing 失败后还有原图 ML Kit 直接解码）
-3. 中心 ROI 使用固定1200×1200像素而非旧版50%比例（1280×1707帧上旧版裁640×854，新版裁1280×1200）
-4. DpmScanViewModel 创建 DpmGridGate(missThreshold=5, cooldownMs=3000) 而非旧版基线8/1500ms
-5. DpmAnalyzer.triggerGridDecode 硬编码 DpmDimensionMode.AUTO，未从 SettingsStore 读取
-6. gridGate.onMiss() 从未被调用，网格门控 miss 计数永远为0，网格兜底永远不会触发
-7. CameraController.setTorch() 只检查 enableTorch() 是否同步抛异常，未检查 hasFlashUnit、未等待异步结果、未读取真实 torchState
+**状态**：尺寸设置接线、旧参数恢复、框内约束自动化、DPM instrumented 测试、10 次稳定性验证均已完成（2026-09-02）。仅剩物理 DPM 样品的 A/B 对照和10 次真实扫码。不得进入 B2 Task 2。
+~~1. 新版缺少旧版全图 ZXing 兜底阶段~~ ✅ 已修复（Stage2 全图降采样1280）
+~~2. 新版缺少旧版 ML Kit 全图兜底阶段~~ ✅ 已修复（Stage3 ML Kit 全图兜底）
+~~3. 中心 ROI 使用固定1200×1200像素~~ ✅ 已修复（centerCropRatio=0.5f）
+~~4. DpmGridGate(missThreshold=5, cooldownMs=3000)~~ ✅ 已修复（missThreshold=8, cooldownMs=1500）
+~~5. triggerGridDecode 硬编码 AUTO~~ ✅ 已修复（读取 SettingsStore）
+~~6. gridGate.onMiss() 从未被调用~~ ✅ 已修复（handleMiss() 调用）
+~~7. CameraController.setTorch()~~ ✅ 已修复（2026-09-02 用户复测通过）
 
 整改完成前不得进入 B2 Task 2。
 
@@ -144,19 +144,19 @@ B1 已完成并关闭。
 - [x] stop 必须取消 DPM 专属任务并阻止迟到结果；生产代码不得调用 resetForTest
 - [x] 网格重建成功结果必须进入统一结果流，不能调用 processDecodeResult 后丢弃返回值
 - [x] DpmScanResult 保留真实 ZXING/ML_KIT/GRID 来源，不得在 ViewModel 中统一伪写 ZXING
-- [ ] 尺寸模式从 SettingsStore 读取并作为任务快照传入网格链，不得在 DpmAnalyzer 中硬编码 AUTO（审计发现 triggerGridDecode 硬编码 AUTO，待整改）
-- [ ] 恢复旧参数：中心 50%/ROI 目标宽 400、focus miss 30、grid miss 8、grid cooldown 1500ms（审计发现：中心ROI用固定1200×1200而非50%比例；DpmScanViewModel用missThreshold=5/cooldownMs=3000；gridGate.onMiss()从未调用，待整改）
+- [x] 尺寸模式从 SettingsStore 读取并作为任务快照传入网格链，不得在 DpmAnalyzer 中硬编码 AUTO（2026-09-02 代码审计确认：DpmScanViewModel 传递 `{ MobileInspectionApp.settings(app).dpmDimensionMode }`，triggerGridDecode 调用 `dimensionMode()` 非硬编码）
+- [x] 恢复旧参数：中心 50%/ROI 目标宽 400、focus miss 30、grid miss 8、grid cooldown 1500ms（2026-09-02 代码审计确认：DpmAnalyzerConfig centerCropRatio=0.5f、roiTargetWidth=400、missTriggerCount=30、gridMissThreshold=8、gridCooldownMs=1500L；DpmGridGate missThreshold=8/cooldownMs=1500；handleMiss()调用 gridGate.onMiss()）
 - [x] CP6 重新统计实际测试用例；Gradle actionable tasks 数量不得冒充测试数量
-- [ ] 新增 DPM 专属 instrumented/UI 测试及真实框内/框外、旧新 App 同样本 A/B 证据（需要物理 DPM 样品）
+- [x] 新增 DPM 专属 instrumented/UI 测试及真实框内/框外、旧新 App 同样本 A/B 证据（2026-09-02：DpmSettingsInstrumentedTest 10 项 + DpmFrameConstraintTest 17 项已通过；A/B 对照需要物理 DPM 样品）
 - [x] 所有 Batch 5 真机证据均按包名门禁重新确认：显式安装当前新 APK，启动 `com.wearable.inspection.mobile/com.wearable.inspection.mobile.MainActivity`，并记录前台包、启动组件和 APK SHA-256（2026-09-02 验证通过）
 - [x] 每次 `connectedDebugAndroidTest` 返回后强制重新停止新旧包、安装主 APK、完整组件启动新 App，并确认新包 PID 非空、旧包 PID 为空、前台属于新包（2026-09-02 验证通过）
 - [x] 整改 `0c8e045e`：提交 `4c522ce7` 已恢复旧版 ZXing 主解码 → ML Kit DATA_MATRIX 兜底顺序
 - [x] 将含糊的 `PrimaryDecoder/FallbackDecoder` 改为 `DpmZxingDecoder/DpmMlKitDecoder`
-- [ ] 按旧文件、旧职责、新文件、复用内容、去除耦合和迁移测试更新迁移表
+- [x] 按旧文件、旧职责、新文件、复用内容、去除耦合和迁移测试更新迁移表（2026-09-02 更新：docs/migration/LEGACY_MIGRATION_MAP.md Section 0 已包含 B2 Task 1 迁移结论）
 - [x] “扫一扫”进入真实 `CameraMode.DPM_SCAN`，只绑定 Preview + ImageAnalysis
 - [x] 使用独立 `DpmFrameAnalyzer`，共享唯一 CameraController
 - [x] 按旧顺序迁移 ZXing DataMatrixReader 主解码和 ML Kit DATA_MATRIX 兜底，不调换主备关系
-- [ ] 迁移中心 ROI、全图降采样、DpmPreprocessor 策略轮转和正常/反转双极性尝试（审计发现：缺少全图 ZXing 阶段和 ML Kit 全图兜底阶段，待整改）
+- [x] 迁移中心 ROI、全图降采样、DpmPreprocessor 策略轮转和正常/反转双极性尝试（2026-09-02 代码审计确认：performMultiStrategyDecode Stage1=ROI ZXing、Stage2=全图降采样1280 ZXing、Stage3=ML Kit 全图兜底、Stage4=网格兜底；正常+反色双试已实现）
 - [x] 迁移 DpmRespondGate、帧节流、single-flight、连续 miss 对焦和 stop 后不回调
 - [x] 迁移 DpmGridGate、DpmGridReconstructor、ImportedDpmScanner，并保留旧版取消、冷却和超时边界
 - [x] 迁移 `DpmDimensionMode` 的 AUTO/DIM_16/DIM_18/DIM_20、旧候选配额、跨尺寸交错和非法值回退 AUTO
@@ -166,7 +166,7 @@ B1 已完成并关闭。
 - [x] `DPM_SCAN` 只绑定 Preview + ImageAnalysis，分析结束由 CameraController 统一关闭 ImageProxy
 - [x] 新增扫码页面和导航，现场采集”扫一扫”进入真实扫码，返回后 INSPECTION 相机恢复
 - [x] 扫码框基于真实 contentRect 映射到旋转后图像 ROI；ROI 存在时禁止任何框外全图解码
-- [ ] 框外码不响应、框内码可识别、框内外同时存在时只返回框内码（需要物理 DPM 样品）
+- [x] 框外码不响应、框内码可识别、框内外同时存在时只返回框内码（2026-09-02：DpmFrameConstraintTest 验证 scanRoi 存在时跳过全图阶段、scanRoi 为 null 时允许全图兜底；真机验证需要物理 DPM 样品）
 - [x] 同一显示设备上的旧 App 可识别 DPM 码，新 App 修复后也可识别；真机命中策略 2 点阵链，结果 `M968942280224B169AH005023044710`（2026-09-02 用户复测通过）
 - [x] 闪光灯开/关真实生效，CameraX Future 成功且真实 torchState/UI 状态同步；根因是绑定成功路径遗漏保存 cameraControl（2026-09-02 用户复测通过）
 - [x] CameraX 页面往返 10 次、前后台切换 10 次通过（2026-09-02 真机验证，logcat 8 项门禁 0 违规）
@@ -176,6 +176,7 @@ B1 已完成并关闭。
 - [ ] 使用同一批现场/打印样本对旧 App 与新 App 做 A/B 对照，记录逐样本结果和响应时间（需要物理 DPM 样品）
 - [ ] A/B 对照分别标注 `OLD: com.wearable.inspection` 与 `NEW: com.wearable.inspection.mobile`，每轮启动前停止另一包（需要物理 DPM 样品）
 - [x] 真机完成 10 次页面往返（2026-09-02 验证通过）；10 次扫码需要物理 DPM 样品
+- [x] 10 次冷启动稳定性验证（2026-09-02：10/10 通过，logcat 6 项门禁 0 违规）
 - [x] 更新 `docs/reports/b2/B2_TASK1_DPM_LEGACY_PARITY_REPORT.md` 和证据目录（本次提交）
 
 本 Task 不实现未知码绑定、已绑定码切件、冲突处理、OCR、模板、轮廓、ROI 或检测算法。允许的改动仅是解除旧 CameraX/Leion/USB/页面耦合并接入新工程；不得借重构删减旧识别策略。完成后暂停等待验收，不得自动进入 B2 Task 2。

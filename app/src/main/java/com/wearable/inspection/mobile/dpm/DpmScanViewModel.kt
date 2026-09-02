@@ -21,7 +21,7 @@ import kotlinx.coroutines.launch
  * - startScan 接收已连接的 CameraController 和 sessionId
  * - stopScan 按 sessionId 清理
  */
-class DpmScanViewModel(application: Application) : AndroidViewModel(application) {
+class DpmScanViewModel(private val app: Application) : AndroidViewModel(app) {
 
     companion object {
         private const val TAG = "DpmScanViewModel"
@@ -72,7 +72,7 @@ class DpmScanViewModel(application: Application) : AndroidViewModel(application)
             respondGate = rg,
             gridGate = gg,
             scope = scope,
-            dimensionMode = { MobileInspectionApp.settings(application).dpmDimensionMode },
+            dimensionMode = { MobileInspectionApp.settings(app).dpmDimensionMode },
         )
         analyzer.setMode(DpmAnalyzer.AnalysisMode.SCAN)
         analyzer.setScanModeActive(true)

@@ -1096,12 +1096,21 @@ MobileInspectionApp/
 - [x] Logcat 门禁 8 项：0 违规 ✓
 - [x] 相机生命周期：DPM 退出 → INSPECTION 恢复 ✓
 
+### 2026-09-02 新增验证
+
+- [x] 尺寸设置接线：DpmScanViewModel 传递 `MobileInspectionApp.settings(app).dpmDimensionMode` ✓
+- [x] 旧参数恢复：centerCropRatio=0.5f、roiTargetWidth=400、missTriggerCount=30、gridMissThreshold=8、gridCooldownMs=1500 ✓
+- [x] 框内约束自动化：DpmFrameConstraintTest 17 项通过 ✓
+- [x] DPM instrumented 测试：DpmSettingsInstrumentedTest 10 项通过 ✓
+- [x] 冷启动稳定性：10/10 通过，logcat 6 项门禁 0 违规 ✓
+- [x] JVM 测试总数：208 @Test（203 passed / 0 failed / 5 skipped）
+- [x] Instrumented 测试总数：30/30 passed
+
 ### 待完成（需要物理 DPM 样品）
 
-- [ ] 框内/框外码验证
+- [ ] 框内/框外码真机验证
 - [ ] 10 次真实扫码
 - [ ] 完整新旧 App A/B 对比（一个同码可用性对照已通过，尚缺逐样本结果和响应时间）
-- [ ] DPM 专属 instrumented/UI 测试
 - [ ] 截图人工视觉复核（mimo-v2.5-pro 无法读取 PNG）
 
 ### 真实样品与闪光灯整改补充（2026-09-02）

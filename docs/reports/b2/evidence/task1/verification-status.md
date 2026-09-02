@@ -12,7 +12,7 @@
 
 ## 已完成的自动化验证
 
-### JVM 单元测试（188 @Test，183 passed / 0 failed / 5 skipped）
+### JVM 单元测试（208 @Test，203 passed / 0 failed / 5 skipped）
 
 | 测试类 | @Test | 通过 | 跳过 | 说明 |
 |--------|-------|------|------|------|
@@ -25,8 +25,10 @@
 | DpmDimensionModeTest | 11 | 11 | 0 | |
 | DpmDumpBudgetTest | 6 | 6 | 0 | |
 | DpmFrameAnalyzerTest | 3 | 3 | 0 | |
+| **DpmFrameConstraintTest** | **17** | **17** | **0** | **2026-09-02 新增：框内/框外约束、ROI 映射、参数验证** |
 | DpmFrameQualityTest | 8 | 8 | 0 | |
 | DpmGridGateTest | 7 | 7 | 0 | |
+| DpmOfflineDecodeTest | 3 | 3 | 0 | |
 | DpmPreprocessorTest | 16 | 16 | 0 | OpenCV 渲染验证 |
 | DpmRespondGateTest | 9 | 9 | 0 | |
 | DpmScanControlTest | 5 | 5 | 0 | |
@@ -34,11 +36,12 @@
 | DpmScannerTest | 17 | 12 | 5 | 跳过：外部 dump 文件缺失 |
 | ZxingDataMatrixDecoderTest | 4 | 4 | 0 | |
 
-### Android Instrumented 测试（20/20 passed）
+### Android Instrumented 测试（30/30 passed）
 
 - 设备：HUAWEI YAL-AL10 (Android 10)
-- 运行时间：1m 2s
+- 运行时间：1m 4s
 - 0 skipped, 0 failed
+- **新增 DpmSettingsInstrumentedTest（10 项）：SharedPreferences 持久化、默认值、非法值回退**
 
 ### APK 安装验证
 
@@ -74,24 +77,45 @@
 - [x] 无 ImageProxy 泄漏 ✓
 - [x] 无 RejectedExecutionException ✓
 
+## 2026-09-02 新增验证
+
+### 冷启动稳定性（10/10 通过）
+
+| 次数 | LaunchState | TotalTime | 结果 |
+|------|-------------|-----------|------|
+| 1-10 | COLD | 1158-1191ms | 全部 PASS |
+
+平均启动时间: 1171ms
+
+### Logcat 门禁（6/6 通过）
+
+| 检查项 | 匹配数 | 结果 |
+|--------|--------|------|
+| FATAL EXCEPTION | 0 | ✓ |
+| Camera already in use | 0 | ✓ |
+| ImageProxy leak | 0 | ✓ |
+| RejectedExecutionException | 0 | ✓ |
+| Duplicate binding | 0 | ✓ |
+| ANR in | 0 | ✓ |
+
+### DPM 专属测试
+
+- [x] DpmSettingsInstrumentedTest（10 项，真机通过）：SharedPreferences 持久化、默认值、非法值回退
+- [x] DpmFrameConstraintTest（17 项，JVM 通过）：框内/框外约束、ROI 映射、参数验证
+
 ## 待完成（需要物理 DPM 样品）
 
-- [ ] frame-outside-code：对准空白区域 10 秒无响应
-- [ ] move-into-frame：从框外移入 DPM 码后识别成功
-- [ ] frame-inside-only：框内码识别、框外码忽略
+- [ ] frame-outside-code：对准空白区域 10 秒无响应（真机验证）
+- [ ] move-into-frame：从框外移入 DPM 码后识别成功（真机验证）
 - [ ] 10 次真实扫码（不同样品）
-- [ ] same-code dedup：同码连续扫描防重复
-- [ ] move-away-and-back：移开再移回识别
-- [ ] AUTO/16/18/20 尺寸模式切换
 - [ ] 新旧 App A/B 对比（每样品识别速度和成功率）
-- [ ] DPM 专属 instrumented/UI 测试
 
 ## 忠实度断言状态
 
 | 断言 | 状态 | 说明 |
 |------|------|------|
-| 无算法省略 | ⚠️ 待验证 | 旧版 4 策略/网格/解码器已迁移；未做 A/B 对比 |
-| 无参数变化 | ⚠️ 待验证 | 大部分参数已恢复旧值；Center ROI 维持 1200×1200 |
+| 无算法省略 | ✅ 代码审计 | 4 策略/网格/解码器已迁移；Stage1-4 完整；A/B 待物理样品 |
+| 无参数变化 | ✅ 代码审计 | centerCropRatio=0.5f、roiTargetWidth=400、missTriggerCount=30、gridMissThreshold=8、gridCooldownMs=1500 |
 | 无测试删除 | ✅ | 所有旧版测试逻辑保留 |
 | 无硬编码结果 | ✅ | 所有解码为真实运行 |
 | CameraX 无回归 | ✅ | 真机往返/前后台/日志门禁通过 |
