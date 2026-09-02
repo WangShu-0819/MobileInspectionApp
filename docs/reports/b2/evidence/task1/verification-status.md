@@ -1,13 +1,13 @@
 # B2 Task 1 — 真机验证状态
 
-## 包名门禁（2026-09-02 Batch 5 验证通过）
+## 包名门禁（2026-09-02 最终验证）
 
 | 项目 | 值 |
 |------|-----|
 | **新包名** | `com.wearable.inspection.mobile` |
 | **启动组件** | `com.wearable.inspection.mobile/com.wearable.inspection.mobile.MainActivity` |
-| **APK SHA-256** | `00357f7c9c38cc1ff3cd36d2ffc9cb8f3cbd3c898dcb1d926a684a67adf28c1b` |
-| **前台包校验** | `pidof` → PID 存在, `mResumedActivity` → 新包 |
+| **APK SHA-256** | `6e2ca7d3f573c1da1af7f9180c23a0dbe8f2f9081eafff5ccf466dcb09c051cc` |
+| **前台包校验** | PID=29674, mResumedActivity → 新包 |
 | **旧包 PID** | 空（已 force-stop） |
 
 ## 已完成的自动化验证
@@ -81,11 +81,20 @@
 
 ### 冷启动稳定性（10/10 通过）
 
-| 次数 | LaunchState | TotalTime | 结果 |
-|------|-------------|-----------|------|
-| 1-10 | COLD | 1158-1191ms | 全部 PASS |
+| 次数 | LaunchState | TotalTime | PID | 结果 |
+|------|-------------|-----------|-----|------|
+| 1 | COLD | 1173ms | 27142 | PASS |
+| 2 | COLD | 1145ms | 27325 | PASS |
+| 3 | COLD | 1147ms | 27483 | PASS |
+| 4 | COLD | 1146ms | 27665 | PASS |
+| 5 | COLD | 1150ms | 27830 | PASS |
+| 6 | COLD | 1152ms | 27986 | PASS |
+| 7 | COLD | 1148ms | 28150 | PASS |
+| 8 | COLD | 1146ms | 28303 | PASS |
+| 9 | COLD | 1158ms | 28466 | PASS |
+| 10 | COLD | 1137ms | 28626 | PASS |
 
-平均启动时间: 1171ms
+平均启动时间: 1150ms
 
 ### Logcat 门禁（6/6 通过）
 

@@ -8,7 +8,7 @@
 | **启动组件** | `com.wearable.inspection.mobile/com.wearable.inspection.mobile.MainActivity` |
 | **APK 路径** | `app/build/outputs/apk/debug/app-debug.apk` |
 | **APK 大小** | 178,356,208 bytes (~170 MB) |
-| **APK SHA-256** | `00357f7c9c38cc1ff3cd36d2ffc9cb8f3cbd3c898dcb1d926a684a67adf28c1b` |
+| **APK SHA-256** | `6e2ca7d3f573c1da1af7f9180c23a0dbe8f2f9081eafff5ccf466dcb09c051cc` |
 | **安装结果** | `Performing Streamed Install` → `Success` |
 | **启动结果** | `Status: ok`, `LaunchState: COLD`, `TotalTime: 1238ms` |
 | **前台包校验** | `pidof` → `32550`, `mResumedActivity` → `com.wearable.inspection.mobile/.MainActivity` |
