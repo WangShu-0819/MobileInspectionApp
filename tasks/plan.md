@@ -109,7 +109,9 @@ B2 Task 1 连续执行检查点：
 
 ### B3：钢印 OCR 迁移
 
-- [ ] 拍照、预处理、离线 OCR、确认和留档
+- [x] Phase 1：核心算法迁移（提交 `0df8e9c5`，10 source +9 test files，66 OCR tests）
+- [x] Phase 2：CameraX/UI 集成（SOFTWARE_COMPLETE，2026-09-02）— StampOcrFrameAnalyzer + StampOcrViewModel + StampOcrScreen + Navigation
+- [ ] 真机 OCR 拍照 + 识别 + 人工确认流程验证（需要钢印样品）
 
 ### V1 可交付闭环（当前优先目标）
 

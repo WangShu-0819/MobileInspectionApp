@@ -64,6 +64,9 @@ fun AppRoot() {
                     onDpmScan = {
                         navController.navigate(Screen.DpmScan.route)
                     },
+                    onStampOcr = {
+                        navController.navigate(Screen.StampOcr.route)
+                    },
                 )
             }
 
@@ -167,6 +170,15 @@ fun AppRoot() {
                     onBack = { navController.popBackStack() },
                     onResult = { code ->
                         // 解码结果回调，后续可导航到结果页
+                    }
+                )
+            }
+
+            composable(Screen.StampOcr.route) {
+                StampOcrScreen(
+                    onBack = { navController.popBackStack() },
+                    onResult = { text ->
+                        // OCR 结果回调，后续可导航到结果页
                     }
                 )
             }

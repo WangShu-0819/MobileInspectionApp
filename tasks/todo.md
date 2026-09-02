@@ -1,6 +1,6 @@
 # 当前任务：LiveInspectionScreen MVP semantic/UI cleanup → V1-3
 
-B2 Task 1 已 SOFTWARE_COMPLETE / PHYSICAL_ACCEPTANCE_PENDING（物理验收不阻塞后续功能开发）。B2 Task 2 软件层面已完成（提交 `bdf1bd89`）。下一软件阶段：LiveInspectionScreen cleanup → V1-3 post-capture comparison。
+B2 Task 1 已 SOFTWARE_COMPLETE / PHYSICAL_ACCEPTANCE_PENDING（物理验收不阻塞后续功能开发）。B2 Task 2 软件层面已完成（提交 `bdf1bd89`）。B3 Phase 2 钢印 OCR CameraX/UI 集成 SOFTWARE_COMPLETE（2026-09-02）。下一软件阶段：LiveInspectionScreen cleanup → V1-3 post-capture comparison。
 
 ## Task 1：整理活跃源码边界
 

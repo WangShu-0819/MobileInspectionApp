@@ -22,6 +22,8 @@
 - B1 技术验收完成，用户已确认进入 B2。
 - B2 DPM 迁移：Task 1 **SOFTWARE_COMPLETE / PHYSICAL_ACCEPTANCE_PENDING**（2026-09-02）。APK SHA-256 `6e2ca7d3f573c1da1af7f9180c23a0dbe8f2f9081eafff5ccf466dcb09c051cc`。JVM 208 项（203 passed / 0 failed / 5 skipped），Instrumented 30/30 passed，冷启动 10/10 passed。4 项物理验收标记为 `PENDING_PHYSICAL_DPM_SAMPLE`。物理验收不阻塞后续非 DPM 功能开发。
 - B2 Task 2：旧模板导入 + 模板透明叠加 MVP — **SOFTWARE_COMPLETE**（2026-09-02）。V1-1 模板导入 MVP（`bdf1bd89`）；V1-2 模板透明叠加 + Alpha Slider（`bdf1bd89`）；V1-6 MVP Profile 信息架构简化（`94e3f5f3`）：ProfileScreen 收缩为 5 个 MVP 入口、移除硬编码 TemplateStats、接真实 DB 统计、TemplatePackageScreen 接通 ZIP 导入、AppSettingsScreen 移除未生效假开关。JVM 242 项（237 passed / 0 failed / 5 skipped）。遗留边界：legacy ROI 未迁移、imageFiles[] 仅取首图、模板包导出未实现。V1-3 拍后比对为下一软件阶段。实时轮廓投影/姿态匹配/单应性对齐继续标记为 DEFERRED / POST-MVP。
+- B3 Phase 1：钢印 OCR 核心算法迁移 — **完成**（2026-09-02，提交 `0df8e9c5`）。10 source files +9 test files（66 OCR tests）。包名 `com.wearable.inspection.mobile.ocr`。ML Kit text-recognition 依赖已启用。
+- B3 Phase 2：钢印 OCR CameraX/UI 集成 — **SOFTWARE_COMPLETE**（2026-09-02）。StampOcrFrameAnalyzer + StampOcrViewModel + StampOcrScreen + Navigation 路由。JVM 308 项（303 passed / 0 failed / 5 skipped）。APK SHA-256 `b27427fa5dbbea37111e0ab5425286a293af9c98cad6718e85bbf0005ceffb82`。
 - DPM 只支持手机相机实时扫一扫，不提供相册码图导入。
 - DPM 入口：顶部扫码图标 contentDescription 为"扫一扫"，只进入实时 DPM 扫描；OCR 图标 contentDescription 为"OCR 钢印"；模板样本相册导入属于"我的 > 模板配置"。
 
