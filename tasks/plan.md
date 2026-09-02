@@ -2,7 +2,7 @@
 
 ## Overview
 
-B1 共享 CameraX 已完成技术验收。当前停在 B1/B2 门禁，等待用户明确确认进入 B2；确认后再依次迁移 DPM、钢印 OCR、模板样本、轮廓与 ROI，不并行推进多个相机业务。
+B1 共享 CameraX 已完成技术验收。B2 Task 1 DPM 迁移 SOFTWARE_COMPLETE / PHYSICAL_ACCEPTANCE_PENDING。B2 Task 2 模板导入 + 透明叠加 MVP 软件层面已完成（提交 `bdf1bd89`）。下一软件阶段：LiveInspectionScreen semantic/UI cleanup → V1-3 post-capture comparison。不并行推进多个相机业务。
 
 ## Architecture Decisions
 
@@ -80,12 +80,12 @@ Task 4 已完成全部验收项：会话安全快门、capture request token 机
 - [x] `tasks/todo.md` 的 B1 验收全部通过
 - [x] 用户确认进入 B2
 
-用户已确认进入 B2。B2 Task 1 软件层面已完成，物理验收不阻塞后续功能开发。
+用户已确认进入 B2。B2 Task 1 软件层面已完成，物理验收不阻塞后续功能开发。B2 Task 2 模板导入 + 透明叠加 MVP 软件层面已完成。
 
 ### B2：DPM 迁移
 
 - [x] **Task 1：旧 DPM 识别链迁移与实时扫码闭环** — **SOFTWARE_COMPLETE / PHYSICAL_ACCEPTANCE_PENDING**（2026-09-02）。APK SHA-256 `6e2ca7d3f573c1da1af7f9180c23a0dbe8f2f9081eafff5ccf466dcb09c051cc`。JVM 208 项（203 passed / 0 failed / 5 skipped），Instrumented 30/30 passed，冷启动 10/10 passed。4 项物理验收标记为 `PENDING_PHYSICAL_DPM_SAMPLE`。
-- [ ] Task 2：旧模板导入 + 模板透明叠加 MVP（当前任务）
+- [x] **Task 2：旧模板导入 + 模板透明叠加 MVP** — **SOFTWARE_COMPLETE**（2026-09-02，提交 `bdf1bd89`）。V1-1 导入 + V1-2 overlay + alpha slider 完成。JVM 242 项（237 passed / 0 failed / 5 skipped）。遗留：legacy ROI 未迁移、imageFiles[] 仅取首图。
 - [ ] Task 3：未知码绑定、已绑定码切件和冲突处理
 
 B2 Task 1 固定边界：使用唯一 CameraController 的 `DPM_SCAN` 模式，忠实迁移旧工程已经可用的生产识别链。顺序固定为中心 ROI/全图的 ZXing `DataMatrixReader` 主解码（含旧预处理策略与双极性尝试）→ ML Kit DATA_MATRIX 兜底 → 满足旧门控条件时执行网格重建兜底；同时保留帧节流、single-flight、响应门、连续 miss 对焦、取消和停止后不回调。“扫一扫”只进入实时扫码，不提供 DPM 相册选图、码图导入或对应权限/路由。
@@ -121,8 +121,8 @@ V1 MVP 数据流闭环：
 模板导入/拍摄 → ROI 配置 → 模板原图透明叠加辅助现场取景 → 拍照 → 模板/实拍双图比对 → 本次 ROI 微调 → ROI 检测 → 保存结果
 ```
 
-1. [ ] **导入旧模板包**：TemplatePackageImporter 解析 template_exports ZIP → PartEntity / InspectionTemplateEntity / RoiDefinitionEntity / 模板图片文件
-2. [ ] **模板透明叠加**：CameraX live preview + selected inspection template image overlay，保持正确宽高比，opacity slider (0f~0.8f, 默认 0.45f)
+1. [x] **导入旧模板包**：DirectoryTemplateImporter 解析目录 + TemplateImportService 事务编排 → PartEntity / InspectionTemplateEntity / 模板图片文件（提交 `bdf1bd89`）。遗留：legacy ROI 未迁移、imageFiles[] 仅取首图。
+2. [x] **模板透明叠加**：CameraX live preview + template image overlay，contentRect 内绘制，保持正确宽高比，opacity slider (0f~0.8f, 默认 0.45f)（提交 `bdf1bd89`）
 3. [ ] **拍后比对**：CaptureComparisonScreen — 模板 vs 实拍，切换/叠加/opacity，区分 templateRoi vs sessionRoi
 4. [ ] **ROI 人工微调**：拖动矩形 + resize handles，当前 session ROI 不覆盖模板 RoiDefinitionEntity
 5. [ ] **ROI → Detector → Result**：crop ROI bitmap → AlgorithmRegistry → detector → per-ROI result → persist
