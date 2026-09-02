@@ -56,7 +56,9 @@
 
 B2 Task 1 允许连续完成纯逻辑、OpenCV/网格链、CameraX 分析器、扫码框 ROI、页面导航和真机回归。每个内部检查点必须先测试并创建小提交；检查点通过后可继续下一个，不需要等待用户逐段确认。任一检查点出现测试失败、相机回归、旧样本识别退化或无法确认的算法差异时立即暂停，不得用后续步骤掩盖失败。
 
-不得实现相册码图导入、未知码绑定、自动切件、OCR、模板、轮廓、ROI 或检测算法。不得创建第二套 CameraX；`tools/contour_extraction/` 继续冻结。
+不得实现相册码图导入、未知码绑定、自动切件、OCR、模板、轮廓、ROI 或检测算法。不得创建第二套 CameraX；`tools/contour_extraction/` 的算法源码和验证产物继续冻结。
+
+离线 Python 工具统一使用 `D:\ProgramData\anaconda3\envs\dinov2\python.exe`；不得在 `tools/` 下创建 `.venv`、Conda 环境、`site-packages` 或依赖副本。
 
 完成整个 Task 1 后提交 `docs/reports/b2/B2_TASK1_DPM_LEGACY_PARITY_REPORT.md` 和结构化证据，更新控制文档并暂停等待验收，不得自动进入 B2 Task 2。
 

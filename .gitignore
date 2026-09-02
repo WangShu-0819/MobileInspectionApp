@@ -21,3 +21,7 @@ captures/
 *.apk
 *.ap_
 
+# Python tool environments and caches
+tools/**/.venv/
+tools/**/__pycache__/
+tools/**/site-packages/
