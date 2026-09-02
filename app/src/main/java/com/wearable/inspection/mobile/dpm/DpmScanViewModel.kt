@@ -155,7 +155,7 @@ class DpmScanViewModel(application: Application) : AndroidViewModel(application)
                 rawValue = result.code,
                 format = BarcodeFormat.DATA_MATRIX,
                 timestampMs = System.currentTimeMillis(),
-                source = DecodeSource.ZXING,
+                source = result.source ?: DecodeSource.ZXING,
             )
             _scanState.value = _scanState.value.copy(
                 lastDecodedCode = result.code,

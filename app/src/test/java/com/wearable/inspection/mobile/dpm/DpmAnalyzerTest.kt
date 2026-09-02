@@ -104,11 +104,12 @@ class DpmAnalyzerTest {
         fakeZxing.result = null
         fakeMlKit.result = null
         val frame = Bitmap.createBitmap(200, 200, Bitmap.Config.ARGB_8888)
-        for (i in 1..6) {
+        // 旧版 MISS_STREAK_TO_FOCUS=30
+        for (i in 1..30) {
             fakeClock.advance(500L) // advance past throttle delay
             analyzer.analyze(frame, frameRotation = 0)
         }
-        assertEquals("Should trigger refocus after miss threshold", 1, refocusCount)
+        assertEquals("Should trigger refocus after miss threshold (30)", 1, refocusCount)
     }
 
     @Test

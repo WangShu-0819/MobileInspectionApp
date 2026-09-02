@@ -32,5 +32,8 @@ enum class DecodeSource {
     ZXING,
 
     /** ML Kit Barcode Scanning 兜底解码 */
-    ML_KIT
+    ML_KIT,
+
+    /** 网格重建解码（ImportedDpmScanner） */
+    GRID,
 }

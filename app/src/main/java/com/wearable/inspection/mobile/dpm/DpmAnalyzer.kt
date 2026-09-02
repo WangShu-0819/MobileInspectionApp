@@ -148,12 +148,17 @@ class DpmAnalyzer(
         return DpmAnalyzeStatus.PROCEED
     }
 
+    /**
+     * 解码结果：code + source
+     */
+    private data class DecodeResult(val code: String, val source: DecodeSource)
+
     private suspend fun performMultiStrategyDecode(
         frame: Bitmap,
         frameRotation: Int,
         scanRoi: Rect?,
         scanControl: DpmScanControl?,
-    ): String? {
+    ): DecodeResult? {
         val processingFrame = applyFrameTransforms(frame, frameRotation, scanRoi)
         val gray = bitmapToGray(processingFrame)
         val w = processingFrame.width
@@ -175,10 +180,10 @@ class DpmAnalyzer(
         return null
     }
 
-    private suspend fun decodePixels(pixels: ByteArray, w: Int, h: Int, binarizer: DpmBinarizer): String? {
+    private suspend fun decodePixels(pixels: ByteArray, w: Int, h: Int, binarizer: DpmBinarizer): DecodeResult? {
         val bitmap = grayBytesToBitmap(pixels, w, h)
-        zxingDecoder.decode(bitmap)?.let { return it.rawValue }
-        mlKitDecoder.decode(bitmap)?.let { return it.rawValue }
+        zxingDecoder.decode(bitmap)?.let { return DecodeResult(it.rawValue, DecodeSource.ZXING) }
+        mlKitDecoder.decode(bitmap)?.let { return DecodeResult(it.rawValue, DecodeSource.ML_KIT) }
         return null
     }
 
@@ -192,8 +197,10 @@ class DpmAnalyzer(
         if (frameRotation != 0) {
             result = rotateBitmap(result, frameRotation.toFloat())
         }
-        if (frame.width > config.downscaleThresholdW && frame.height > config.downscaleThresholdH) {
-            result = downscaleBitmap(result, config.downscaleFactor)
+        // 旧版 DPM_ROI_TARGET_WIDTH=400：ROI 预处理前缩放到 400px（保持宽高比）
+        if (result.width > config.roiTargetWidth) {
+            val scale = config.roiTargetWidth.toFloat() / result.width
+            result = Bitmap.createScaledBitmap(result, config.roiTargetWidth, (result.height * scale).toInt(), true)
         }
         return result
     }
@@ -268,7 +275,18 @@ class DpmAnalyzer(
                 val result = DpmGridReconstructor.reconstruct(gray, w, h, DpmDimensionMode.AUTO, scanControl)
                 result?.let { code ->
                     if (gridGate.belongsToCurrentSession(generationSnap)) {
-                        processDecodeResult(code)
+                        // 网格解码结果：绕过响应门直接响应，source=GRID
+                        val now = clock.currentTimeMs()
+                        respondGate.onResponded(code)
+                        throttleLastSuccessMs.set(now)
+                        missCount = 0
+                        gridGate.onHit()
+                        emitResult(DpmAnalyzeResult(
+                            status = DpmAnalyzeStatus.DECODED,
+                            code = code,
+                            isDuplicated = false,
+                            source = DecodeSource.GRID,
+                        ))
                     }
                 }
             } finally {
@@ -277,18 +295,31 @@ class DpmAnalyzer(
         }
     }
 
+    /**
+     * 发射结果到结果流（由子协程调用）
+     */
+    private var resultEmitter: (suspend (DpmAnalyzeResult) -> Unit)? = null
+
+    fun setResultEmitter(emitter: suspend (DpmAnalyzeResult) -> Unit) {
+        resultEmitter = emitter
+    }
+
+    private suspend fun emitResult(result: DpmAnalyzeResult) {
+        resultEmitter?.invoke(result)
+    }
+
     // ─── Result processing ───
 
-    private fun processDecodeResult(code: String?): DpmAnalyzeResult {
+    private fun processDecodeResult(result: DecodeResult?): DpmAnalyzeResult {
         val now = clock.currentTimeMs()
-        return if (code != null) {
-            handleSuccess(code, now)
+        return if (result != null) {
+            handleSuccess(result.code, result.source, now)
         } else {
             handleMiss(now)
         }
     }
 
-    private fun handleSuccess(code: String, now: Long): DpmAnalyzeResult {
+    private fun handleSuccess(code: String, source: DecodeSource, now: Long): DpmAnalyzeResult {
         val rearmOnHold = currentMode == AnalysisMode.SCAN
         if (!respondGate.shouldRespond(code, rearmOnHold)) {
             throttleLastSuccessMs.set(now)
@@ -301,6 +332,7 @@ class DpmAnalyzer(
             status = DpmAnalyzeStatus.DECODED,
             code = code,
             isDuplicated = false,
+            source = source,
         )
     }
 
@@ -320,26 +352,41 @@ class DpmAnalyzer(
     enum class AnalysisMode { SCAN, INSPECTION }
 }
 
+/**
+ * DpmAnalyzer 配置参数 — 忠实保留旧版默认值。
+ *
+ * 旧版来源：camera/DpmAnalyzer.kt companion object 常量。
+ */
 data class DpmAnalyzerConfig(
+    /** 旧版 CENTER_ROI_RATIO=0.5f → 中心 50% 区域（默认1200×1200） */
     val centerRoiWidth: Int = 1200,
     val centerRoiHeight: Int = 1200,
-    val downscaleThresholdW: Int = 1800,
-    val downscaleThresholdH: Int = 1800,
-    val downscaleFactor: Int = 3,
-    val missTriggerCount: Int = 6,
+    /** 旧版 DPM_ROI_TARGET_WIDTH=400 → ROI 预处理前缩放到 400px */
+    val roiTargetWidth: Int = 400,
+    /** 旧版 ATTEMPT_INTERVAL_MS=200 */
+    val attemptIntervalMs: Long = 200L,
+    /** 旧版 MISS_STREAK_TO_FOCUS=30 */
+    val missTriggerCount: Int = 30,
+    /** 旧版 MISS_STREAK_TO_GRID=8 */
+    val gridMissThreshold: Int = 8,
+    /** 旧版 GRID_COOLDOWN_MS=1500 */
+    val gridCooldownMs: Long = 1500L,
 )
 
 data class DpmAnalyzeResult(
     val status: DpmAnalyzeStatus,
     val code: String? = null,
     val isDuplicated: Boolean = false,
+    val source: DecodeSource? = null,
 )
 
 enum class DpmAnalyzeStatus {
     PROCEED, DECODED, DEDUPLICATED, NO_CODE, THROTTLED
 }
 
+/** 旧版无显式 success hold；扫码模式下同码由 DpmRespondGate 控制 */
 private const val SUCCESS_HOLD_MS = 1000L
 private const val SCAN_SUCCESS_HOLD_MS = 3000L
+/** 旧版 ATTEMPT_INTERVAL_MS=200 的 miss 端细分 */
 private const val FAIL_SHORT_DELAY_MS = 100L
 private const val FAIL_LONG_DELAY_MS = 200L

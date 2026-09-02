@@ -48,6 +48,15 @@ class DpmFrameAnalyzer(
     private val analyzerJob = SupervisorJob()
     private val analyzerScope = CoroutineScope(scope.coroutineContext + analyzerJob)
 
+    init {
+        // 将 DpmAnalyzer 的网格解码结果也发射到结果流
+        dpmAnalyzer.setResultEmitter { result ->
+            if (!isStopped) {
+                _results.emit(result)
+            }
+        }
+    }
+
     /**
      * 动态更新扫描 ROI
      */
