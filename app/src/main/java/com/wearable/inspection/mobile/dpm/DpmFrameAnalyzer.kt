@@ -35,7 +35,6 @@ import java.io.ByteArrayOutputStream
 class DpmFrameAnalyzer(
     private val dpmAnalyzer: DpmAnalyzer,
     private val scope: CoroutineScope,
-    private val scanRoi: Rect? = null,
     private val onLensRefocus: () -> Unit = {},
 ) : FrameAnalyzer {
 
@@ -45,7 +44,18 @@ class DpmFrameAnalyzer(
     @Volatile
     private var isStopped = false
 
-    private var frameCount = 0L
+    @Volatile
+    private var scanRoi: Rect? = null
+
+    /**
+     * 动态更新扫描 ROI
+     *
+     * 由 DpmScanScreen 在 frameInfo 或 scanFrame 变化时调用。
+     * 传 null 表示全图扫描。
+     */
+    fun updateScanRoi(roi: Rect?) {
+        scanRoi = roi
+    }
 
     override fun analyze(image: ImageProxy) {
         if (isStopped) return
@@ -71,7 +81,7 @@ class DpmFrameAnalyzer(
 
     override fun stop() {
         isStopped = true
-        dpmAnalyzer.resetForTest()
+        scanRoi = null
     }
 
     companion object {

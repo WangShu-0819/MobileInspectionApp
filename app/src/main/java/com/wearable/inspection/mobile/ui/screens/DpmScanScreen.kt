@@ -1,5 +1,6 @@
 package com.wearable.inspection.mobile.ui.screens
 
+import android.graphics.Rect
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -51,6 +52,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.wearable.inspection.mobile.camera.CameraController
 import com.wearable.inspection.mobile.camera.CameraMode
+import com.wearable.inspection.mobile.dpm.DpmScanRoiMapper
 import com.wearable.inspection.mobile.dpm.DpmScanViewModel
 import com.wearable.inspection.mobile.ui.theme.Primary
 import com.wearable.inspection.mobile.ui.theme.SurfaceWhite
@@ -58,13 +60,17 @@ import com.wearable.inspection.mobile.ui.theme.TextPrimary
 import com.wearable.inspection.mobile.ui.theme.TextSecondary
 import kotlinx.coroutines.launch
 
+/** 扫描框占屏幕比例 */
+private const val SCAN_FRAME_RATIO = 0.6f
+
 /**
  * DPM 扫码页面
  *
- * 生命周期（修复竞态）：
- * 1. CameraPreview 以 DPM_SCAN 模式 connect → 返回 sessionId
- * 2. onConnected 回调中启动 DpmScanViewModel 并安装 FrameAnalyzer
- * 3. onDispose 中按 sessionId 清理 Analyzer + disconnect
+ * ROI 映射流程：
+ * 1. CameraPreview 以 DPM_SCAN 模式连接，onFrameInfo 报告 contentRect + stream 信息
+ * 2. ScanOverlay 绘制中心 60% 扫描框，返回屏幕坐标 Rect
+ * 3. DpmScanRoiMapper 将屏幕 Rect 映射到旋转后 Bitmap 坐标
+ * 4. 动态 scanRoi 传给 DpmFrameAnalyzer（随布局/旋转变化更新）
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -79,8 +85,37 @@ fun DpmScanScreen(
     val lastResult by viewModel.lastResult.collectAsState()
     val coroutineScope = rememberCoroutineScope()
 
-    // 追踪已连接的会话 ID，用于退出时清理
+    // 追踪已连接的会话 ID
     var connectedSessionId by remember { mutableStateOf<String?>(null) }
+
+    // 帧信息（contentRect + stream）和扫描框屏幕坐标
+    var frameInfo by remember { mutableStateOf<FrameInfo?>(null) }
+    var scanFrameScreenRect by remember { mutableStateOf<Rect?>(null) }
+
+    // 动态计算 bitmap ROI 并更新 ViewModel
+    LaunchedEffect(frameInfo, scanFrameScreenRect) {
+        val fi = frameInfo
+        val screenRect = scanFrameScreenRect
+        if (fi != null && screenRect != null) {
+            // 计算旋转后的 bitmap 尺寸
+            val bitmapW: Int
+            val bitmapH: Int
+            if (fi.streamRotation == 90 || fi.streamRotation == 270) {
+                bitmapW = fi.streamResolution.height
+                bitmapH = fi.streamResolution.width
+            } else {
+                bitmapW = fi.streamResolution.width
+                bitmapH = fi.streamResolution.height
+            }
+            val roi = DpmScanRoiMapper.mapToBitmap(
+                screenRect = screenRect,
+                contentRect = fi.contentRect,
+                bitmapWidth = bitmapW,
+                bitmapHeight = bitmapH,
+            )
+            viewModel.updateScanRoi(roi)
+        }
+    }
 
     // 解码结果回调
     LaunchedEffect(lastResult) {
@@ -145,7 +180,7 @@ fun DpmScanScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // 相机预览：以 DPM_SCAN 模式连接，连接完成后再安装分析器
+            // 相机预览：以 DPM_SCAN 模式连接
             CameraPreview(
                 modifier = Modifier.fillMaxSize(),
                 cameraMode = CameraMode.DPM_SCAN,
@@ -153,11 +188,16 @@ fun DpmScanScreen(
                     connectedSessionId = sessionId
                     viewModel.startScan(controller = controller, sessionId = sessionId)
                 },
+                onFrameInfo = { info ->
+                    frameInfo = info
+                },
             )
 
-            // 扫描框覆盖层
+            // 扫描框覆盖层：返回屏幕坐标 Rect
             ScanOverlay(
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
+                frameRatio = SCAN_FRAME_RATIO,
+                onFrameRect = { rect -> scanFrameScreenRect = rect },
             )
 
             // 底部结果卡片
@@ -175,20 +215,34 @@ fun DpmScanScreen(
 
 /**
  * 扫描框覆盖层 — 中心虚线矩形
+ *
+ * @param frameRatio 扫描框占屏幕尺寸的比例
+ * @param onFrameRect 回调扫描框在屏幕坐标系中的 Rect（相对于 Canvas 左上角）
  */
 @Composable
-private fun ScanOverlay(modifier: Modifier = Modifier) {
+private fun ScanOverlay(
+    modifier: Modifier = Modifier,
+    frameRatio: Float = 0.6f,
+    onFrameRect: (Rect) -> Unit = {},
+) {
     val overlayColor = Color.Black.copy(alpha = 0.4f)
     val frameColor = Primary
-    val frameSize = 0.6f
 
     Canvas(modifier = modifier) {
         val w = size.width
         val h = size.height
-        val frameW = w * frameSize
-        val frameH = h * frameSize
+        val frameW = w * frameRatio
+        val frameH = h * frameRatio
         val left = (w - frameW) / 2
         val top = (h - frameH) / 2
+
+        // 回调屏幕坐标 Rect（px）
+        onFrameRect(Rect(
+            left.toInt(),
+            top.toInt(),
+            (left + frameW).toInt(),
+            (top + frameH).toInt(),
+        ))
 
         // 半透明遮罩
         drawRect(overlayColor, Offset.Zero, Size(w, top))

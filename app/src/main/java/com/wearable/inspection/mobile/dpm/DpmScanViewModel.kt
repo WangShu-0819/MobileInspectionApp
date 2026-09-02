@@ -51,7 +51,6 @@ class DpmScanViewModel(application: Application) : AndroidViewModel(application)
     fun startScan(
         controller: CameraController,
         sessionId: String,
-        scanRoi: Rect? = null,
     ) {
         val scope = viewModelScope
 
@@ -74,7 +73,6 @@ class DpmScanViewModel(application: Application) : AndroidViewModel(application)
         val frameAnalyzer = DpmFrameAnalyzer(
             dpmAnalyzer = analyzer,
             scope = scope,
-            scanRoi = scanRoi,
         )
         dpmFrameAnalyzer = frameAnalyzer
 
@@ -94,6 +92,16 @@ class DpmScanViewModel(application: Application) : AndroidViewModel(application)
         }
 
         _scanState.value = DpmScanState(scanning = true)
+    }
+
+    /**
+     * 动态更新扫描 ROI
+     *
+     * 由 DpmScanScreen 在 frameInfo 或 scanFrame 变化时调用。
+     * 传 null 表示全图扫描（框与图像无交集时停止分析）。
+     */
+    fun updateScanRoi(scanRoi: Rect?) {
+        dpmFrameAnalyzer?.updateScanRoi(scanRoi)
     }
 
     /**

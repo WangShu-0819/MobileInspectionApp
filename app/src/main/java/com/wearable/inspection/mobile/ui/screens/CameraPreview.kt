@@ -47,6 +47,17 @@ import com.wearable.inspection.mobile.camera.CameraStateType
 import kotlinx.coroutines.launch
 
 /**
+ * 相机帧信息 — 用于 ROI 映射
+ */
+data class FrameInfo(
+    val contentRect: android.graphics.Rect,
+    val streamResolution: android.util.Size,
+    val streamRotation: Int,
+    val previewWidth: Int,
+    val previewHeight: Int,
+)
+
+/**
  * 相机预览（可复用组件）
  *
  * 核心行为：
@@ -67,6 +78,7 @@ fun CameraPreview(
     onPermissionPermanentlyDenied: () -> Unit = {},
     onSessionReady: (sessionId: String?) -> Unit = {},
     onConnected: ((CameraController, String) -> Unit)? = null,
+    onFrameInfo: ((FrameInfo) -> Unit)? = null,
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -186,7 +198,17 @@ fun CameraPreview(
                             val viewH = previewView.height
                             if (viewW > 0 && viewH > 0 && rotatedW > 0 && rotatedH > 0) {
                                 val bounds = calculateContentRectBounds(viewW, viewH, rotatedW, rotatedH)
-                                contentRect = android.graphics.Rect(bounds.left, bounds.top, bounds.right, bounds.bottom)
+                                val rect = android.graphics.Rect(bounds.left, bounds.top, bounds.right, bounds.bottom)
+                                contentRect = rect
+
+                                // 通知帧信息（用于 ROI 映射）
+                                onFrameInfo?.invoke(FrameInfo(
+                                    contentRect = rect,
+                                    streamResolution = streamRes,
+                                    streamRotation = streamRot,
+                                    previewWidth = viewW,
+                                    previewHeight = viewH,
+                                ))
 
                                 if (BuildConfig.DEBUG) {
                                     android.util.Log.d("CameraPreview", "=== 画幅诊断 ===")
