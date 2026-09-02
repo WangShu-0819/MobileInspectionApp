@@ -84,7 +84,7 @@ Task 4 已完成全部验收项：会话安全快门、capture request token 机
 
 ### B2：DPM 迁移
 
-- [ ] **当前 Task 1：旧 DPM 识别链迁移与实时扫码闭环**
+- [x] **Task 1：旧 DPM 识别链迁移与实时扫码闭环** — **SOFTWARE_COMPLETE / PHYSICAL_ACCEPTANCE_PENDING**（2026-09-02）。APK SHA-256 `6e2ca7d3f573c1da1af7f9180c23a0dbe8f2f9081eafff5ccf466dcb09c051cc`。JVM 208 项（203 passed / 0 failed / 5 skipped），Instrumented 30/30 passed，冷启动 10/10 passed。4 项物理验收标记为 `PENDING_PHYSICAL_DPM_SAMPLE`。
 - [ ] Task 2：未知码绑定、已绑定码切件和冲突处理
 - [ ] Task 3：同样本对照回归、性能诊断与参数优化
 
@@ -111,11 +111,18 @@ B2 Task 1 连续执行检查点：
 
 - [ ] 拍照、预处理、离线 OCR、确认和留档
 
-### B4-B6：模板与 ROI
+### V1 可交付闭环（当前优先目标）
 
-- [ ] 模板拍摄/相册导入/模板包
-- [ ] 真实轮廓提取
-- [ ] ROI 编辑和配置
+**Contour-based live alignment**: DEFERRED / EXPERIMENTAL。轮廓提取成熟度不足，继续优化会阻塞可交付版本。V1 改为模板原始图片透明叠加 CameraX 实时画面。
+
+V1 数据流闭环：
+
+1. [ ] **导入旧模板包**：TemplatePackageImporter 解析 template_exports ZIP → PartEntity / InspectionTemplateEntity / RoiDefinitionEntity / 模板图片文件
+2. [ ] **模板透明叠加**：CameraX live preview + selected inspection template image overlay，保持正确宽高比，opacity slider (0f..1f)，写入 SettingsStore
+3. [ ] **InspectionCompareScreen**：拍照后显示模板 vs 实拍，切换/叠加/opacity/zoom/pan/ROI overlay
+4. [ ] **ROI 人工微调**：拖动矩形 + resize handles，区分模板 ROI vs session ROI
+5. [ ] **ROI → Detector → Result**：crop ROI bitmap → AlgorithmRegistry → detector → per-ROI result → persist
+6. [ ] **结果查看**：Overall PASS/FAIL，per-ROI name/algorithm/PASS/FAIL/score/error
 
 ## Risks
 

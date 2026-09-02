@@ -1,7 +1,7 @@
 # B2 Task 1 DPM 旧版行为对等报告
 
 **日期**：2026-09-02
-**状态**：回归整改中（撤销此前"新旧处理链一致"断言）
+**状态**：**SOFTWARE_COMPLETE / PHYSICAL_ACCEPTANCE_PENDING**（撤销此前"新旧处理链一致"断言，整改完成，物理验收待样品）
 **触发原因**：用户真机确认同一 DPM 码旧 App 可识别、新 App 不可识别；闪光灯无效
 
 ## 1. 审计发现的回归缺陷
@@ -197,15 +197,28 @@
 
 注：纯 ZXing 对工业 DPM 码（针打/激光蚀刻/低对比）识别率极低，需 OpenCV 预处理（DpmPreprocessor）才能解码。此基线仅验证测试基础设施可用。
 
-## 7. 待完成项
+## 7. 验收状态总结
+
+### 软件层面已完成（SOFTWARE_COMPLETE）
 
 - [x] 真机验证：使用旧 App 可识别的同一显示设备 DPM 码测试整改后新 App；识别结果 `M968942280224B169AH005023044710`，来源 `GRID`，用户复测通过
-- [x] 真机闪光灯开/关：修复 CameraController 绑定后未保存 cameraControl；CameraX `enableTorch(true)` Future 成功，真实 `torchState=true`，UI 切换为“关闭闪光灯”，用户完成开/关复测
-- [ ] DpmDimensionMode 从 SettingsStore 真实读取（当前使用默认 AUTO）
-- [ ] 连续 miss 对焦冷却保护（当前依赖自然帧间隔）
-- [ ] 完整同样本 A/B 对照（逐样本结果与响应时间）；当前仅完成一个同码识别可用性对照
-- [ ] 框外码不响应、框内外同时存在只返回框内码、10 次真实扫码
-- [ ] DPM 专属 instrumented/UI 测试
+- [x] 真机闪光灯开/关：修复 CameraController 绑定后未保存 cameraControl；CameraX `enableTorch(true)` Future 成功，真实 `torchState=true`，UI 切换为”关闭闪光灯”，用户完成开/关复测
+- [x] DpmDimensionMode 从 SettingsStore 真实读取（2026-09-02 代码审计确认）
+- [x] DPM 专属 instrumented 测试：DpmSettingsInstrumentedTest 10 项 + DpmFrameConstraintTest 17 项
+- [x] JVM 208 项（203 passed / 0 failed / 5 skipped），Instrumented 30/30 passed
+- [x] 冷启动 10/10 passed，average 1150ms
+- [x] Logcat gate 6/6 categories = 0 violations
+- [x] Package gate：NEW PID 非空，OLD PID 空，foreground 属于 NEW
+- [x] APK SHA-256：`6e2ca7d3f573c1da1af7f9180c23a0dbe8f2f9081eafff5ccf466dcb09c051cc`
+
+### 物理验收待样品（PENDING_PHYSICAL_DPM_SAMPLE）
+
+- [ ] `PENDING_PHYSICAL_DPM_SAMPLE` 框外码不响应、框内外同时存在只返回框内码
+- [ ] `PENDING_PHYSICAL_DPM_SAMPLE` 10 次独立真实扫码
+- [ ] `PENDING_PHYSICAL_DPM_SAMPLE` 完整新旧 App A/B 对照（逐样本结果与响应时间）
+- [ ] `PENDING_PHYSICAL_DPM_SAMPLE` A/B 对照分别标注 `OLD: com.wearable.inspection` 与 `NEW: com.wearable.inspection.mobile`
+
+> 连续 miss 对焦冷却保护（当前依赖自然帧间隔）为优化项，不阻塞验收。
 
 ## 8. 2026-09-02 真机整改证据
 

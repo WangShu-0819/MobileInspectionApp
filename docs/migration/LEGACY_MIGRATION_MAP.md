@@ -2,9 +2,7 @@
 
 **目标**：将 Wearable Inspection 旧工程中的功能迁移到 MobileInspectionApp（新工程）
 **创建时间**：2026-08-31
-**状态**：B1 已完成；B2 Task 1 SOFTWARE_COMPLETE / PHYSICAL_ACCEPTANCE_PENDING；V1 功能开发中
-
-> **Contour-based live alignment**: DEFERRED / EXPERIMENTAL。轮廓提取成熟度不足，继续优化会阻塞可交付版本。V1 改为模板原始图片透明叠加 CameraX 实时画面。`tools/contour_extraction/` 工具和数据保留，但不进入 V1 实时现场采集功能。
+**状态**：B1 已完成；B2 Task 1 迁移审计进行中
 
 > 当前状态与执行边界以根目录 `AGENTS.md`、`tasks/todo.md` 和 `tasks/plan.md` 为准。本文件中标为“历史目标”的 B0/B1 内容只保留审计背景，不得据此重新创建 `SharedCameraSession`、`PhoneCameraController` 或第二套 CameraX。
 

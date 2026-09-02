@@ -125,7 +125,7 @@ B1 已完成并关闭。
 
 ## B2 Task 1：旧 DPM 识别链迁移与实时扫码闭环
 
-**状态**：尺寸设置接线、旧参数恢复、框内约束自动化、DPM instrumented 测试、10 次稳定性验证均已完成（2026-09-02）。仅剩物理 DPM 样品的 A/B 对照和10 次真实扫码。不得进入 B2 Task 2。
+**状态**：**SOFTWARE_COMPLETE / PHYSICAL_ACCEPTANCE_PENDING**（2026-09-02）。软件层面全部完成：尺寸设置接线、旧参数恢复、框内约束自动化、DPM instrumented 测试、10 次稳定性验证、APK SHA-256 `6e2ca7d3f573c1da1af7f9180c23a0dbe8f2f9081eafff5ccf466dcb09c051cc`。仅剩物理 DPM 样品相关验收项（标记为 `PENDING_PHYSICAL_DPM_SAMPLE`）。软件开发不再为此阻塞，可进入后续功能开发。
 ~~1. 新版缺少旧版全图 ZXing 兜底阶段~~ ✅ 已修复（Stage2 全图降采样1280）
 ~~2. 新版缺少旧版 ML Kit 全图兜底阶段~~ ✅ 已修复（Stage3 ML Kit 全图兜底）
 ~~3. 中心 ROI 使用固定1200×1200像素~~ ✅ 已修复（centerCropRatio=0.5f）
@@ -134,7 +134,7 @@ B1 已完成并关闭。
 ~~6. gridGate.onMiss() 从未被调用~~ ✅ 已修复（handleMiss() 调用）
 ~~7. CameraController.setTorch()~~ ✅ 已修复（2026-09-02 用户复测通过）
 
-整改完成前不得进入 B2 Task 2。
+整改完成前不得进入 B2 Task 2。物理验收项不再阻塞后续 V1 功能开发。
 
 - [x] 整改现场采集”扫一扫”仍为 TODO，接通真实 DPM 路由并补导航测试
 - [x] CameraPreview 支持显式目标 CameraMode；DPM 页面连接即为 DPM_SCAN，不得被组件重新连接成 INSPECTION
@@ -173,10 +173,93 @@ B1 已完成并关闭。
 - [x] 页面退出后释放扫码分析资源，返回现场采集后相机正常恢复（2026-09-02 真机验证）
 - [x] UI 不存在 DPM 相册选择、码图导入或相关权限/路由
 - [x] 迁移旧 DPM 专项测试，并覆盖解码链、预处理、网格门控、节流、并发、重复抑制、停止和资源释放
-- [ ] 使用同一批现场/打印样本对旧 App 与新 App 做 A/B 对照，记录逐样本结果和响应时间（需要物理 DPM 样品）
-- [ ] A/B 对照分别标注 `OLD: com.wearable.inspection` 与 `NEW: com.wearable.inspection.mobile`，每轮启动前停止另一包（需要物理 DPM 样品）
-- [x] 真机完成 10 次页面往返（2026-09-02 验证通过）；10 次扫码需要物理 DPM 样品
+- [ ] `PENDING_PHYSICAL_DPM_SAMPLE` 使用同一批现场/打印样本对旧 App 与新 App 做 A/B 对照，记录逐样本结果和响应时间（需要物理 DPM 样品）
+- [ ] `PENDING_PHYSICAL_DPM_SAMPLE` A/B 对照分别标注 `OLD: com.wearable.inspection` 与 `NEW: com.wearable.inspection.mobile`，每轮启动前停止另一包（需要物理 DPM 样品）
+- [x] 真机完成 10 次页面往返（2026-09-02 验证通过）；`PENDING_PHYSICAL_DPM_SAMPLE` 10 次扫码需要物理 DPM 样品
 - [x] 10 次冷启动稳定性验证（2026-09-02：10/10 通过，logcat 6 项门禁 0 违规）
 - [x] 更新 `docs/reports/b2/B2_TASK1_DPM_LEGACY_PARITY_REPORT.md` 和证据目录（本次提交）
 
-本 Task 不实现未知码绑定、已绑定码切件、冲突处理、OCR、模板、轮廓、ROI 或检测算法。允许的改动仅是解除旧 CameraX/Leion/USB/页面耦合并接入新工程；不得借重构删减旧识别策略。完成后暂停等待验收，不得自动进入 B2 Task 2。
+本 Task 不实现未知码绑定、已绑定码切件、冲突处理、OCR、模板、轮廓、ROI 或检测算法。允许的改动仅是解除旧 CameraX/Leion/USB/页面耦合并接入新工程；不得借重构删减旧识别策略。物理验收项不再阻塞后续 V1 功能开发。
+
+---
+
+## V1 可交付闭环
+
+**Contour-based live alignment**: DEFERRED / EXPERIMENTAL。`tools/contour_extraction/` 工具和数据保留但不进入 V1。V1 改为模板原始图片透明叠加。
+
+### V1-1：导入旧模板包
+
+状态：待开始
+
+- [ ] 检查旧 `template_exports` ZIP 数据结构
+- [ ] 迁移/适配 `TemplatePackageImporter`（复用旧 ZIP 解析逻辑）
+- [ ] 适配 `PartEntity` / `InspectionTemplateEntity` / `RoiDefinitionEntity`
+- [ ] 适配 `InspectionRepository` / `MobileImageStore` 模板存储目录
+- [ ] 成功解析两个 template_exports ZIP
+- [ ] 导入后零件、模板记录、模板图片文件存在且可解码
+- [ ] 图片尺寸正确
+- [ ] 重复导入不产生脏数据
+- [ ] 损坏 ZIP 不 crash
+- [ ] Zip Slip/path traversal 拒绝
+- [ ] JVM 测试通过
+- [ ] 提交
+
+### V1-2：模板透明叠加
+
+状态：待开始
+
+- [ ] CameraX live preview + selected template image overlay
+- [ ] 模板图片保持正确宽高比（不拉伸填满 Preview）
+- [ ] 沿用 PreviewView FIT_CENTER / contentRect
+- [ ] Template opacity slider (0f..1f)，初始 0.35f
+- [ ] Opacity 写入 SettingsStore 持久化
+- [ ] 滑杆只改变模板 alpha，不触发 CameraX rebind
+- [ ] 快速显示/隐藏模板能力
+- [ ] 提交
+
+### V1-3：InspectionCompareScreen
+
+状态：待开始
+
+- [ ] 输入 templateId + captureImagePath
+- [ ] 显示模板图片 + 本次拍摄图片
+- [ ] Template / Capture 切换
+- [ ] 两图透明叠加
+- [ ] Opacity slider
+- [ ] Zoom + pan
+- [ ] ROI rectangle overlay
+- [ ] 模板与实拍统一坐标映射，不拉伸
+- [ ] 提交
+
+### V1-4：ROI 人工微调
+
+状态：待开始
+
+- [ ] InspectionCompareScreen 增加 ROI 编辑
+- [ ] 拖动矩形 + resize handles（x/y/width/height）
+- [ ] 区分模板定义 ROI vs 当前 inspection session ROI
+- [ ] 保存 ROI
+- [ ] 沿用当前坐标规范
+- [ ] 提交
+
+### V1-5：ROI → Detector → Result
+
+状态：待开始
+
+- [ ] load InspectionTemplate + RoiDefinitionEntity list
+- [ ] map ROI to captured image coordinates
+- [ ] crop ROI bitmap
+- [ ] AlgorithmRegistry → corresponding detector
+- [ ] per-ROI result → RoiInspectionRecordEntity
+- [ ] InspectionSessionEntity final result
+- [ ] 至少一个 detector 完整跑通
+- [ ] 提交
+
+### V1-6：结果查看
+
+状态：待开始
+
+- [ ] Overall: PASS / FAIL
+- [ ] Per-ROI: name / algorithm / PASS / FAIL / score / error
+- [ ] 检测失败 vs 系统错误区分
+- [ ] 提交
