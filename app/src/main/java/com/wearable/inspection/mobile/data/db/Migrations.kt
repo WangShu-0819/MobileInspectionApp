@@ -41,7 +41,10 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
  */
 val MIGRATION_2_3 = object : Migration(2, 3) {
     override fun migrate(db: SupportSQLiteDatabase) {
-        // TODO: 版本升级时实现
+        db.execSQL(
+            "ALTER TABLE roi_inspection_records " +
+                "ADD COLUMN debugImagePath TEXT"
+        )
     }
 }
 

@@ -38,4 +38,17 @@ interface TemplateDao {
 
     @Query("SELECT COUNT(*) FROM inspection_templates")
     suspend fun count(): Int
+
+    @Query("UPDATE inspection_templates SET displayOrder = :displayOrder WHERE id = :id")
+    suspend fun updateDisplayOrder(id: String, displayOrder: Int)
+
+    /**
+     * 批量更新 displayOrder
+     *
+     * 在事务内逐条更新。调用方需确保 orders 中的 id 存在且 order 值不重复。
+     */
+    @androidx.room.Transaction
+    suspend fun reorderTemplates(orders: List<Pair<String, Int>>) {
+        orders.forEach { (id, order) -> updateDisplayOrder(id, order) }
+    }
 }

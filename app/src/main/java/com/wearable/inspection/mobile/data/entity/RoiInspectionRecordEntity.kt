@@ -40,5 +40,6 @@ data class RoiInspectionRecordEntity(
     val durationMs: Long,
     val roiCropPath: String? = null,
     val preprocessedPath: String? = null,
+    val debugImagePath: String? = null,
     val errorMessage: String? = null
 )
