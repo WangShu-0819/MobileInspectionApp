@@ -45,11 +45,13 @@ object DirectoryTemplateImporter {
         val imagesDir = File(directory, "images")
         val extracted = mutableMapOf<String, File>() // basename → file
         if (imagesDir.isDirectory) {
-            imagesDir.listFiles()?.forEach { file ->
+            imagesDir.listFiles()
+                ?.sortedWith(compareBy<File> { it.name }.thenBy { it.absolutePath })
+                ?.forEach { file ->
                 if (file.isFile) {
                     extracted[file.name] = file
                 }
-            }
+                }
         }
 
         // 3. 解析 manifest（复用 TemplatePackageImporter 的解析逻辑）
@@ -83,7 +85,7 @@ object DirectoryTemplateImporter {
             else -> obj.optString("dpmCode").trim().ifEmpty { null }
         }
 
-        val regions = mutableListOf<TemplateRegionData>()
+        val regions = mutableListOf<IndexedRegion>()
         obj.optJSONArray("regions")?.let { arr ->
             for (i in 0 until arr.length()) {
                 val region = arr.optJSONObject(i) ?: continue
@@ -108,10 +110,33 @@ object DirectoryTemplateImporter {
                         imageFiles += file
                     }
                 }
-                regions += TemplateRegionData(regionName, imageFiles)
+                regions += IndexedRegion(
+                    originalIndex = i,
+                    displayOrder = regionOrder(region, i),
+                    region = TemplateRegionData(regionName, imageFiles)
+                )
             }
         }
-        return TemplatePackage(partId, partName, dpmCode, regions, warnings)
+        val orderedRegions = regions
+            .sortedWith(compareBy<IndexedRegion> { it.displayOrder }.thenBy { it.originalIndex })
+            .mapIndexed { index, item -> item.region.copy(displayOrder = index) }
+        return TemplatePackage(partId, partName, dpmCode, orderedRegions, warnings)
+    }
+
+    private data class IndexedRegion(
+        val originalIndex: Int,
+        val displayOrder: Int,
+        val region: TemplateRegionData,
+    )
+
+    /** 显式 manifest order 优先；没有合法 order 时使用 manifest 数组 index。 */
+    private fun regionOrder(region: JSONObject, manifestIndex: Int): Int {
+        val raw = region.opt("order")
+        return when (raw) {
+            is Number -> raw.toInt().takeIf { it >= 0 } ?: manifestIndex
+            is String -> raw.toIntOrNull()?.takeIf { it >= 0 } ?: manifestIndex
+            else -> manifestIndex
+        }
     }
 
     private fun validateRoi(region: JSONObject, regionName: String, warnings: MutableList<String>) {

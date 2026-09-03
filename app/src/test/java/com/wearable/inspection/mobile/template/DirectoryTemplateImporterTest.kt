@@ -21,11 +21,16 @@ class DirectoryTemplateImporterTest {
 
     // ---------- helpers ----------
 
-    private fun region(name: String, imageFiles: List<String>, roi: JSONObject? = null): JSONObject =
+    private fun region(
+        name: String,
+        imageFiles: List<String>,
+        roi: JSONObject? = null,
+        order: Int? = 1,
+    ): JSONObject =
         JSONObject().apply {
             put("regionId", "region_x")
             put("regionName", name)
-            put("order", 1)
+            order?.let { put("order", it) }
             put("imageFiles", JSONArray(imageFiles))
             roi?.let { put("roi", it) }
         }
@@ -99,6 +104,64 @@ class DirectoryTemplateImporterTest {
         assertEquals("正前方", pkg.regions[0].regionName)
         assertEquals(2, pkg.regions[0].imageFiles.size)
         assertTrue(pkg.warnings.isEmpty())
+    }
+
+    @Test
+    fun `显式 order - 按 manifest order 排列`() {
+        val dir = buildDirectory(
+            manifest = buildManifest(
+                regions = JSONArray().apply {
+                    put(region("视角三", listOf("images/3.jpg"), order = 30))
+                    put(region("视角一", listOf("images/1.jpg"), order = 10))
+                    put(region("视角二", listOf("images/2.jpg"), order = 20))
+                },
+            ),
+            images = mapOf(
+                "3.jpg" to byteArrayOf(3),
+                "1.jpg" to byteArrayOf(1),
+                "2.jpg" to byteArrayOf(2),
+            ),
+        )
+
+        val pkg = DirectoryTemplateImporter.parse(dir)
+
+        assertEquals(listOf("视角一", "视角二", "视角三"), pkg.regions.map { it.regionName })
+        assertEquals(listOf(0, 1, 2), pkg.regions.map { it.displayOrder })
+    }
+
+    @Test
+    fun `缺少 order - 使用 manifest index 作为稳定 fallback`() {
+        val dir = buildDirectory(
+            manifest = buildManifest(
+                regions = JSONArray().apply {
+                    put(region("第一", listOf("images/1.jpg"), order = null))
+                    put(region("第二", listOf("images/2.jpg"), order = null))
+                },
+            ),
+            images = mapOf("1.jpg" to byteArrayOf(1), "2.jpg" to byteArrayOf(2)),
+        )
+
+        val pkg = DirectoryTemplateImporter.parse(dir)
+
+        assertEquals(listOf("第一", "第二"), pkg.regions.map { it.regionName })
+        assertEquals(listOf(0, 1), pkg.regions.map { it.displayOrder })
+    }
+
+    @Test
+    fun `重复 order - 按 manifest 原始 index 确定性排列`() {
+        val dir = buildDirectory(
+            manifest = buildManifest(
+                regions = JSONArray().apply {
+                    put(region("后写入", listOf("images/b.jpg"), order = 5))
+                    put(region("先写入", listOf("images/a.jpg"), order = 5))
+                },
+            ),
+            images = mapOf("b.jpg" to byteArrayOf(2), "a.jpg" to byteArrayOf(1)),
+        )
+
+        val pkg = DirectoryTemplateImporter.parse(dir)
+
+        assertEquals(listOf("后写入", "先写入"), pkg.regions.map { it.regionName })
     }
 
     @Test

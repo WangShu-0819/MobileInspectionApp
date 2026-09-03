@@ -37,10 +37,14 @@ class TemplatePackageImporterTest {
         return zip
     }
 
-    private fun region(name: String, imageFiles: List<String>): JSONObject = JSONObject().apply {
+    private fun region(
+        name: String,
+        imageFiles: List<String>,
+        order: Int? = 1,
+    ): JSONObject = JSONObject().apply {
         put("regionId", "region_x")
         put("regionName", name)
-        put("order", 1)
+        order?.let { put("order", it) }
         put("imageFiles", JSONArray(imageFiles))
     }
 
@@ -98,6 +102,70 @@ class TemplatePackageImporterTest {
         assertArrayEquals("图片内容逐字节一致", img.copyOf(512), pkg.regions[0].imageFiles[1].readBytes())
         assertEquals("左侧 45°", pkg.regions[1].regionName)
         assertTrue("无警告", pkg.warnings.isEmpty())
+    }
+
+    @Test
+    fun `显式 order - 按 manifest order 排列`() {
+        val zip = buildZip(
+            mapOf(
+                "template.json" to buildManifest(
+                    regions = JSONArray().apply {
+                        put(region("视角三", listOf("images/3.jpg"), order = 30))
+                        put(region("视角一", listOf("images/1.jpg"), order = 10))
+                        put(region("视角二", listOf("images/2.jpg"), order = 20))
+                    },
+                ).toByteArray(),
+                "images/1.jpg" to byteArrayOf(1),
+                "images/2.jpg" to byteArrayOf(2),
+                "images/3.jpg" to byteArrayOf(3),
+            ),
+        )
+
+        val pkg = TemplatePackageImporter.parse(zip, tmp.newFolder("work"))
+
+        assertEquals(listOf("视角一", "视角二", "视角三"), pkg.regions.map { it.regionName })
+        assertEquals(listOf(0, 1, 2), pkg.regions.map { it.displayOrder })
+    }
+
+    @Test
+    fun `缺少 order - 使用 manifest index 作为稳定 fallback`() {
+        val zip = buildZip(
+            mapOf(
+                "template.json" to buildManifest(
+                    regions = JSONArray().apply {
+                        put(region("第一", listOf("images/1.jpg"), order = null))
+                        put(region("第二", listOf("images/2.jpg"), order = null))
+                    },
+                ).toByteArray(),
+                "images/1.jpg" to byteArrayOf(1),
+                "images/2.jpg" to byteArrayOf(2),
+            ),
+        )
+
+        val pkg = TemplatePackageImporter.parse(zip, tmp.newFolder("work"))
+
+        assertEquals(listOf("第一", "第二"), pkg.regions.map { it.regionName })
+        assertEquals(listOf(0, 1), pkg.regions.map { it.displayOrder })
+    }
+
+    @Test
+    fun `重复 order - 按 manifest 原始 index 确定性排列`() {
+        val zip = buildZip(
+            mapOf(
+                "template.json" to buildManifest(
+                    regions = JSONArray().apply {
+                        put(region("后写入", listOf("images/b.jpg"), order = 5))
+                        put(region("先写入", listOf("images/a.jpg"), order = 5))
+                    },
+                ).toByteArray(),
+                "images/a.jpg" to byteArrayOf(1),
+                "images/b.jpg" to byteArrayOf(2),
+            ),
+        )
+
+        val pkg = TemplatePackageImporter.parse(zip, tmp.newFolder("work"))
+
+        assertEquals(listOf("后写入", "先写入"), pkg.regions.map { it.regionName })
     }
 
     @Test

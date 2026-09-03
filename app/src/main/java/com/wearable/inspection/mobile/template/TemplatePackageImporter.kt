@@ -12,6 +12,8 @@ data class TemplateRegionData(
     val regionName: String,
     /** 已解压到 workDir 的实际文件，保持 template.json 中 imageFiles 的顺序 */
     val imageFiles: List<File>,
+    /** 解析后用于持久化的视角顺序；从 0 开始。 */
+    val displayOrder: Int = 0,
 )
 
 /** 离线模板包解析结果（结构与目录无关，落库由 Repository 编排） */
@@ -196,7 +198,7 @@ object TemplatePackageImporter {
             else -> obj.optString("dpmCode").trim().ifEmpty { null }
         }
 
-        val regions = mutableListOf<TemplateRegionData>()
+        val regions = mutableListOf<IndexedRegion>()
         obj.optJSONArray("regions")?.let { arr ->
             for (i in 0 until arr.length()) {
                 val region = arr.optJSONObject(i) ?: continue
@@ -221,10 +223,33 @@ object TemplatePackageImporter {
                         imageFiles += file
                     }
                 }
-                regions += TemplateRegionData(regionName, imageFiles)
+                regions += IndexedRegion(
+                    originalIndex = i,
+                    displayOrder = regionOrder(region, i),
+                    region = TemplateRegionData(regionName, imageFiles)
+                )
             }
         }
-        return TemplatePackage(partId, partName, dpmCode, regions, warnings)
+        val orderedRegions = regions
+            .sortedWith(compareBy<IndexedRegion> { it.displayOrder }.thenBy { it.originalIndex })
+            .mapIndexed { index, item -> item.region.copy(displayOrder = index) }
+        return TemplatePackage(partId, partName, dpmCode, orderedRegions, warnings)
+    }
+
+    private data class IndexedRegion(
+        val originalIndex: Int,
+        val displayOrder: Int,
+        val region: TemplateRegionData,
+    )
+
+    /** 显式 manifest order 优先；没有合法 order 时使用 manifest 数组 index。 */
+    private fun regionOrder(region: JSONObject, manifestIndex: Int): Int {
+        val raw = region.opt("order")
+        return when (raw) {
+            is Number -> raw.toInt().takeIf { it >= 0 } ?: manifestIndex
+            is String -> raw.toIntOrNull()?.takeIf { it >= 0 } ?: manifestIndex
+            else -> manifestIndex
+        }
     }
 
     /** roi 仅解析校验（TemplateImage 无 roi 列，匹配链路暂不消费），非法仅警告不失败 */
