@@ -23,6 +23,10 @@ sealed class Screen(val route: String) {
     object AppSettings : Screen("app_settings")                    // 应用设置
     object PartManagement : Screen("part_management")              // 零件管理
     object DpmScan : Screen("dpm_scan")                            // DPM 扫码
+    object DpmBind : Screen("dpm_bind/{partId}") {
+        const val ARG_PART_ID = "partId"
+        fun createRoute(partId: String) = "dpm_bind/${android.net.Uri.encode(partId)}"
+    }
     object StampOcr : Screen("stamp_ocr")                          // 钢印 OCR
     object TemplatePackages : Screen("template_packages")          // 模板包
     object ResultManagement : Screen("result_management")          // 检测结果管理

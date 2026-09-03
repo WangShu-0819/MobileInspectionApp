@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.sp
 import com.wearable.inspection.mobile.BuildConfig
 import com.wearable.inspection.mobile.MobileInspectionApp
 import com.wearable.inspection.mobile.dpm.DpmDimensionMode
+import com.wearable.inspection.mobile.data.settings.PreviewDisplayMode
 import com.wearable.inspection.mobile.ui.theme.LocalCustomColors
 import com.wearable.inspection.mobile.ui.theme.Primary
 import com.wearable.inspection.mobile.ui.theme.SurfaceWhite
@@ -71,6 +72,8 @@ fun AppSettingsScreen(
 
     var dpmMode by remember { mutableStateOf(settings.dpmDimensionMode) }
     var dpmMenuExpanded by remember { mutableStateOf(false) }
+    var previewMode by remember { mutableStateOf(settings.previewDisplayMode) }
+    var previewMenuExpanded by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -113,7 +116,7 @@ fun AppSettingsScreen(
                 SettingsSection(
                     title = "DPM 扫码",
                     items = listOf(
-                        SettingItem.InfoItem(
+                        SettingItem.ActionItem(
                             icon = Icons.Default.QrCode,
                             title = "网格重建尺寸",
                             subtitle = dpmMode.label,
@@ -150,19 +153,53 @@ fun AppSettingsScreen(
                 }
             }
 
-            // 2. 相机信息（只读）
+            // 2. 相机预览显示
             item {
                 SettingsSection(
                     title = "相机",
                     items = listOf(
-                        SettingItem.InfoItem(
+                        SettingItem.ActionItem(
                             icon = Icons.Default.CameraAlt,
-                            title = "预览分辨率",
-                            subtitle = "由设备自动协商",
-                            onClick = { /* 只读 */ }
+                            title = "预览显示比例",
+                            subtitle = previewMode.label,
+                            onClick = { previewMenuExpanded = true }
                         )
                     )
                 )
+            }
+
+            // 实时预览显示比例下拉菜单
+            item {
+                Box {
+                    DropdownMenu(
+                        expanded = previewMenuExpanded,
+                        onDismissRequest = { previewMenuExpanded = false }
+                    ) {
+                        PreviewDisplayMode.entries.forEach { mode ->
+                            DropdownMenuItem(
+                                text = {
+                                    Column {
+                                        Text(
+                                            text = mode.label,
+                                            fontWeight = if (mode == previewMode) FontWeight.Bold else FontWeight.Normal,
+                                            color = if (mode == previewMode) Primary else TextPrimary
+                                        )
+                                        Text(
+                                            text = mode.description,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = TextSecondary
+                                        )
+                                    }
+                                },
+                                onClick = {
+                                    previewMode = mode
+                                    settings.previewDisplayMode = mode
+                                    previewMenuExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
             }
 
             // 3. 版本与诊断
@@ -173,14 +210,12 @@ fun AppSettingsScreen(
                         SettingItem.InfoItem(
                             icon = Icons.Default.Info,
                             title = "应用版本",
-                            subtitle = "v${BuildConfig.VERSION_NAME} (${BuildConfig.BUILD_TYPE})",
-                            onClick = { /* 只读 */ }
+                            subtitle = "v${BuildConfig.VERSION_NAME} (${BuildConfig.BUILD_TYPE})"
                         ),
                         SettingItem.InfoItem(
                             icon = Icons.Default.Info,
                             title = "包名",
-                            subtitle = context.packageName,
-                            onClick = { /* 只读 */ }
+                            subtitle = context.packageName
                         )
                     )
                 )
@@ -219,7 +254,19 @@ private fun SettingsSection(
                 items.forEachIndexed { index, item ->
                     when (item) {
                         is SettingItem.InfoItem -> {
-                            InfoSettingRow(item = item)
+                            InfoSettingRow(
+                                icon = item.icon,
+                                title = item.title,
+                                subtitle = item.subtitle
+                            )
+                        }
+                        is SettingItem.ActionItem -> {
+                            InfoSettingRow(
+                                icon = item.icon,
+                                title = item.title,
+                                subtitle = item.subtitle,
+                                onClick = item.onClick
+                            )
                         }
                     }
                     if (index < items.lastIndex) {
@@ -236,22 +283,41 @@ private fun SettingsSection(
 }
 
 private sealed class SettingItem {
-    data class InfoItem(
+    data class ActionItem(
         val icon: ImageVector,
         val title: String,
         val subtitle: String,
         val onClick: () -> Unit
     ) : SettingItem()
+
+    data class InfoItem(
+        val icon: ImageVector,
+        val title: String,
+        val subtitle: String
+    ) : SettingItem()
 }
 
 @Composable
-private fun InfoSettingRow(item: SettingItem.InfoItem) {
+private fun InfoSettingRow(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    onClick: (() -> Unit)? = null
+) {
+    val action = onClick
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 12.dp)
-            .clip(RoundedCornerShape(4.dp))
-            .clickable { item.onClick() }
+            .then(
+                if (action != null) {
+                    Modifier
+                        .clip(RoundedCornerShape(4.dp))
+                        .clickable { action() }
+                } else {
+                    Modifier
+                }
+            )
             .padding(vertical = 4.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
@@ -262,7 +328,7 @@ private fun InfoSettingRow(item: SettingItem.InfoItem) {
             modifier = Modifier.weight(1f)
         ) {
             Icon(
-                imageVector = item.icon,
+                imageVector = icon,
                 contentDescription = null,
                 tint = Primary,
                 modifier = Modifier.size(24.dp)
@@ -271,13 +337,13 @@ private fun InfoSettingRow(item: SettingItem.InfoItem) {
                 verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 Text(
-                    text = item.title,
+                    text = title,
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Medium,
                     color = TextPrimary
                 )
                 Text(
-                    text = item.subtitle,
+                    text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
                     color = TextSecondary
                 )

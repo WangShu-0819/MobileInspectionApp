@@ -7,6 +7,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
@@ -17,6 +18,14 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
+import android.widget.Toast
+import com.wearable.inspection.mobile.MobileInspectionApp
+import com.wearable.inspection.mobile.data.settings.PartSelectionBus
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import com.wearable.inspection.mobile.ui.BottomNavItem
 import com.wearable.inspection.mobile.ui.screens.*
 
@@ -49,17 +58,8 @@ fun AppRoot() {
             // 一级页面
             composable(Screen.LiveInspection.route) {
                 LiveInspectionScreen(
-                    onStartInspection = { partId ->
-                        navController.navigate(Screen.CameraPreview.createRoute(partId))
-                    },
                     onOpenTemplates = {
-                        navController.navigate(Screen.Profile.route) {
-                            popUpTo(Screen.Profile.route) { inclusive = false }
-                            launchSingleTop = true
-                        }
-                    },
-                    onViewRecord = { recordId ->
-                        navController.navigate(Screen.InspectionResult.createRoute(recordId))
+                        navController.navigate(Screen.TemplateConfig.route)
                     },
                     onDpmScan = {
                         navController.navigate(Screen.DpmScan.route)
@@ -71,11 +71,7 @@ fun AppRoot() {
             }
 
             composable(Screen.TraceRecords.route) {
-                TraceRecordsScreen(
-                    onViewRecord = { recordId ->
-                        navController.navigate(Screen.InspectionResult.createRoute(recordId))
-                    }
-                )
+                TraceRecordsScreen()
             }
 
             composable(Screen.Profile.route) {
@@ -104,7 +100,10 @@ fun AppRoot() {
                     onBack = { navController.popBackStack() },
                     onTemplateClick = { templateId ->
                         navController.navigate(Screen.TemplateDetail.createRoute(templateId))
-                    }
+                    },
+                    onBindDpm = { partId ->
+                        navController.navigate(Screen.DpmBind.createRoute(partId))
+                    },
                 )
             }
 
@@ -166,10 +165,70 @@ fun AppRoot() {
             }
 
             composable(Screen.DpmScan.route) {
+                val context = LocalContext.current
+                val repository = remember { MobileInspectionApp.repository(context) }
+                val scope = rememberCoroutineScope()
                 DpmScanScreen(
                     onBack = { navController.popBackStack() },
                     onResult = { code ->
-                        // 解码结果回调，后续可导航到结果页
+                        scope.launch {
+                            val part = withContext(Dispatchers.IO) {
+                                repository.getPartByDpmCode(code)
+                            }
+                            if (part == null) {
+                                Toast.makeText(
+                                    context,
+                                    "未找到对应零件，请先在模板配置中扫码绑定",
+                                    Toast.LENGTH_SHORT,
+                                ).show()
+                            } else {
+                                // 只切换已有零件；WorkBench 通过事件立即重载该零件的有序模板视角。
+                                MobileInspectionApp.settings(context).selectedPartId = part.id
+                                PartSelectionBus.emit(part.id)
+                                navController.popBackStack(Screen.LiveInspection.route, false)
+                            }
+                        }
+                    }
+                )
+            }
+
+            composable(
+                route = Screen.DpmBind.route,
+                arguments = listOf(navArgument(Screen.DpmBind.ARG_PART_ID) { type = NavType.StringType })
+            ) { backStackEntry ->
+                val context = LocalContext.current
+                val repository = remember { MobileInspectionApp.repository(context) }
+                val scope = rememberCoroutineScope()
+                val partId = backStackEntry.arguments?.getString(Screen.DpmBind.ARG_PART_ID)
+                    ?: return@composable
+                DpmScanScreen(
+                    onBack = { navController.popBackStack() },
+                    onResult = { code ->
+                        scope.launch {
+                            val cleanCode = code.trim()
+                            val existing = withContext(Dispatchers.IO) {
+                                repository.getPartByDpmCode(cleanCode)
+                            }
+                            when {
+                                cleanCode.isBlank() -> {
+                                    Toast.makeText(context, "DPM 码为空，无法绑定", Toast.LENGTH_SHORT).show()
+                                }
+                                existing != null && existing.id != partId -> {
+                                    Toast.makeText(
+                                        context,
+                                        "该 DPM 码已绑定零件「${existing.name}」",
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
+                                }
+                                else -> {
+                                    withContext(Dispatchers.IO) {
+                                        repository.updateDpmCode(partId, cleanCode)
+                                    }
+                                    Toast.makeText(context, "DPM 码绑定成功", Toast.LENGTH_SHORT).show()
+                                    navController.popBackStack()
+                                }
+                            }
+                        }
                     }
                 )
             }
