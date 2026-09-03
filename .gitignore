@@ -25,3 +25,15 @@ captures/
 tools/**/.venv/
 tools/**/__pycache__/
 tools/**/site-packages/
+
+# Local contour-extraction generated outputs and model cache
+tools/contour_extraction/__pycache__/
+tools/contour_extraction/models/
+tools/contour_extraction/annotations/
+tools/contour_extraction/*_output/
+tools/contour_extraction/*_validation/
+tools/contour_extraction/output/
+
+# Local build/tool caches
+.gradle-user-home/
+.kotlin/
