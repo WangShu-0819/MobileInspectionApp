@@ -5,6 +5,8 @@ import androidx.core.content.FileProvider
 import com.wearable.inspection.mobile.data.db.AppDatabase
 import com.wearable.inspection.mobile.data.dao.*
 import com.wearable.inspection.mobile.data.entity.*
+import com.wearable.inspection.mobile.data.image.MobileImageStore
+import com.wearable.inspection.mobile.data.image.StoredImageResult
 import kotlinx.coroutines.flow.Flow
 import java.io.File
 import java.util.UUID
@@ -18,6 +20,7 @@ class InspectionRepository(
     private val sessionDao: InspectionSessionDao,
     private val roiRecordDao: RoiRecordDao
 ) {
+    private val imageStore: MobileImageStore by lazy { MobileImageStore(context) }
     // ---- 零件 ----
 
     fun observeParts(): Flow<List<PartEntity>> = partDao.observeAll()
@@ -122,6 +125,46 @@ class InspectionRepository(
     suspend fun insertRoiRecords(records: List<RoiInspectionRecordEntity>) {
         roiRecordDao.insertAll(records)
     }
+
+    // ---- 排序 ----
+
+    /**
+     * 批量更新模板 displayOrder
+     *
+     * @param orders (templateId, newDisplayOrder) 列表
+     */
+    suspend fun reorderTemplates(orders: List<Pair<String, Int>>) {
+        templateDao.reorderTemplates(orders)
+    }
+
+    // ---- 模板图片存储 ----
+
+    /**
+     * 存储模板拍摄图片
+     *
+     * 使用 template_images/ 目录，与采集图片 captures/ 分离。
+     * @return 存储结果，失败返回 null
+     */
+    fun storeTemplateImage(tempFile: File): StoredImageResult? {
+        return imageStore.storeTemplateImage(tempFile)
+    }
+
+    /**
+     * 删除模板图片文件
+     */
+    fun deleteTemplateImage(path: String) {
+        imageStore.deleteTemplateImage(path)
+    }
+
+    /**
+     * 生成临时文件
+     */
+    fun generateTempFile(): File = imageStore.generateTempFile()
+
+    /**
+     * 删除临时文件
+     */
+    fun deleteTempFile(file: File) = imageStore.deleteTempFile(file)
 
     // ---- 统计 ----
 

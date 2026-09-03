@@ -42,6 +42,7 @@ class MobileImageStore(private val context: Context) {
     companion object {
         private const val CAPTURES_DIR = "captures"
         private const val TEMP_DIR = "capture_tmp"
+        private const val TEMPLATE_IMAGES_DIR = "template_images"
 
         private const val TEMP_PREFIX = "capture_"
         private const val TEMP_SUFFIX = ".tmp.jpg"
@@ -49,6 +50,7 @@ class MobileImageStore(private val context: Context) {
         private const val PART_SUFFIX = ".part"
 
         private const val CAPTURE_FILE_PATTERN = "capture_%s_%s.jpg"
+        private const val TEMPLATE_FILE_PATTERN = "tpl_%s_%s.jpg"
     }
 
     // ========== 临时文件 ==========
@@ -276,4 +278,78 @@ class MobileImageStore(private val context: Context) {
             dir.listFiles()?.filter { it.name.endsWith(PART_SUFFIX) }?.forEach { it.delete() }
         }
     }
+
+    // ========== 模板图片存储 ==========
+
+    private fun getTemplateImagesDir(): File {
+        return File(context.filesDir, TEMPLATE_IMAGES_DIR).apply { mkdirs() }
+    }
+
+    private fun generateTemplateFileName(): String {
+        val ts = SimpleDateFormat("yyyyMMdd_HHmmss_SSS", Locale.US).format(Date())
+        val uuid = UUID.randomUUID().toString().take(8)
+        return String.format(TEMPLATE_FILE_PATTERN, ts, uuid)
+    }
+
+    /**
+     * 存储模板图片到 template_images/ 目录
+     *
+     * 流程与 storeCapturedImage 相同：校验 → .part 中间文件 → 原子重命名。
+     * 模板图片与采集图片使用独立目录，互不干扰。
+     *
+     * @param tempFile 临时文件（拍照输出或复制的临时文件）
+     * @return 存储结果，失败返回 null
+     */
+    fun storeTemplateImage(tempFile: File): StoredImageResult? {
+        val validation = validateJpeg(tempFile) ?: run {
+            tempFile.delete()
+            return null
+        }
+        val finalFile = File(getTemplateImagesDir(), generateTemplateFileName())
+        val partFile = File(finalFile.absolutePath + PART_SUFFIX)
+        try {
+            if (finalFile.exists()) {
+                tempFile.delete()
+                return null
+            }
+            tempFile.copyTo(partFile, overwrite = false)
+            if (!partFile.exists() || partFile.length() == 0L) {
+                cleanupFiles(partFile, tempFile)
+                return null
+            }
+            if (!partFile.renameTo(finalFile)) {
+                cleanupFiles(partFile, tempFile)
+                return null
+            }
+            tempFile.delete()
+            return validateJpeg(finalFile)
+        } catch (e: Exception) {
+            cleanupFiles(partFile, tempFile)
+            return null
+        }
+    }
+
+    /**
+     * 删除模板图片
+     *
+     * 路径必须在 template_images/ 目录内（安全检查）。
+     */
+    fun deleteTemplateImage(path: String) {
+        val file = File(path)
+        val templateDir = getTemplateImagesDir()
+        try {
+            val canonical = file.canonicalPath
+            val baseCanonical = templateDir.canonicalPath
+            if (canonical.startsWith(baseCanonical) && file.exists()) {
+                file.delete()
+            }
+        } catch (_: Exception) {
+            // 忽略路径检查或删除失败
+        }
+    }
+
+    /**
+     * 获取模板图片目录路径
+     */
+    fun getTemplateImagesPath(): String = getTemplateImagesDir().absolutePath
 }

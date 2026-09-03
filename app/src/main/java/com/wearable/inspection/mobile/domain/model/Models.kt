@@ -19,7 +19,9 @@ enum class InspectionType {
     HOLE_PRESENCE,      // 孔有无
     SCREW_PRESENCE,     // 螺钉有无
     THREAD_PRESENCE,    // 螺纹有无
-    SMALL_PART_PRESENCE // 小部件有无
+    SMALL_PART_PRESENCE, // 小部件有无
+    NUT_PRESENCE,       // 螺母有无
+    FEATURE_PRESENCE    // 其他特征有无
 }
 
 /**
