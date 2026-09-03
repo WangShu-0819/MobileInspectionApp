@@ -172,33 +172,6 @@ fun PartListScreen(
                 .padding(top = 12.dp, bottom = 8.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // 新建零件按钮
-            item {
-                Button(
-                    onClick = {
-                        createPartId = ""
-                        createPartName = ""
-                        createPartError = null
-                        showCreatePartDialog = true
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Primary),
-                    shape = RoundedCornerShape(8.dp),
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp),
-                    )
-                    Text(
-                        text = "新建零件",
-                        modifier = Modifier.padding(start = 8.dp),
-                    )
-                }
-            }
-
             // 空状态
             if (loaded && parts.isEmpty()) {
                 item {
@@ -416,7 +389,7 @@ private fun EmptyPartsState() {
                 color = TextSecondary,
             )
             Text(
-                text = "点击上方按钮新建零件",
+                text = "点击右上角 + 新建零件",
                 style = MaterialTheme.typography.bodySmall,
                 color = PlaceholderColor,
             )

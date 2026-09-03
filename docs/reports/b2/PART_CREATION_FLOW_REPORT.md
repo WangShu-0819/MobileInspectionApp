@@ -103,7 +103,7 @@
 
 | 标准 | 状态 |
 |---|---|
-| 模板配置零件列表只保留"新建零件"入口 | ✅ 移除"导入模板"按钮，仅保留一个全宽"新建零件"按钮 + TopAppBar "+" |
+| 模板配置零件列表只保留"新建零件"入口 | ✅ 移除"导入模板"按钮，仅保留一个全宽"新建零件"按钮 + TopAppBar "+"；后于 2026-09-03 进一步移除全宽按钮，仅保留 TopAppBar "+" |
 | 移除"导入模板"按钮避免顶部遮挡 | ✅ 按钮行从双按钮改为单按钮 |
 | "导入模板包"独立页面/路由/功能不受影响 | ✅ TemplatePackageScreen 和 ProfileScreen 入口未修改 |
 | 新建对话框能真实保存零件 | ✅ 通过 Repository.upsertPart |
@@ -121,7 +121,73 @@
 
 ## Git 状态
 
-`NOT_COMMITTED`（未获用户明确授权前不提交）
+`866c23fc`（`feat(template): simplify template config entry`）
+
+---
+
+## 补充整改：移除重复的全宽"新建零件"按钮（2026-09-03）
+
+日期：2026-09-03
+状态：**SOFTWARE_COMPLETE**（待用户验收）
+
+### 问题描述
+
+`PartListScreen`（模板配置页面）同时存在两个"新建零件"入口：
+1. TopAppBar 右上角 `+` IconButton（L150-161）
+2. LazyColumn 内全宽 `Button`（原 L175-200）
+
+两个按钮打开同一个 `showCreatePartDialog`，造成 UI 冗余。
+
+### 实施方案
+
+| 文件 | 改动说明 |
+|---|---|
+| `PartListScreen.kt` | 移除 LazyColumn 内全宽"新建零件" Button（26 行）；EmptyPartsState 文案从"点击上方按钮新建零件"改为"点击右上角 + 新建零件" |
+
+**未修改文件**：AppNavigation.kt、PartCreationValidator.kt、PartCreationValidatorTest.kt、TemplateConfigScreen.kt、PartManagementScreen.kt
+
+### 前序必须保留的能力
+
+| 能力 | 状态 |
+|---|---|
+| TopAppBar "+" 按钮打开新建零件对话框 | ✅ 不回归 |
+| 新建对话框校验 + Repository.upsertPart | ✅ 不回归 |
+| onPartCreated → PartDetail 导航 | ✅ 不回归 |
+| PartCard 点击 → PartDetail 导航 | ✅ 不回归 |
+| DPM 绑定入口 | ✅ 不回归 |
+| Lifecycle ON_RESUME 自动刷新 | ✅ 不回归 |
+| EmptyPartsState 空状态 | ✅ 文案已更新 |
+| PartCreationValidator 校验逻辑 | ✅ 未修改 |
+
+### 测试结果
+
+| 命令 | 结果 |
+|---|---|
+| `:app:compileDebugKotlin --no-daemon` | ✅ BUILD SUCCESSFUL（57s） |
+| `:app:testDebugUnitTest --no-daemon` | ✅ BUILD SUCCESSFUL（410 项：全部 passed / 0 failed / 0 skipped） |
+| `:app:assembleDebug --no-daemon` | ✅ BUILD SUCCESSFUL（27s） |
+
+### 真机范围
+
+`NOT_RUN_BY_SCOPE`（本轮禁止 adb）
+
+### 验收标准对照
+
+| 标准 | 状态 |
+|---|---|
+| 模板配置页面只保留一个"新建零件"入口 | ✅ 仅 TopAppBar "+" |
+| TopAppBar "+" 回调和对话框逻辑不变 | ✅ |
+| 导航、数据库和创建逻辑不变 | ✅ |
+| EmptyPartsState 文案指向正确入口 | ✅ "点击右上角 + 新建零件" |
+| 三条 Gradle 命令全部通过 | ✅ |
+
+### 未完成项
+
+1. 拍后比对（V1-3）、Detector（V1-4）、结果查看（V1-5）仍为 DEFERRED
+
+### Git 状态
+
+`NOT_COMMITTED`（本轮不提交）
 
 ## 前序能力回归矩阵
 
