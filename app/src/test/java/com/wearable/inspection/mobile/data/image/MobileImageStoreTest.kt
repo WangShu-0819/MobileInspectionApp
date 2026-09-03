@@ -214,6 +214,94 @@ class MobileImageStoreTest {
         assertTrue("不应该留下 .part 文件", partFiles.isEmpty())
     }
 
+    // ─── 模板图片存储测试 ───
+
+    @Test
+    fun `模板图片存储成功`() {
+        val tempFile = createValidJpegTempFile()
+
+        val result = store.storeTemplateImage(tempFile)
+        assertNotNull("模板图片存储应该成功", result)
+
+        val stored = result!!
+        assertTrue("文件应该存在", File(stored.finalPath).exists())
+        assertTrue("路径应该在 template_images 目录", stored.finalPath.contains("template_images"))
+        assertTrue("宽度应该大于 0", stored.width > 0)
+        assertTrue("高度应该大于 0", stored.height > 0)
+
+        File(stored.finalPath).delete()
+    }
+
+    @Test
+    fun `模板图片存储后临时文件被清理`() {
+        val tempFile = createValidJpegTempFile()
+
+        val result = store.storeTemplateImage(tempFile)
+        assertNotNull("存储应该成功", result)
+        assertFalse("临时文件应该被删除", tempFile.exists())
+
+        result?.let { File(it.finalPath).delete() }
+    }
+
+    @Test
+    fun `空文件模板图片存储失败`() {
+        val tempFile = store.generateTempFile()
+        tempFile.createNewFile()
+
+        val result = store.storeTemplateImage(tempFile)
+        assertNull("空文件存储应该失败", result)
+        assertFalse("临时文件应该被删除", tempFile.exists())
+    }
+
+    @Test
+    fun `模板图片存储失败后不留 part 残留`() {
+        val tempFile = store.generateTempFile()
+        tempFile.createNewFile() // 空文件
+
+        val templateDir = File(context.filesDir, "template_images")
+
+        val result = store.storeTemplateImage(tempFile)
+        assertNull("空文件存储应该失败", result)
+
+        val partFiles = templateDir.listFiles()?.filter { it.name.endsWith(".part") } ?: emptyList()
+        assertTrue("不应该留下 .part 文件", partFiles.isEmpty())
+    }
+
+    @Test
+    fun `删除模板图片成功`() {
+        val tempFile = createValidJpegTempFile()
+        val stored = store.storeTemplateImage(tempFile)
+        assertNotNull("存储应该成功", stored)
+
+        val path = stored!!.finalPath
+        assertTrue("文件应该存在", File(path).exists())
+
+        store.deleteTemplateImage(path)
+        assertFalse("文件应该被删除", File(path).exists())
+    }
+
+    @Test
+    fun `删除模板图片安全检查拒绝非 template_images 路径`() {
+        // 尝试删除不在 template_images/ 目录的文件
+        val externalFile = File(context.filesDir, "captures/test.jpg")
+        externalFile.parentFile?.mkdirs()
+        externalFile.createNewFile()
+        assertTrue("外部文件应该存在", externalFile.exists())
+
+        store.deleteTemplateImage(externalFile.absolutePath)
+        // 安全检查应该拒绝删除非 template_images 路径
+        assertTrue("非 template_images 路径不应该被删除", externalFile.exists())
+
+        externalFile.delete()
+    }
+
+    @Test
+    fun `模板图片目录路径有效`() {
+        val path = store.getTemplateImagesPath()
+        assertNotNull("路径不应该为 null", path)
+        assertTrue("路径应该包含 template_images", path.contains("template_images"))
+    }
+
     // ─── 辅助方法 ───
 
     private fun createValidJpegTempFile(): File {
