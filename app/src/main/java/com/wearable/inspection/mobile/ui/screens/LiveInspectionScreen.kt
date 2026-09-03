@@ -50,6 +50,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -121,6 +122,16 @@ fun LiveInspectionScreen(
     onOpenTemplates: () -> Unit,
     onDpmScan: () -> Unit = {},
     onStampOcr: () -> Unit = {},
+    onNavigateToConfirm: (
+        batchId: String,
+        photoId: Long,
+        photoPath: String,
+        viewIndex: Int,
+        templateId: String,
+        templateName: String,
+        partId: String,
+        totalViews: Int
+    ) -> Unit = { _, _, _, _, _, _, _, _ -> },
 ) {
     val context = LocalContext.current
     val inspectionState by viewModel.inspectionState.collectAsState()
@@ -133,6 +144,7 @@ fun LiveInspectionScreen(
     }
     val customColors = LocalCustomColors.current
     val coroutineScope = rememberCoroutineScope()
+    val repository = remember { MobileInspectionApp.repository(context) }
 
     // 相机会话
     var sessionId by remember { mutableStateOf<String?>(null) }
@@ -146,6 +158,9 @@ fun LiveInspectionScreen(
     var captureState by remember { mutableStateOf(CaptureUiState.IDLE) }
     var captureError by remember { mutableStateOf<String?>(null) }
     var savedPath by remember { mutableStateOf<String?>(null) }
+
+    // 采集批次
+    var currentBatchId by remember { mutableStateOf<String?>(null) }
 
     // 模板选择 bottom sheet
     var showTemplateSheet by remember { mutableStateOf(false) }
@@ -172,6 +187,23 @@ fun LiveInspectionScreen(
             savedPath = null
 
             coroutineScope.launch {
+                // 确保有采集批次
+                val batchId = currentBatchId ?: run {
+                    val newBatchId = "batch_${System.currentTimeMillis()}_${java.util.UUID.randomUUID().toString().take(8)}"
+                    val part = selectedPart
+                    repository.insertCaptureBatch(
+                        com.wearable.inspection.mobile.data.entity.CaptureBatchEntity(
+                            batchId = newBatchId,
+                            partId = part?.id,
+                            partName = part?.name,
+                            startTime = System.currentTimeMillis(),
+                            viewCount = inspectionState.totalViews
+                        )
+                    )
+                    currentBatchId = newBatchId
+                    newBatchId
+                }
+
                 val tempFile = imageStore.generateTempFile()
                 val result = cameraController.takePhoto(currentSessionId, tempFile)
                 result.fold(
@@ -179,17 +211,35 @@ fun LiveInspectionScreen(
                         val storeResult = imageStore.storeCapturedImage(file)
                         if (storeResult != null) {
                             savedPath = storeResult.finalPath
+
+                            // 记录照片到批次
+                            val template = inspectionState.selectedTemplate
+                            val capturedPhoto = com.wearable.inspection.mobile.data.entity.CapturedPhotoEntity(
+                                batchId = batchId,
+                                filePath = storeResult.finalPath,
+                                viewIndex = inspectionState.currentViewIndex,
+                                templateId = template?.id,
+                                templateName = template?.name,
+                                capturedAt = storeResult.capturedAt
+                            )
+                            repository.insertCapturedPhoto(capturedPhoto)
+
                             captureState = CaptureUiState.SAVED
-                            // 推进到下一视角
-                            val hasNext = viewModel.advanceToNextView()
-                            if (!hasNext) {
-                                // 所有视角完成，保持 SAVED 状态显示完成提示
-                            } else {
-                                // 1.5秒后回到 IDLE（下一视角已切换）
-                                delay(1500)
-                                if (captureState == CaptureUiState.SAVED) {
-                                    captureState = CaptureUiState.IDLE
-                                }
+
+                            // 导航到人工确认页面
+                            val tpl = template
+                            val part = selectedPart
+                            if (tpl != null && part != null) {
+                                onNavigateToConfirm(
+                                    batchId,
+                                    capturedPhoto.photoId,
+                                    storeResult.finalPath,
+                                    inspectionState.currentViewIndex,
+                                    tpl.id,
+                                    tpl.name,
+                                    part.id,
+                                    inspectionState.totalViews
+                                )
                             }
                         } else {
                             imageStore.deleteTempFile(file)
@@ -215,6 +265,17 @@ fun LiveInspectionScreen(
         captureState = CaptureUiState.IDLE
         captureError = null
         savedPath = null
+    }
+
+    // 重置采集批次（切换零件或手动重置时）
+    val onResetBatch: () -> Unit = {
+        currentBatchId = null
+        onResetCapture()
+    }
+
+    // 切换零件时重置批次
+    LaunchedEffect(selectedPart?.id) {
+        currentBatchId = null
     }
 
     val captureEnabled = sessionId != null &&
@@ -451,7 +512,7 @@ private fun CaptureActionBar(
     Row(
         modifier = modifier
             .background(SurfaceWhite)
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = 12.dp, vertical = 2.dp),
         horizontalArrangement = Arrangement.Center
     ) {
         Button(
@@ -459,24 +520,24 @@ private fun CaptureActionBar(
             enabled = enabled,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(48.dp),
+                .height(40.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Primary,
                 contentColor = Color.White,
                 disabledContainerColor = DividerColor,
                 disabledContentColor = TextSecondary
             ),
-            shape = RoundedCornerShape(8.dp)
+            shape = RoundedCornerShape(6.dp)
         ) {
             Icon(
                 imageVector = Icons.Default.CameraAlt,
                 contentDescription = null,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(18.dp)
             )
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(6.dp))
             Text(
                 text = label,
-                fontSize = 16.sp,
+                fontSize = 14.sp,
                 fontWeight = FontWeight.Medium
             )
         }
@@ -658,8 +719,8 @@ private fun TemplateReferenceSection(
         modifier = modifier
             .fillMaxWidth()
             .background(SurfaceWhite)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp)
+            .padding(horizontal = 12.dp, vertical = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         // 只保留当前视角和切换入口，不再用大标题占用参考图空间
         Row(
@@ -669,15 +730,15 @@ private fun TemplateReferenceSection(
         ) {
             Row(
                 modifier = Modifier
-                    .heightIn(min = 40.dp),
+                    .heightIn(min = 28.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (totalViews > 0) {
                     Text(
                         text = "视角 ${viewIndex + 1}/$totalViews",
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.SemiBold,
-                        fontSize = 13.sp,
+                        fontSize = 12.sp,
                         color = TextPrimary
                     )
                 }
@@ -685,18 +746,18 @@ private fun TemplateReferenceSection(
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(2.dp),
+                horizontalArrangement = Arrangement.spacedBy(0.dp),
             ) {
                 if (template != null) {
                     IconButton(
                         onClick = { referenceFill = !referenceFill },
-                        modifier = Modifier.size(48.dp),
+                        modifier = Modifier.size(32.dp),
                     ) {
                         Icon(
                             imageVector = Icons.Default.AspectRatio,
                             contentDescription = if (referenceFill) "显示原比例" else "撑满参考图",
                             tint = Primary,
-                            modifier = Modifier.size(20.dp),
+                            modifier = Modifier.size(16.dp),
                         )
                     }
                 }
@@ -729,65 +790,69 @@ private fun TemplateReferenceSection(
             )
         }
 
-        // 拍照状态提示
-        when (captureState) {
-            CaptureUiState.CAPTURING -> {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        strokeWidth = 2.dp
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "拍摄中…",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = TextSecondary
-                    )
-                }
-            }
-            CaptureUiState.SAVED -> {
-                if (!allViewsCaptured) {
+        // 拍照状态提示（固定最小高度，避免状态切换时模板参考图上移）
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 28.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            when (captureState) {
+                CaptureUiState.CAPTURING -> {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.CheckCircle,
-                            contentDescription = null,
-                            tint = PassColor,
-                            modifier = Modifier.size(20.dp)
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "已保存，切换下一视角",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = PassColor
+                            text = "拍摄中…",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary
                         )
                     }
                 }
-            }
-            CaptureUiState.ERROR -> {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Text(
-                        text = captureError ?: "拍照失败",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = FailColor
-                    )
-                    TextButton(onClick = onRetry) {
-                        Text("重试", color = Primary)
+                CaptureUiState.SAVED -> {
+                    if (!allViewsCaptured) {
+                        Row(
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = null,
+                                tint = PassColor,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "已保存，切换下一视角",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = PassColor
+                            )
+                        }
                     }
                 }
+                CaptureUiState.ERROR -> {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                    ) {
+                        Text(
+                            text = captureError ?: "拍照失败",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = FailColor
+                        )
+                        TextButton(onClick = onRetry, modifier = Modifier.height(24.dp)) {
+                            Text("重试", color = Primary, fontSize = 12.sp)
+                        }
+                    }
+                }
+                CaptureUiState.IDLE -> { /* 不显示额外内容 */ }
             }
-            CaptureUiState.IDLE -> { /* 不显示额外内容 */ }
         }
 
     }
@@ -805,14 +870,15 @@ private fun TemplateSelector(
         modifier = Modifier
             .clip(RoundedCornerShape(4.dp))
             .clickable { onClick() }
-            .heightIn(min = 48.dp)
-            .padding(horizontal = 8.dp),
+            .heightIn(min = 28.dp)
+            .padding(horizontal = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
+        horizontalArrangement = Arrangement.spacedBy(2.dp)
     ) {
         Text(
             text = currentTemplate.name,
             style = MaterialTheme.typography.bodySmall,
+            fontSize = 11.sp,
             color = TextSecondary,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
@@ -821,7 +887,7 @@ private fun TemplateSelector(
             imageVector = Icons.Default.ArrowDropDown,
             contentDescription = null,
             tint = TextSecondary,
-            modifier = Modifier.size(16.dp)
+            modifier = Modifier.size(14.dp)
         )
     }
 }
@@ -946,36 +1012,37 @@ private fun AllViewsCapturedCard(onReset: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = BackgroundVariant1),
-        shape = RoundedCornerShape(8.dp)
+        shape = RoundedCornerShape(6.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 6.dp),
+                .padding(horizontal = 10.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Icon(
                 imageVector = Icons.Default.CheckCircle,
                 contentDescription = null,
                 tint = PassColor,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(18.dp)
             )
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = "零件采集完成",
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.Medium,
                     color = TextPrimary,
                 )
                 Text(
                     text = "所有视角已拍摄完毕",
                     style = MaterialTheme.typography.labelSmall,
+                    fontSize = 10.sp,
                     color = TextSecondary,
                 )
             }
-            TextButton(onClick = onReset) {
-                Text("重新开始", color = Primary)
+            TextButton(onClick = onReset, modifier = Modifier.height(28.dp)) {
+                Text("重新开始", color = Primary, fontSize = 12.sp)
             }
         }
     }
@@ -1090,35 +1157,36 @@ private fun TemplateOverlayControls(
     Row(
         modifier = modifier
             .background(BackgroundVariant1)
-            .heightIn(min = 48.dp)
-            .padding(horizontal = 12.dp),
+            .heightIn(min = 36.dp)
+            .padding(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         // 显示/隐藏按钮
-        IconButton(onClick = onToggleVisibility, modifier = Modifier.size(48.dp)) {
+        IconButton(onClick = onToggleVisibility, modifier = Modifier.size(32.dp)) {
             Icon(
                 imageVector = if (visible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
                 contentDescription = if (visible) "隐藏模板" else "显示模板",
                 tint = if (visible) Primary else TextSecondary,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(16.dp)
             )
         }
 
         // 透明度标签
         Column(
-            modifier = Modifier.width(56.dp),
-            verticalArrangement = Arrangement.spacedBy(1.dp),
+            modifier = Modifier.width(48.dp),
+            verticalArrangement = Arrangement.spacedBy(0.dp),
         ) {
             Text(
                 text = "透明度",
                 style = MaterialTheme.typography.labelSmall,
                 color = TextSecondary,
                 maxLines = 1,
+                fontSize = 10.sp,
             )
             Text(
                 text = "${(alpha * 100).toInt()}%",
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.Medium,
                 color = Primary,
                 maxLines = 1,
@@ -1130,7 +1198,7 @@ private fun TemplateOverlayControls(
             value = alpha,
             onValueChange = onAlphaChange,
             valueRange = 0f..0.8f,
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1f).height(24.dp),
             enabled = visible,
             colors = SliderDefaults.colors(
                 thumbColor = Primary,

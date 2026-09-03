@@ -49,11 +49,49 @@ val MIGRATION_2_3 = object : Migration(2, 3) {
 }
 
 /**
+ * 数据库 Migration v3 → v4
+ *
+ * 新增采集批次和已采集照片表，支持按零件+批次导出照片。
+ */
+val MIGRATION_3_4 = object : Migration(3, 4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS capture_batches (
+                batchId TEXT NOT NULL PRIMARY KEY,
+                partId TEXT,
+                partName TEXT,
+                startTime INTEGER NOT NULL,
+                endTime INTEGER,
+                viewCount INTEGER NOT NULL DEFAULT 0,
+                FOREIGN KEY (partId) REFERENCES parts(id) ON DELETE SET NULL
+            )
+            """.trimIndent()
+        )
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS captured_photos (
+                photoId INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                batchId TEXT NOT NULL,
+                filePath TEXT NOT NULL,
+                viewIndex INTEGER NOT NULL,
+                templateId TEXT,
+                templateName TEXT,
+                capturedAt INTEGER NOT NULL,
+                FOREIGN KEY (batchId) REFERENCES capture_batches(batchId) ON DELETE CASCADE
+            )
+            """.trimIndent()
+        )
+    }
+}
+
+/**
  * 所有 Migration 列表
  * 新增 Migration 时必须在此添加
  */
 @JvmField
 val ALL_MIGRATIONS = arrayOf<Migration>(
     MIGRATION_1_2,
-    MIGRATION_2_3
+    MIGRATION_2_3,
+    MIGRATION_3_4
 )

@@ -18,7 +18,9 @@ class InspectionRepository(
     private val templateDao: TemplateDao,
     private val roiDao: RoiDao,
     private val sessionDao: InspectionSessionDao,
-    private val roiRecordDao: RoiRecordDao
+    private val roiRecordDao: RoiRecordDao,
+    private val captureBatchDao: CaptureBatchDao,
+    private val capturedPhotoDao: CapturedPhotoDao
 ) {
     private val imageStore: MobileImageStore by lazy { MobileImageStore(context) }
     // ---- 零件 ----
@@ -126,6 +128,37 @@ class InspectionRepository(
         roiRecordDao.insertAll(records)
     }
 
+    // ---- 采集批次 ----
+
+    fun observeCaptureBatches(): Flow<List<CaptureBatchEntity>> = captureBatchDao.observeAll()
+
+    suspend fun getCaptureBatch(batchId: String): CaptureBatchEntity? =
+        captureBatchDao.getById(batchId)
+
+    suspend fun insertCaptureBatch(batch: CaptureBatchEntity) {
+        captureBatchDao.insert(batch)
+    }
+
+    suspend fun updateCaptureBatch(batch: CaptureBatchEntity) {
+        captureBatchDao.update(batch)
+    }
+
+    suspend fun deleteCaptureBatch(batchId: String) {
+        captureBatchDao.deleteById(batchId)
+    }
+
+    // ---- 已采集照片 ----
+
+    fun observeCapturedPhotos(batchId: String): Flow<List<CapturedPhotoEntity>> =
+        capturedPhotoDao.observeByBatchId(batchId)
+
+    suspend fun getCapturedPhotos(batchId: String): List<CapturedPhotoEntity> =
+        capturedPhotoDao.getByBatchId(batchId)
+
+    suspend fun insertCapturedPhoto(photo: CapturedPhotoEntity) {
+        capturedPhotoDao.insert(photo)
+    }
+
     // ---- 排序 ----
 
     /**
@@ -200,4 +233,5 @@ class InspectionRepository(
             file
         )
     }
+
 }
