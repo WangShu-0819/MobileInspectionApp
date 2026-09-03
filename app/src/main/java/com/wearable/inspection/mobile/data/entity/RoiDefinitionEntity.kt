@@ -32,5 +32,15 @@ data class RoiDefinitionEntity(
     val configJson: String? = null, // 算法参数
     val preprocessJson: String? = null, // 预处理配置
     val enabled: Boolean = true,
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    /**
+     * ROI 目标属性类型（RoiTargetType.name）
+     *
+     * - THREAD → 螺纹检测
+     * - NUT → 螺母检测
+     * - FEATURE → 部件检测
+     *
+     * 旧 ROI 无属性时为 null，显示"未选择"，不得自动猜测。
+     */
+    val targetType: String? = null
 )

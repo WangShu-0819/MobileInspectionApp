@@ -45,12 +45,13 @@ import androidx.compose.ui.unit.sp
 import com.wearable.inspection.mobile.MobileInspectionApp
 import com.wearable.inspection.mobile.data.entity.InspectionTemplateEntity
 import com.wearable.inspection.mobile.data.entity.RoiDefinitionEntity
+import com.wearable.inspection.mobile.data.entity.RoiTargetType
 import com.wearable.inspection.mobile.ui.theme.LocalCustomColors
+import com.wearable.inspection.mobile.ui.theme.PlaceholderColor
 import com.wearable.inspection.mobile.ui.theme.Primary
 import com.wearable.inspection.mobile.ui.theme.SurfaceWhite
 import com.wearable.inspection.mobile.ui.theme.TextPrimary
 import com.wearable.inspection.mobile.ui.theme.TextSecondary
-import com.wearable.inspection.mobile.ui.theme.PlaceholderColor
 import com.wearable.inspection.mobile.ui.theme.DividerColor
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -280,7 +281,8 @@ fun TemplateDetailScreen(
                                         modifier = Modifier.padding(vertical = 4.dp)
                                     )
                                 }
-                                DetailRow("${index + 1}. ${roi.name}", roi.inspectionType)
+                                val targetTypeName = RoiTargetType.fromName(roi.targetType)?.displayName ?: "未选择"
+                                DetailRow("${index + 1}. ${roi.name}", targetTypeName)
                             }
                         }
                     }

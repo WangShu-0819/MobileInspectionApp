@@ -20,6 +20,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material.icons.Icons
@@ -39,6 +41,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -66,9 +69,11 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.wearable.inspection.mobile.MobileInspectionApp
+import com.wearable.inspection.mobile.data.entity.RoiTargetType
 import com.wearable.inspection.mobile.ui.theme.DividerColor
 import com.wearable.inspection.mobile.ui.theme.FailColor
 import com.wearable.inspection.mobile.ui.theme.LocalCustomColors
+import com.wearable.inspection.mobile.ui.theme.PlaceholderColor
 import com.wearable.inspection.mobile.ui.theme.Primary
 import com.wearable.inspection.mobile.ui.theme.SurfaceWhite
 import com.wearable.inspection.mobile.ui.theme.TextPrimary
@@ -108,8 +113,11 @@ fun RoiEditorScreen(
     val selectedRoiId = viewModel.selectedRoiId
     val isDrawingMode = viewModel.isDrawingMode
     val deleteError = viewModel.deleteError
+    val drawingTargetType = viewModel.drawingTargetType
 
     var showDeleteConfirm by remember { mutableStateOf(false) }
+    var showTargetTypeMenu by remember { mutableStateOf(false) }
+    var showEditTargetTypeMenu by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
 
     // 删除错误反馈
@@ -211,6 +219,75 @@ fun RoiEditorScreen(
                         )
                     }
 
+                    // 选中 ROI 的属性显示和编辑
+                    val selectedRoi = rois.find { it.id == selectedRoiId }
+                    if (selectedRoi != null && !isDrawingMode) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            Text(
+                                text = "目标属性：${RoiTargetType.fromName(selectedRoi.targetType)?.displayName ?: "未选择"}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = if (selectedRoi.targetType != null) TextPrimary else PlaceholderColor,
+                            )
+                            Box {
+                                TextButton(onClick = { showEditTargetTypeMenu = true }) {
+                                    Text("修改", style = MaterialTheme.typography.bodySmall)
+                                }
+                                DropdownMenu(
+                                    expanded = showEditTargetTypeMenu,
+                                    onDismissRequest = { showEditTargetTypeMenu = false },
+                                ) {
+                                    RoiTargetType.entries.forEach { type ->
+                                        DropdownMenuItem(
+                                            text = { Text(type.displayName) },
+                                            onClick = {
+                                                showEditTargetTypeMenu = false
+                                                viewModel.updateRoiTargetType(selectedRoi.id, type)
+                                            },
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // 绘制模式下的属性选择
+                    if (isDrawingMode) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            Text(
+                                text = "目标属性：${drawingTargetType?.displayName ?: "请选择"}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = if (drawingTargetType != null) TextPrimary else FailColor,
+                            )
+                            Box {
+                                TextButton(onClick = { showTargetTypeMenu = true }) {
+                                    Text("选择", style = MaterialTheme.typography.bodySmall)
+                                }
+                                DropdownMenu(
+                                    expanded = showTargetTypeMenu,
+                                    onDismissRequest = { showTargetTypeMenu = false },
+                                ) {
+                                    RoiTargetType.entries.forEach { type ->
+                                        DropdownMenuItem(
+                                            text = { Text(type.displayName) },
+                                            onClick = {
+                                                showTargetTypeMenu = false
+                                                viewModel.updateDrawingTargetType(type)
+                                            },
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     // 操作按钮
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -219,8 +296,13 @@ fun RoiEditorScreen(
                         if (isDrawingMode) {
                             // 绘制模式：保存/取消
                             Button(
-                                onClick = { viewModel.saveDrawingRect() },
-                                enabled = drawingRect != null,
+                                onClick = {
+                                    val saved = viewModel.saveDrawingRect()
+                                    if (!saved && drawingTargetType == null) {
+                                        // 提示用户选择属性
+                                    }
+                                },
+                                enabled = drawingRect != null && drawingTargetType != null,
                                 modifier = Modifier.weight(1f),
                                 colors = ButtonDefaults.buttonColors(containerColor = Primary),
                                 shape = RoundedCornerShape(8.dp),

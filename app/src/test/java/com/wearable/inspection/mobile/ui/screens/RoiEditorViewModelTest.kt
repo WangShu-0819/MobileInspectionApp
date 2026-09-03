@@ -1,6 +1,7 @@
 package com.wearable.inspection.mobile.ui.screens
 
 import com.wearable.inspection.mobile.data.entity.RoiDefinitionEntity
+import com.wearable.inspection.mobile.data.entity.RoiTargetType
 import com.wearable.inspection.mobile.data.repository.InspectionRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -587,6 +588,7 @@ class RoiEditorViewModelTest {
         // 绘制并保存新 ROI
         viewModel.toggleDrawingMode()
         viewModel.updateDrawingRect(NormalizedRect(0.2f, 0.2f, 0.6f, 0.6f))
+        viewModel.updateDrawingTargetType(RoiTargetType.THREAD)
         viewModel.saveDrawingRect("新 ROI")
         advanceUntilIdle()
 
@@ -721,6 +723,7 @@ class RoiEditorViewModelTest {
 
         viewModel.toggleDrawingMode()
         viewModel.updateDrawingRect(NormalizedRect(0.2f, 0.2f, 0.6f, 0.6f))
+        viewModel.updateDrawingTargetType(RoiTargetType.FEATURE)
         viewModel.saveDrawingRect("新增 ROI")
         advanceUntilIdle()
 
@@ -762,5 +765,163 @@ class RoiEditorViewModelTest {
         assertEquals(0.2f, resized.top, 0.001f)
         assertEquals(0.8f, resized.right, 0.001f)
         assertEquals(0.8f, resized.bottom, 0.001f)
+    }
+
+    // ══════════════════════════════════════════
+    // ROI 目标属性类型（targetType）测试
+    // ══════════════════════════════════════════
+
+    @Test
+    fun `RoiTargetType 枚举值正确`() {
+        assertEquals(3, RoiTargetType.entries.size)
+        assertEquals("螺纹", RoiTargetType.THREAD.displayName)
+        assertEquals("螺母", RoiTargetType.NUT.displayName)
+        assertEquals("部件", RoiTargetType.FEATURE.displayName)
+    }
+
+    @Test
+    fun `RoiTargetType fromName 解析有效值`() {
+        assertEquals(RoiTargetType.THREAD, RoiTargetType.fromName("THREAD"))
+        assertEquals(RoiTargetType.NUT, RoiTargetType.fromName("NUT"))
+        assertEquals(RoiTargetType.FEATURE, RoiTargetType.fromName("FEATURE"))
+    }
+
+    @Test
+    fun `RoiTargetType fromName 解析 null 返回 null`() {
+        assertNull(RoiTargetType.fromName(null))
+    }
+
+    @Test
+    fun `RoiTargetType fromName 解析无效值返回 null`() {
+        assertNull(RoiTargetType.fromName("INVALID"))
+        assertNull(RoiTargetType.fromName(""))
+        assertNull(RoiTargetType.fromName("thread")) // 大小写敏感
+    }
+
+    @Test
+    fun `旧 ROI 无 targetType 时为 null`() = runTest {
+        val legacyRoi = createTestRoi("roi_legacy") // targetType 默认为 null
+        `when`(mockRepository.getRois("tpl_001")).thenReturn(listOf(legacyRoi))
+
+        val viewModel = RoiEditorViewModel(mockRepository, "tpl_001")
+        advanceUntilIdle()
+
+        assertNull(viewModel.rois[0].targetType)
+    }
+
+    @Test
+    fun `新增 ROI 必须选择 targetType`() = runTest {
+        `when`(mockRepository.getRois("tpl_001")).thenReturn(emptyList())
+
+        val viewModel = RoiEditorViewModel(mockRepository, "tpl_001")
+        advanceUntilIdle()
+
+        viewModel.toggleDrawingMode()
+        viewModel.updateDrawingRect(NormalizedRect(0.2f, 0.2f, 0.6f, 0.6f))
+
+        // 未选择 targetType 时保存失败
+        val saved = viewModel.saveDrawingRect("新 ROI")
+        assertFalse("未选择 targetType 时应保存失败", saved)
+        assertEquals(0, viewModel.rois.size)
+    }
+
+    @Test
+    fun `新增 ROI 选择 targetType 后保存成功`() = runTest {
+        `when`(mockRepository.getRois("tpl_001")).thenReturn(emptyList())
+
+        val viewModel = RoiEditorViewModel(mockRepository, "tpl_001")
+        advanceUntilIdle()
+
+        viewModel.toggleDrawingMode()
+        viewModel.updateDrawingRect(NormalizedRect(0.2f, 0.2f, 0.6f, 0.6f))
+        viewModel.updateDrawingTargetType(RoiTargetType.THREAD)
+
+        val saved = viewModel.saveDrawingRect("新 ROI")
+        assertTrue("选择 targetType 后应保存成功", saved)
+        advanceUntilIdle()
+
+        assertEquals(1, viewModel.rois.size)
+        assertEquals("THREAD", viewModel.rois[0].targetType)
+    }
+
+    @Test
+    fun `更新已有 ROI 的 targetType`() = runTest {
+        val roi1 = createTestRoi("roi_1")
+        `when`(mockRepository.getRois("tpl_001")).thenReturn(listOf(roi1))
+
+        val viewModel = RoiEditorViewModel(mockRepository, "tpl_001")
+        advanceUntilIdle()
+
+        assertNull(viewModel.rois[0].targetType)
+
+        viewModel.updateRoiTargetType("roi_1", RoiTargetType.NUT)
+        advanceUntilIdle()
+
+        assertEquals("NUT", viewModel.rois[0].targetType)
+    }
+
+    @Test
+    fun `更新不存在的 ROI 的 targetType 不执行操作`() = runTest {
+        val roi1 = createTestRoi("roi_1")
+        `when`(mockRepository.getRois("tpl_001")).thenReturn(listOf(roi1))
+
+        val viewModel = RoiEditorViewModel(mockRepository, "tpl_001")
+        advanceUntilIdle()
+
+        viewModel.updateRoiTargetType("nonexistent", RoiTargetType.FEATURE)
+        advanceUntilIdle()
+
+        // 不存在的 ROI 不应改变列表状态
+        assertEquals(1, viewModel.rois.size)
+        assertNull(viewModel.rois[0].targetType)
+    }
+
+    @Test
+    fun `取消绘制清除 targetType`() = runTest {
+        `when`(mockRepository.getRois("tpl_001")).thenReturn(emptyList())
+
+        val viewModel = RoiEditorViewModel(mockRepository, "tpl_001")
+        advanceUntilIdle()
+
+        viewModel.toggleDrawingMode()
+        viewModel.updateDrawingTargetType(RoiTargetType.THREAD)
+        assertNotNull(viewModel.drawingTargetType)
+
+        viewModel.cancelDrawing()
+        assertNull(viewModel.drawingTargetType)
+    }
+
+    @Test
+    fun `切换绘制模式清除 targetType`() = runTest {
+        `when`(mockRepository.getRois("tpl_001")).thenReturn(emptyList())
+
+        val viewModel = RoiEditorViewModel(mockRepository, "tpl_001")
+        advanceUntilIdle()
+
+        viewModel.toggleDrawingMode()
+        viewModel.updateDrawingTargetType(RoiTargetType.FEATURE)
+        assertNotNull(viewModel.drawingTargetType)
+
+        viewModel.toggleDrawingMode() // 关闭绘制模式
+        assertNull(viewModel.drawingTargetType)
+    }
+
+    @Test
+    fun `不同 templateId 的 targetType 隔离`() = runTest {
+        val roiA = createTestRoi("roi_A", templateId = "tpl_A")
+        val roiB = createTestRoi("roi_B", templateId = "tpl_B")
+        `when`(mockRepository.getRois("tpl_A")).thenReturn(listOf(roiA))
+        `when`(mockRepository.getRois("tpl_B")).thenReturn(listOf(roiB))
+
+        val viewModelA = RoiEditorViewModel(mockRepository, "tpl_A")
+        val viewModelB = RoiEditorViewModel(mockRepository, "tpl_B")
+        advanceUntilIdle()
+
+        // 更新 tpl_A 的 ROI targetType
+        viewModelA.updateRoiTargetType("roi_A", RoiTargetType.THREAD)
+        advanceUntilIdle()
+
+        // tpl_B 的 ROI 不受影响
+        assertNull(viewModelB.rois[0].targetType)
     }
 }

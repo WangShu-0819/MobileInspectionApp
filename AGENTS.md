@@ -57,29 +57,67 @@
 
 ## 当前唯一任务
 
-**模板配置支持先创建零件，再导入模板** — **IN_PROGRESS**（2026-09-03，待用户验收）。
+**拍照后人工确认 + 持久化** — **IN_PROGRESS**（2026-09-04）。
 
-目标：在当前 `PartListScreen` 中提供不依赖模板图片的真实新建零件入口；创建成功后进入对应 `PartDetailScreen`，再导入或拍摄多个 View。页面已简化为只保留"新建零件"入口，移除"导入模板"按钮避免顶部遮挡。当前 APK SHA-256 `2a32ee15784734a8c719f3c3e33598788066d5c3673f1d90980bfbaab88c458b`，JVM 397 项（全部 passed / 0 failed / 0 skipped）。
+目标：每拍完一个 View 的现场照片后，展示全部模板 ROI，工人逐个选择 ROI 的 OK/NG，并单独选择整张照片的总体 OK/NG；所有人工结果、时间、照片、View、模板、零件和采集批次必须真实持久化。
 
 执行边界：
-1. 复用现有 `PartEntity`、`PartDao`、`InspectionRepository`、`PartListScreen`、`PartDetailScreen` 和唯一 CameraX 架构。
-2. 保留已有零件导入多张图片、选择已有零件、View 拍摄/重拍/删除、排序和逐 View ROI 行为。
-3. 创建空零件不要求图片，不创建空模板或孤儿文件；不重写 ROI、模板存储或数据库模型。
-4. 不实现拍后自动对比、Detector/PASS-FAIL、实时轮廓/姿态对齐、Session ROI 或结果导出。
-5. 只进行源码、自动化测试和文档修改，禁止执行 adb、安装/卸载 APK、启动或停止真机应用。
-6. 完成后由 Agent 回填 `tasks/todo.md` 完成清单、实际修改文件、测试结果、报告和 Git 状态，然后暂停等待验收。
+1. 复用现有 `CaptureBatchEntity`、`CapturedPhotoEntity`、`InspectionSessionEntity`、`RoiInspectionRecordEntity`、DAO 和 `InspectionRepository`；不得创建第二套 ROI 数据模型或第二套 CameraX。
+2. ROI 坐标使用模板 `normalizedRect` 映射到现场照片实际 image contentRect；不实现 Homography、自动对齐、自动轮廓或 Session ROI 编辑。
+3. ROI `targetType` 继续使用稳定枚举值；历史空值显示"未选择"，不得自动猜测。
+4. 软件检测结果保持 null/未执行，不伪造 Detector、PASS 或 FAIL；总体结果不能由 ROI 结果自动计算或覆盖。
+5. 未确认时不得默认 OK/NG；ROI 或总体为 NG 时仍必须保存。
+6. 只进行源码、自动化测试和文档修改；禁止执行 adb、Gradle、APK 安装/卸载、启动/停止真机应用。
+7. 完成后更新 `tasks/todo.md` 和 `docs/reports/b2/` 对应报告，然后暂停等待验收；不提交 Git，除非用户另行明确授权。
 
 **Bug Fix**（2026-09-03）：修复模板图片降采样导致 Canvas 绘制失败。CameraPreview 的 inSampleSize 计算逻辑已修正，8000x6000 图片现在使用 inSampleSize=4。模板图片解码已移至 Dispatchers.IO，切换 View 时旧 Bitmap 已正确回收。新增 CameraPreviewTest 14 项单元测试。
 
 历史记录：模板拍摄、缩略图、重拍、排序 — **SOFTWARE_COMPLETE**（2026-09-03）。APK SHA-256 `56e390a067ccd1a040ea05b86b9743bc185bf2c1215630e7fc0f4f35a9e7f495`。
 
 当前任务边界：
-- 复用已有 PartEntity、PartDao、InspectionTemplateEntity、TemplateImportService、InspectionRepository。
-- 模板配置零件列表本轮新增“新建零件”入口；创建后通过 `partId` 进入 PartDetail，再使用已有模板导入/拍摄流程。
-- 导入时支持选择已有零件或新建零件，避免重复输入零件 ID/名称；已有零件导入不再重复填写 ID/name。
-- ROI 编辑器的选中、移动、缩放、边界约束和保存 `normalizedRect` 属于已完成前序能力，本轮只做回归。
+- 复用已有 `RoiEditorScreen`、`RoiEditorViewModel`、`RoiDefinitionEntity`、ROI DAO 和 `InspectionRepository`。
+- 本轮实现模板 ROI 的目标属性选择和持久化。
+- 保留 ROI 新增、取消、选中、移动、缩放、边界约束、删除和 `normalizedRect` 保存行为。
 - 只进行源码、自动化测试和文档修改，禁止执行 adb、安装/卸载 APK、启动或停止真机应用。
-- 不实现拍后自动对比、Detector/PASS-FAIL、自动轮廓提取、自动对齐、Session ROI 或结果导出。
+- 不实现 Detector/PASS-FAIL、自动轮廓提取、自动对齐、Session ROI 或结果包导出。
+
+## 已完成任务：模板 ROI 属性选择
+
+状态：**SOFTWARE_COMPLETE / PHYSICAL_ACCEPTANCE_PASS**（2026-09-04，用户确认验收完成）。已实现 `RoiTargetType` 枚举、`RoiDefinitionEntity.targetType` 字段、数据库 migration v4→v5、UI 属性选择器和自动化测试（441 项通过）。
+
+目标：模板配置中的每一个 ROI 除 `normalizedRect` 外，还必须保存一个目标属性，用于后续选择一致的 ROI 检测算法。当前支持三种属性：
+
+- `THREAD` — 螺纹
+- `NUT` — 螺母
+- `FEATURE` — 部件
+
+后续实现要求：
+
+1. 复用现有 `RoiDefinitionEntity`、ROI DAO、`InspectionRepository` 和 `RoiEditorScreen`；优先在现有 ROI 实体增加一个规范字段（建议 `targetType`），不得创建第二套 ROI 数据模型。
+2. 新增 ROI 时必须能够选择属性；属性未选择时不得静默保存为某一种检测类型，也不得显示“配置完成”。
+3. 已有 ROI 必须显示当前属性，并支持重新选择/修改属性；历史 ROI 没有属性时显示“未选择”，不能自动猜测，后续检测前必须要求补选。
+4. 属性必须真实持久化，并按当前 `templateId`、View 和图片隔离；切换 View、重新进入页面、删除后重建页面时属性不能串用或丢失。
+5. 属性选择控件应在 ROI 创建和编辑流程中清晰可见，使用用户可理解的中文名称“螺纹/螺母/部件”，同时保存稳定枚举值，不得只保存展示文本。
+6. 审计并覆盖所有 ROI 读写路径：新增、编辑、移动、缩放、加载、删除、模板导入以及现有模板包序列化路径（如果该路径当前已实现）。数据库变更必须提供真实 migration，并保留旧数据可读性。
+7. 为后续检测路由保留明确映射：`THREAD` → Thread 检测、`NUT` → Nut 检测、`FEATURE` → Feature 检测。本任务只实现属性选择和存储，不实现 Detector/PASS-FAIL 或自动检测。
+8. 不允许用全局 Part 属性代替 ROI 属性；同一 View 中不同 ROI 可以有不同属性，每张图片的 ROI 仍保持独立。
+9. 增加自动化测试：属性枚举校验、默认未选择状态、新增/修改/重新加载持久化、按 `templateId`/View 隔离、删除后无残留，以及旧 ROI migration 回归。
+10. 只进行 MobileInspectionApp 源码、自动化测试和文档修改；不得修改旧工程，不得实现自动轮廓提取、实时对齐、Session ROI、结果导出或新的 CameraX。
+11. 完成后更新 `tasks/todo.md` 和 `docs/reports/b2/` 对应报告，报告必须列出实际修改文件、migration、测试结果、未完成的检测集成项和 Git 状态；不提交 Git，等待验收。
+
+可直接交给执行 Agent 的任务描述：
+
+> 在现有模板 ROI 编辑器中增加 ROI 目标属性选择，支持“螺纹（THREAD）/螺母（NUT）/部件（FEATURE）”。请先审计 `RoiDefinitionEntity`、DAO、Repository、`RoiEditorScreen` 和所有模板导入/加载路径，再以最小改动增加规范枚举字段并完成真实持久化。新增 ROI 必须选择属性；旧 ROI 没有属性时显示“未选择”，不得自动猜测或伪造检测就绪。已有 ROI 支持查看和修改属性，属性按 `templateId`、View、图片独立保存。保留 ROI 新增、取消、选中、移动、缩放、边界约束、删除和 `normalizedRect` 行为。补充 JVM/Repository/UI 状态测试，覆盖新增、修改、重载、隔离、删除和 migration。当前任务只做属性选择与数据层，不实现 Detector/PASS-FAIL、自动轮廓、自动对齐、Session ROI、结果导出或新的 CameraX；不运行 adb、安装 APK 或真机测试；完成后更新任务清单和 B2 报告，不提交 Git，等待验收。
+
+## 当前任务详细要求：拍照后人工确认
+
+状态：**IN_PROGRESS**。附件图片仅作为 OK/NG 弹窗的交互草图，不是验收证据；本轮先完成确认界面和持久化，不接入自动检测。
+
+- 单张照片拍摄完成后，预留“检测结果人工确认”流程和按钮/弹窗。
+- ROI 自动检测可以暂时不接入，但 UI 和数据结构应为后续 `PASS/FAIL` 结果预留，不得伪造检测结果。
+- 人工确认选项为 `OK` 和 `NG`；用户未确认时不能自动标记合格或不合格。
+- 后续实现需明确确认对象是整张照片还是每个 ROI，并保存照片、ROI、检测状态、人工确认结果和时间的关联。
+- 本需求不改变当前 ROI 属性、ROI 编辑、检测算法和官方 DCIM 评估口径。
 
 识别算法以旧工程当前生产实现为行为基线：保留 ZXing `DataMatrixReader` 主解码、中心 ROI、预处理策略轮转、双极性尝试、全图降采样、ML Kit DATA_MATRIX 兜底、帧节流、响应门、连续 miss 对焦和旧版网格兜底。只允许为适配新 `CameraController`、`FrameAnalyzer`、包名和生命周期做必要改造，不得擅自调换解码顺序、删减旧策略或用全新简化算法替代。
 

@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.wearable.inspection.mobile.data.entity.RoiDefinitionEntity
+import com.wearable.inspection.mobile.data.entity.RoiTargetType
 import com.wearable.inspection.mobile.data.repository.InspectionRepository
 import kotlinx.coroutines.launch
 import java.util.UUID
@@ -33,6 +34,10 @@ class RoiEditorViewModel(
 
     /** 选中的 ROI ID（用于高亮和删除） */
     var selectedRoiId by mutableStateOf<String?>(null)
+        private set
+
+    /** 当前绘制时选择的目标属性类型 */
+    var drawingTargetType by mutableStateOf<RoiTargetType?>(null)
         private set
 
     /** 删除错误信息，UI 消费后调用 clearDeleteError() 清除 */
@@ -65,6 +70,7 @@ class RoiEditorViewModel(
         isDrawingMode = !isDrawingMode
         if (!isDrawingMode) {
             drawingRect = null
+            drawingTargetType = null
         }
         selectedRoiId = null
     }
@@ -79,9 +85,15 @@ class RoiEditorViewModel(
         drawingRect = rect
     }
 
-    /** 保存正在绘制的矩形为新 ROI */
-    fun saveDrawingRect(name: String = "ROI ${_rois.size + 1}") {
-        val rect = drawingRect ?: return
+    /** 更新绘制时的目标属性类型 */
+    fun updateDrawingTargetType(type: RoiTargetType?) {
+        drawingTargetType = type
+    }
+
+    /** 保存正在绘制的矩形为新 ROI（必须指定 targetType） */
+    fun saveDrawingRect(name: String = "ROI ${_rois.size + 1}"): Boolean {
+        val rect = drawingRect ?: return false
+        val targetType = drawingTargetType ?: return false // 未选择属性时不允许保存
         val roi = RoiDefinitionEntity(
             id = UUID.randomUUID().toString(),
             templateId = templateId,
@@ -90,18 +102,38 @@ class RoiEditorViewModel(
             shapeType = "RECT",
             normalizedRect = rect.toJsonString(),
             inspectionType = "VISUAL",
+            targetType = targetType.name,
         )
         viewModelScope.launch {
             repository.insertRoi(roi)
             _rois.add(roi)
             drawingRect = null
+            drawingTargetType = null
             isDrawingMode = false
+        }
+        return true
+    }
+
+    /**
+     * 更新已有 ROI 的目标属性类型
+     *
+     * @param roiId 目标 ROI ID
+     * @param targetType 新的目标属性类型
+     */
+    fun updateRoiTargetType(roiId: String, targetType: RoiTargetType) {
+        val index = _rois.indexOfFirst { it.id == roiId }
+        if (index < 0) return
+        viewModelScope.launch {
+            val updated = _rois[index].copy(targetType = targetType.name)
+            repository.updateRoi(updated)
+            _rois[index] = updated
         }
     }
 
     /** 取消当前绘制 */
     fun cancelDrawing() {
         drawingRect = null
+        drawingTargetType = null
         isDrawingMode = false
     }
 

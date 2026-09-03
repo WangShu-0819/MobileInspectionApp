@@ -17,7 +17,7 @@ import com.wearable.inspection.mobile.data.entity.*
         CaptureBatchEntity::class,
         CapturedPhotoEntity::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {

@@ -1,13 +1,27 @@
 # Implementation Plan: MobileInspectionApp 当前阶段
 
+## 当前任务：拍照后人工确认 + 持久化（IN_PROGRESS）
+
+2026-09-04：模板 ROI 属性选择已完成并通过验收。本阶段只推进拍照后人工确认和持久化，完整照片 + Excel ZIP 作为后续独立任务。
+
+执行边界：
+
+- 每拍完一个 View 后进入人工确认界面，不自动把 ROI 结果或总体结果判为 OK/NG。
+- 复用现有批次、照片、InspectionSession、ROI 记录、DAO 和 Repository；不创建第二套 ROI 数据模型或新的 CameraX。
+- 展示当前照片全部 ROI，使用 normalizedRect 映射到实际 image contentRect，并保存 ROI/总体人工结果及确认时间。
+- 软件检测结果保持 null/未执行；不实现自动检测、Homography、自动对齐、自动轮廓或 Session ROI 编辑。
+- 只修改源码、自动化测试和文档；不运行 Gradle、ADB、APK 或真机测试，不提交 Git。
+
+完成后必须更新 `tasks/todo.md` 和 `docs/reports/b2/` 报告，列出实际修改文件、测试状态、未完成项和 Git 状态，暂停等待验收。
+
 ## 已完成任务：模板视角 ROI 长按删除回归整改（2026-09-03）
 
 状态：**SOFTWARE_COMPLETE / PHYSICAL_ACCEPTANCE_PASS**（2026-09-03，人工交互验收通过）
 
 用户确认：已有 ROI 和新增 ROI 均可点按/长按选中、确认删除并正确持久化。
 
-结果包导出（基础照片 ZIP，以及 manifest + Excel + 图片的完整结果包）是后续独立任务，不能在本轮并行实现。
-现场采集模板参考图拍照时上移、黑边消失和比例变化，作为后续独立任务处理。
+~~结果包导出（基础照片 ZIP）~~ 阶段 1 实现中：基础照片 ZIP 导出已完成，manifest + Excel + 图片完整结果包仍未实现。
+~~现场采集模板参考图拍照时上移、黑边消失和比例变化，作为阶段 2 处理。~~ 阶段 2 实现中：模板参考图拍照时上移已修复。
 ~~重复"新建零件"按钮作为后续独立任务处理。~~ ✅ 已修复：移除列表区全宽按钮，仅保留 TopAppBar "+" 入口。
 
 ### 审计结论与依赖
@@ -103,7 +117,7 @@
 
 ## Overview
 
-B1 共享 CameraX 已完成技术验收。B2 模板导入、透明叠加、模板配置层级、模板拍摄和 ROI 移动/缩放整改已完成对应软件任务。当前只执行“模板视角 ROI 长按删除回归整改”，不并行推进现场采集模板图布局、拍后比对、Detector、结果包导出或 B3 Presence Detection。
+B1 共享 CameraX 已完成技术验收。B2 模板导入、透明叠加、模板配置层级、模板拍摄、ROI 移动/缩放和 ROI 属性选择已完成对应软件任务。当前只执行“拍照后人工确认 + 持久化”，不并行推进 Detector、完整结果包导出或 B3 Presence Detection。
 
 ## Architecture Decisions
 
@@ -114,19 +128,38 @@ B1 共享 CameraX 已完成技术验收。B2 模板导入、透明叠加、模�
 
 ## Task List
 
-### 当前任务：模板视角 ROI 长按删除回归整改
+### 历史阶段：按采集批次导出照片 ZIP + UI 压缩
 
-- [ ] 普通点按和长按已有 ROI 均能可靠命中并选中
-- [ ] 长按选中后进入清晰的删除确认
-- [ ] 删除当前 View 的选中 ROI 并真实持久化
-- [ ] 删除失败和无选中状态处理正确
-- [ ] 新增、取消、移动、缩放、边界和多 View ROI 回归通过
-- [ ] 补充自动化测试并通过三条 Gradle 命令
-- [ ] Agent 回填 `tasks/todo.md` 和 `docs/reports/b2/` 报告
+**阶段 1：按采集批次导出** — ✅ SOFTWARE_COMPLETE（待验收）
 
-### Checkpoint：ROI 长按删除回归整改完成
+- [x] CaptureBatchEntity + CapturedPhotoEntity 实体定义
+- [x] CaptureBatchDao + CapturedPhotoDao DAO
+- [x] AppDatabase 版本 3→4，MIGRATION_3_4
+- [x] InspectionRepository 新增批次/照片 CRUD
+- [x] PhotoExportService 重写为 exportBatchToZip(batchId)
+- [x] LiveInspectionScreen 拍照时自动创建批次、记录照片
+- [x] TraceRecordsScreen 显示采集批次列表，per-batch 导出按钮
+- [x] 切换零件时自动重置批次
+- [x] 三条 Gradle 命令全部通过
+- [x] 更新 docs/reports/b2/PHOTO_ZIP_EXPORT_REPORT.md
 
-- [ ] 所有验收标准已由代码和测试证明
+**阶段 2：压缩采集页控件** — ✅ SOFTWARE_COMPLETE（待验收）
+
+- [x] 压缩 TemplateOverlayControls：minHeight 48→36dp，IconButton 48→32dp，icon 20→16dp，padding 12→8dp
+- [x] 压缩 TemplateReferenceSection：padding 8→4dp，spacedBy 6→4dp，view row minHeight 40→28dp
+- [x] 压缩 CaptureActionBar：button height 48→40dp，icon 24→18dp，fontSize 16→14sp
+- [x] 压缩 TemplateSelector：minHeight 48→28dp，fontSize 11sp
+- [x] 压缩 AllViewsCapturedCard：icon 24→18dp，padding 压缩
+- [x] 压缩拍照状态提示：minHeight 36→28dp，icon 20→16dp
+- [x] 不修改 CameraPreview、模板图显示、FIT_CENTER、contentRect、CameraX
+- [x] 三条 Gradle 命令全部通过
+- [x] 更新 tasks/todo.md
+
+### Checkpoint：阶段 1 + 2 验收
+
+- [x] 阶段 1 所有验收标准已由代码和测试证明
+- [x] 阶段 2 所有验收标准已由代码和测试证明
+- [ ] 用户验收阶段 1 + 2
 - [ ] 报告记录实际修改文件、测试结果、真机范围、未完成项和 Git 状态
 - [ ] 等待用户验收后再决定是否提交 Git
 

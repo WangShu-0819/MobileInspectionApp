@@ -1,10 +1,170 @@
-# 当前唯一任务：模板视角 ROI 长按删除回归整改
+# 当前任务：拍照后人工确认 + 持久化
 
-用户最新反馈（2026-09-03）：上一版虽然增加了删除按钮和确认框，但人工测试时点击模板视角中的已有 ROI 仍无法完成选中和删除。需要改为可靠的“长按 ROI 框选中 → 删除确认”交互。本轮暂停 B3 Presence Detection、拍后比对和结果包导出，只处理 ROI 删除回归；完成后更新本文件及对应报告，暂停等待用户验收。不得并行处理其他未完成业务。
+用户最新指令（2026-09-04）：
+- 模板 ROI 属性选择已完成并通过验收，不重复实现。
+- 继续执行“拍照后人工确认 + 持久化”任务。
 
-结果包导出（基础照片 ZIP、manifest + Excel + 图片）作为后续独立任务，待本任务验收后再单独规划。
+## 拍照后人工确认 + 持久化
 
-现场采集模板参考图拍照时上移、黑边和显示比例变化，作为 ROI 删除验收通过后的独立任务处理。
+状态：**IN_PROGRESS**（2026-09-04，执行中）。
+
+目标：每拍完一个 View 的现场照片后，展示该照片对应的全部模板 ROI；工人逐个选择 ROI 的 OK/NG，并单独选择整张照片的总体 OK/NG，结果和确认时间真实保存到当前零件的采集批次。
+
+当前清单：
+- [ ] 审计并复用现有批次、照片、InspectionSession、ROI 记录和 Repository 数据路径
+- [ ] 拍照成功后进入当前 View 的人工确认界面，不自动推进到下一 View
+- [ ] 展示全部 ROI 裁剪图、ROI ID、名称、targetType 和 ROI OK/NG 选择
+- [ ] 展示并保存独立的整张照片总体 OK/NG 选择
+- [ ] 使用 normalizedRect 映射到现场照片实际 image contentRect
+- [ ] 保存照片、零件、模板、View、ROI、人工结果和确认时间关联
+- [ ] 未确认时不默认 OK/NG，软件检测结果保持 null/未执行
+- [ ] 补充状态、持久化、隔离、重载和 NG 路径自动化测试
+- [ ] 更新 `docs/reports/b2/` 对应报告并等待验收
+
+本任务不实现 Thread/Nut/Feature 自动检测、PASS/FAIL、Homography、自动对齐、自动轮廓、Session ROI 编辑或新的 CameraX。完整照片 + Excel ZIP 导出列为本任务后的独立任务。
+
+---
+
+## 已完成任务：模板 ROI 属性选择
+
+用户最新指令（2026-09-03）：
+- 为模板配置中的每个 ROI 增加目标属性选择：THREAD（螺纹）、NUT（螺母）、FEATURE（部件）
+- 暂停当前 ROI 删除整改，不并行处理其他任务
+
+## 模板 ROI 属性选择
+
+状态：**SOFTWARE_COMPLETE / PHYSICAL_ACCEPTANCE_PASS**（2026-09-04，用户确认验收完成）
+
+目标：模板配置中的每一个 ROI 除 `normalizedRect` 外，还必须保存一个目标属性，用于后续选择一致的 ROI 检测算法。
+
+完成清单：
+- [x] 创建 `RoiTargetType` 枚举（THREAD/NUT/FEATURE）
+- [x] `RoiDefinitionEntity` 增加 `targetType` 字段（nullable，旧 ROI 为 null）
+- [x] 数据库 migration v4 → v5（ALTER TABLE roi_definitions ADD COLUMN targetType TEXT）
+- [x] `RoiEditorViewModel` 支持 targetType：新增 ROI 必须选择属性，已有 ROI 可修改属性
+- [x] `RoiEditorScreen` 增加属性选择 UI：绘制模式选择、选中 ROI 显示和修改
+- [x] `TemplateDetailScreen` 显示 targetType
+- [x] 旧 ROI 无属性时显示”未选择”，不得自动猜测
+- [x] 属性真实保存到 `RoiDefinitionEntity`，按 templateId/View 隔离
+- [x] 保留 ROI 新增、选中、移动、缩放、边界约束、删除和 normalizedRect
+- [x] 补充 `RoiTargetTypeTest`（10 项）和 `RoiEditorViewModelTest`（12 项新增，总计 65 项）
+- [x] `:app:compileDebugKotlin --no-daemon` 通过
+- [x] `:app:testDebugUnitTest --no-daemon` 通过（441 项：全部 passed / 0 failed / 5 skipped）
+- [x] `:app:assembleDebug --no-daemon` 通过
+- [x] 更新 `docs/reports/b2/ROI_TARGET_TYPE_REPORT.md`
+
+### 执行完成回填区
+
+- 实际修改文件：
+  - `app/src/main/java/com/wearable/inspection/mobile/data/entity/RoiTargetType.kt` — 新增：ROI 目标属性类型枚举（THREAD/NUT/FEATURE）
+  - `app/src/main/java/com/wearable/inspection/mobile/data/entity/RoiDefinitionEntity.kt` — 增加 `targetType: String? = null` 字段
+  - `app/src/main/java/com/wearable/inspection/mobile/data/db/AppDatabase.kt` — 版本 4→5
+  - `app/src/main/java/com/wearable/inspection/mobile/data/db/Migrations.kt` — MIGRATION_4_5
+  - `app/src/main/java/com/wearable/inspection/mobile/ui/screens/RoiEditorViewModel.kt` — 增加 `drawingTargetType` 状态、`updateDrawingTargetType()`、`saveDrawingRect()` 返回 Boolean、`updateRoiTargetType()`
+  - `app/src/main/java/com/wearable/inspection/mobile/ui/screens/RoiEditorScreen.kt` — 增加属性选择 UI（绘制模式选择器、选中 ROI 显示和修改）
+  - `app/src/main/java/com/wearable/inspection/mobile/ui/screens/TemplateDetailScreen.kt` — ROI 列表显示 targetType
+  - `app/src/test/java/com/wearable/inspection/mobile/data/entity/RoiTargetTypeTest.kt` — 新增：10 项测试
+  - `app/src/test/java/com/wearable/inspection/mobile/ui/screens/RoiEditorViewModelTest.kt` — 新增 12 项 targetType 测试，总计 65 项
+- 测试命令及结果：
+  - `:app:compileDebugKotlin --no-daemon` — BUILD SUCCESSFUL（36s）
+  - `:app:testDebugUnitTest --no-daemon` — BUILD SUCCESSFUL（441 项：全部 passed / 0 failed / 5 skipped）
+  - `:app:assembleDebug --no-daemon` — BUILD SUCCESSFUL（24s）
+- 真机证据：`NOT_RUN_BY_SCOPE`（本轮禁止 adb）
+- 未完成项：
+  - Detector/PASS-FAIL 集成（后续任务）
+  - 自动轮廓提取、自动对齐（DEFERRED）
+  - Session ROI、结果导出（DEFERRED）
+  - Git 提交：本轮提交后回填
+
+---
+
+# 历史任务
+
+## 按采集批次导出照片 ZIP + UI 压缩
+
+用户最新反馈（2026-09-03）：
+- 阶段 1：按”零件 + 单次采集”导出基础照片 ZIP（✅ Phase 1 完成，待验收）
+- 阶段 2：压缩采集页透明度和视角提示控件（✅ Phase 2 完成，待验收）
+
+## 阶段 1：按采集批次导出照片 ZIP
+
+状态：**SOFTWARE_COMPLETE**（2026-09-03，待用户验收）
+
+目标：按”零件 + 单次采集”导出基础照片 ZIP，建立可靠的 partId/batch 关联，老照片不被导出。
+
+完成清单：
+- [x] CaptureBatchEntity + CapturedPhotoEntity 实体定义
+- [x] CaptureBatchDao + CapturedPhotoDao DAO
+- [x] AppDatabase 版本 3→4，MIGRATION_3_4
+- [x] InspectionRepository 新增批次/照片 CRUD
+- [x] PhotoExportService 重写为 exportBatchToZip(batchId)
+- [x] LiveInspectionScreen 拍照时自动创建批次、记录照片
+- [x] TraceRecordsScreen 显示采集批次列表，每个批次独立导出按钮
+- [x] 切换零件时自动重置批次（LaunchedEffect）
+- [x] `:app:compileDebugKotlin` 通过
+- [x] `:app:testDebugUnitTest` 通过
+- [x] `:app:assembleDebug` 通过
+- [x] 更新 `docs/reports/b2/PHOTO_ZIP_EXPORT_REPORT.md`
+
+### 执行完成回填区
+
+- 实际修改文件：
+  - `data/entity/CaptureBatchEntity.kt` — 新增：采集批次实体
+  - `data/entity/CapturedPhotoEntity.kt` — 新增：已拍照片实体
+  - `data/dao/CaptureBatchDao.kt` — 新增：批次 DAO
+  - `data/dao/CapturedPhotoDao.kt` — 新增：照片 DAO
+  - `data/db/AppDatabase.kt` — 版本 3→4，新增实体和 DAO
+  - `data/db/Migrations.kt` — MIGRATION_3_4
+  - `data/repository/InspectionRepository.kt` — 新增批次/照片 CRUD，移除 getImageStore() 方法
+  - `MobileInspectionApp.kt` — 更新 repository 构造参数
+  - `data/export/PhotoExportService.kt` — 重写为按批次导出
+  - `ui/screens/LiveInspectionScreen.kt` — 拍照时创建批次、记录照片、切换零件重置批次
+  - `ui/screens/TraceRecordsScreen.kt` — 显示采集批次列表，per-batch 导出按钮
+  - `data/export/PhotoExportServiceTest.kt` — 更新测试
+- 测试命令及结果：
+  - `:app:compileDebugKotlin` — BUILD SUCCESSFUL（12s）
+  - `:app:testDebugUnitTest` — BUILD SUCCESSFUL（39s）
+  - `:app:assembleDebug` — BUILD SUCCESSFUL（16s）
+- 真机证据：`NOT_RUN_BY_SCOPE`（本轮禁止 adb）
+- 未完成项：
+  - manifest + Excel + 图片完整结果包（当前产品边界暂缓）
+  - 拍后比对（V1-3）、Detector（V1-4）、结果查看（V1-5）仍为 DEFERRED
+- Git 提交：`NOT_COMMITTED`（阶段 1 不提交）
+
+## 阶段 2：压缩采集页控件
+
+状态：**SOFTWARE_COMPLETE**（2026-09-03，待用户验收）
+
+目标：压缩 TemplateOverlayControls 和 TemplateReferenceSection 的视觉高度/内边距/背景，释放更多空间给模板参考图。
+
+完成清单：
+- [x] TemplateOverlayControls：minHeight 48→36dp，IconButton 48→32dp，icon 20→16dp，padding 12→8dp
+- [x] TemplateReferenceSection：padding 8→4dp，spacedBy 6→4dp，view row minHeight 40→28dp
+- [x] CaptureActionBar：button height 48→40dp，icon 24→18dp，fontSize 16→14sp
+- [x] TemplateSelector：minHeight 48→28dp，fontSize 标准化为 11sp
+- [x] AllViewsCapturedCard：icon 24→18dp，padding 压缩，fontSize 标准化
+- [x] 拍照状态提示区域：minHeight 36→28dp，icon 20→16dp
+- [x] 不修改 CameraPreview、模板图显示、FIT_CENTER、contentRect、CameraX
+- [x] `:app:compileDebugKotlin` 通过
+- [x] `:app:testDebugUnitTest` 通过
+- [x] `:app:assembleDebug` 通过
+
+### 执行完成回填区
+
+- 实际修改文件：
+  - `app/src/main/java/com/wearable/inspection/mobile/ui/screens/LiveInspectionScreen.kt` — 压缩 TemplateOverlayControls、TemplateReferenceSection、CaptureActionBar、TemplateSelector、AllViewsCapturedCard 和拍照状态提示区域的垂直高度/内边距/字号
+- 测试命令及结果：
+  - `:app:compileDebugKotlin` — BUILD SUCCESSFUL（12s）
+  - `:app:testDebugUnitTest` — BUILD SUCCESSFUL（34s）
+  - `:app:assembleDebug` — BUILD SUCCESSFUL（7s）
+- 真机证据：`NOT_RUN_BY_SCOPE`（本轮禁止 adb）
+- 未完成项：
+  - 回归测试：模板叠加、View 切换、零件选择（需真机验证）
+- Git 提交：`NOT_COMMITTED`（阶段 2 不提交）
+
+---
+
+# 历史任务
 
 ## 模板视角 ROI 长按删除回归整改
 
@@ -58,8 +218,9 @@
 - 未完成项：
   - 手势级自动化测试（点按选中、长按选中、重叠 ROI 命中）因 RoiCanvas 为 private 函数无法直接通过 Compose UI 测试覆盖；已通过 ViewModel 级测试（53 项）+ 人工交互验收覆盖
   - ~~重复"新建零件"按钮（PartListScreen 顶部与列表区可能存在两个入口）~~ ✅ 已修复：移除列表区全宽按钮，仅保留 TopAppBar "+" 入口
-  - 结果包导出（基础照片 ZIP、manifest + Excel + 图片）作为后续独立任务，待单独规划
-  - 现场采集模板图布局稳定性、拍后比对（V1-3）、Detector（V1-4）、结果查看（V1-5）暂不处理
+  - ~~结果包导出（基础照片 ZIP）~~ 阶段 1 实现中：基础照片 ZIP 导出已完成，manifest + Excel + 图片完整结果包仍未实现
+  - ~~现场采集模板图布局稳定性~~ 阶段 2 实现中：模板参考图拍照时上移已修复
+  - 拍后比对（V1-3）、Detector（V1-4）、结果查看（V1-5）暂不处理
 - Git 提交：`NOT_COMMITTED`（本轮不提交）
 
 ---
@@ -170,7 +331,14 @@
 
 ## 暂停任务：B3 Presence Detection：螺纹、螺母和其他特征的目标有无检测
 
-状态：**PAUSED_BY_USER**
+状态：**NUT_KEY_REFINEMENT_COMPLETE / FULL_SUITE_BLOCKED_BY_PREEXISTING_THREAD_REGRESSION**（2026-09-03）
+
+本轮仅推进 NutPresenceDetector 的 Key 批量回归；Thread、Feature、Android App、Gradle/Kotlin 和实时检测集成未修改。详细结果见 `docs/reports/b3/feature_presence/NUT_REFINEMENT_REPORT.md`。
+
+- [x] 自动发现全部 `Key/nut_*.png|jpg|jpeg`，5 张样本均输出 2 个 NMS 后主体框
+- [x] `nut_1.png` 保持 `expectedCount=2`、`candidateCount=2`、`PASS`
+- [x] 增加 Nut Key 批量回归、嵌套重复框、背景亮斑/圆形/垫圈/非六边形/无中心孔误检测试和 debug contact sheet
+- [ ] 完整 unittest 门禁：当前仍受既有 Thread 严格几何测试 4 个 failure 阻塞；本轮不越界修改 Thread
 
 - [ ] 离线清点 Key/DCIM、EXIF、HSV 青绿色掩码、debug 图、manifest、unknown-only ground truth
 - [ ] 实现并测试独立 `ThreadPresenceDetector`、`NutPresenceDetector`、`FeaturePresenceDetector`

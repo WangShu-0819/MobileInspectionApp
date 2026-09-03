@@ -86,6 +86,21 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
 }
 
 /**
+ * 数据库 Migration v4 → v5
+ *
+ * 为 ROI 增加目标属性类型字段（targetType），支持螺纹/螺母/部件检测算法路由。
+ * 旧 ROI 的 targetType 为 null，显示"未选择"。
+ */
+val MIGRATION_4_5 = object : Migration(4, 5) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "ALTER TABLE roi_definitions " +
+                "ADD COLUMN targetType TEXT"
+        )
+    }
+}
+
+/**
  * 所有 Migration 列表
  * 新增 Migration 时必须在此添加
  */
@@ -93,5 +108,6 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
 val ALL_MIGRATIONS = arrayOf<Migration>(
     MIGRATION_1_2,
     MIGRATION_2_3,
-    MIGRATION_3_4
+    MIGRATION_3_4,
+    MIGRATION_4_5
 )
