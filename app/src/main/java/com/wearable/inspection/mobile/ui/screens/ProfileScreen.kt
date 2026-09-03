@@ -33,6 +33,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -57,6 +58,8 @@ import com.wearable.inspection.mobile.ui.theme.SurfaceWhite
 import com.wearable.inspection.mobile.ui.theme.TextPrimary
 import com.wearable.inspection.mobile.ui.theme.TextSecondary
 import com.wearable.inspection.mobile.ui.theme.PlaceholderColor
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * 我的页面 — MVP 简化版
@@ -87,15 +90,21 @@ fun ProfileScreen(
     val repository = remember { MobileInspectionApp.repository(context) }
 
     // 从数据库获取真实统计
-    var partCount by remember { mutableIntStateOf(0) }
-    var templateCount by remember { mutableIntStateOf(0) }
     var roiCount by remember { mutableIntStateOf(0) }
     var statsLoaded by remember { mutableStateOf(false) }
+    val allTemplates by repository.observeAllTemplates().collectAsState(initial = emptyList())
+    val configuredTemplates = remember(allTemplates) {
+        allTemplates.filter { it.enabled }
+    }
+    val partCount = remember(configuredTemplates) {
+        configuredTemplates.map { it.partId }.distinct().size
+    }
+    val templateCount = configuredTemplates.size
 
-    LaunchedEffect(Unit) {
-        partCount = repository.partCount()
-        templateCount = repository.templateCount()
-        roiCount = repository.roiCount()
+    LaunchedEffect(configuredTemplates.map { it.id }) {
+        roiCount = withContext(Dispatchers.IO) {
+            configuredTemplates.sumOf { repository.getRois(it.id).size }
+        }
         statsLoaded = true
     }
 
@@ -121,7 +130,7 @@ fun ProfileScreen(
                         icon = Icons.Default.PhotoLibrary,
                         title = "模板配置",
                         subtitle = if (statsLoaded) {
-                            "$partCount 个零件 · $templateCount 个模板 · $roiCount 个 ROI"
+                            "$partCount 个零件 · $templateCount 个视角 · $roiCount 个 ROI"
                         } else {
                             "加载中…"
                         },

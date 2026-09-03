@@ -1,62 +1,48 @@
 package com.wearable.inspection.mobile.ui.screens
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.wearable.inspection.mobile.MobileInspectionApp
+import com.wearable.inspection.mobile.data.entity.InspectionSessionEntity
+import com.wearable.inspection.mobile.domain.model.InspectionStatus
 import com.wearable.inspection.mobile.ui.theme.LocalCustomColors
-import com.wearable.inspection.mobile.ui.theme.PassColor
 import com.wearable.inspection.mobile.ui.theme.FailColor
+import com.wearable.inspection.mobile.ui.theme.PassColor
 import com.wearable.inspection.mobile.ui.theme.PendingColor
 import com.wearable.inspection.mobile.ui.theme.SurfaceWhite
 import com.wearable.inspection.mobile.ui.theme.TextPrimary
 import com.wearable.inspection.mobile.ui.theme.TextSecondary
-import com.wearable.inspection.mobile.ui.theme.DividerColor
-import com.wearable.inspection.mobile.ui.theme.Primary
 import com.wearable.inspection.mobile.ui.theme.PlaceholderColor
-import com.wearable.inspection.mobile.ui.theme.BackgroundVariant1
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import java.util.Calendar
 
 /**
  * 追溯记录页
@@ -64,18 +50,18 @@ import java.util.Locale
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TraceRecordsScreen(
-    onViewRecord: (String) -> Unit
-) {
+fun TraceRecordsScreen() {
     val customColors = LocalCustomColors.current
-
-    // 模拟统计（TODO: 从数据库获取）
-    val todayPass = 12
-    val todayFail = 3
-    val todayPending = 1
-
-    // 模拟记录列表（TODO: 从数据库获取）
-    val records = emptyList<InspectionRecordItem>()
+    val context = LocalContext.current
+    val repository = androidx.compose.runtime.remember {
+        MobileInspectionApp.repository(context)
+    }
+    val sessions by repository.observeSessions().collectAsState(initial = emptyList())
+    val todayRange = currentDayRange()
+    val todaySessions = sessions.filter { it.startTime in todayRange }
+    val todayPass = todaySessions.count { it.effectiveStatus() == InspectionStatus.PASS }
+    val todayFail = todaySessions.count { it.effectiveStatus() == InspectionStatus.FAIL }
+    val todayPending = todaySessions.size - todayPass - todayFail
 
     Scaffold(
         topBar = {
@@ -91,26 +77,11 @@ fun TraceRecordsScreen(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = SurfaceWhite,
                     titleContentColor = TextPrimary,
-                    actionIconContentColor = Primary
-                ),
-                actions = {
-                    IconButton(onClick = { /* TODO: 搜索 */ }) {
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = "搜索"
-                        )
-                    }
-                    IconButton(onClick = { /* TODO: 筛选 */ }) {
-                        Icon(
-                            imageVector = Icons.Default.FilterList,
-                            contentDescription = "筛选"
-                        )
-                    }
-                }
+                )
             )
         },
         containerColor = customColors.pageBackground
-    ) { paddingValues ->
+        ) { paddingValues ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -119,7 +90,6 @@ fun TraceRecordsScreen(
                 .padding(top = 16.dp, bottom = 8.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // 1. 今日统计
             item {
                 TodayStatsCard(
                     passCount = todayPass,
@@ -127,29 +97,29 @@ fun TraceRecordsScreen(
                     pendingCount = todayPending
                 )
             }
-
-            // 2. 筛选栏（TODO: 实现筛选功能）
             item {
-                FilterBar(
-                    activeFilters = 0,
-                    onFilterClick = { /* TODO: 打开筛选弹窗 */ }
-                )
-            }
-
-            // 3. 记录列表
-            if (records.isEmpty()) {
-                item {
-                    EmptyRecordsState()
-                }
-            } else {
-                // TODO: 实现记录列表
-            }
-
-            item {
-                Spacer(modifier = Modifier.height(8.dp))
+                EmptyRecordsState()
             }
         }
     }
+}
+
+private fun currentDayRange(): LongRange {
+    val start = Calendar.getInstance().apply {
+        set(Calendar.HOUR_OF_DAY, 0)
+        set(Calendar.MINUTE, 0)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+    }
+    val end = (start.clone() as Calendar).apply {
+        add(Calendar.DAY_OF_YEAR, 1)
+    }
+    return start.timeInMillis until end.timeInMillis
+}
+
+private fun InspectionSessionEntity.effectiveStatus(): InspectionStatus? {
+    val statusName = finalOverallStatus ?: autoOverallStatus
+    return InspectionStatus.values().firstOrNull { it.name == statusName }
 }
 
 @Composable
@@ -165,7 +135,9 @@ private fun TodayStatsCard(
         shape = RoundedCornerShape(8.dp)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Row(
@@ -175,93 +147,45 @@ private fun TodayStatsCard(
             ) {
                 Text(
                     text = "今日统计",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.SemiBold
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = TextPrimary
                 )
                 Icon(
                     imageVector = Icons.Default.DateRange,
                     contentDescription = null,
-                    tint = TextSecondary,
-                    modifier = Modifier.size(18.dp)
+                    tint = TextSecondary
                 )
             }
-
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                StatItem(
-                    label = "通过",
-                    value = "$passCount",
-                    color = PassColor
-                )
-                StatItem(
-                    label = "不通过",
-                    value = "$failCount",
-                    color = FailColor
-                )
-                StatItem(
-                    label = "待复核",
-                    value = "$pendingCount",
-                    color = PendingColor
-                )
+                StatItem("通过", passCount.toString(), PassColor)
+                StatItem("不通过", failCount.toString(), FailColor)
+                StatItem("待复核", pendingCount.toString(), PendingColor)
             }
         }
     }
 }
 
 @Composable
-private fun FilterBar(
-    activeFilters: Int,
-    onFilterClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+private fun StatItem(label: String, value: String, color: Color) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        androidx.compose.material3.AssistChip(
-            onClick = onFilterClick,
-            leadingIcon = {
-                Icon(
-                    imageVector = Icons.Default.FilterList,
-                    contentDescription = null,
-                    modifier = Modifier.size(16.dp)
-                )
-            },
-            label = {
-                Text(
-                    text = if (activeFilters > 0) "已选 $activeFilters" else "筛选",
-                    style = MaterialTheme.typography.bodySmall
-                )
-            },
-            colors = androidx.compose.material3.AssistChipDefaults.assistChipColors(
-                containerColor = if (activeFilters > 0) Primary else BackgroundVariant1,
-                labelColor = if (activeFilters > 0) Color.White else TextSecondary
-            )
+        Text(
+            text = value,
+            color = color,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 20.sp
         )
-
-        if (activeFilters > 0) {
-            androidx.compose.material3.AssistChip(
-                onClick = { /* TODO: 清除筛选 */ },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
-                    )
-                },
-                label = {
-                    Text(
-                        text = "清除",
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                },
-                colors = androidx.compose.material3.AssistChipDefaults.assistChipColors(
-                    containerColor = BackgroundVariant1,
-                    labelColor = TextSecondary
-                )
-            )
-        }
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall,
+            color = TextSecondary
+        )
     }
 }
 
@@ -297,46 +221,5 @@ private fun EmptyRecordsState() {
                 color = PlaceholderColor
             )
         }
-    }
-}
-
-// 数据模型（临时）
-data class InspectionRecordItem(
-    val id: Long,
-    val partName: String,
-    val templateName: String,
-    val timestamp: Date,
-    val status: InspectionStatus,
-    val thumbnailUrl: String? = null
-)
-
-enum class InspectionStatus {
-    PASS,    // 通过
-    FAIL,    // 不通过
-    PENDING  // 待复核
-}
-
-@Composable
-private fun StatItem(
-    label: String,
-    value: String,
-    color: Color
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        Text(
-            text = value,
-            style = MaterialTheme.typography.displaySmall,
-            fontWeight = FontWeight.SemiBold,
-            color = color,
-            fontSize = 20.sp
-        )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodySmall,
-            color = TextSecondary
-        )
     }
 }

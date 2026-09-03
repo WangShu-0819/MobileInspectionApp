@@ -68,11 +68,14 @@ fun TemplateDetailScreen(
     val repository = remember { MobileInspectionApp.repository(context) }
 
     var template by remember { mutableStateOf<InspectionTemplateEntity?>(null) }
+    var partViews by remember { mutableStateOf<List<InspectionTemplateEntity>>(emptyList()) }
     var rois by remember { mutableStateOf<List<RoiDefinitionEntity>>(emptyList()) }
     var loaded by remember { mutableStateOf(false) }
 
     LaunchedEffect(templateId) {
-        template = repository.getTemplate(templateId)
+        val loadedTemplate = repository.getTemplate(templateId)
+        template = loadedTemplate
+        partViews = loadedTemplate?.let { repository.getTemplatesByPart(it.partId) } ?: emptyList()
         rois = repository.getRois(templateId)
         loaded = true
     }
@@ -152,8 +155,9 @@ fun TemplateDetailScreen(
                             .padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        DetailRow("模板名称", t.name)
+                        DetailRow("视角名称", t.name)
                         DetailRow("零件 ID", t.partId)
+                        DetailRow("视角", "${t.displayOrder + 1} / ${partViews.size}")
                         DetailRow("状态", if (t.enabled) "启用" else "已停用")
                         DetailRow("创建时间", dateFormat.format(Date(t.createdAt)))
                         DetailRow("更新时间", dateFormat.format(Date(t.updatedAt)))
@@ -176,7 +180,7 @@ fun TemplateDetailScreen(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            text = "模板图片",
+                            text = "参考图片",
                             style = MaterialTheme.typography.bodyLarge,
                             fontWeight = FontWeight.Medium,
                             color = TextPrimary
