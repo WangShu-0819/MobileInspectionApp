@@ -1,0 +1,2508 @@
+{
+  "schemaVersion": "feature_presence.ground_truth.v1",
+  "status": "INSUFFICIENT_DATA",
+  "labelVocabulary": [
+    "present",
+    "absent",
+    "unknown"
+  ],
+  "policy": {
+    "unannotatedLabel": "unknown",
+    "unannotatedRoi": null,
+    "unannotatedAnnotationStatus": "UNANNOTATED",
+    "accuracyMetricsAllowed": false,
+    "note": "Unknown images must not be converted to absent or used for accuracy claims."
+  },
+  "images": [
+    {
+      "imageId": "dcim:IMG_20260828_103109",
+      "fileName": "IMG_20260828_103109.jpg",
+      "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103109.jpg",
+      "targets": [
+        {
+          "targetId": "thread",
+          "inspectionType": "THREAD_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "nut",
+          "inspectionType": "NUT_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_1",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_2",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        }
+      ]
+    },
+    {
+      "imageId": "dcim:IMG_20260828_103112",
+      "fileName": "IMG_20260828_103112.jpg",
+      "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103112.jpg",
+      "targets": [
+        {
+          "targetId": "thread",
+          "inspectionType": "THREAD_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "nut",
+          "inspectionType": "NUT_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_1",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_2",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        }
+      ]
+    },
+    {
+      "imageId": "dcim:IMG_20260828_103115",
+      "fileName": "IMG_20260828_103115.jpg",
+      "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103115.jpg",
+      "targets": [
+        {
+          "targetId": "thread",
+          "inspectionType": "THREAD_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "nut",
+          "inspectionType": "NUT_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_1",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_2",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        }
+      ]
+    },
+    {
+      "imageId": "dcim:IMG_20260828_103118",
+      "fileName": "IMG_20260828_103118.jpg",
+      "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103118.jpg",
+      "targets": [
+        {
+          "targetId": "thread",
+          "inspectionType": "THREAD_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "nut",
+          "inspectionType": "NUT_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_1",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_2",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        }
+      ]
+    },
+    {
+      "imageId": "dcim:IMG_20260828_103122",
+      "fileName": "IMG_20260828_103122.jpg",
+      "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103122.jpg",
+      "targets": [
+        {
+          "targetId": "thread",
+          "inspectionType": "THREAD_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "nut",
+          "inspectionType": "NUT_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_1",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_2",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        }
+      ]
+    },
+    {
+      "imageId": "dcim:IMG_20260828_103127",
+      "fileName": "IMG_20260828_103127.jpg",
+      "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103127.jpg",
+      "targets": [
+        {
+          "targetId": "thread",
+          "inspectionType": "THREAD_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "nut",
+          "inspectionType": "NUT_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_1",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_2",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        }
+      ]
+    },
+    {
+      "imageId": "dcim:IMG_20260828_103130",
+      "fileName": "IMG_20260828_103130.jpg",
+      "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103130.jpg",
+      "targets": [
+        {
+          "targetId": "thread",
+          "inspectionType": "THREAD_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "nut",
+          "inspectionType": "NUT_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_1",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_2",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        }
+      ]
+    },
+    {
+      "imageId": "dcim:IMG_20260828_103134",
+      "fileName": "IMG_20260828_103134.jpg",
+      "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103134.jpg",
+      "targets": [
+        {
+          "targetId": "thread",
+          "inspectionType": "THREAD_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "nut",
+          "inspectionType": "NUT_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_1",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_2",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        }
+      ]
+    },
+    {
+      "imageId": "dcim:IMG_20260828_103138",
+      "fileName": "IMG_20260828_103138.jpg",
+      "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103138.jpg",
+      "targets": [
+        {
+          "targetId": "thread",
+          "inspectionType": "THREAD_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "nut",
+          "inspectionType": "NUT_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_1",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_2",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        }
+      ]
+    },
+    {
+      "imageId": "dcim:IMG_20260828_103145",
+      "fileName": "IMG_20260828_103145.jpg",
+      "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103145.jpg",
+      "targets": [
+        {
+          "targetId": "thread",
+          "inspectionType": "THREAD_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "nut",
+          "inspectionType": "NUT_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_1",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_2",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        }
+      ]
+    },
+    {
+      "imageId": "dcim:IMG_20260828_103149",
+      "fileName": "IMG_20260828_103149.jpg",
+      "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103149.jpg",
+      "targets": [
+        {
+          "targetId": "thread",
+          "inspectionType": "THREAD_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "nut",
+          "inspectionType": "NUT_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_1",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_2",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        }
+      ]
+    },
+    {
+      "imageId": "dcim:IMG_20260828_103156",
+      "fileName": "IMG_20260828_103156.jpg",
+      "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103156.jpg",
+      "targets": [
+        {
+          "targetId": "thread",
+          "inspectionType": "THREAD_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "nut",
+          "inspectionType": "NUT_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_1",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_2",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        }
+      ]
+    },
+    {
+      "imageId": "dcim:IMG_20260828_103203",
+      "fileName": "IMG_20260828_103203.jpg",
+      "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103203.jpg",
+      "targets": [
+        {
+          "targetId": "thread",
+          "inspectionType": "THREAD_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "nut",
+          "inspectionType": "NUT_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_1",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_2",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        }
+      ]
+    },
+    {
+      "imageId": "dcim:IMG_20260828_103205",
+      "fileName": "IMG_20260828_103205.jpg",
+      "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103205.jpg",
+      "targets": [
+        {
+          "targetId": "thread",
+          "inspectionType": "THREAD_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "nut",
+          "inspectionType": "NUT_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_1",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_2",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        }
+      ]
+    },
+    {
+      "imageId": "dcim:IMG_20260828_103209",
+      "fileName": "IMG_20260828_103209.jpg",
+      "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103209.jpg",
+      "targets": [
+        {
+          "targetId": "thread",
+          "inspectionType": "THREAD_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "nut",
+          "inspectionType": "NUT_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_1",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_2",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        }
+      ]
+    },
+    {
+      "imageId": "dcim:IMG_20260828_103218",
+      "fileName": "IMG_20260828_103218.jpg",
+      "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103218.jpg",
+      "targets": [
+        {
+          "targetId": "thread",
+          "inspectionType": "THREAD_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "nut",
+          "inspectionType": "NUT_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_1",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_2",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        }
+      ]
+    },
+    {
+      "imageId": "dcim:IMG_20260828_103223",
+      "fileName": "IMG_20260828_103223.jpg",
+      "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103223.jpg",
+      "targets": [
+        {
+          "targetId": "thread",
+          "inspectionType": "THREAD_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "nut",
+          "inspectionType": "NUT_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_1",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_2",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        }
+      ]
+    },
+    {
+      "imageId": "dcim:IMG_20260828_103228",
+      "fileName": "IMG_20260828_103228.jpg",
+      "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103228.jpg",
+      "targets": [
+        {
+          "targetId": "thread",
+          "inspectionType": "THREAD_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "nut",
+          "inspectionType": "NUT_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_1",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_2",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        }
+      ]
+    },
+    {
+      "imageId": "dcim:IMG_20260828_103231",
+      "fileName": "IMG_20260828_103231.jpg",
+      "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103231.jpg",
+      "targets": [
+        {
+          "targetId": "thread",
+          "inspectionType": "THREAD_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "nut",
+          "inspectionType": "NUT_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_1",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_2",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        }
+      ]
+    },
+    {
+      "imageId": "dcim:IMG_20260828_103241",
+      "fileName": "IMG_20260828_103241.jpg",
+      "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103241.jpg",
+      "targets": [
+        {
+          "targetId": "thread",
+          "inspectionType": "THREAD_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "nut",
+          "inspectionType": "NUT_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_1",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_2",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        }
+      ]
+    },
+    {
+      "imageId": "dcim:IMG_20260828_103308",
+      "fileName": "IMG_20260828_103308.jpg",
+      "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103308.jpg",
+      "targets": [
+        {
+          "targetId": "thread",
+          "inspectionType": "THREAD_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "nut",
+          "inspectionType": "NUT_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_1",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_2",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        }
+      ]
+    },
+    {
+      "imageId": "dcim:IMG_20260828_103313",
+      "fileName": "IMG_20260828_103313.jpg",
+      "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103313.jpg",
+      "targets": [
+        {
+          "targetId": "thread",
+          "inspectionType": "THREAD_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "nut",
+          "inspectionType": "NUT_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_1",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_2",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        }
+      ]
+    },
+    {
+      "imageId": "dcim:IMG_20260828_103318",
+      "fileName": "IMG_20260828_103318.jpg",
+      "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103318.jpg",
+      "targets": [
+        {
+          "targetId": "thread",
+          "inspectionType": "THREAD_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "nut",
+          "inspectionType": "NUT_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_1",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_2",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        }
+      ]
+    },
+    {
+      "imageId": "dcim:IMG_20260828_103322",
+      "fileName": "IMG_20260828_103322.jpg",
+      "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103322.jpg",
+      "targets": [
+        {
+          "targetId": "thread",
+          "inspectionType": "THREAD_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "nut",
+          "inspectionType": "NUT_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_1",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_2",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        }
+      ]
+    },
+    {
+      "imageId": "dcim:IMG_20260828_103326",
+      "fileName": "IMG_20260828_103326.jpg",
+      "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103326.jpg",
+      "targets": [
+        {
+          "targetId": "thread",
+          "inspectionType": "THREAD_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "nut",
+          "inspectionType": "NUT_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_1",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_2",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        }
+      ]
+    },
+    {
+      "imageId": "dcim:IMG_20260828_103331",
+      "fileName": "IMG_20260828_103331.jpg",
+      "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103331.jpg",
+      "targets": [
+        {
+          "targetId": "thread",
+          "inspectionType": "THREAD_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "nut",
+          "inspectionType": "NUT_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_1",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_2",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        }
+      ]
+    },
+    {
+      "imageId": "dcim:IMG_20260828_103335",
+      "fileName": "IMG_20260828_103335.jpg",
+      "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103335.jpg",
+      "targets": [
+        {
+          "targetId": "thread",
+          "inspectionType": "THREAD_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "nut",
+          "inspectionType": "NUT_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_1",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_2",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        }
+      ]
+    },
+    {
+      "imageId": "dcim:IMG_20260828_103340",
+      "fileName": "IMG_20260828_103340.jpg",
+      "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103340.jpg",
+      "targets": [
+        {
+          "targetId": "thread",
+          "inspectionType": "THREAD_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "nut",
+          "inspectionType": "NUT_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_1",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_2",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        }
+      ]
+    },
+    {
+      "imageId": "dcim:IMG_20260828_103344",
+      "fileName": "IMG_20260828_103344.jpg",
+      "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103344.jpg",
+      "targets": [
+        {
+          "targetId": "thread",
+          "inspectionType": "THREAD_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "nut",
+          "inspectionType": "NUT_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_1",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_2",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        }
+      ]
+    },
+    {
+      "imageId": "dcim:IMG_20260828_103354",
+      "fileName": "IMG_20260828_103354.jpg",
+      "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103354.jpg",
+      "targets": [
+        {
+          "targetId": "thread",
+          "inspectionType": "THREAD_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "nut",
+          "inspectionType": "NUT_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_1",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        },
+        {
+          "targetId": "feature_2",
+          "inspectionType": "FEATURE_PRESENCE",
+          "label": "unknown",
+          "expectedCount": null,
+          "roi": null,
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "annotationStatus": "UNANNOTATED",
+          "evaluableForMetrics": false,
+          "reason": "No human-confirmed target ROI or presence label is available."
+        }
+      ]
+    }
+  ]
+}

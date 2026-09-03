@@ -1,0 +1,454 @@
+{
+  "mode": "EXPLORATORY_FULL_IMAGE_SCAN",
+  "algorithm": "NutPresenceDetector",
+  "algorithmVersion": "presence-offline.2",
+  "expectedCount": null,
+  "note": "This scan intentionally ignores missing DCIM ROI and does not change the official unknown-only evaluation.",
+  "rows": [
+    {
+      "index": 1,
+      "imageId": "dcim:IMG_20260828_103109",
+      "fileName": "IMG_20260828_103109.jpg",
+      "status": "REVIEW",
+      "score": 0.6925326307884614,
+      "candidateCountBeforeNms": 1.0,
+      "candidateCount": 1.0,
+      "boxes": [
+        [
+          591,
+          1986,
+          538,
+          443
+        ]
+      ],
+      "message": "expectedCount is not configured; candidate count is informational",
+      "durationMs": 384,
+      "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_dcim_20260903\\debug\\01_IMG_20260828_103109.jpg.nut.jpg"
+    },
+    {
+      "index": 2,
+      "imageId": "dcim:IMG_20260828_103112",
+      "fileName": "IMG_20260828_103112.jpg",
+      "status": "REVIEW",
+      "score": 0.0,
+      "candidateCountBeforeNms": 0.0,
+      "candidateCount": 0.0,
+      "boxes": [],
+      "message": "expectedCount is not configured; candidate count is informational",
+      "durationMs": 230,
+      "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_dcim_20260903\\debug\\02_IMG_20260828_103112.jpg.nut.jpg"
+    },
+    {
+      "index": 3,
+      "imageId": "dcim:IMG_20260828_103115",
+      "fileName": "IMG_20260828_103115.jpg",
+      "status": "REVIEW",
+      "score": 0.6009769239637701,
+      "candidateCountBeforeNms": 1.0,
+      "candidateCount": 1.0,
+      "boxes": [
+        [
+          3779,
+          1612,
+          317,
+          341
+        ]
+      ],
+      "message": "expectedCount is not configured; candidate count is informational",
+      "durationMs": 231,
+      "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_dcim_20260903\\debug\\03_IMG_20260828_103115.jpg.nut.jpg"
+    },
+    {
+      "index": 4,
+      "imageId": "dcim:IMG_20260828_103118",
+      "fileName": "IMG_20260828_103118.jpg",
+      "status": "REVIEW",
+      "score": 0.6666138374977101,
+      "candidateCountBeforeNms": 1.0,
+      "candidateCount": 1.0,
+      "boxes": [
+        [
+          1158,
+          1381,
+          402,
+          313
+        ]
+      ],
+      "message": "expectedCount is not configured; candidate count is informational",
+      "durationMs": 369,
+      "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_dcim_20260903\\debug\\04_IMG_20260828_103118.jpg.nut.jpg"
+    },
+    {
+      "index": 5,
+      "imageId": "dcim:IMG_20260828_103122",
+      "fileName": "IMG_20260828_103122.jpg",
+      "status": "REVIEW",
+      "score": 0.0,
+      "candidateCountBeforeNms": 0.0,
+      "candidateCount": 0.0,
+      "boxes": [],
+      "message": "expectedCount is not configured; candidate count is informational",
+      "durationMs": 284,
+      "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_dcim_20260903\\debug\\05_IMG_20260828_103122.jpg.nut.jpg"
+    },
+    {
+      "index": 6,
+      "imageId": "dcim:IMG_20260828_103127",
+      "fileName": "IMG_20260828_103127.jpg",
+      "status": "REVIEW",
+      "score": 0.0,
+      "candidateCountBeforeNms": 0.0,
+      "candidateCount": 0.0,
+      "boxes": [],
+      "message": "expectedCount is not configured; candidate count is informational",
+      "durationMs": 264,
+      "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_dcim_20260903\\debug\\06_IMG_20260828_103127.jpg.nut.jpg"
+    },
+    {
+      "index": 7,
+      "imageId": "dcim:IMG_20260828_103130",
+      "fileName": "IMG_20260828_103130.jpg",
+      "status": "REVIEW",
+      "score": 0.0,
+      "candidateCountBeforeNms": 0.0,
+      "candidateCount": 0.0,
+      "boxes": [],
+      "message": "expectedCount is not configured; candidate count is informational",
+      "durationMs": 245,
+      "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_dcim_20260903\\debug\\07_IMG_20260828_103130.jpg.nut.jpg"
+    },
+    {
+      "index": 8,
+      "imageId": "dcim:IMG_20260828_103134",
+      "fileName": "IMG_20260828_103134.jpg",
+      "status": "REVIEW",
+      "score": 0.0,
+      "candidateCountBeforeNms": 0.0,
+      "candidateCount": 0.0,
+      "boxes": [],
+      "message": "expectedCount is not configured; candidate count is informational",
+      "durationMs": 250,
+      "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_dcim_20260903\\debug\\08_IMG_20260828_103134.jpg.nut.jpg"
+    },
+    {
+      "index": 9,
+      "imageId": "dcim:IMG_20260828_103138",
+      "fileName": "IMG_20260828_103138.jpg",
+      "status": "REVIEW",
+      "score": 0.0,
+      "candidateCountBeforeNms": 0.0,
+      "candidateCount": 0.0,
+      "boxes": [],
+      "message": "expectedCount is not configured; candidate count is informational",
+      "durationMs": 228,
+      "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_dcim_20260903\\debug\\09_IMG_20260828_103138.jpg.nut.jpg"
+    },
+    {
+      "index": 10,
+      "imageId": "dcim:IMG_20260828_103145",
+      "fileName": "IMG_20260828_103145.jpg",
+      "status": "REVIEW",
+      "score": 0.0,
+      "candidateCountBeforeNms": 0.0,
+      "candidateCount": 0.0,
+      "boxes": [],
+      "message": "expectedCount is not configured; candidate count is informational",
+      "durationMs": 199,
+      "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_dcim_20260903\\debug\\10_IMG_20260828_103145.jpg.nut.jpg"
+    },
+    {
+      "index": 11,
+      "imageId": "dcim:IMG_20260828_103149",
+      "fileName": "IMG_20260828_103149.jpg",
+      "status": "REVIEW",
+      "score": 0.0,
+      "candidateCountBeforeNms": 0.0,
+      "candidateCount": 0.0,
+      "boxes": [],
+      "message": "expectedCount is not configured; candidate count is informational",
+      "durationMs": 211,
+      "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_dcim_20260903\\debug\\11_IMG_20260828_103149.jpg.nut.jpg"
+    },
+    {
+      "index": 12,
+      "imageId": "dcim:IMG_20260828_103156",
+      "fileName": "IMG_20260828_103156.jpg",
+      "status": "REVIEW",
+      "score": 0.0,
+      "candidateCountBeforeNms": 0.0,
+      "candidateCount": 0.0,
+      "boxes": [],
+      "message": "expectedCount is not configured; candidate count is informational",
+      "durationMs": 188,
+      "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_dcim_20260903\\debug\\12_IMG_20260828_103156.jpg.nut.jpg"
+    },
+    {
+      "index": 13,
+      "imageId": "dcim:IMG_20260828_103203",
+      "fileName": "IMG_20260828_103203.jpg",
+      "status": "REVIEW",
+      "score": 0.0,
+      "candidateCountBeforeNms": 0.0,
+      "candidateCount": 0.0,
+      "boxes": [],
+      "message": "expectedCount is not configured; candidate count is informational",
+      "durationMs": 268,
+      "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_dcim_20260903\\debug\\13_IMG_20260828_103203.jpg.nut.jpg"
+    },
+    {
+      "index": 14,
+      "imageId": "dcim:IMG_20260828_103205",
+      "fileName": "IMG_20260828_103205.jpg",
+      "status": "REVIEW",
+      "score": 0.7287299048834144,
+      "candidateCountBeforeNms": 1.0,
+      "candidateCount": 1.0,
+      "boxes": [
+        [
+          830,
+          791,
+          324,
+          242
+        ]
+      ],
+      "message": "expectedCount is not configured; candidate count is informational",
+      "durationMs": 350,
+      "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_dcim_20260903\\debug\\14_IMG_20260828_103205.jpg.nut.jpg"
+    },
+    {
+      "index": 15,
+      "imageId": "dcim:IMG_20260828_103209",
+      "fileName": "IMG_20260828_103209.jpg",
+      "status": "REVIEW",
+      "score": 0.509498455334555,
+      "candidateCountBeforeNms": 1.0,
+      "candidateCount": 1.0,
+      "boxes": [
+        [
+          109,
+          1358,
+          374,
+          351
+        ]
+      ],
+      "message": "expectedCount is not configured; candidate count is informational",
+      "durationMs": 242,
+      "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_dcim_20260903\\debug\\15_IMG_20260828_103209.jpg.nut.jpg"
+    },
+    {
+      "index": 16,
+      "imageId": "dcim:IMG_20260828_103218",
+      "fileName": "IMG_20260828_103218.jpg",
+      "status": "REVIEW",
+      "score": 0.0,
+      "candidateCountBeforeNms": 0.0,
+      "candidateCount": 0.0,
+      "boxes": [],
+      "message": "expectedCount is not configured; candidate count is informational",
+      "durationMs": 220,
+      "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_dcim_20260903\\debug\\16_IMG_20260828_103218.jpg.nut.jpg"
+    },
+    {
+      "index": 17,
+      "imageId": "dcim:IMG_20260828_103223",
+      "fileName": "IMG_20260828_103223.jpg",
+      "status": "REVIEW",
+      "score": 0.5977291209538729,
+      "candidateCountBeforeNms": 2.0,
+      "candidateCount": 2.0,
+      "boxes": [
+        [
+          2200,
+          1148,
+          323,
+          316
+        ],
+        [
+          983,
+          0,
+          420,
+          267
+        ]
+      ],
+      "message": "expectedCount is not configured; candidate count is informational",
+      "durationMs": 409,
+      "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_dcim_20260903\\debug\\17_IMG_20260828_103223.jpg.nut.jpg"
+    },
+    {
+      "index": 18,
+      "imageId": "dcim:IMG_20260828_103228",
+      "fileName": "IMG_20260828_103228.jpg",
+      "status": "REVIEW",
+      "score": 0.0,
+      "candidateCountBeforeNms": 0.0,
+      "candidateCount": 0.0,
+      "boxes": [],
+      "message": "expectedCount is not configured; candidate count is informational",
+      "durationMs": 250,
+      "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_dcim_20260903\\debug\\18_IMG_20260828_103228.jpg.nut.jpg"
+    },
+    {
+      "index": 19,
+      "imageId": "dcim:IMG_20260828_103231",
+      "fileName": "IMG_20260828_103231.jpg",
+      "status": "REVIEW",
+      "score": 0.0,
+      "candidateCountBeforeNms": 0.0,
+      "candidateCount": 0.0,
+      "boxes": [],
+      "message": "expectedCount is not configured; candidate count is informational",
+      "durationMs": 269,
+      "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_dcim_20260903\\debug\\19_IMG_20260828_103231.jpg.nut.jpg"
+    },
+    {
+      "index": 20,
+      "imageId": "dcim:IMG_20260828_103241",
+      "fileName": "IMG_20260828_103241.jpg",
+      "status": "REVIEW",
+      "score": 0.0,
+      "candidateCountBeforeNms": 0.0,
+      "candidateCount": 0.0,
+      "boxes": [],
+      "message": "expectedCount is not configured; candidate count is informational",
+      "durationMs": 288,
+      "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_dcim_20260903\\debug\\20_IMG_20260828_103241.jpg.nut.jpg"
+    },
+    {
+      "index": 21,
+      "imageId": "dcim:IMG_20260828_103308",
+      "fileName": "IMG_20260828_103308.jpg",
+      "status": "REVIEW",
+      "score": 0.0,
+      "candidateCountBeforeNms": 0.0,
+      "candidateCount": 0.0,
+      "boxes": [],
+      "message": "expectedCount is not configured; candidate count is informational",
+      "durationMs": 242,
+      "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_dcim_20260903\\debug\\21_IMG_20260828_103308.jpg.nut.jpg"
+    },
+    {
+      "index": 22,
+      "imageId": "dcim:IMG_20260828_103313",
+      "fileName": "IMG_20260828_103313.jpg",
+      "status": "REVIEW",
+      "score": 0.0,
+      "candidateCountBeforeNms": 0.0,
+      "candidateCount": 0.0,
+      "boxes": [],
+      "message": "expectedCount is not configured; candidate count is informational",
+      "durationMs": 315,
+      "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_dcim_20260903\\debug\\22_IMG_20260828_103313.jpg.nut.jpg"
+    },
+    {
+      "index": 23,
+      "imageId": "dcim:IMG_20260828_103318",
+      "fileName": "IMG_20260828_103318.jpg",
+      "status": "REVIEW",
+      "score": 0.0,
+      "candidateCountBeforeNms": 0.0,
+      "candidateCount": 0.0,
+      "boxes": [],
+      "message": "expectedCount is not configured; candidate count is informational",
+      "durationMs": 332,
+      "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_dcim_20260903\\debug\\23_IMG_20260828_103318.jpg.nut.jpg"
+    },
+    {
+      "index": 24,
+      "imageId": "dcim:IMG_20260828_103322",
+      "fileName": "IMG_20260828_103322.jpg",
+      "status": "REVIEW",
+      "score": 0.0,
+      "candidateCountBeforeNms": 0.0,
+      "candidateCount": 0.0,
+      "boxes": [],
+      "message": "expectedCount is not configured; candidate count is informational",
+      "durationMs": 240,
+      "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_dcim_20260903\\debug\\24_IMG_20260828_103322.jpg.nut.jpg"
+    },
+    {
+      "index": 25,
+      "imageId": "dcim:IMG_20260828_103326",
+      "fileName": "IMG_20260828_103326.jpg",
+      "status": "REVIEW",
+      "score": 0.0,
+      "candidateCountBeforeNms": 0.0,
+      "candidateCount": 0.0,
+      "boxes": [],
+      "message": "expectedCount is not configured; candidate count is informational",
+      "durationMs": 348,
+      "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_dcim_20260903\\debug\\25_IMG_20260828_103326.jpg.nut.jpg"
+    },
+    {
+      "index": 26,
+      "imageId": "dcim:IMG_20260828_103331",
+      "fileName": "IMG_20260828_103331.jpg",
+      "status": "REVIEW",
+      "score": 0.0,
+      "candidateCountBeforeNms": 0.0,
+      "candidateCount": 0.0,
+      "boxes": [],
+      "message": "expectedCount is not configured; candidate count is informational",
+      "durationMs": 257,
+      "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_dcim_20260903\\debug\\26_IMG_20260828_103331.jpg.nut.jpg"
+    },
+    {
+      "index": 27,
+      "imageId": "dcim:IMG_20260828_103335",
+      "fileName": "IMG_20260828_103335.jpg",
+      "status": "REVIEW",
+      "score": 0.5110163968540417,
+      "candidateCountBeforeNms": 1.0,
+      "candidateCount": 1.0,
+      "boxes": [
+        [
+          547,
+          2589,
+          250,
+          368
+        ]
+      ],
+      "message": "expectedCount is not configured; candidate count is informational",
+      "durationMs": 225,
+      "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_dcim_20260903\\debug\\27_IMG_20260828_103335.jpg.nut.jpg"
+    },
+    {
+      "index": 28,
+      "imageId": "dcim:IMG_20260828_103340",
+      "fileName": "IMG_20260828_103340.jpg",
+      "status": "REVIEW",
+      "score": 0.0,
+      "candidateCountBeforeNms": 0.0,
+      "candidateCount": 0.0,
+      "boxes": [],
+      "message": "expectedCount is not configured; candidate count is informational",
+      "durationMs": 267,
+      "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_dcim_20260903\\debug\\28_IMG_20260828_103340.jpg.nut.jpg"
+    },
+    {
+      "index": 29,
+      "imageId": "dcim:IMG_20260828_103344",
+      "fileName": "IMG_20260828_103344.jpg",
+      "status": "REVIEW",
+      "score": 0.0,
+      "candidateCountBeforeNms": 0.0,
+      "candidateCount": 0.0,
+      "boxes": [],
+      "message": "expectedCount is not configured; candidate count is informational",
+      "durationMs": 267,
+      "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_dcim_20260903\\debug\\29_IMG_20260828_103344.jpg.nut.jpg"
+    },
+    {
+      "index": 30,
+      "imageId": "dcim:IMG_20260828_103354",
+      "fileName": "IMG_20260828_103354.jpg",
+      "status": "REVIEW",
+      "score": 0.0,
+      "candidateCountBeforeNms": 0.0,
+      "candidateCount": 0.0,
+      "boxes": [],
+      "message": "expectedCount is not configured; candidate count is informational",
+      "durationMs": 320,
+      "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_dcim_20260903\\debug\\30_IMG_20260828_103354.jpg.nut.jpg"
+    }
+  ]
+}

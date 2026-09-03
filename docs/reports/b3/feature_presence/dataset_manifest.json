@@ -1,0 +1,4592 @@
+{
+  "schemaVersion": "feature_presence.dataset_manifest.v1",
+  "generatedAtUtc": "2026-09-03T05:37:53Z",
+  "status": "INSUFFICIENT_DATA",
+  "task": "Task 1: data inventory, teal mark mask, offline manifest",
+  "runtime": {
+    "pythonExecutable": "D:\\ProgramData\\anaconda3\\envs\\dinov2\\python.exe",
+    "scriptVersion": "task1.v1"
+  },
+  "inputs": {
+    "keyDir": "D:\\study\\Textile_defects\\Wearable Inspection\\Key",
+    "dcimDir": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM",
+    "imageExtensions": [
+      ".jpeg",
+      ".jpg",
+      ".png"
+    ],
+    "excludedNonImageFiles": [
+      "2e0e5b7b6c79fb4f41f8b2158f71c627.mp4"
+    ],
+    "videoPolicy": "excluded_from_image_inventory_and_ground_truth"
+  },
+  "orientationPolicy": {
+    "operationOrder": [
+      "decode",
+      "read_orientation_metadata",
+      "normalize_for_debug",
+      "HSV_mask"
+    ],
+    "validExifOrientationValues": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "invalidZero": {
+      "orientationRaw": 0,
+      "orientationAssumption": "NO_TRANSFORM",
+      "orientationAnomaly": true
+    }
+  },
+  "tealMask": {
+    "colorSpace": "HSV",
+    "hueRangeOpenCv": [
+      75,
+      105
+    ],
+    "saturationMin": 80,
+    "valueMin": 50,
+    "dilateKernel": [
+      3,
+      3
+    ],
+    "dilateIterations": 1,
+    "meaning": "candidate_teal_manual_mark_only",
+    "calibrationStatus": "INITIAL_CONFIGURABLE_MASK_NOT_DETECTOR_CALIBRATION"
+  },
+  "targetProfiles": [
+    {
+      "targetId": "thread",
+      "inspectionType": "THREAD_PRESENCE",
+      "templateFiles": [
+        "thread_1.png",
+        "thread_2.png"
+      ],
+      "observedTemplateCount": 1,
+      "expectedCount": null,
+      "expectedCountConfigurable": true,
+      "roi": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "roiSource": "KEY_CROPPED_IMAGE",
+      "annotationStatus": "KEY_CROPPED_IMAGE_ROI",
+      "roiPolicy": "full_cropped_key_image_is_template_roi; dcim_roi_requires_human_annotation",
+      "calibrationStatus": "NOT_CALIBRATED",
+      "templates": [
+        {
+          "fileName": "thread_1.png",
+          "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\Key\\thread_1.png",
+          "roi": [
+            0.0,
+            0.0,
+            1.0,
+            1.0
+          ],
+          "roiSource": "KEY_CROPPED_IMAGE",
+          "annotationStatus": "KEY_CROPPED_IMAGE_ROI",
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 91,
+            "bottom": 84,
+            "width": 91,
+            "height": 84,
+            "coordinateSpace": "normalized_image_pixels"
+          }
+        },
+        {
+          "fileName": "thread_2.png",
+          "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\Key\\thread_2.png",
+          "roi": [
+            0.0,
+            0.0,
+            1.0,
+            1.0
+          ],
+          "roiSource": "KEY_CROPPED_IMAGE",
+          "annotationStatus": "KEY_CROPPED_IMAGE_ROI",
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 203,
+            "bottom": 177,
+            "width": 203,
+            "height": 177,
+            "coordinateSpace": "normalized_image_pixels"
+          }
+        }
+      ]
+    },
+    {
+      "targetId": "nut",
+      "inspectionType": "NUT_PRESENCE",
+      "templateFiles": [
+        "nut_1.png"
+      ],
+      "observedTemplateCount": 2,
+      "expectedCount": null,
+      "expectedCountConfigurable": true,
+      "roi": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "roiSource": "KEY_CROPPED_IMAGE",
+      "annotationStatus": "KEY_CROPPED_IMAGE_ROI",
+      "roiPolicy": "full_cropped_key_image_is_template_roi; dcim_roi_requires_human_annotation",
+      "calibrationStatus": "NOT_CALIBRATED",
+      "templates": [
+        {
+          "fileName": "nut_1.png",
+          "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\Key\\nut_1.png",
+          "roi": [
+            0.0,
+            0.0,
+            1.0,
+            1.0
+          ],
+          "roiSource": "KEY_CROPPED_IMAGE",
+          "annotationStatus": "KEY_CROPPED_IMAGE_ROI",
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 376,
+            "bottom": 136,
+            "width": 376,
+            "height": 136,
+            "coordinateSpace": "normalized_image_pixels"
+          }
+        }
+      ]
+    },
+    {
+      "targetId": "feature_1",
+      "inspectionType": "FEATURE_PRESENCE",
+      "templateFiles": [
+        "feature_1.png"
+      ],
+      "observedTemplateCount": 1,
+      "expectedCount": null,
+      "expectedCountConfigurable": true,
+      "roi": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "roiSource": "KEY_CROPPED_IMAGE",
+      "annotationStatus": "KEY_CROPPED_IMAGE_ROI",
+      "roiPolicy": "full_cropped_key_image_is_template_roi; dcim_roi_requires_human_annotation",
+      "calibrationStatus": "NOT_CALIBRATED",
+      "templates": [
+        {
+          "fileName": "feature_1.png",
+          "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\Key\\feature_1.png",
+          "roi": [
+            0.0,
+            0.0,
+            1.0,
+            1.0
+          ],
+          "roiSource": "KEY_CROPPED_IMAGE",
+          "annotationStatus": "KEY_CROPPED_IMAGE_ROI",
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 268,
+            "bottom": 127,
+            "width": 268,
+            "height": 127,
+            "coordinateSpace": "normalized_image_pixels"
+          }
+        }
+      ]
+    },
+    {
+      "targetId": "feature_2",
+      "inspectionType": "FEATURE_PRESENCE",
+      "templateFiles": [
+        "feature_2.png"
+      ],
+      "observedTemplateCount": 1,
+      "expectedCount": null,
+      "expectedCountConfigurable": true,
+      "roi": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "roiSource": "KEY_CROPPED_IMAGE",
+      "annotationStatus": "KEY_CROPPED_IMAGE_ROI",
+      "roiPolicy": "full_cropped_key_image_is_template_roi; dcim_roi_requires_human_annotation",
+      "calibrationStatus": "NOT_CALIBRATED",
+      "templates": [
+        {
+          "fileName": "feature_2.png",
+          "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\Key\\feature_2.png",
+          "roi": [
+            0.0,
+            0.0,
+            1.0,
+            1.0
+          ],
+          "roiSource": "KEY_CROPPED_IMAGE",
+          "annotationStatus": "KEY_CROPPED_IMAGE_ROI",
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 189,
+            "bottom": 261,
+            "width": 189,
+            "height": 261,
+            "coordinateSpace": "normalized_image_pixels"
+          }
+        }
+      ]
+    }
+  ],
+  "inventory": {
+    "key": {
+      "expectedImageCount": 5,
+      "imageCount": 5,
+      "readableCount": 5,
+      "unreadableCount": 0,
+      "countCheck": true,
+      "readabilityCheck": true,
+      "images": [
+        {
+          "imageId": "key:feature_1",
+          "subset": "key",
+          "fileName": "feature_1.png",
+          "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\Key\\feature_1.png",
+          "fileSizeBytes": 38246,
+          "readable": true,
+          "format": "PNG",
+          "orientationRaw": null,
+          "orientationAssumption": "NO_TRANSFORM",
+          "orientationAnomaly": true,
+          "orientationApplied": false,
+          "orientationNote": "EXIF Orientation is missing/unknown metadata; no transform was applied.",
+          "rawSize": {
+            "width": 268,
+            "height": 127
+          },
+          "normalizedSize": {
+            "width": 268,
+            "height": 127
+          },
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 268,
+            "bottom": 127,
+            "width": 268,
+            "height": 127,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "maskCoverage": {
+            "totalPixels": 34036,
+            "rawPixels": 7,
+            "dilatedPixels": 33,
+            "rawCoverage": 0.00020566459043365847,
+            "dilatedCoverage": 0.0009695616406158185
+          },
+          "debug": {
+            "path": "debug/key/feature_1__orientation_mask.jpg",
+            "containsPanels": [
+              "raw_source",
+              "normalized",
+              "hsv_dilate_overlay",
+              "binary_mask"
+            ],
+            "overlayColor": "magenta"
+          },
+          "targets": [
+            {
+              "targetId": "feature_1",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": 1,
+              "roi": [
+                0.0,
+                0.0,
+                1.0,
+                1.0
+              ],
+              "roiSource": "KEY_CROPPED_IMAGE",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 268,
+                "bottom": 127,
+                "width": 268,
+                "height": 127,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "KEY_CROPPED_IMAGE_ROI",
+              "datasetRole": "POSITIVE_TEMPLATE_CANDIDATE"
+            }
+          ]
+        },
+        {
+          "imageId": "key:feature_2",
+          "subset": "key",
+          "fileName": "feature_2.png",
+          "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\Key\\feature_2.png",
+          "fileSizeBytes": 73493,
+          "readable": true,
+          "format": "PNG",
+          "orientationRaw": null,
+          "orientationAssumption": "NO_TRANSFORM",
+          "orientationAnomaly": true,
+          "orientationApplied": false,
+          "orientationNote": "EXIF Orientation is missing/unknown metadata; no transform was applied.",
+          "rawSize": {
+            "width": 189,
+            "height": 261
+          },
+          "normalizedSize": {
+            "width": 189,
+            "height": 261
+          },
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 189,
+            "bottom": 261,
+            "width": 189,
+            "height": 261,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "maskCoverage": {
+            "totalPixels": 49329,
+            "rawPixels": 1107,
+            "dilatedPixels": 1395,
+            "rawCoverage": 0.022441160372194856,
+            "dilatedCoverage": 0.028279511038131727
+          },
+          "debug": {
+            "path": "debug/key/feature_2__orientation_mask.jpg",
+            "containsPanels": [
+              "raw_source",
+              "normalized",
+              "hsv_dilate_overlay",
+              "binary_mask"
+            ],
+            "overlayColor": "magenta"
+          },
+          "targets": [
+            {
+              "targetId": "feature_2",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": 1,
+              "roi": [
+                0.0,
+                0.0,
+                1.0,
+                1.0
+              ],
+              "roiSource": "KEY_CROPPED_IMAGE",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 189,
+                "bottom": 261,
+                "width": 189,
+                "height": 261,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "KEY_CROPPED_IMAGE_ROI",
+              "datasetRole": "POSITIVE_TEMPLATE_CANDIDATE"
+            }
+          ]
+        },
+        {
+          "imageId": "key:nut_1",
+          "subset": "key",
+          "fileName": "nut_1.png",
+          "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\Key\\nut_1.png",
+          "fileSizeBytes": 77765,
+          "readable": true,
+          "format": "PNG",
+          "orientationRaw": null,
+          "orientationAssumption": "NO_TRANSFORM",
+          "orientationAnomaly": true,
+          "orientationApplied": false,
+          "orientationNote": "EXIF Orientation is missing/unknown metadata; no transform was applied.",
+          "rawSize": {
+            "width": 376,
+            "height": 136
+          },
+          "normalizedSize": {
+            "width": 376,
+            "height": 136
+          },
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 376,
+            "bottom": 136,
+            "width": 376,
+            "height": 136,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "maskCoverage": {
+            "totalPixels": 51136,
+            "rawPixels": 761,
+            "dilatedPixels": 1042,
+            "rawCoverage": 0.014881883604505632,
+            "dilatedCoverage": 0.0203770337922403
+          },
+          "debug": {
+            "path": "debug/key/nut_1__orientation_mask.jpg",
+            "containsPanels": [
+              "raw_source",
+              "normalized",
+              "hsv_dilate_overlay",
+              "binary_mask"
+            ],
+            "overlayColor": "magenta"
+          },
+          "targets": [
+            {
+              "targetId": "nut",
+              "inspectionType": "NUT_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": 2,
+              "roi": [
+                0.0,
+                0.0,
+                1.0,
+                1.0
+              ],
+              "roiSource": "KEY_CROPPED_IMAGE",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 376,
+                "bottom": 136,
+                "width": 376,
+                "height": 136,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "KEY_CROPPED_IMAGE_ROI",
+              "datasetRole": "POSITIVE_TEMPLATE_CANDIDATE"
+            }
+          ]
+        },
+        {
+          "imageId": "key:thread_1",
+          "subset": "key",
+          "fileName": "thread_1.png",
+          "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\Key\\thread_1.png",
+          "fileSizeBytes": 11455,
+          "readable": true,
+          "format": "PNG",
+          "orientationRaw": null,
+          "orientationAssumption": "NO_TRANSFORM",
+          "orientationAnomaly": true,
+          "orientationApplied": false,
+          "orientationNote": "EXIF Orientation is missing/unknown metadata; no transform was applied.",
+          "rawSize": {
+            "width": 91,
+            "height": 84
+          },
+          "normalizedSize": {
+            "width": 91,
+            "height": 84
+          },
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 91,
+            "bottom": 84,
+            "width": 91,
+            "height": 84,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "maskCoverage": {
+            "totalPixels": 7644,
+            "rawPixels": 2,
+            "dilatedPixels": 12,
+            "rawCoverage": 0.00026164311878597594,
+            "dilatedCoverage": 0.0015698587127158557
+          },
+          "debug": {
+            "path": "debug/key/thread_1__orientation_mask.jpg",
+            "containsPanels": [
+              "raw_source",
+              "normalized",
+              "hsv_dilate_overlay",
+              "binary_mask"
+            ],
+            "overlayColor": "magenta"
+          },
+          "targets": [
+            {
+              "targetId": "thread",
+              "inspectionType": "THREAD_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": 1,
+              "roi": [
+                0.0,
+                0.0,
+                1.0,
+                1.0
+              ],
+              "roiSource": "KEY_CROPPED_IMAGE",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 91,
+                "bottom": 84,
+                "width": 91,
+                "height": 84,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "KEY_CROPPED_IMAGE_ROI",
+              "datasetRole": "POSITIVE_TEMPLATE_CANDIDATE"
+            }
+          ]
+        },
+        {
+          "imageId": "key:thread_2",
+          "subset": "key",
+          "fileName": "thread_2.png",
+          "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\Key\\thread_2.png",
+          "fileSizeBytes": 72782,
+          "readable": true,
+          "format": "PNG",
+          "orientationRaw": null,
+          "orientationAssumption": "NO_TRANSFORM",
+          "orientationAnomaly": true,
+          "orientationApplied": false,
+          "orientationNote": "EXIF Orientation is missing/unknown metadata; no transform was applied.",
+          "rawSize": {
+            "width": 203,
+            "height": 177
+          },
+          "normalizedSize": {
+            "width": 203,
+            "height": 177
+          },
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 203,
+            "bottom": 177,
+            "width": 203,
+            "height": 177,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "maskCoverage": {
+            "totalPixels": 35931,
+            "rawPixels": 1807,
+            "dilatedPixels": 2220,
+            "rawCoverage": 0.05029083521193398,
+            "dilatedCoverage": 0.0617850880854972
+          },
+          "debug": {
+            "path": "debug/key/thread_2__orientation_mask.jpg",
+            "containsPanels": [
+              "raw_source",
+              "normalized",
+              "hsv_dilate_overlay",
+              "binary_mask"
+            ],
+            "overlayColor": "magenta"
+          },
+          "targets": [
+            {
+              "targetId": "thread",
+              "inspectionType": "THREAD_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": 1,
+              "roi": [
+                0.0,
+                0.0,
+                1.0,
+                1.0
+              ],
+              "roiSource": "KEY_CROPPED_IMAGE",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 203,
+                "bottom": 177,
+                "width": 203,
+                "height": 177,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "KEY_CROPPED_IMAGE_ROI",
+              "datasetRole": "POSITIVE_TEMPLATE_CANDIDATE"
+            }
+          ]
+        }
+      ],
+      "maskSummary": {
+        "readableImages": 5,
+        "rawCoverage": {
+          "min": 0.00020566459043365847,
+          "max": 0.05029083521193398,
+          "mean": 0.01761623737957082
+        },
+        "dilatedCoverage": {
+          "min": 0.0009695616406158185,
+          "max": 0.0617850880854972,
+          "mean": 0.022596210653840182
+        }
+      }
+    },
+    "dcim": {
+      "expectedImageCount": 30,
+      "imageCount": 30,
+      "readableCount": 30,
+      "unreadableCount": 0,
+      "countCheck": true,
+      "readabilityCheck": true,
+      "images": [
+        {
+          "imageId": "dcim:IMG_20260828_103109",
+          "subset": "dcim",
+          "fileName": "IMG_20260828_103109.jpg",
+          "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103109.jpg",
+          "fileSizeBytes": 3881809,
+          "readable": true,
+          "format": "JPEG",
+          "orientationRaw": 0,
+          "orientationAssumption": "NO_TRANSFORM",
+          "orientationAnomaly": true,
+          "orientationApplied": false,
+          "orientationNote": "EXIF Orientation=0 is invalid/unknown metadata; no transform was applied.",
+          "rawSize": {
+            "width": 4096,
+            "height": 3072
+          },
+          "normalizedSize": {
+            "width": 4096,
+            "height": 3072
+          },
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "maskCoverage": {
+            "totalPixels": 12582912,
+            "rawPixels": 68373,
+            "dilatedPixels": 82645,
+            "rawCoverage": 0.005433797836303711,
+            "dilatedCoverage": 0.006568034489949544
+          },
+          "debug": {
+            "path": "debug/dcim/IMG_20260828_103109__orientation_mask.jpg",
+            "containsPanels": [
+              "raw_source",
+              "normalized",
+              "hsv_dilate_overlay",
+              "binary_mask"
+            ],
+            "overlayColor": "magenta"
+          },
+          "targets": [
+            {
+              "targetId": "thread",
+              "inspectionType": "THREAD_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "nut",
+              "inspectionType": "NUT_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_1",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_2",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            }
+          ]
+        },
+        {
+          "imageId": "dcim:IMG_20260828_103112",
+          "subset": "dcim",
+          "fileName": "IMG_20260828_103112.jpg",
+          "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103112.jpg",
+          "fileSizeBytes": 3401563,
+          "readable": true,
+          "format": "JPEG",
+          "orientationRaw": 0,
+          "orientationAssumption": "NO_TRANSFORM",
+          "orientationAnomaly": true,
+          "orientationApplied": false,
+          "orientationNote": "EXIF Orientation=0 is invalid/unknown metadata; no transform was applied.",
+          "rawSize": {
+            "width": 4096,
+            "height": 3072
+          },
+          "normalizedSize": {
+            "width": 4096,
+            "height": 3072
+          },
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "maskCoverage": {
+            "totalPixels": 12582912,
+            "rawPixels": 50844,
+            "dilatedPixels": 57111,
+            "rawCoverage": 0.004040718078613281,
+            "dilatedCoverage": 0.004538774490356445
+          },
+          "debug": {
+            "path": "debug/dcim/IMG_20260828_103112__orientation_mask.jpg",
+            "containsPanels": [
+              "raw_source",
+              "normalized",
+              "hsv_dilate_overlay",
+              "binary_mask"
+            ],
+            "overlayColor": "magenta"
+          },
+          "targets": [
+            {
+              "targetId": "thread",
+              "inspectionType": "THREAD_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "nut",
+              "inspectionType": "NUT_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_1",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_2",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            }
+          ]
+        },
+        {
+          "imageId": "dcim:IMG_20260828_103115",
+          "subset": "dcim",
+          "fileName": "IMG_20260828_103115.jpg",
+          "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103115.jpg",
+          "fileSizeBytes": 3201765,
+          "readable": true,
+          "format": "JPEG",
+          "orientationRaw": 0,
+          "orientationAssumption": "NO_TRANSFORM",
+          "orientationAnomaly": true,
+          "orientationApplied": false,
+          "orientationNote": "EXIF Orientation=0 is invalid/unknown metadata; no transform was applied.",
+          "rawSize": {
+            "width": 4096,
+            "height": 3072
+          },
+          "normalizedSize": {
+            "width": 4096,
+            "height": 3072
+          },
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "maskCoverage": {
+            "totalPixels": 12582912,
+            "rawPixels": 51338,
+            "dilatedPixels": 58014,
+            "rawCoverage": 0.004079977671305339,
+            "dilatedCoverage": 0.004610538482666016
+          },
+          "debug": {
+            "path": "debug/dcim/IMG_20260828_103115__orientation_mask.jpg",
+            "containsPanels": [
+              "raw_source",
+              "normalized",
+              "hsv_dilate_overlay",
+              "binary_mask"
+            ],
+            "overlayColor": "magenta"
+          },
+          "targets": [
+            {
+              "targetId": "thread",
+              "inspectionType": "THREAD_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "nut",
+              "inspectionType": "NUT_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_1",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_2",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            }
+          ]
+        },
+        {
+          "imageId": "dcim:IMG_20260828_103118",
+          "subset": "dcim",
+          "fileName": "IMG_20260828_103118.jpg",
+          "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103118.jpg",
+          "fileSizeBytes": 3438630,
+          "readable": true,
+          "format": "JPEG",
+          "orientationRaw": 0,
+          "orientationAssumption": "NO_TRANSFORM",
+          "orientationAnomaly": true,
+          "orientationApplied": false,
+          "orientationNote": "EXIF Orientation=0 is invalid/unknown metadata; no transform was applied.",
+          "rawSize": {
+            "width": 4096,
+            "height": 3072
+          },
+          "normalizedSize": {
+            "width": 4096,
+            "height": 3072
+          },
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "maskCoverage": {
+            "totalPixels": 12582912,
+            "rawPixels": 66118,
+            "dilatedPixels": 76988,
+            "rawCoverage": 0.005254586537679036,
+            "dilatedCoverage": 0.006118456522623698
+          },
+          "debug": {
+            "path": "debug/dcim/IMG_20260828_103118__orientation_mask.jpg",
+            "containsPanels": [
+              "raw_source",
+              "normalized",
+              "hsv_dilate_overlay",
+              "binary_mask"
+            ],
+            "overlayColor": "magenta"
+          },
+          "targets": [
+            {
+              "targetId": "thread",
+              "inspectionType": "THREAD_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "nut",
+              "inspectionType": "NUT_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_1",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_2",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            }
+          ]
+        },
+        {
+          "imageId": "dcim:IMG_20260828_103122",
+          "subset": "dcim",
+          "fileName": "IMG_20260828_103122.jpg",
+          "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103122.jpg",
+          "fileSizeBytes": 3737190,
+          "readable": true,
+          "format": "JPEG",
+          "orientationRaw": 0,
+          "orientationAssumption": "NO_TRANSFORM",
+          "orientationAnomaly": true,
+          "orientationApplied": false,
+          "orientationNote": "EXIF Orientation=0 is invalid/unknown metadata; no transform was applied.",
+          "rawSize": {
+            "width": 4096,
+            "height": 3072
+          },
+          "normalizedSize": {
+            "width": 4096,
+            "height": 3072
+          },
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "maskCoverage": {
+            "totalPixels": 12582912,
+            "rawPixels": 55984,
+            "dilatedPixels": 65880,
+            "rawCoverage": 0.004449208577473958,
+            "dilatedCoverage": 0.0052356719970703125
+          },
+          "debug": {
+            "path": "debug/dcim/IMG_20260828_103122__orientation_mask.jpg",
+            "containsPanels": [
+              "raw_source",
+              "normalized",
+              "hsv_dilate_overlay",
+              "binary_mask"
+            ],
+            "overlayColor": "magenta"
+          },
+          "targets": [
+            {
+              "targetId": "thread",
+              "inspectionType": "THREAD_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "nut",
+              "inspectionType": "NUT_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_1",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_2",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            }
+          ]
+        },
+        {
+          "imageId": "dcim:IMG_20260828_103127",
+          "subset": "dcim",
+          "fileName": "IMG_20260828_103127.jpg",
+          "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103127.jpg",
+          "fileSizeBytes": 3791808,
+          "readable": true,
+          "format": "JPEG",
+          "orientationRaw": 0,
+          "orientationAssumption": "NO_TRANSFORM",
+          "orientationAnomaly": true,
+          "orientationApplied": false,
+          "orientationNote": "EXIF Orientation=0 is invalid/unknown metadata; no transform was applied.",
+          "rawSize": {
+            "width": 4096,
+            "height": 3072
+          },
+          "normalizedSize": {
+            "width": 4096,
+            "height": 3072
+          },
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "maskCoverage": {
+            "totalPixels": 12582912,
+            "rawPixels": 66940,
+            "dilatedPixels": 76890,
+            "rawCoverage": 0.005319913228352864,
+            "dilatedCoverage": 0.006110668182373047
+          },
+          "debug": {
+            "path": "debug/dcim/IMG_20260828_103127__orientation_mask.jpg",
+            "containsPanels": [
+              "raw_source",
+              "normalized",
+              "hsv_dilate_overlay",
+              "binary_mask"
+            ],
+            "overlayColor": "magenta"
+          },
+          "targets": [
+            {
+              "targetId": "thread",
+              "inspectionType": "THREAD_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "nut",
+              "inspectionType": "NUT_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_1",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_2",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            }
+          ]
+        },
+        {
+          "imageId": "dcim:IMG_20260828_103130",
+          "subset": "dcim",
+          "fileName": "IMG_20260828_103130.jpg",
+          "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103130.jpg",
+          "fileSizeBytes": 4499350,
+          "readable": true,
+          "format": "JPEG",
+          "orientationRaw": 0,
+          "orientationAssumption": "NO_TRANSFORM",
+          "orientationAnomaly": true,
+          "orientationApplied": false,
+          "orientationNote": "EXIF Orientation=0 is invalid/unknown metadata; no transform was applied.",
+          "rawSize": {
+            "width": 4096,
+            "height": 3072
+          },
+          "normalizedSize": {
+            "width": 4096,
+            "height": 3072
+          },
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "maskCoverage": {
+            "totalPixels": 12582912,
+            "rawPixels": 85420,
+            "dilatedPixels": 100950,
+            "rawCoverage": 0.006788571675618489,
+            "dilatedCoverage": 0.008022785186767578
+          },
+          "debug": {
+            "path": "debug/dcim/IMG_20260828_103130__orientation_mask.jpg",
+            "containsPanels": [
+              "raw_source",
+              "normalized",
+              "hsv_dilate_overlay",
+              "binary_mask"
+            ],
+            "overlayColor": "magenta"
+          },
+          "targets": [
+            {
+              "targetId": "thread",
+              "inspectionType": "THREAD_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "nut",
+              "inspectionType": "NUT_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_1",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_2",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            }
+          ]
+        },
+        {
+          "imageId": "dcim:IMG_20260828_103134",
+          "subset": "dcim",
+          "fileName": "IMG_20260828_103134.jpg",
+          "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103134.jpg",
+          "fileSizeBytes": 4424687,
+          "readable": true,
+          "format": "JPEG",
+          "orientationRaw": 0,
+          "orientationAssumption": "NO_TRANSFORM",
+          "orientationAnomaly": true,
+          "orientationApplied": false,
+          "orientationNote": "EXIF Orientation=0 is invalid/unknown metadata; no transform was applied.",
+          "rawSize": {
+            "width": 4096,
+            "height": 3072
+          },
+          "normalizedSize": {
+            "width": 4096,
+            "height": 3072
+          },
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "maskCoverage": {
+            "totalPixels": 12582912,
+            "rawPixels": 102020,
+            "dilatedPixels": 116657,
+            "rawCoverage": 0.008107821146647135,
+            "dilatedCoverage": 0.009271065394083658
+          },
+          "debug": {
+            "path": "debug/dcim/IMG_20260828_103134__orientation_mask.jpg",
+            "containsPanels": [
+              "raw_source",
+              "normalized",
+              "hsv_dilate_overlay",
+              "binary_mask"
+            ],
+            "overlayColor": "magenta"
+          },
+          "targets": [
+            {
+              "targetId": "thread",
+              "inspectionType": "THREAD_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "nut",
+              "inspectionType": "NUT_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_1",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_2",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            }
+          ]
+        },
+        {
+          "imageId": "dcim:IMG_20260828_103138",
+          "subset": "dcim",
+          "fileName": "IMG_20260828_103138.jpg",
+          "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103138.jpg",
+          "fileSizeBytes": 3474328,
+          "readable": true,
+          "format": "JPEG",
+          "orientationRaw": 0,
+          "orientationAssumption": "NO_TRANSFORM",
+          "orientationAnomaly": true,
+          "orientationApplied": false,
+          "orientationNote": "EXIF Orientation=0 is invalid/unknown metadata; no transform was applied.",
+          "rawSize": {
+            "width": 4096,
+            "height": 3072
+          },
+          "normalizedSize": {
+            "width": 4096,
+            "height": 3072
+          },
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "maskCoverage": {
+            "totalPixels": 12582912,
+            "rawPixels": 36802,
+            "dilatedPixels": 40819,
+            "rawCoverage": 0.002924760182698568,
+            "dilatedCoverage": 0.00324400266011556
+          },
+          "debug": {
+            "path": "debug/dcim/IMG_20260828_103138__orientation_mask.jpg",
+            "containsPanels": [
+              "raw_source",
+              "normalized",
+              "hsv_dilate_overlay",
+              "binary_mask"
+            ],
+            "overlayColor": "magenta"
+          },
+          "targets": [
+            {
+              "targetId": "thread",
+              "inspectionType": "THREAD_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "nut",
+              "inspectionType": "NUT_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_1",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_2",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            }
+          ]
+        },
+        {
+          "imageId": "dcim:IMG_20260828_103145",
+          "subset": "dcim",
+          "fileName": "IMG_20260828_103145.jpg",
+          "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103145.jpg",
+          "fileSizeBytes": 2868394,
+          "readable": true,
+          "format": "JPEG",
+          "orientationRaw": 0,
+          "orientationAssumption": "NO_TRANSFORM",
+          "orientationAnomaly": true,
+          "orientationApplied": false,
+          "orientationNote": "EXIF Orientation=0 is invalid/unknown metadata; no transform was applied.",
+          "rawSize": {
+            "width": 4096,
+            "height": 3072
+          },
+          "normalizedSize": {
+            "width": 4096,
+            "height": 3072
+          },
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "maskCoverage": {
+            "totalPixels": 12582912,
+            "rawPixels": 128286,
+            "dilatedPixels": 135224,
+            "rawCoverage": 0.010195255279541016,
+            "dilatedCoverage": 0.010746637980143229
+          },
+          "debug": {
+            "path": "debug/dcim/IMG_20260828_103145__orientation_mask.jpg",
+            "containsPanels": [
+              "raw_source",
+              "normalized",
+              "hsv_dilate_overlay",
+              "binary_mask"
+            ],
+            "overlayColor": "magenta"
+          },
+          "targets": [
+            {
+              "targetId": "thread",
+              "inspectionType": "THREAD_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "nut",
+              "inspectionType": "NUT_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_1",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_2",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            }
+          ]
+        },
+        {
+          "imageId": "dcim:IMG_20260828_103149",
+          "subset": "dcim",
+          "fileName": "IMG_20260828_103149.jpg",
+          "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103149.jpg",
+          "fileSizeBytes": 4245286,
+          "readable": true,
+          "format": "JPEG",
+          "orientationRaw": 0,
+          "orientationAssumption": "NO_TRANSFORM",
+          "orientationAnomaly": true,
+          "orientationApplied": false,
+          "orientationNote": "EXIF Orientation=0 is invalid/unknown metadata; no transform was applied.",
+          "rawSize": {
+            "width": 4096,
+            "height": 3072
+          },
+          "normalizedSize": {
+            "width": 4096,
+            "height": 3072
+          },
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "maskCoverage": {
+            "totalPixels": 12582912,
+            "rawPixels": 117030,
+            "dilatedPixels": 128274,
+            "rawCoverage": 0.009300708770751953,
+            "dilatedCoverage": 0.01019430160522461
+          },
+          "debug": {
+            "path": "debug/dcim/IMG_20260828_103149__orientation_mask.jpg",
+            "containsPanels": [
+              "raw_source",
+              "normalized",
+              "hsv_dilate_overlay",
+              "binary_mask"
+            ],
+            "overlayColor": "magenta"
+          },
+          "targets": [
+            {
+              "targetId": "thread",
+              "inspectionType": "THREAD_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "nut",
+              "inspectionType": "NUT_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_1",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_2",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            }
+          ]
+        },
+        {
+          "imageId": "dcim:IMG_20260828_103156",
+          "subset": "dcim",
+          "fileName": "IMG_20260828_103156.jpg",
+          "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103156.jpg",
+          "fileSizeBytes": 3511531,
+          "readable": true,
+          "format": "JPEG",
+          "orientationRaw": 0,
+          "orientationAssumption": "NO_TRANSFORM",
+          "orientationAnomaly": true,
+          "orientationApplied": false,
+          "orientationNote": "EXIF Orientation=0 is invalid/unknown metadata; no transform was applied.",
+          "rawSize": {
+            "width": 4096,
+            "height": 3072
+          },
+          "normalizedSize": {
+            "width": 4096,
+            "height": 3072
+          },
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "maskCoverage": {
+            "totalPixels": 12582912,
+            "rawPixels": 59974,
+            "dilatedPixels": 67637,
+            "rawCoverage": 0.004766305287679036,
+            "dilatedCoverage": 0.005375305811564128
+          },
+          "debug": {
+            "path": "debug/dcim/IMG_20260828_103156__orientation_mask.jpg",
+            "containsPanels": [
+              "raw_source",
+              "normalized",
+              "hsv_dilate_overlay",
+              "binary_mask"
+            ],
+            "overlayColor": "magenta"
+          },
+          "targets": [
+            {
+              "targetId": "thread",
+              "inspectionType": "THREAD_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "nut",
+              "inspectionType": "NUT_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_1",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_2",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            }
+          ]
+        },
+        {
+          "imageId": "dcim:IMG_20260828_103203",
+          "subset": "dcim",
+          "fileName": "IMG_20260828_103203.jpg",
+          "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103203.jpg",
+          "fileSizeBytes": 5138231,
+          "readable": true,
+          "format": "JPEG",
+          "orientationRaw": 0,
+          "orientationAssumption": "NO_TRANSFORM",
+          "orientationAnomaly": true,
+          "orientationApplied": false,
+          "orientationNote": "EXIF Orientation=0 is invalid/unknown metadata; no transform was applied.",
+          "rawSize": {
+            "width": 4096,
+            "height": 3072
+          },
+          "normalizedSize": {
+            "width": 4096,
+            "height": 3072
+          },
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "maskCoverage": {
+            "totalPixels": 12582912,
+            "rawPixels": 56732,
+            "dilatedPixels": 70258,
+            "rawCoverage": 0.004508654276529948,
+            "dilatedCoverage": 0.005583604176839192
+          },
+          "debug": {
+            "path": "debug/dcim/IMG_20260828_103203__orientation_mask.jpg",
+            "containsPanels": [
+              "raw_source",
+              "normalized",
+              "hsv_dilate_overlay",
+              "binary_mask"
+            ],
+            "overlayColor": "magenta"
+          },
+          "targets": [
+            {
+              "targetId": "thread",
+              "inspectionType": "THREAD_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "nut",
+              "inspectionType": "NUT_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_1",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_2",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            }
+          ]
+        },
+        {
+          "imageId": "dcim:IMG_20260828_103205",
+          "subset": "dcim",
+          "fileName": "IMG_20260828_103205.jpg",
+          "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103205.jpg",
+          "fileSizeBytes": 4468556,
+          "readable": true,
+          "format": "JPEG",
+          "orientationRaw": 0,
+          "orientationAssumption": "NO_TRANSFORM",
+          "orientationAnomaly": true,
+          "orientationApplied": false,
+          "orientationNote": "EXIF Orientation=0 is invalid/unknown metadata; no transform was applied.",
+          "rawSize": {
+            "width": 4096,
+            "height": 3072
+          },
+          "normalizedSize": {
+            "width": 4096,
+            "height": 3072
+          },
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "maskCoverage": {
+            "totalPixels": 12582912,
+            "rawPixels": 79072,
+            "dilatedPixels": 85489,
+            "rawCoverage": 0.006284077962239583,
+            "dilatedCoverage": 0.006794055302937825
+          },
+          "debug": {
+            "path": "debug/dcim/IMG_20260828_103205__orientation_mask.jpg",
+            "containsPanels": [
+              "raw_source",
+              "normalized",
+              "hsv_dilate_overlay",
+              "binary_mask"
+            ],
+            "overlayColor": "magenta"
+          },
+          "targets": [
+            {
+              "targetId": "thread",
+              "inspectionType": "THREAD_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "nut",
+              "inspectionType": "NUT_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_1",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_2",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            }
+          ]
+        },
+        {
+          "imageId": "dcim:IMG_20260828_103209",
+          "subset": "dcim",
+          "fileName": "IMG_20260828_103209.jpg",
+          "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103209.jpg",
+          "fileSizeBytes": 2762601,
+          "readable": true,
+          "format": "JPEG",
+          "orientationRaw": 0,
+          "orientationAssumption": "NO_TRANSFORM",
+          "orientationAnomaly": true,
+          "orientationApplied": false,
+          "orientationNote": "EXIF Orientation=0 is invalid/unknown metadata; no transform was applied.",
+          "rawSize": {
+            "width": 4096,
+            "height": 3072
+          },
+          "normalizedSize": {
+            "width": 4096,
+            "height": 3072
+          },
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "maskCoverage": {
+            "totalPixels": 12582912,
+            "rawPixels": 38934,
+            "dilatedPixels": 42926,
+            "rawCoverage": 0.003094196319580078,
+            "dilatedCoverage": 0.003411451975504557
+          },
+          "debug": {
+            "path": "debug/dcim/IMG_20260828_103209__orientation_mask.jpg",
+            "containsPanels": [
+              "raw_source",
+              "normalized",
+              "hsv_dilate_overlay",
+              "binary_mask"
+            ],
+            "overlayColor": "magenta"
+          },
+          "targets": [
+            {
+              "targetId": "thread",
+              "inspectionType": "THREAD_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "nut",
+              "inspectionType": "NUT_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_1",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_2",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            }
+          ]
+        },
+        {
+          "imageId": "dcim:IMG_20260828_103218",
+          "subset": "dcim",
+          "fileName": "IMG_20260828_103218.jpg",
+          "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103218.jpg",
+          "fileSizeBytes": 4804336,
+          "readable": true,
+          "format": "JPEG",
+          "orientationRaw": 0,
+          "orientationAssumption": "NO_TRANSFORM",
+          "orientationAnomaly": true,
+          "orientationApplied": false,
+          "orientationNote": "EXIF Orientation=0 is invalid/unknown metadata; no transform was applied.",
+          "rawSize": {
+            "width": 4096,
+            "height": 3072
+          },
+          "normalizedSize": {
+            "width": 4096,
+            "height": 3072
+          },
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "maskCoverage": {
+            "totalPixels": 12582912,
+            "rawPixels": 66239,
+            "dilatedPixels": 75731,
+            "rawCoverage": 0.0052642027537028,
+            "dilatedCoverage": 0.0060185591379801435
+          },
+          "debug": {
+            "path": "debug/dcim/IMG_20260828_103218__orientation_mask.jpg",
+            "containsPanels": [
+              "raw_source",
+              "normalized",
+              "hsv_dilate_overlay",
+              "binary_mask"
+            ],
+            "overlayColor": "magenta"
+          },
+          "targets": [
+            {
+              "targetId": "thread",
+              "inspectionType": "THREAD_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "nut",
+              "inspectionType": "NUT_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_1",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_2",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            }
+          ]
+        },
+        {
+          "imageId": "dcim:IMG_20260828_103223",
+          "subset": "dcim",
+          "fileName": "IMG_20260828_103223.jpg",
+          "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103223.jpg",
+          "fileSizeBytes": 2950954,
+          "readable": true,
+          "format": "JPEG",
+          "orientationRaw": 0,
+          "orientationAssumption": "NO_TRANSFORM",
+          "orientationAnomaly": true,
+          "orientationApplied": false,
+          "orientationNote": "EXIF Orientation=0 is invalid/unknown metadata; no transform was applied.",
+          "rawSize": {
+            "width": 4096,
+            "height": 3072
+          },
+          "normalizedSize": {
+            "width": 4096,
+            "height": 3072
+          },
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "maskCoverage": {
+            "totalPixels": 12582912,
+            "rawPixels": 46424,
+            "dilatedPixels": 53606,
+            "rawCoverage": 0.003689448038736979,
+            "dilatedCoverage": 0.00426022211710612
+          },
+          "debug": {
+            "path": "debug/dcim/IMG_20260828_103223__orientation_mask.jpg",
+            "containsPanels": [
+              "raw_source",
+              "normalized",
+              "hsv_dilate_overlay",
+              "binary_mask"
+            ],
+            "overlayColor": "magenta"
+          },
+          "targets": [
+            {
+              "targetId": "thread",
+              "inspectionType": "THREAD_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "nut",
+              "inspectionType": "NUT_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_1",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_2",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            }
+          ]
+        },
+        {
+          "imageId": "dcim:IMG_20260828_103228",
+          "subset": "dcim",
+          "fileName": "IMG_20260828_103228.jpg",
+          "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103228.jpg",
+          "fileSizeBytes": 5604351,
+          "readable": true,
+          "format": "JPEG",
+          "orientationRaw": 0,
+          "orientationAssumption": "NO_TRANSFORM",
+          "orientationAnomaly": true,
+          "orientationApplied": false,
+          "orientationNote": "EXIF Orientation=0 is invalid/unknown metadata; no transform was applied.",
+          "rawSize": {
+            "width": 4096,
+            "height": 3072
+          },
+          "normalizedSize": {
+            "width": 4096,
+            "height": 3072
+          },
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "maskCoverage": {
+            "totalPixels": 12582912,
+            "rawPixels": 42743,
+            "dilatedPixels": 51940,
+            "rawCoverage": 0.003396908442179362,
+            "dilatedCoverage": 0.004127820332845052
+          },
+          "debug": {
+            "path": "debug/dcim/IMG_20260828_103228__orientation_mask.jpg",
+            "containsPanels": [
+              "raw_source",
+              "normalized",
+              "hsv_dilate_overlay",
+              "binary_mask"
+            ],
+            "overlayColor": "magenta"
+          },
+          "targets": [
+            {
+              "targetId": "thread",
+              "inspectionType": "THREAD_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "nut",
+              "inspectionType": "NUT_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_1",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_2",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            }
+          ]
+        },
+        {
+          "imageId": "dcim:IMG_20260828_103231",
+          "subset": "dcim",
+          "fileName": "IMG_20260828_103231.jpg",
+          "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103231.jpg",
+          "fileSizeBytes": 5500748,
+          "readable": true,
+          "format": "JPEG",
+          "orientationRaw": 0,
+          "orientationAssumption": "NO_TRANSFORM",
+          "orientationAnomaly": true,
+          "orientationApplied": false,
+          "orientationNote": "EXIF Orientation=0 is invalid/unknown metadata; no transform was applied.",
+          "rawSize": {
+            "width": 4096,
+            "height": 3072
+          },
+          "normalizedSize": {
+            "width": 4096,
+            "height": 3072
+          },
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "maskCoverage": {
+            "totalPixels": 12582912,
+            "rawPixels": 75198,
+            "dilatedPixels": 90635,
+            "rawCoverage": 0.005976200103759766,
+            "dilatedCoverage": 0.007203022638956706
+          },
+          "debug": {
+            "path": "debug/dcim/IMG_20260828_103231__orientation_mask.jpg",
+            "containsPanels": [
+              "raw_source",
+              "normalized",
+              "hsv_dilate_overlay",
+              "binary_mask"
+            ],
+            "overlayColor": "magenta"
+          },
+          "targets": [
+            {
+              "targetId": "thread",
+              "inspectionType": "THREAD_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "nut",
+              "inspectionType": "NUT_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_1",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_2",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            }
+          ]
+        },
+        {
+          "imageId": "dcim:IMG_20260828_103241",
+          "subset": "dcim",
+          "fileName": "IMG_20260828_103241.jpg",
+          "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103241.jpg",
+          "fileSizeBytes": 4880535,
+          "readable": true,
+          "format": "JPEG",
+          "orientationRaw": 0,
+          "orientationAssumption": "NO_TRANSFORM",
+          "orientationAnomaly": true,
+          "orientationApplied": false,
+          "orientationNote": "EXIF Orientation=0 is invalid/unknown metadata; no transform was applied.",
+          "rawSize": {
+            "width": 4096,
+            "height": 3072
+          },
+          "normalizedSize": {
+            "width": 4096,
+            "height": 3072
+          },
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 4096,
+            "bottom": 3072,
+            "width": 4096,
+            "height": 3072,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "maskCoverage": {
+            "totalPixels": 12582912,
+            "rawPixels": 12491,
+            "dilatedPixels": 19026,
+            "rawCoverage": 0.0009926954905192058,
+            "dilatedCoverage": 0.0015120506286621094
+          },
+          "debug": {
+            "path": "debug/dcim/IMG_20260828_103241__orientation_mask.jpg",
+            "containsPanels": [
+              "raw_source",
+              "normalized",
+              "hsv_dilate_overlay",
+              "binary_mask"
+            ],
+            "overlayColor": "magenta"
+          },
+          "targets": [
+            {
+              "targetId": "thread",
+              "inspectionType": "THREAD_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "nut",
+              "inspectionType": "NUT_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_1",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_2",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 4096,
+                "bottom": 3072,
+                "width": 4096,
+                "height": 3072,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            }
+          ]
+        },
+        {
+          "imageId": "dcim:IMG_20260828_103308",
+          "subset": "dcim",
+          "fileName": "IMG_20260828_103308.jpg",
+          "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103308.jpg",
+          "fileSizeBytes": 2953670,
+          "readable": true,
+          "format": "JPEG",
+          "orientationRaw": 0,
+          "orientationAssumption": "NO_TRANSFORM",
+          "orientationAnomaly": true,
+          "orientationApplied": false,
+          "orientationNote": "EXIF Orientation=0 is invalid/unknown metadata; no transform was applied.",
+          "rawSize": {
+            "width": 3072,
+            "height": 4096
+          },
+          "normalizedSize": {
+            "width": 3072,
+            "height": 4096
+          },
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "maskCoverage": {
+            "totalPixels": 12582912,
+            "rawPixels": 1014,
+            "dilatedPixels": 1387,
+            "rawCoverage": 8.058547973632812e-05,
+            "dilatedCoverage": 0.00011022885640462239
+          },
+          "debug": {
+            "path": "debug/dcim/IMG_20260828_103308__orientation_mask.jpg",
+            "containsPanels": [
+              "raw_source",
+              "normalized",
+              "hsv_dilate_overlay",
+              "binary_mask"
+            ],
+            "overlayColor": "magenta"
+          },
+          "targets": [
+            {
+              "targetId": "thread",
+              "inspectionType": "THREAD_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 3072,
+                "bottom": 4096,
+                "width": 3072,
+                "height": 4096,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "nut",
+              "inspectionType": "NUT_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 3072,
+                "bottom": 4096,
+                "width": 3072,
+                "height": 4096,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_1",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 3072,
+                "bottom": 4096,
+                "width": 3072,
+                "height": 4096,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_2",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 3072,
+                "bottom": 4096,
+                "width": 3072,
+                "height": 4096,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            }
+          ]
+        },
+        {
+          "imageId": "dcim:IMG_20260828_103313",
+          "subset": "dcim",
+          "fileName": "IMG_20260828_103313.jpg",
+          "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103313.jpg",
+          "fileSizeBytes": 3904857,
+          "readable": true,
+          "format": "JPEG",
+          "orientationRaw": 0,
+          "orientationAssumption": "NO_TRANSFORM",
+          "orientationAnomaly": true,
+          "orientationApplied": false,
+          "orientationNote": "EXIF Orientation=0 is invalid/unknown metadata; no transform was applied.",
+          "rawSize": {
+            "width": 3072,
+            "height": 4096
+          },
+          "normalizedSize": {
+            "width": 3072,
+            "height": 4096
+          },
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "maskCoverage": {
+            "totalPixels": 12582912,
+            "rawPixels": 15499,
+            "dilatedPixels": 18152,
+            "rawCoverage": 0.0012317498524983723,
+            "dilatedCoverage": 0.0014425913492838542
+          },
+          "debug": {
+            "path": "debug/dcim/IMG_20260828_103313__orientation_mask.jpg",
+            "containsPanels": [
+              "raw_source",
+              "normalized",
+              "hsv_dilate_overlay",
+              "binary_mask"
+            ],
+            "overlayColor": "magenta"
+          },
+          "targets": [
+            {
+              "targetId": "thread",
+              "inspectionType": "THREAD_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 3072,
+                "bottom": 4096,
+                "width": 3072,
+                "height": 4096,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "nut",
+              "inspectionType": "NUT_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 3072,
+                "bottom": 4096,
+                "width": 3072,
+                "height": 4096,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_1",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 3072,
+                "bottom": 4096,
+                "width": 3072,
+                "height": 4096,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_2",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 3072,
+                "bottom": 4096,
+                "width": 3072,
+                "height": 4096,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            }
+          ]
+        },
+        {
+          "imageId": "dcim:IMG_20260828_103318",
+          "subset": "dcim",
+          "fileName": "IMG_20260828_103318.jpg",
+          "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103318.jpg",
+          "fileSizeBytes": 3670473,
+          "readable": true,
+          "format": "JPEG",
+          "orientationRaw": 0,
+          "orientationAssumption": "NO_TRANSFORM",
+          "orientationAnomaly": true,
+          "orientationApplied": false,
+          "orientationNote": "EXIF Orientation=0 is invalid/unknown metadata; no transform was applied.",
+          "rawSize": {
+            "width": 3072,
+            "height": 4096
+          },
+          "normalizedSize": {
+            "width": 3072,
+            "height": 4096
+          },
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "maskCoverage": {
+            "totalPixels": 12582912,
+            "rawPixels": 28776,
+            "dilatedPixels": 35305,
+            "rawCoverage": 0.0022869110107421875,
+            "dilatedCoverage": 0.002805789311726888
+          },
+          "debug": {
+            "path": "debug/dcim/IMG_20260828_103318__orientation_mask.jpg",
+            "containsPanels": [
+              "raw_source",
+              "normalized",
+              "hsv_dilate_overlay",
+              "binary_mask"
+            ],
+            "overlayColor": "magenta"
+          },
+          "targets": [
+            {
+              "targetId": "thread",
+              "inspectionType": "THREAD_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 3072,
+                "bottom": 4096,
+                "width": 3072,
+                "height": 4096,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "nut",
+              "inspectionType": "NUT_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 3072,
+                "bottom": 4096,
+                "width": 3072,
+                "height": 4096,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_1",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 3072,
+                "bottom": 4096,
+                "width": 3072,
+                "height": 4096,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_2",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 3072,
+                "bottom": 4096,
+                "width": 3072,
+                "height": 4096,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            }
+          ]
+        },
+        {
+          "imageId": "dcim:IMG_20260828_103322",
+          "subset": "dcim",
+          "fileName": "IMG_20260828_103322.jpg",
+          "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103322.jpg",
+          "fileSizeBytes": 3462621,
+          "readable": true,
+          "format": "JPEG",
+          "orientationRaw": 0,
+          "orientationAssumption": "NO_TRANSFORM",
+          "orientationAnomaly": true,
+          "orientationApplied": false,
+          "orientationNote": "EXIF Orientation=0 is invalid/unknown metadata; no transform was applied.",
+          "rawSize": {
+            "width": 3072,
+            "height": 4096
+          },
+          "normalizedSize": {
+            "width": 3072,
+            "height": 4096
+          },
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "maskCoverage": {
+            "totalPixels": 12582912,
+            "rawPixels": 32582,
+            "dilatedPixels": 37749,
+            "rawCoverage": 0.0025893847147623696,
+            "dilatedCoverage": 0.003000020980834961
+          },
+          "debug": {
+            "path": "debug/dcim/IMG_20260828_103322__orientation_mask.jpg",
+            "containsPanels": [
+              "raw_source",
+              "normalized",
+              "hsv_dilate_overlay",
+              "binary_mask"
+            ],
+            "overlayColor": "magenta"
+          },
+          "targets": [
+            {
+              "targetId": "thread",
+              "inspectionType": "THREAD_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 3072,
+                "bottom": 4096,
+                "width": 3072,
+                "height": 4096,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "nut",
+              "inspectionType": "NUT_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 3072,
+                "bottom": 4096,
+                "width": 3072,
+                "height": 4096,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_1",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 3072,
+                "bottom": 4096,
+                "width": 3072,
+                "height": 4096,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_2",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 3072,
+                "bottom": 4096,
+                "width": 3072,
+                "height": 4096,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            }
+          ]
+        },
+        {
+          "imageId": "dcim:IMG_20260828_103326",
+          "subset": "dcim",
+          "fileName": "IMG_20260828_103326.jpg",
+          "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103326.jpg",
+          "fileSizeBytes": 5607335,
+          "readable": true,
+          "format": "JPEG",
+          "orientationRaw": 0,
+          "orientationAssumption": "NO_TRANSFORM",
+          "orientationAnomaly": true,
+          "orientationApplied": false,
+          "orientationNote": "EXIF Orientation=0 is invalid/unknown metadata; no transform was applied.",
+          "rawSize": {
+            "width": 3072,
+            "height": 4096
+          },
+          "normalizedSize": {
+            "width": 3072,
+            "height": 4096
+          },
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "maskCoverage": {
+            "totalPixels": 12582912,
+            "rawPixels": 48935,
+            "dilatedPixels": 61493,
+            "rawCoverage": 0.003889004389444987,
+            "dilatedCoverage": 0.004887024561564128
+          },
+          "debug": {
+            "path": "debug/dcim/IMG_20260828_103326__orientation_mask.jpg",
+            "containsPanels": [
+              "raw_source",
+              "normalized",
+              "hsv_dilate_overlay",
+              "binary_mask"
+            ],
+            "overlayColor": "magenta"
+          },
+          "targets": [
+            {
+              "targetId": "thread",
+              "inspectionType": "THREAD_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 3072,
+                "bottom": 4096,
+                "width": 3072,
+                "height": 4096,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "nut",
+              "inspectionType": "NUT_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 3072,
+                "bottom": 4096,
+                "width": 3072,
+                "height": 4096,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_1",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 3072,
+                "bottom": 4096,
+                "width": 3072,
+                "height": 4096,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_2",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 3072,
+                "bottom": 4096,
+                "width": 3072,
+                "height": 4096,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            }
+          ]
+        },
+        {
+          "imageId": "dcim:IMG_20260828_103331",
+          "subset": "dcim",
+          "fileName": "IMG_20260828_103331.jpg",
+          "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103331.jpg",
+          "fileSizeBytes": 4430216,
+          "readable": true,
+          "format": "JPEG",
+          "orientationRaw": 0,
+          "orientationAssumption": "NO_TRANSFORM",
+          "orientationAnomaly": true,
+          "orientationApplied": false,
+          "orientationNote": "EXIF Orientation=0 is invalid/unknown metadata; no transform was applied.",
+          "rawSize": {
+            "width": 3072,
+            "height": 4096
+          },
+          "normalizedSize": {
+            "width": 3072,
+            "height": 4096
+          },
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "maskCoverage": {
+            "totalPixels": 12582912,
+            "rawPixels": 21012,
+            "dilatedPixels": 24978,
+            "rawCoverage": 0.0016698837280273438,
+            "dilatedCoverage": 0.0019850730895996094
+          },
+          "debug": {
+            "path": "debug/dcim/IMG_20260828_103331__orientation_mask.jpg",
+            "containsPanels": [
+              "raw_source",
+              "normalized",
+              "hsv_dilate_overlay",
+              "binary_mask"
+            ],
+            "overlayColor": "magenta"
+          },
+          "targets": [
+            {
+              "targetId": "thread",
+              "inspectionType": "THREAD_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 3072,
+                "bottom": 4096,
+                "width": 3072,
+                "height": 4096,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "nut",
+              "inspectionType": "NUT_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 3072,
+                "bottom": 4096,
+                "width": 3072,
+                "height": 4096,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_1",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 3072,
+                "bottom": 4096,
+                "width": 3072,
+                "height": 4096,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_2",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 3072,
+                "bottom": 4096,
+                "width": 3072,
+                "height": 4096,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            }
+          ]
+        },
+        {
+          "imageId": "dcim:IMG_20260828_103335",
+          "subset": "dcim",
+          "fileName": "IMG_20260828_103335.jpg",
+          "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103335.jpg",
+          "fileSizeBytes": 3556827,
+          "readable": true,
+          "format": "JPEG",
+          "orientationRaw": 0,
+          "orientationAssumption": "NO_TRANSFORM",
+          "orientationAnomaly": true,
+          "orientationApplied": false,
+          "orientationNote": "EXIF Orientation=0 is invalid/unknown metadata; no transform was applied.",
+          "rawSize": {
+            "width": 3072,
+            "height": 4096
+          },
+          "normalizedSize": {
+            "width": 3072,
+            "height": 4096
+          },
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "maskCoverage": {
+            "totalPixels": 12582912,
+            "rawPixels": 38200,
+            "dilatedPixels": 44484,
+            "rawCoverage": 0.003035863240559896,
+            "dilatedCoverage": 0.0035352706909179688
+          },
+          "debug": {
+            "path": "debug/dcim/IMG_20260828_103335__orientation_mask.jpg",
+            "containsPanels": [
+              "raw_source",
+              "normalized",
+              "hsv_dilate_overlay",
+              "binary_mask"
+            ],
+            "overlayColor": "magenta"
+          },
+          "targets": [
+            {
+              "targetId": "thread",
+              "inspectionType": "THREAD_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 3072,
+                "bottom": 4096,
+                "width": 3072,
+                "height": 4096,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "nut",
+              "inspectionType": "NUT_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 3072,
+                "bottom": 4096,
+                "width": 3072,
+                "height": 4096,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_1",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 3072,
+                "bottom": 4096,
+                "width": 3072,
+                "height": 4096,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_2",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 3072,
+                "bottom": 4096,
+                "width": 3072,
+                "height": 4096,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            }
+          ]
+        },
+        {
+          "imageId": "dcim:IMG_20260828_103340",
+          "subset": "dcim",
+          "fileName": "IMG_20260828_103340.jpg",
+          "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103340.jpg",
+          "fileSizeBytes": 3669437,
+          "readable": true,
+          "format": "JPEG",
+          "orientationRaw": 0,
+          "orientationAssumption": "NO_TRANSFORM",
+          "orientationAnomaly": true,
+          "orientationApplied": false,
+          "orientationNote": "EXIF Orientation=0 is invalid/unknown metadata; no transform was applied.",
+          "rawSize": {
+            "width": 3072,
+            "height": 4096
+          },
+          "normalizedSize": {
+            "width": 3072,
+            "height": 4096
+          },
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "maskCoverage": {
+            "totalPixels": 12582912,
+            "rawPixels": 67645,
+            "dilatedPixels": 76782,
+            "rawCoverage": 0.0053759415944417315,
+            "dilatedCoverage": 0.006102085113525391
+          },
+          "debug": {
+            "path": "debug/dcim/IMG_20260828_103340__orientation_mask.jpg",
+            "containsPanels": [
+              "raw_source",
+              "normalized",
+              "hsv_dilate_overlay",
+              "binary_mask"
+            ],
+            "overlayColor": "magenta"
+          },
+          "targets": [
+            {
+              "targetId": "thread",
+              "inspectionType": "THREAD_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 3072,
+                "bottom": 4096,
+                "width": 3072,
+                "height": 4096,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "nut",
+              "inspectionType": "NUT_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 3072,
+                "bottom": 4096,
+                "width": 3072,
+                "height": 4096,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_1",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 3072,
+                "bottom": 4096,
+                "width": 3072,
+                "height": 4096,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_2",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 3072,
+                "bottom": 4096,
+                "width": 3072,
+                "height": 4096,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            }
+          ]
+        },
+        {
+          "imageId": "dcim:IMG_20260828_103344",
+          "subset": "dcim",
+          "fileName": "IMG_20260828_103344.jpg",
+          "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103344.jpg",
+          "fileSizeBytes": 4643805,
+          "readable": true,
+          "format": "JPEG",
+          "orientationRaw": 0,
+          "orientationAssumption": "NO_TRANSFORM",
+          "orientationAnomaly": true,
+          "orientationApplied": false,
+          "orientationNote": "EXIF Orientation=0 is invalid/unknown metadata; no transform was applied.",
+          "rawSize": {
+            "width": 3072,
+            "height": 4096
+          },
+          "normalizedSize": {
+            "width": 3072,
+            "height": 4096
+          },
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "maskCoverage": {
+            "totalPixels": 12582912,
+            "rawPixels": 71306,
+            "dilatedPixels": 86230,
+            "rawCoverage": 0.005666891733805339,
+            "dilatedCoverage": 0.006852944691975911
+          },
+          "debug": {
+            "path": "debug/dcim/IMG_20260828_103344__orientation_mask.jpg",
+            "containsPanels": [
+              "raw_source",
+              "normalized",
+              "hsv_dilate_overlay",
+              "binary_mask"
+            ],
+            "overlayColor": "magenta"
+          },
+          "targets": [
+            {
+              "targetId": "thread",
+              "inspectionType": "THREAD_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 3072,
+                "bottom": 4096,
+                "width": 3072,
+                "height": 4096,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "nut",
+              "inspectionType": "NUT_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 3072,
+                "bottom": 4096,
+                "width": 3072,
+                "height": 4096,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_1",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 3072,
+                "bottom": 4096,
+                "width": 3072,
+                "height": 4096,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_2",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 3072,
+                "bottom": 4096,
+                "width": 3072,
+                "height": 4096,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            }
+          ]
+        },
+        {
+          "imageId": "dcim:IMG_20260828_103354",
+          "subset": "dcim",
+          "fileName": "IMG_20260828_103354.jpg",
+          "sourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\DCIM\\IMG_20260828_103354.jpg",
+          "fileSizeBytes": 6501477,
+          "readable": true,
+          "format": "JPEG",
+          "orientationRaw": 0,
+          "orientationAssumption": "NO_TRANSFORM",
+          "orientationAnomaly": true,
+          "orientationApplied": false,
+          "orientationNote": "EXIF Orientation=0 is invalid/unknown metadata; no transform was applied.",
+          "rawSize": {
+            "width": 3072,
+            "height": 4096
+          },
+          "normalizedSize": {
+            "width": 3072,
+            "height": 4096
+          },
+          "imageBounds": {
+            "left": 0,
+            "top": 0,
+            "right": 3072,
+            "bottom": 4096,
+            "width": 3072,
+            "height": 4096,
+            "coordinateSpace": "normalized_image_pixels"
+          },
+          "maskCoverage": {
+            "totalPixels": 12582912,
+            "rawPixels": 85195,
+            "dilatedPixels": 110401,
+            "rawCoverage": 0.006770690282185872,
+            "dilatedCoverage": 0.008773883183797201
+          },
+          "debug": {
+            "path": "debug/dcim/IMG_20260828_103354__orientation_mask.jpg",
+            "containsPanels": [
+              "raw_source",
+              "normalized",
+              "hsv_dilate_overlay",
+              "binary_mask"
+            ],
+            "overlayColor": "magenta"
+          },
+          "targets": [
+            {
+              "targetId": "thread",
+              "inspectionType": "THREAD_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 3072,
+                "bottom": 4096,
+                "width": 3072,
+                "height": 4096,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "nut",
+              "inspectionType": "NUT_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 3072,
+                "bottom": 4096,
+                "width": 3072,
+                "height": 4096,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_1",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 3072,
+                "bottom": 4096,
+                "width": 3072,
+                "height": 4096,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            },
+            {
+              "targetId": "feature_2",
+              "inspectionType": "FEATURE_PRESENCE",
+              "expectedCount": null,
+              "expectedCountConfigurable": true,
+              "observedTemplateCount": null,
+              "roi": null,
+              "roiSource": "NO_HUMAN_ANNOTATION",
+              "imageBounds": {
+                "left": 0,
+                "top": 0,
+                "right": 3072,
+                "bottom": 4096,
+                "width": 3072,
+                "height": 4096,
+                "coordinateSpace": "normalized_image_pixels"
+              },
+              "annotationStatus": "UNANNOTATED",
+              "datasetRole": "HOLDOUT_UNANNOTATED"
+            }
+          ]
+        }
+      ],
+      "maskSummary": {
+        "readableImages": 30,
+        "rawCoverage": {
+          "min": 8.058547973632812e-05,
+          "max": 0.010195255279541016,
+          "mean": 0.004548830456203885
+        },
+        "dilatedCoverage": {
+          "min": 0.00011022885640462239,
+          "max": 0.010746637980143229,
+          "mean": 0.00528139803144667
+        }
+      }
+    }
+  },
+  "groundTruthPolicy": {
+    "allowedLabels": [
+      "present",
+      "absent",
+      "unknown"
+    ],
+    "unannotatedLabel": "unknown",
+    "unannotatedRoi": null,
+    "unannotatedAnnotationStatus": "UNANNOTATED",
+    "metricsStatus": "INSUFFICIENT_DATA"
+  }
+}

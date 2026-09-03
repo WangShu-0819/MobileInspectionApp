@@ -1,0 +1,136 @@
+{
+  "mode": "MANUAL_INDIVIDUAL_ROI_VALIDATION",
+  "expectedCount": 1,
+  "results": [
+    {
+      "fileName": "IMG_20260828_103223.jpg",
+      "roiName": "nut_1",
+      "roiPixels": [
+        2150,
+        1080,
+        500,
+        500
+      ],
+      "status": "PASS",
+      "score": 0.8289229646622911,
+      "candidateCount": 1.0,
+      "boxesInRoi": [
+        [
+          49,
+          72,
+          325,
+          315
+        ]
+      ],
+      "message": "configured nut count and near-hexagonal geometry match",
+      "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_dcim_20260903\\roi_validation\\individual\\IMG_20260828_103223.jpg.nut_1.debug.jpg",
+      "annotatedPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_dcim_20260903\\roi_validation\\individual\\IMG_20260828_103223.jpg.nut_1.annotated.jpg"
+    },
+    {
+      "fileName": "IMG_20260828_103223.jpg",
+      "roiName": "nut_2",
+      "roiPixels": [
+        2000,
+        1720,
+        550,
+        500
+      ],
+      "status": "PASS",
+      "score": 0.8355005751117807,
+      "candidateCount": 1.0,
+      "boxesInRoi": [
+        [
+          77,
+          67,
+          355,
+          346
+        ]
+      ],
+      "message": "configured nut count and near-hexagonal geometry match",
+      "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_dcim_20260903\\roi_validation\\individual\\IMG_20260828_103223.jpg.nut_2.debug.jpg",
+      "annotatedPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_dcim_20260903\\roi_validation\\individual\\IMG_20260828_103223.jpg.nut_2.annotated.jpg"
+    },
+    {
+      "fileName": "IMG_20260828_103228.jpg",
+      "roiName": "nut_1",
+      "roiPixels": [
+        2700,
+        1150,
+        650,
+        650
+      ],
+      "status": "PASS",
+      "score": 0.617570144160724,
+      "candidateCount": 1.0,
+      "boxesInRoi": [
+        [
+          106,
+          208,
+          200,
+          226
+        ]
+      ],
+      "message": "configured nut count and near-hexagonal geometry match",
+      "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_dcim_20260903\\roi_validation\\individual\\IMG_20260828_103228.jpg.nut_1.debug.jpg",
+      "annotatedPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_dcim_20260903\\roi_validation\\individual\\IMG_20260828_103228.jpg.nut_1.annotated.jpg"
+    },
+    {
+      "fileName": "IMG_20260828_103228.jpg",
+      "roiName": "nut_2",
+      "roiPixels": [
+        3200,
+        1150,
+        650,
+        650
+      ],
+      "status": "FAIL",
+      "score": 0.0,
+      "candidateCount": 0.0,
+      "boxesInRoi": [],
+      "message": "expected 1 nut candidates, found 0",
+      "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_dcim_20260903\\roi_validation\\individual\\IMG_20260828_103228.jpg.nut_2.debug.jpg",
+      "annotatedPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_dcim_20260903\\roi_validation\\individual\\IMG_20260828_103228.jpg.nut_2.annotated.jpg"
+    },
+    {
+      "fileName": "IMG_20260828_103231.jpg",
+      "roiName": "nut_1",
+      "roiPixels": [
+        500,
+        1200,
+        650,
+        650
+      ],
+      "status": "PASS",
+      "score": 0.6553714864510413,
+      "candidateCount": 1.0,
+      "boxesInRoi": [
+        [
+          149,
+          52,
+          246,
+          234
+        ]
+      ],
+      "message": "configured nut count and near-hexagonal geometry match",
+      "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_dcim_20260903\\roi_validation\\individual\\IMG_20260828_103231.jpg.nut_1.debug.jpg",
+      "annotatedPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_dcim_20260903\\roi_validation\\individual\\IMG_20260828_103231.jpg.nut_1.annotated.jpg"
+    },
+    {
+      "fileName": "IMG_20260828_103231.jpg",
+      "roiName": "nut_2",
+      "roiPixels": [
+        1050,
+        1200,
+        650,
+        650
+      ],
+      "status": "FAIL",
+      "score": 0.0,
+      "candidateCount": 0.0,
+      "boxesInRoi": [],
+      "message": "expected 1 nut candidates, found 0",
+      "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_dcim_20260903\\roi_validation\\individual\\IMG_20260828_103231.jpg.nut_2.debug.jpg",
+      "annotatedPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_dcim_20260903\\roi_validation\\individual\\IMG_20260828_103231.jpg.nut_2.annotated.jpg"
+    }
+  ]
+}

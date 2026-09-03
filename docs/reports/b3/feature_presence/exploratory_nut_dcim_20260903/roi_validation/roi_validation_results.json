@@ -1,0 +1,130 @@
+{
+  "mode": "MANUAL_ROI_VALIDATION",
+  "expectedCount": 2,
+  "results": [
+    {
+      "fileName": "IMG_20260828_103223.jpg",
+      "imageSize": [
+        4096,
+        3072
+      ],
+      "roiPixels": [
+        1900,
+        1000,
+        900,
+        1250
+      ],
+      "roiNormalized": [
+        0.4638671875,
+        0.3255208333333333,
+        0.2197265625,
+        0.4069010416666667
+      ],
+      "status": "PASS",
+      "score": 0.8311096615503866,
+      "metrics": {
+        "tealRawCoverage": 0.016339555555555555,
+        "tealDilatedCoverage": 0.018551111111111112,
+        "candidateCountBeforeNms": 2.0,
+        "candidateCount": 2.0,
+        "averageGeometryScore": 0.9649522484970547,
+        "averageCenterHoleScore": 0.6379110500866308,
+        "minCenterHoleScore": 0.6067394414358893,
+        "averageCircularity": 0.7804119690198648,
+        "averageEdgeDensity": 0.15785230914573445,
+        "quality": 1.0
+      },
+      "boxesInRoi": [
+        [
+          177,
+          786,
+          355,
+          347
+        ],
+        [
+          297,
+          151,
+          327,
+          314
+        ]
+      ],
+      "message": "configured nut count and near-hexagonal geometry match",
+      "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_dcim_20260903\\roi_validation\\IMG_20260828_103223.jpg.roi_debug.jpg",
+      "annotatedPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_dcim_20260903\\roi_validation\\IMG_20260828_103223.jpg.roi_annotated.jpg"
+    },
+    {
+      "fileName": "IMG_20260828_103228.jpg",
+      "imageSize": [
+        4096,
+        3072
+      ],
+      "roiPixels": [
+        2500,
+        1100,
+        1500,
+        800
+      ],
+      "roiNormalized": [
+        0.6103515625,
+        0.3580729166666667,
+        0.3662109375,
+        0.2604166666666667
+      ],
+      "status": "FAIL",
+      "score": 0.0,
+      "metrics": {
+        "tealRawCoverage": 0.005125833333333333,
+        "tealDilatedCoverage": 0.0059025,
+        "candidateCountBeforeNms": 0.0,
+        "candidateCount": 0.0,
+        "averageGeometryScore": 0.0,
+        "averageCenterHoleScore": 0.0,
+        "minCenterHoleScore": 0.0,
+        "averageCircularity": 0.0,
+        "averageEdgeDensity": 0.0,
+        "quality": 1.0
+      },
+      "boxesInRoi": [],
+      "message": "expected 2 nut candidates, found 0",
+      "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_dcim_20260903\\roi_validation\\IMG_20260828_103228.jpg.roi_debug.jpg",
+      "annotatedPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_dcim_20260903\\roi_validation\\IMG_20260828_103228.jpg.roi_annotated.jpg"
+    },
+    {
+      "fileName": "IMG_20260828_103231.jpg",
+      "imageSize": [
+        4096,
+        3072
+      ],
+      "roiPixels": [
+        450,
+        1100,
+        1250,
+        850
+      ],
+      "roiNormalized": [
+        0.10986328125,
+        0.3580729166666667,
+        0.30517578125,
+        0.2766927083333333
+      ],
+      "status": "FAIL",
+      "score": 0.0,
+      "metrics": {
+        "tealRawCoverage": 0.006716235294117647,
+        "tealDilatedCoverage": 0.007650823529411765,
+        "candidateCountBeforeNms": 0.0,
+        "candidateCount": 0.0,
+        "averageGeometryScore": 0.0,
+        "averageCenterHoleScore": 0.0,
+        "minCenterHoleScore": 0.0,
+        "averageCircularity": 0.0,
+        "averageEdgeDensity": 0.0,
+        "quality": 1.0
+      },
+      "boxesInRoi": [],
+      "message": "expected 2 nut candidates, found 0",
+      "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_dcim_20260903\\roi_validation\\IMG_20260828_103231.jpg.roi_debug.jpg",
+      "annotatedPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_dcim_20260903\\roi_validation\\IMG_20260828_103231.jpg.roi_annotated.jpg"
+    }
+  ]
+}
