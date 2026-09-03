@@ -71,6 +71,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.wearable.inspection.mobile.MobileInspectionApp
 import com.wearable.inspection.mobile.data.settings.PreviewDisplayMode
@@ -91,6 +93,7 @@ import com.wearable.inspection.mobile.ui.theme.PendingColor
 import com.wearable.inspection.mobile.ui.theme.PlaceholderColor
 import com.wearable.inspection.mobile.ui.theme.BackgroundVariant1
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import com.wearable.inspection.mobile.BuildConfig
 import com.wearable.inspection.mobile.camera.CameraController
 import com.wearable.inspection.mobile.camera.CameraStateType
@@ -170,6 +173,35 @@ fun LiveInspectionScreen(
     val cameraController = remember { CameraController.getInstance(context) }
     val imageStore = remember { MobileImageStore(context) }
 
+    // 从确认页返回后自动推进到下一视角
+    var pendingAdvance by remember { mutableStateOf(false) }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    androidx.compose.runtime.DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME && pendingAdvance) {
+                pendingAdvance = false
+                val hasNext = viewModel.advanceToNextView()
+                if (!hasNext) {
+                    // 所有视角完成，更新批次结束时间
+                    currentBatchId?.let { bid ->
+                        coroutineScope.launch {
+                            repository.getCaptureBatch(bid)?.let { batch ->
+                                repository.updateCaptureBatch(batch.copy(endTime = System.currentTimeMillis()))
+                            }
+                        }
+                    }
+                }
+                captureState = CaptureUiState.IDLE
+                captureError = null
+                savedPath = null
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
     // CameraState
     val cameraState by cameraController.cameraStateFlow.collectAsState()
 
@@ -230,6 +262,12 @@ fun LiveInspectionScreen(
                             val tpl = template
                             val part = selectedPart
                             if (tpl != null && part != null) {
+                                // 非最后一个视角时，标记待推进（确认后返回时自动 advanceToNextView）
+                                // 最后一个视角时，确认页直接导航到 ExportResultScreen，不需要回来 advance
+                                val isLastView = inspectionState.currentViewIndex >= inspectionState.totalViews - 1
+                                if (!isLastView) {
+                                    pendingAdvance = true
+                                }
                                 onNavigateToConfirm(
                                     batchId,
                                     capturedPhoto.photoId,
@@ -380,24 +418,7 @@ fun LiveInspectionScreen(
                 }
             )
 
-            // 唯一主操作：固定在预览下方，不覆盖实时画面
-            CaptureActionBar(
-                enabled = captureEnabled,
-                label = captureLabel,
-                onCapture = onCapture,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            // 模板叠加控制栏
-            TemplateOverlayControls(
-                alpha = overlayAlpha,
-                visible = templateVisible,
-                onAlphaChange = { overlayAlpha = it },
-                onToggleVisibility = { templateVisible = !templateVisible },
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            // 下方模板参考 + 信息
+            // 下方模板参考 + 信息（模板提示 + 拍照提示）
             TemplateReferenceSection(
                 modifier = Modifier.weight(0.60f),
                 template = inspectionState.selectedTemplate,
@@ -414,6 +435,23 @@ fun LiveInspectionScreen(
                     viewModel.resetViewIndex()
                     onResetCapture()
                 }
+            )
+
+            // 模板叠加控制栏
+            TemplateOverlayControls(
+                alpha = overlayAlpha,
+                visible = templateVisible,
+                onAlphaChange = { overlayAlpha = it },
+                onToggleVisibility = { templateVisible = !templateVisible },
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            // 唯一主操作：固定在透明度控制栏下方，不覆盖实时画面
+            CaptureActionBar(
+                enabled = captureEnabled,
+                label = captureLabel,
+                onCapture = onCapture,
+                modifier = Modifier.fillMaxWidth()
             )
 
             // 模板选择 Bottom Sheet
