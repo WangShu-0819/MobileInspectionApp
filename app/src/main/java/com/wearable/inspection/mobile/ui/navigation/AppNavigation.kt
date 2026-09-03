@@ -105,6 +105,9 @@ fun AppRoot() {
                     onBindDpm = { partId ->
                         navController.navigate(Screen.DpmBind.createRoute(partId))
                     },
+                    onPartCreated = { partId ->
+                        navController.navigate(Screen.PartDetail.createRoute(partId))
+                    },
                 )
             }
 
@@ -117,6 +120,9 @@ fun AppRoot() {
                     },
                     onBindDpm = { partId ->
                         navController.navigate(Screen.DpmBind.createRoute(partId))
+                    },
+                    onPartCreated = { partId ->
+                        navController.navigate(Screen.PartDetail.createRoute(partId))
                     },
                 )
             }

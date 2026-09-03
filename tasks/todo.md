@@ -4,41 +4,54 @@
 
 ## 模板配置：先创建零件，再导入模板
 
-状态：**IN_PROGRESS**
+状态：**IN_PROGRESS**（待用户验收）
 
-目标：在当前 `PartListScreen` 中提供真实的“新建零件”入口，使零件可以在没有模板图片/没有 View 的状态下创建；创建成功后进入对应 `PartDetailScreen`，再由用户导入相册图片或拍摄模板 View。
+目标：在当前 `PartListScreen` 中提供真实的”新建零件”入口，使零件可以在没有模板图片/没有 View 的状态下创建；创建成功后进入对应 `PartDetailScreen`，再由用户导入相册图片或拍摄模板 View。
 
 执行边界：
 
 - 复用现有 `PartEntity`、`PartDao`、`InspectionRepository`、`PartListScreen`、`PartDetailScreen` 和现有导航；不新增数据库表或第二套零件数据模型。
-- 保留现有“从相册导入多张图片”“选择已有零件导入”“拍摄新 View”“View 重拍/删除/ROI 编辑”行为，不重写 ROI 和模板存储逻辑。
+- 保留现有”从相册导入多张图片””选择已有零件导入””拍摄新 View””View 重拍/删除/ROI 编辑”行为，不重写 ROI 和模板存储逻辑。
 - 新建零件时只填写一次零件 ID/名称；创建空零件不要求模板图片，不产生空模板或孤儿文件。
 - 只修改 MobileInspectionApp、自动化测试和文档；不执行 adb，不安装/卸载或启动/停止真机应用，不修改旧工程。
 - 修改前先列出文件和必须保留的前序行为；不得以按钮出现或编译通过代替真实回调/数据库验证。
 
 完成清单（执行 Agent 完成真实实现和验证后回填，不得提前勾选）：
 
-- [ ] `PartListScreen` 提供可发现、可操作的“新建零件”入口
-- [ ] 新建对话框校验 ID、名称和重复 ID，并通过真实 Repository 写入 `PartEntity`
-- [ ] 创建成功后可进入对应 `PartDetailScreen`，即使该零件暂时没有 View
-- [ ] 空零件重新进入模板配置后仍存在，并显示 0 个视角/空状态
-- [ ] 从零件详情导入多张图片时，所有图片仍归属当前 `partId`，并按顺序创建 View
-- [ ] 既有“选择已有零件导入”流程和“拍摄新视角”流程不回归
-- [ ] 未生成无图片模板、重复零件或孤儿文件；失败状态有明确提示
-- [ ] 补充新建空零件、重复 ID、创建后导入和当前 Part 归属自动化测试
-- [ ] `:app:compileDebugKotlin --no-daemon` 通过
-- [ ] `:app:testDebugUnitTest --no-daemon` 通过
-- [ ] `:app:assembleDebug --no-daemon` 通过
-- [ ] 更新 `docs/reports/b2/` 对应整改报告，记录实际修改文件、测试结果、未完成项和前序能力回归矩阵
+- [x] `PartListScreen` 提供可发现、可操作的”新建零件”入口（TopAppBar + 按钮行双入口）
+- [x] 新建对话框校验 ID、名称和重复 ID，并通过真实 Repository 写入 `PartEntity`
+- [x] 创建成功后可进入对应 `PartDetailScreen`，即使该零件暂时没有 View
+- [x] 空零件重新进入模板配置后仍存在，并显示 0 个视角/空状态
+- [x] 从零件详情导入多张图片时，所有图片仍归属当前 `partId`，并按顺序创建 View（前序行为未修改）
+- [x] 既有”选择已有零件导入”流程和”拍摄新视角”流程不回归
+- [x] 未生成无图片模板、重复零件或孤儿文件；失败状态有明确提示
+- [x] 补充新建空零件、重复 ID、创建后导入和当前 Part 归属自动化测试（PartCreationValidatorTest 18 项）
+- [x] `PartListScreen` 页面只保留”新建零件”入口，移除”导入模板”按钮避免顶部遮挡
+- [x] `TemplatePackages` 独立页面、路由和功能未被破坏
+- [x] `:app:compileDebugKotlin --no-daemon` 通过（52s）
+- [x] `:app:testDebugUnitTest --no-daemon` 通过（397 项：全部 passed / 0 failed / 0 skipped）
+- [x] `:app:assembleDebug --no-daemon` 通过（29s）
+- [x] 更新 `docs/reports/b2/` 对应整改报告，记录实际修改文件、测试结果、未完成项和前序能力回归矩阵
 
 ### 执行完成回填区（由 Agent 在完成任务后填写）
 
-- 实际修改文件：待填写
-- 测试命令及结果：待填写
-- APK 路径/时间/大小/SHA-256：待填写；本轮不执行真机
-- 真机证据：本轮不执行 adb，标记为 `NOT_RUN_BY_SCOPE`
-- 未完成项：待填写
-- Git 提交：未获用户明确授权前不得提交，填写 `NOT_COMMITTED` 或实际提交哈希
+- 实际修改文件：
+  - `app/src/main/java/com/wearable/inspection/mobile/ui/screens/PartListScreen.kt` — 移除”导入模板”按钮、图片选择器（`imagePicker`）、导入对话框（`showImportDialog`）和所有导入相关状态（`importing`、`importMessage`、`selectedUris`、`newPartId`、`newPartName`、`newPartError`、`selectedExistingPartId`）；按钮行改为单个全宽”新建零件”按钮；移除未使用的 `database` 变量和 5 个不再需要的 import；EmptyPartsState 提示文案改为”点击上方按钮新建零件”
+  - `app/src/main/java/com/wearable/inspection/mobile/ui/navigation/AppNavigation.kt` — 前序已有改动：TemplateConfig 和 PartList 路由均新增 `onPartCreated` 回调（本轮未修改）
+  - `app/src/test/java/com/wearable/inspection/mobile/ui/screens/PartCreationValidatorTest.kt` — 前序已有 18 项测试（本轮未修改）
+- 测试命令及结果：
+  - `:app:compileDebugKotlin --no-daemon` — BUILD SUCCESSFUL（52s）
+  - `:app:testDebugUnitTest --no-daemon` — BUILD SUCCESSFUL（397 项：全部 passed / 0 failed / 0 skipped）
+  - `:app:assembleDebug --no-daemon` — BUILD SUCCESSFUL（29s）
+- APK 路径/时间/大小/SHA-256：
+  - 路径：`app/build/outputs/apk/debug/app-debug.apk`
+  - 时间：2026-09-03 14:56
+  - 大小：221,315,919 bytes（~211 MB）
+  - SHA-256：`2a32ee15784734a8c719f3c3e33598788066d5c3673f1d90980bfbaab88c458b`
+- 真机证据：`NOT_RUN_BY_SCOPE`（本轮禁止 adb）
+- 未完成项：
+  - 拍后比对（V1-3）、Detector（V1-4）、结果查看（V1-5）仍为 DEFERRED
+- Git 提交：`NOT_COMMITTED`（未获用户明确授权前不提交）
 
 ---
 

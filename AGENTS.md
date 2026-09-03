@@ -57,9 +57,9 @@
 
 ## 当前唯一任务
 
-**模板配置支持先创建零件，再导入模板** — **IN_PROGRESS**（2026-09-03）。
+**模板配置支持先创建零件，再导入模板** — **IN_PROGRESS**（2026-09-03，待用户验收）。
 
-目标：在当前 `PartListScreen` 中提供不依赖模板图片的真实新建零件入口；创建成功后进入对应 `PartDetailScreen`，再导入或拍摄多个 View。前序 ROI 整改 APK SHA-256 `d679e7a3e41f236d1958b125410ec827a54eb28c7d7e58b83fd216a8345bb56c`，JVM 379 项（374 passed / 0 failed / 5 skipped）。
+目标：在当前 `PartListScreen` 中提供不依赖模板图片的真实新建零件入口；创建成功后进入对应 `PartDetailScreen`，再导入或拍摄多个 View。页面已简化为只保留"新建零件"入口，移除"导入模板"按钮避免顶部遮挡。当前 APK SHA-256 `2a32ee15784734a8c719f3c3e33598788066d5c3673f1d90980bfbaab88c458b`，JVM 397 项（全部 passed / 0 failed / 0 skipped）。
 
 执行边界：
 1. 复用现有 `PartEntity`、`PartDao`、`InspectionRepository`、`PartListScreen`、`PartDetailScreen` 和唯一 CameraX 架构。
