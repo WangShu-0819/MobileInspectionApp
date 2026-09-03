@@ -4,6 +4,19 @@ import android.content.Context
 import android.content.SharedPreferences
 import com.wearable.inspection.mobile.dpm.DpmDimensionMode
 
+enum class PreviewDisplayMode(
+    val label: String,
+    val description: String,
+) {
+    ORIGINAL("原比例", "完整显示相机画面，可能保留黑边"),
+    FILL("填充预览", "铺满预览区域，边缘可能被裁切");
+
+    companion object {
+        fun parse(value: String?): PreviewDisplayMode =
+            entries.firstOrNull { it.name == value } ?: ORIGINAL
+    }
+}
+
 class SettingsStore(context: Context) {
     private val prefs: SharedPreferences = context.getSharedPreferences("mobile_inspection_settings", Context.MODE_PRIVATE)
 
@@ -30,4 +43,11 @@ class SettingsStore(context: Context) {
             return DpmDimensionMode.parse(name)
         }
         set(value) = prefs.edit().putString("dpm_dimension_mode", value.name).apply()
+
+    /**
+     * 实时预览显示模式。只影响 PreviewView 的显示缩放，不改变相机流和拍照文件。
+     */
+    var previewDisplayMode: PreviewDisplayMode
+        get() = PreviewDisplayMode.parse(prefs.getString("preview_display_mode", null))
+        set(value) = prefs.edit().putString("preview_display_mode", value.name).apply()
 }
