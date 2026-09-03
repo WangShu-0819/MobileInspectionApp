@@ -1,6 +1,114 @@
-# 当前任务：DPM 绑定/已绑定码切换收口 + 当前进度文档同步
+# 当前唯一任务：模板配置支持先创建零件，再导入模板
 
-B2 Task 1 已 SOFTWARE_COMPLETE / PHYSICAL_ACCEPTANCE_PENDING（物理验收不阻塞后续功能开发）。B2 Task 2 模板导入与透明叠加软件能力已完成。B3 Phase 2 钢印 OCR CameraX/UI 集成 SOFTWARE_COMPLETE（2026-09-02）。当前已完成 View 顺序持久化、真实 Part 选择和现场采集交互整理；DPM 绑定/已绑定码切换已接入，待完整构建与真机验收后收口，之后才进入 V1-3 拍后比对。
+用户最新反馈（2026-09-03）：进入“我的 → 模板配置”后仍必须先选择模板图片，才能在导入对话框中创建零件；期望流程是先创建零件，再进入该零件详情，之后按当前零件导入或拍摄多个 View。本轮暂停 B3 Presence Detection，只修复模板配置入口和零件上下文流程；完成后更新本文件及对应报告，暂停等待用户验收。不得并行处理拍后比对、Detector、DPM/OCR 或其他未完成业务。
+
+## 模板配置：先创建零件，再导入模板
+
+状态：**IN_PROGRESS**
+
+目标：在当前 `PartListScreen` 中提供真实的“新建零件”入口，使零件可以在没有模板图片/没有 View 的状态下创建；创建成功后进入对应 `PartDetailScreen`，再由用户导入相册图片或拍摄模板 View。
+
+执行边界：
+
+- 复用现有 `PartEntity`、`PartDao`、`InspectionRepository`、`PartListScreen`、`PartDetailScreen` 和现有导航；不新增数据库表或第二套零件数据模型。
+- 保留现有“从相册导入多张图片”“选择已有零件导入”“拍摄新 View”“View 重拍/删除/ROI 编辑”行为，不重写 ROI 和模板存储逻辑。
+- 新建零件时只填写一次零件 ID/名称；创建空零件不要求模板图片，不产生空模板或孤儿文件。
+- 只修改 MobileInspectionApp、自动化测试和文档；不执行 adb，不安装/卸载或启动/停止真机应用，不修改旧工程。
+- 修改前先列出文件和必须保留的前序行为；不得以按钮出现或编译通过代替真实回调/数据库验证。
+
+完成清单（执行 Agent 完成真实实现和验证后回填，不得提前勾选）：
+
+- [ ] `PartListScreen` 提供可发现、可操作的“新建零件”入口
+- [ ] 新建对话框校验 ID、名称和重复 ID，并通过真实 Repository 写入 `PartEntity`
+- [ ] 创建成功后可进入对应 `PartDetailScreen`，即使该零件暂时没有 View
+- [ ] 空零件重新进入模板配置后仍存在，并显示 0 个视角/空状态
+- [ ] 从零件详情导入多张图片时，所有图片仍归属当前 `partId`，并按顺序创建 View
+- [ ] 既有“选择已有零件导入”流程和“拍摄新视角”流程不回归
+- [ ] 未生成无图片模板、重复零件或孤儿文件；失败状态有明确提示
+- [ ] 补充新建空零件、重复 ID、创建后导入和当前 Part 归属自动化测试
+- [ ] `:app:compileDebugKotlin --no-daemon` 通过
+- [ ] `:app:testDebugUnitTest --no-daemon` 通过
+- [ ] `:app:assembleDebug --no-daemon` 通过
+- [ ] 更新 `docs/reports/b2/` 对应整改报告，记录实际修改文件、测试结果、未完成项和前序能力回归矩阵
+
+### 执行完成回填区（由 Agent 在完成任务后填写）
+
+- 实际修改文件：待填写
+- 测试命令及结果：待填写
+- APK 路径/时间/大小/SHA-256：待填写；本轮不执行真机
+- 真机证据：本轮不执行 adb，标记为 `NOT_RUN_BY_SCOPE`
+- 未完成项：待填写
+- Git 提交：未获用户明确授权前不得提交，填写 `NOT_COMMITTED` 或实际提交哈希
+
+---
+
+## 已完成任务：ROI 移动/缩放整改
+
+状态：**SOFTWARE_COMPLETE**
+
+目标：在现有 `RoiEditorScreen` / `RoiEditorViewModel` 基础上，让每个 View 的已有 ROI 可以被真实选中、拖拽移动、四角缩放，并将结果以合法 `normalizedRect` 写回当前 View 对应的 `RoiDefinitionEntity`。
+
+执行边界：
+
+- 复用现有 `PartEntity`、`InspectionTemplateEntity`、`RoiDefinitionEntity`、`RoiDao`、`InspectionRepository` 和唯一 CameraX 架构；不新增数据库表或第二套 CameraX。
+- 不实现拍后自动比对、实时轮廓/姿态对齐、Detector/PASS-FAIL、Session ROI 或结果导出。
+- 只修改 MobileInspectionApp；不执行 adb，不安装/卸载或启动/停止真机应用，不修改旧工程。
+- 修改前先列出文件并说明必须保留的前序行为；不得把 TODO 或仅编译通过当作完成证据。
+
+完成清单（执行 Agent 完成真实实现和验证后回填，不得提前勾选）：
+
+- [x] 已有 ROI 可在 Canvas 内点击命中并显示选中状态
+- [x] 已有 ROI 支持拖拽移动，且始终限制在图片 `contentRect` 内
+- [x] 已有 ROI 支持四角缩放，且最小尺寸、边界和 left/top/right/bottom 关系有效
+- [x] 移动/缩放结果转换为 0..1 范围的 `normalizedRect` 并调用 `InspectionRepository.updateRoi`
+- [x] ROI 删除、取消、新增和不同 View 的 `templateId` 隔离行为保持不回归
+- [x] 删除两个 ROI 移动/缩放 TODO 空回调；无 UI 按钮只存在但不落库的假功能
+- [x] 补充 ROI 创建、更新、删除、边界、序列化和多 View 隔离自动化测试
+- [x] `:app:compileDebugKotlin --no-daemon` 通过
+- [x] `:app:testDebugUnitTest --no-daemon` 通过
+- [x] `:app:assembleDebug --no-daemon` 通过
+- [x] 更新 `docs/reports/b2/` 对应整改报告，记录实际修改文件、测试结果、未完成项和前序能力回归矩阵
+
+### 执行完成回填区（由 Agent 在完成任务后填写）
+
+- 实际修改文件：
+  - `app/src/main/java/com/wearable/inspection/mobile/ui/screens/RoiEditorViewModel.kt` — 移除未使用的 InteractionMode 枚举；moveRoi/resizeRoi 方法调用 InspectionRepository.updateRoi 持久化；NormalizedRect.move/resize 方法实现边界约束和最小尺寸
+  - `app/src/main/java/com/wearable/inspection/mobile/ui/screens/RoiEditorScreen.kt` — RoiCanvas 实现点击选中、拖拽移动、四角缩放；角点控制柄绘制；onRoiMoved/onRoiResized 回调连接 ViewModel；两个 TODO 空回调已删除
+  - `app/src/test/java/com/wearable/inspection/mobile/ui/screens/RoiEditorViewModelTest.kt` — 40 项测试：覆盖 NormalizedRect 序列化、move 边界约束（8 项）、resize 四角语义（10 项）、最小尺寸约束、0..1 范围约束、多 ROI 独立性、move+resize 组合操作
+- 测试命令及结果：
+  - `:app:compileDebugKotlin --no-daemon` — BUILD SUCCESSFUL（17s）
+  - `:app:testDebugUnitTest --no-daemon` — BUILD SUCCESSFUL（379 项：374 passed / 0 failed / 5 skipped）
+  - `:app:assembleDebug --no-daemon` — BUILD SUCCESSFUL（20s）
+- APK 路径/时间/大小/SHA-256：
+  - 路径：`app/build/outputs/apk/debug/app-debug.apk`
+  - 时间：2026-09-03 13:43
+  - 大小：224,833,659 bytes（~214 MB）
+  - SHA-256：`d679e7a3e41f236d1958b125410ec827a54eb28c7d7e58b83fd216a8345bb56c`
+- 真机证据：`NOT_RUN_BY_SCOPE`（本轮禁止 adb）
+- 未完成项：
+  - 移动/缩放回调中逐次 `updateRoi` 调用可能在高频拖拽时产生性能压力（可后续优化为 onDragEnd 才持久化）
+  - ViewModel 持久化测试因 Mockito 不支持 Kotlin suspend 函数未能添加（通过编译+assembleDebug+NormalizedRect 逻辑测试覆盖）
+  - 拍后比对（V1-3）、Detector（V1-4）、结果查看（V1-5）仍为 DEFERRED
+- Git 提交：`NOT_COMMITTED`（未获用户明确授权前不提交）
+
+---
+
+## 暂停任务：B3 Presence Detection：螺纹、螺母和其他特征的目标有无检测
+
+状态：**PAUSED_BY_USER**
+
+- [ ] 离线清点 Key/DCIM、EXIF、HSV 青绿色掩码、debug 图、manifest、unknown-only ground truth
+- [ ] 实现并测试独立 `ThreadPresenceDetector`、`NutPresenceDetector`、`FeaturePresenceDetector`
+- [ ] 建立统一 detector 协议/注册器，接入 `RoiDefinitionEntity` 配置和 `RoiInspectionRecordEntity`
+- [ ] 通过现有唯一 `CameraController`/`FrameAnalyzer` 接入实时 single-flight、帧节流和连续帧结果
+- [ ] 执行离线工具、JVM 测试、Debug 编译和 APK 构建
+- [ ] 更新 `docs/reports/b3/feature_presence/` 最终报告；DCIM 未标注数据保持 `unknown` 并声明 `INSUFFICIENT_DATA`
+
+---
+
+# 历史任务：模板拍摄、缩略图、重拍、排序
+
+B2 Task 1 已 SOFTWARE_COMPLETE / PHYSICAL_ACCEPTANCE_PENDING。B2 Task 2 模板导入与透明叠加 MVP 软件层面已完成。B3 Phase 2 钢印 OCR CameraX/UI 集成 SOFTWARE_COMPLETE。模板拍摄、缩略图、重拍和排序已作为历史软件任务完成；当前唯一进行中任务见文档顶部。
 
 ## Task 1：整理活跃源码边界
 
@@ -27,7 +135,7 @@ B2 Task 1 已 SOFTWARE_COMPLETE / PHYSICAL_ACCEPTANCE_PENDING（物理验收不�
 - [x] ContentRect 计算完成（使用 CameraController.streamResolution 和 streamRotation）
 - [x] 竖屏内容使用实际流比例 + FIT_CENTER，无固定 60/40 拉伸
 - [x] 输出 PreviewView、流尺寸、旋转和 content rect 诊断日志
-- [x] 真机：PreviewView 1080x1039, 流 8000x6000 (4:3), 旋转 90°, contentRect 779x1039
+- [x] 真机：PreviewView 1080x1039；现场拍照 ImageCapture 8000x6000（4:3），实时 Preview/Analysis 约 1440x1080（4:3）；旋转 90°，contentRect 779x1039
 - [x] 真机：四角标记可见，不进入 letterbox，中央圆不变形
 - [x] 真机：权限临时拒绝后可再次请求并恢复
 - [x] 真机：LiveInspectionScreen 首屏直接显示实时相机预览
@@ -261,10 +369,10 @@ Template ROI 配置、拍后模板/实拍比对、ROI 映射、Detector、PASS/F
 
 ### 当前补充任务：DPM 绑定与已绑定码切换
 
-状态：自动化与模板导入/按序拍摄真机回归完成；结果导出按产品边界暂缓
+状态：源码与业务路由已接入；模板导入/按序拍摄真机流程完成；已绑定码实际切换与完整累积 instrumented 回归待补
 
 - [x] 保持现场采集顶部“扫一扫”入口和现有实时 DPM 解码链不变
-- [x] 扫码命中已绑定 DPM 码后，只切换已有 Part，并重新加载该 Part 的有序模板和 View 1/N 进度
+- [x] 扫码命中已绑定 DPM 码后，只切换已有 Part，并重新加载该 Part 的有序模板和 View 1/N 进度（源码路由已接入，实物命中切换待补）
 - [x] 未绑定 DPM 码不新建零件，只提示先在模板配置绑定
 - [x] 模板配置按 Part 显示 DPM 绑定状态，并提供扫码绑定/更换绑定入口
 - [x] 已被其他 Part 使用的 DPM 码拒绝覆盖
@@ -272,13 +380,63 @@ Template ROI 配置、拍后模板/实拍比对、ROI 映射、Detector、PASS/F
 - [x] 通过 PartSelectionBus 让已存在的现场采集 ViewModel 立即切换零件
 - [x] `:app:compileDebugKotlin` 已通过
 - [x] 补充/执行 DPM 绑定查询测试和完整 JVM 回归（PartDpmDaoTest 3/3；JVM 318 项：313 passed / 5 skipped / 0 failed）
-- [x] 生成新 APK 并按新包名门禁完成真机验证（`com.wearable.inspection.mobile`；模板导入 8 视角、按序拍摄 8/8、结果页复核通过）
+- [x] 生成新 APK 并按新包名门禁完成真机验证（`com.wearable.inspection.mobile`；模板导入 8 视角、按序拍摄 8/8、DPM 入口和绑定保存通过）
+- [ ] 使用已绑定 DPM 码在同一最终 APK 实测切换 Part，并确认切换后从 View 1/N 重新开始
+- [ ] 完整 `connectedDebugAndroidTest` 累积回归成功；当前报告因 camera round-trip runner 长时间无结果未计为通过
 
-本轮已将 `DPM_data/` 的 6 张样本纳入离线基线运行；测试无异常退出，但当前 ZXing 全图及中心 ROI 两阶段均为 0/6 命中。该测试不覆盖 ML Kit/GRID 兜底，也不能替代实时相机样本验收。`sample_data/1/` 的 8 张模板图已在真机通过 SAF 导入，现场采集已完成 8/8 张真实拍摄并进入检测结果页；结果页仍为空状态且无导出按钮，因为 InspectionSession 完整结果写入和结果导出按当前产品边界暂缓。
+本轮已将 `DPM_data/` 的 6 张样本纳入离线基线运行；测试无异常退出，但当前 ZXing 全图及中心 ROI 两阶段均为 0/6 命中。该测试不覆盖 ML Kit/GRID 兜底，也不能替代实时相机样本验收。实时相机流程中曾识别 `M968942280224B169AH005023044710`，并在模板配置中绑定保存成功；随后从现场采集进入扫码页时因当前视野无码未重新命中，因此不能把已绑定码切换 Part 记为真机通过。`sample_data/1/` 的 8 张模板图已在真机通过 SAF 导入，现场采集已完成 8/8 张真实拍摄并进入检测结果页；结果页仍为空状态且无导出按钮，因为 InspectionSession 完整结果写入和结果导出按当前产品边界暂缓。完整方案对照见 `docs/reports/b2/V1_PLAN_IMPLEMENTATION_AUDIT_20260903.md`。
+
+### 历史任务：模板拍摄、缩略图、重拍、排序
+
+状态：**SOFTWARE_COMPLETE**（2026-09-03）。源码、自动化测试和工程文档已完成。APK SHA-256 `56e390a067ccd1a040ea05b86b9743bc185bf2c1215630e7fc0f4f35a9e7f495`。
+
+### 历史任务：模板配置重构与逐视角 ROI
+
+状态：**SOFTWARE_PARTIAL / ROI_REMEDIATION_PENDING**（2026-09-03 审计）
+
+- [x] Task 1：审计并更新任务状态
+- [x] Task 2：重构 Part 上下文 + 导入流程 + UI 层级
+  - [x] 新建 PartListScreen（零件列表页，替代原 TemplateConfig 扁平列表）
+  - [x] 新建 PartDetailScreen（零件详情页，视角网格展示）
+  - [x] 改造导入对话框：支持选择已有零件或新建零件
+  - [x] 添加 Screen 路由（PartList、PartDetail、RoiEditor）
+  - [x] 更新 AppNavigation 注册新路由
+- [x] Task 3：实现逐视角 ROI 编辑器基础能力
+  - [x] 新建 RoiEditorScreen（Canvas 绘制新矩形）
+  - [x] 新建 RoiEditorViewModel（状态管理、坐标转换）
+  - [x] normalizedRect 坐标转换（像素 ↔ 0-1 范围）
+  - [x] 边界约束（矩形不超出图片内容区域）
+  - [x] TemplateDetailScreen 添加 ROI 编辑入口
+  - [x] RoiEditorViewModelTest 基础序列化测试
+  - [ ] 已有 ROI 点选、拖拽移动、四角缩放
+  - [ ] 移动/缩放调用 updateRoi 并持久化
+- [x] Task 4：自动化回归测试
+  - [x] `:app:compileDebugKotlin` BUILD SUCCESSFUL
+  - [x] `:app:testDebugUnitTest` 332 项（327 passed / 0 failed / 5 skipped）
+  - [x] `:app:assembleDebug` BUILD SUCCESSFUL
+
+审计结论：新增 ROI、取消、删除和按 `templateId` 查询隔离的基础路径存在，但 `RoiEditorScreen.kt` 中已有 ROI 的移动/缩放回调仍为空，`RoiEditorViewModel` 没有对应更新方法；上述未勾选项由“ROI 移动/缩放整改”任务负责，不得以本节历史测试通过替代。
+
+### Bug Fix：模板图片降采样导致 Canvas 绘制失败
+
+状态：**已修复**（2026-09-03）
+
+问题：CameraPreview 加载模板图片时 inSampleSize 计算逻辑错误，8000x6000 图片只得到 inSampleSize=2，解码后仍为 4000x3000，Bitmap 过大导致 Canvas 无法绘制。
+
+修复内容：
+- [x] 修正 inSampleSize 计算逻辑：以图片最大边为依据，确保解码后不超过 2048px
+- [x] 8000x6000 图片现在计算为 inSampleSize=4（解码后约 2000x1500）
+- [x] 模板图片解码放在 Dispatchers.IO，不阻塞 Compose 主线程
+- [x] templateImagePath 变化时释放旧 Bitmap，避免连续切换 View 造成泄漏
+- [x] 提取 `calculateInSampleSize()` 为可测试函数
+- [x] 新增 CameraPreviewTest 14 项单元测试
+- [x] `:app:compileDebugKotlin` BUILD SUCCESSFUL
+- [x] `:app:testDebugUnitTest` 全部通过
+- [x] `:app:assembleDebug` BUILD SUCCESSFUL
 
 ### V1-3：拍后比对（暂缓）
 
-状态：暂缓，待按序拍摄链路验收后开始
+状态：下一软件任务，尚未开始（2026-09-03 方案审计）
 
 - [ ] CaptureComparisonScreen：templateImage + capturedImage
 - [ ] 双图切换 / alpha overlay / blink comparison
@@ -287,9 +445,9 @@ Template ROI 配置、拍后模板/实拍比对、ROI 映射、Detector、PASS/F
 
 ### V1-4：Template ROI → Detector → Result（DEFERRED）
 
-状态：暂缓
+状态：暂缓；模板 ROI 编辑器正在进行整改，Session ROI 和 Detector 执行链路尚未接入。
 
-现场不提供 ROI 框选、拖动、缩放或 Session ROI 编辑器。模板 ROI 只在模板配置阶段配置一次，后续由算法映射到实拍图。
+现场不提供 Session ROI 框选、拖动、缩放或编辑器。模板 ROI 在模板配置阶段配置一次，后续由算法映射到实拍图。
 
 ### V1-5：结果查看（DEFERRED）
 

@@ -57,15 +57,29 @@
 
 ## 当前唯一任务
 
-B2 Task 2（旧模板导入 + 模板透明叠加 MVP）软件层面已完成（提交 `bdf1bd89`）。当前任务：**DPM 绑定与已绑定码切换收口，并同步当前工程文档**。
+**模板配置支持先创建零件，再导入模板** — **IN_PROGRESS**（2026-09-03）。
+
+目标：在当前 `PartListScreen` 中提供不依赖模板图片的真实新建零件入口；创建成功后进入对应 `PartDetailScreen`，再导入或拍摄多个 View。前序 ROI 整改 APK SHA-256 `d679e7a3e41f236d1958b125410ec827a54eb28c7d7e58b83fd216a8345bb56c`，JVM 379 项（374 passed / 0 failed / 5 skipped）。
+
+执行边界：
+1. 复用现有 `PartEntity`、`PartDao`、`InspectionRepository`、`PartListScreen`、`PartDetailScreen` 和唯一 CameraX 架构。
+2. 保留已有零件导入多张图片、选择已有零件、View 拍摄/重拍/删除、排序和逐 View ROI 行为。
+3. 创建空零件不要求图片，不创建空模板或孤儿文件；不重写 ROI、模板存储或数据库模型。
+4. 不实现拍后自动对比、Detector/PASS-FAIL、实时轮廓/姿态对齐、Session ROI 或结果导出。
+5. 只进行源码、自动化测试和文档修改，禁止执行 adb、安装/卸载 APK、启动或停止真机应用。
+6. 完成后由 Agent 回填 `tasks/todo.md` 完成清单、实际修改文件、测试结果、报告和 Git 状态，然后暂停等待验收。
+
+**Bug Fix**（2026-09-03）：修复模板图片降采样导致 Canvas 绘制失败。CameraPreview 的 inSampleSize 计算逻辑已修正，8000x6000 图片现在使用 inSampleSize=4。模板图片解码已移至 Dispatchers.IO，切换 View 时旧 Bitmap 已正确回收。新增 CameraPreviewTest 14 项单元测试。
+
+历史记录：模板拍摄、缩略图、重拍、排序 — **SOFTWARE_COMPLETE**（2026-09-03）。APK SHA-256 `56e390a067ccd1a040ea05b86b9743bc185bf2c1215630e7fc0f4f35a9e7f495`。
 
 当前任务边界：
-- 顶部 DPM 入口和整体现场采集界面保持不变。
-- 现场采集扫码命中已绑定 DPM 码时，只切换已有 Part 和该 Part 的有序模板 Views，并从 View 1/N 重新开始。
-- 未绑定码不创建零件、不进入未知码录入流程，只提示先在模板配置绑定。
-- 模板配置每个 Part 支持扫码绑定/更换 DPM 码；已被其他 Part 使用的码拒绝覆盖。
-- 继续复用现有 DPM 解码链和唯一 CameraController，不新增 DPM 算法或第二套 CameraX。
-- ROI 配置、现场 ROI 编辑、Detector、PASS/FAIL、拍后比对、检测记录和结果导出继续暂缓。
+- 复用已有 PartEntity、PartDao、InspectionTemplateEntity、TemplateImportService、InspectionRepository。
+- 模板配置零件列表本轮新增“新建零件”入口；创建后通过 `partId` 进入 PartDetail，再使用已有模板导入/拍摄流程。
+- 导入时支持选择已有零件或新建零件，避免重复输入零件 ID/名称；已有零件导入不再重复填写 ID/name。
+- ROI 编辑器的选中、移动、缩放、边界约束和保存 `normalizedRect` 属于已完成前序能力，本轮只做回归。
+- 只进行源码、自动化测试和文档修改，禁止执行 adb、安装/卸载 APK、启动或停止真机应用。
+- 不实现拍后自动对比、Detector/PASS-FAIL、自动轮廓提取、自动对齐、Session ROI 或结果导出。
 
 识别算法以旧工程当前生产实现为行为基线：保留 ZXing `DataMatrixReader` 主解码、中心 ROI、预处理策略轮转、双极性尝试、全图降采样、ML Kit DATA_MATRIX 兜底、帧节流、响应门、连续 miss 对焦和旧版网格兜底。只允许为适配新 `CameraController`、`FrameAnalyzer`、包名和生命周期做必要改造，不得擅自调换解码顺序、删减旧策略或用全新简化算法替代。
 
