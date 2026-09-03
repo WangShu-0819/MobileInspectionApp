@@ -6,21 +6,32 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 /**
  * 数据库 Migration v1 → v2
  *
- * 当前 v1 → v2 暂未做 schema 变更，但保留此文件作为模板。
- * 后续版本升级时，在此添加具体的 ALTER TABLE 语句。
- *
- * 示例：
- * ```kotlin
- * val MIGRATION_1_2 = object : Migration(1, 2) {
- *     override fun migrate(db: SupportSQLiteDatabase) {
- *         // db.execSQL("ALTER TABLE parts ADD COLUMN new_field TEXT")
- *     }
- * }
- * ```
+ * 为模板增加稳定的视角顺序。旧数据没有顺序字段，因此按
+ * createdAt ASC、id ASC 回填，保证已有模板在升级后仍有确定顺序。
  */
 val MIGRATION_1_2 = object : Migration(1, 2) {
     override fun migrate(db: SupportSQLiteDatabase) {
-        // 当前版本无 schema 变更，留空
+        db.execSQL(
+            "ALTER TABLE inspection_templates " +
+                "ADD COLUMN displayOrder INTEGER NOT NULL DEFAULT 0"
+        )
+        db.execSQL(
+            """
+            UPDATE inspection_templates
+            SET displayOrder = (
+                SELECT COUNT(*)
+                FROM inspection_templates AS previous
+                WHERE previous.partId = inspection_templates.partId
+                  AND (
+                      previous.createdAt < inspection_templates.createdAt
+                      OR (
+                          previous.createdAt = inspection_templates.createdAt
+                          AND previous.id < inspection_templates.id
+                      )
+                  )
+            )
+            """.trimIndent()
+        )
     }
 }
 

@@ -51,6 +51,9 @@ android {
         unitTests.isIncludeAndroidResources = true
     }
 
+    // MigrationTestHelper 从 androidTest assets 读取历史 Room schema。
+    sourceSets["androidTest"].assets.srcDir("$projectDir/schemas")
+
     // Room schema 导出配置
     ksp {
         arg("room.schemaLocation", "$projectDir/schemas")

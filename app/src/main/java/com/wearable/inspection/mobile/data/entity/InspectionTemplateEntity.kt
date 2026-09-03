@@ -24,6 +24,8 @@ data class InspectionTemplateEntity(
     val partId: String,
     val name: String,
     val mainImagePath: String,
+    /** 当前零件下的有序视角索引，从 0 开始。 */
+    val displayOrder: Int = 0,
     val outlineData: String? = null, // JSON 格式的轮廓数据
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),

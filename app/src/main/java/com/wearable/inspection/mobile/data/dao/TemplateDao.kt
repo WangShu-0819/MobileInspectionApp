@@ -6,19 +6,19 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface TemplateDao {
-    @Query("SELECT * FROM inspection_templates WHERE partId = :partId ORDER BY createdAt DESC")
+    @Query("SELECT * FROM inspection_templates WHERE partId = :partId ORDER BY displayOrder ASC, id ASC")
     fun observeByPartId(partId: String): Flow<List<InspectionTemplateEntity>>
 
     @Query("SELECT * FROM inspection_templates WHERE id = :id")
     suspend fun getById(id: String): InspectionTemplateEntity?
 
-    @Query("SELECT * FROM inspection_templates WHERE partId = :partId")
+    @Query("SELECT * FROM inspection_templates WHERE partId = :partId ORDER BY displayOrder ASC, id ASC")
     suspend fun getByPartId(partId: String): List<InspectionTemplateEntity>
 
-    @Query("SELECT * FROM inspection_templates ORDER BY updatedAt DESC")
+    @Query("SELECT * FROM inspection_templates ORDER BY partId ASC, displayOrder ASC, id ASC")
     fun observeAll(): Flow<List<InspectionTemplateEntity>>
 
-    @Query("SELECT * FROM inspection_templates ORDER BY updatedAt DESC")
+    @Query("SELECT * FROM inspection_templates ORDER BY partId ASC, displayOrder ASC, id ASC")
     suspend fun getAll(): List<InspectionTemplateEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

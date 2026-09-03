@@ -15,7 +15,7 @@ import com.wearable.inspection.mobile.data.entity.*
         InspectionSessionEntity::class,
         RoiInspectionRecordEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -37,6 +37,7 @@ abstract class AppDatabase : RoomDatabase() {
                     "mobile_inspection_db"
                 )
                     .setJournalMode(RoomDatabase.JournalMode.TRUNCATE)
+                    .addMigrations(MIGRATION_1_2)
                     .build()
                 INSTANCE = instance
                 instance

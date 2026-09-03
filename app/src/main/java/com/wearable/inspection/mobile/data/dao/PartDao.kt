@@ -15,6 +15,12 @@ interface PartDao {
     @Query("SELECT * FROM parts WHERE id = :id")
     suspend fun getById(id: String): PartEntity?
 
+    @Query("SELECT * FROM parts WHERE dpmCode = :dpmCode LIMIT 1")
+    suspend fun getByDpmCode(dpmCode: String): PartEntity?
+
+    @Query("UPDATE parts SET dpmCode = :dpmCode, updatedAt = :updatedAt WHERE id = :partId")
+    suspend fun updateDpmCode(partId: String, dpmCode: String?, updatedAt: Long = System.currentTimeMillis())
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(part: PartEntity)
 

@@ -26,6 +26,13 @@ class InspectionRepository(
 
     suspend fun getPartById(id: String): PartEntity? = partDao.getById(id)
 
+    suspend fun getPartByDpmCode(dpmCode: String): PartEntity? =
+        partDao.getByDpmCode(dpmCode.trim())
+
+    suspend fun updateDpmCode(partId: String, dpmCode: String?) {
+        partDao.updateDpmCode(partId, dpmCode?.trim()?.ifBlank { null })
+    }
+
     suspend fun upsertPart(part: PartEntity) {
         partDao.insert(part)
     }
