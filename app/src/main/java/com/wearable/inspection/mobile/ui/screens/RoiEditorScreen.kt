@@ -2,6 +2,9 @@ package com.wearable.inspection.mobile.ui.screens
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.awaitLongPressOrCancellation
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,6 +19,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -101,6 +107,18 @@ fun RoiEditorScreen(
     val drawingRect = viewModel.drawingRect
     val selectedRoiId = viewModel.selectedRoiId
     val isDrawingMode = viewModel.isDrawingMode
+    val deleteError = viewModel.deleteError
+
+    var showDeleteConfirm by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // 删除错误反馈
+    LaunchedEffect(deleteError) {
+        if (deleteError != null) {
+            snackbarHostState.showSnackbar(deleteError)
+            viewModel.clearDeleteError()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -127,7 +145,7 @@ fun RoiEditorScreen(
                 },
                 actions = {
                     if (selectedRoiId != null) {
-                        IconButton(onClick = { viewModel.deleteSelectedRoi() }) {
+                        IconButton(onClick = { showDeleteConfirm = true }) {
                             Icon(
                                 imageVector = Icons.Default.Delete,
                                 contentDescription = "删除选中 ROI",
@@ -138,6 +156,7 @@ fun RoiEditorScreen(
                 }
             )
         },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         containerColor = customColors.pageBackground,
     ) { paddingValues ->
         Column(
@@ -250,14 +269,48 @@ fun RoiEditorScreen(
             }
         }
     }
+
+    // 删除确认对话框
+    if (showDeleteConfirm) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirm = false },
+            title = { Text("删除 ROI") },
+            text = { Text("确定要删除当前选中的 ROI 吗？此操作不可撤销。") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showDeleteConfirm = false
+                        viewModel.deleteSelectedRoi()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = FailColor),
+                ) {
+                    Text("删除")
+                }
+            },
+            dismissButton = {
+                Button(
+                    onClick = { showDeleteConfirm = false },
+                    colors = ButtonDefaults.buttonColors(containerColor = DividerColor),
+                ) {
+                    Text("取消")
+                }
+            },
+        )
+    }
 }
 
 /**
  * ROI 编辑 Canvas
  *
  * 显示模板图片作为背景，叠加显示已有 ROI 和正在绘制的 ROI。
- * 编辑模式支持：点击选中已有 ROI、拖拽移动、四角缩放。
+ * 编辑模式支持：点击/长按选中已有 ROI、拖拽移动、四角缩放。
  * 绘制模式支持：拖拽绘制新矩形。
+ *
+ * 手势分离策略（编辑模式）：
+ * - 普通点按（释放前移动距离 < touchSlop）→ 选中命中 ROI
+ * - 长按（按住不动 ≥ LongPressTimeout）→ 选中命中 ROI
+ * - 拖拽（移动距离 ≥ touchSlop）→ 移动或缩放已命中 ROI
+ * 三者互不干扰：点按和长按不会触发移动/缩放，拖拽不会误触发选中。
  */
 @Composable
 private fun RoiCanvas(
@@ -282,8 +335,8 @@ private fun RoiCanvas(
     }
 
     // 绘制模式拖拽状态
-    var dragStart by remember { mutableStateOf<Offset?>(null) }
-    var dragCurrent by remember { mutableStateOf<Offset?>(null) }
+    var drawDragStart by remember { mutableStateOf<Offset?>(null) }
+    var drawDragCurrent by remember { mutableStateOf<Offset?>(null) }
 
     // 图片显示区域（FIT_CENTER 计算）
     var contentRect by remember { mutableStateOf<Rect?>(null) }
@@ -301,22 +354,17 @@ private fun RoiCanvas(
             modifier = Modifier
                 .fillMaxSize()
                 .pointerInput(isDrawingMode, rois, selectedRoiId) {
-                    // 编辑模式共享状态
-                    var actionRoiId: String? = null
-                    var actionCornerIndex = -1
-                    var isMoveAction = false
-
                     if (isDrawingMode) {
                         // ── 绘制模式：拖拽绘制新矩形 ──
                         detectDragGestures(
                             onDragStart = { offset ->
-                                dragStart = offset
-                                dragCurrent = offset
+                                drawDragStart = offset
+                                drawDragCurrent = offset
                             },
                             onDrag = { change, _ ->
-                                dragCurrent = change.position
-                                val start = dragStart ?: return@detectDragGestures
-                                val current = dragCurrent ?: return@detectDragGestures
+                                drawDragCurrent = change.position
+                                val start = drawDragStart ?: return@detectDragGestures
+                                val current = drawDragCurrent ?: return@detectDragGestures
                                 val cr = contentRect ?: return@detectDragGestures
                                 val normalized = pixelToNormalized(
                                     left = minOf(start.x, current.x),
@@ -330,19 +378,23 @@ private fun RoiCanvas(
                             onDragEnd = { },
                         )
                     } else {
-                        // ── 编辑模式：点击选中 + 拖拽移动/缩放 ──
-                        detectDragGestures(
-                            onDragStart = { startPos ->
-                                val cr = contentRect ?: return@detectDragGestures
+                        // ── 编辑模式：tap 选中 + long-press 选中 + 拖拽移动/缩放 ──
+                        awaitEachGesture {
+                            val down = awaitFirstDown(requireUnconsumed = true)
+                            down.consume()
+                            val downPos = down.position
+                            val cr = contentRect
 
-                                // 命中检测：角点控制柄 → 缩放；ROI 内部 → 移动；空白 → 无操作
-                                actionRoiId = null
-                                actionCornerIndex = -1
-                                isMoveAction = false
+                            // ── Step 1: 按下时做命中检测 ──
+                            var actionRoiId: String? = null
+                            var actionCornerIndex = -1
+                            var isMoveAction = false
 
-                                val selectedRoi = rois.find { it.id == selectedRoiId }
-                                if (selectedRoi != null) {
-                                    val selRect = NormalizedRect.fromJsonString(selectedRoi.normalizedRect)
+                            if (cr != null) {
+                                // 优先检测已选中 ROI 的四角控制柄
+                                val selRoi = rois.find { it.id == selectedRoiId }
+                                if (selRoi != null) {
+                                    val selRect = NormalizedRect.fromJsonString(selRoi.normalizedRect)
                                     if (selRect != null) {
                                         val selPixel = normalizedToPixel(selRect, cr)
                                         val corners = listOf(
@@ -352,60 +404,95 @@ private fun RoiCanvas(
                                             Offset(selPixel.right, selPixel.bottom),
                                         )
                                         val hitCorner = corners.indexOfFirst { corner ->
-                                            val distX = startPos.x - corner.x
-                                            val distY = startPos.y - corner.y
-                                            kotlin.math.sqrt(distX * distX + distY * distY) <= handleRadiusPx
+                                            val dx = downPos.x - corner.x
+                                            val dy = downPos.y - corner.y
+                                            kotlin.math.sqrt(dx * dx + dy * dy) <= handleRadiusPx
                                         }
                                         if (hitCorner >= 0) {
                                             actionRoiId = selectedRoiId
                                             actionCornerIndex = hitCorner
-                                        } else if (selPixel.contains(startPos)) {
+                                        } else if (selPixel.contains(downPos)) {
                                             actionRoiId = selectedRoiId
                                             isMoveAction = true
                                         }
                                     }
                                 }
 
-                                // 未命中已选中 ROI → 检测是否命中其他 ROI
+                                // 未命中已选中 ROI → 检测是否命中其他 ROI（最上层优先）
                                 if (actionRoiId == null) {
                                     val hitRoi = rois.lastOrNull { roi ->
                                         val r = NormalizedRect.fromJsonString(roi.normalizedRect) ?: return@lastOrNull false
                                         val px = normalizedToPixel(r, cr)
-                                        px.contains(startPos)
+                                        px.contains(downPos)
                                     }
                                     if (hitRoi != null) {
                                         actionRoiId = hitRoi.id
                                         isMoveAction = true
                                     }
                                 }
-                            },
-                            onDrag = { change, dragAmount ->
-                                val cr = contentRect ?: return@detectDragGestures
-                                val roiId = actionRoiId ?: return@detectDragGestures
+                            }
 
-                                if (actionCornerIndex >= 0) {
-                                    // 缩放：将当前累计位置转换为 normalized 传给 ViewModel
-                                    val curX = change.position.x
-                                    val curY = change.position.y
-                                    val normX = ((curX - cr.left) / cr.width).coerceIn(0f, 1f)
-                                    val normY = ((curY - cr.top) / cr.height).coerceIn(0f, 1f)
-                                    onRoiResized(roiId, actionCornerIndex, normX, normY)
-                                } else if (isMoveAction) {
-                                    // 移动：将像素 delta 转换为 normalized delta
-                                    val deltaNormX = dragAmount.x / cr.width
-                                    val deltaNormY = dragAmount.y / cr.height
-                                    onRoiMoved(roiId, deltaNormX, deltaNormY)
-                                }
-                            },
-                            onDragEnd = {
-                                // 短拖拽视为点击选中
+                            // ── Step 2: 等待长按 ──
+                            val longPress = awaitLongPressOrCancellation(down.id)
+                            if (longPress != null) {
+                                // 长按命中 → 选中 ROI（不触发移动/缩放）
                                 if (actionRoiId != null) {
                                     onRoiSelected(actionRoiId)
-                                } else {
-                                    onRoiSelected(null)
                                 }
-                            },
-                        )
+                                // 长按后不再处理拖拽
+                                return@awaitEachGesture
+                            }
+
+                            // ── Step 3: 非长按 → 等待拖拽或点击释放 ──
+                            if (actionCornerIndex >= 0 || isMoveAction) {
+                                // 命中了 ROI 或控制柄 → 跟踪拖拽直到释放
+                                var didDrag = false
+                                while (true) {
+                                    val event = awaitPointerEvent()
+                                    val change = event.changes.firstOrNull() ?: break
+                                    if (!change.pressed) {
+                                        // 指针释放
+                                        change.consume()
+                                        break
+                                    }
+
+                                    val dragDx = change.position.x - change.previousPosition.x
+                                    val dragDy = change.position.y - change.previousPosition.y
+                                    if (dragDx == 0f && dragDy == 0f) continue
+
+                                    didDrag = true
+                                    if (cr != null) {
+                                        if (actionCornerIndex >= 0) {
+                                            val normX = ((change.position.x - cr.left) / cr.width).coerceIn(0f, 1f)
+                                            val normY = ((change.position.y - cr.top) / cr.height).coerceIn(0f, 1f)
+                                            onRoiResized(actionRoiId!!, actionCornerIndex, normX, normY)
+                                        } else if (isMoveAction) {
+                                            val deltaNormX = dragDx / cr.width
+                                            val deltaNormY = dragDy / cr.height
+                                            onRoiMoved(actionRoiId!!, deltaNormX, deltaNormY)
+                                        }
+                                    }
+                                    change.consume()
+                                }
+
+                                // 释放后：如果是短拖拽（即点击），选中 ROI
+                                if (!didDrag && actionRoiId != null) {
+                                    onRoiSelected(actionRoiId)
+                                }
+                            } else {
+                                // 空白区域：等待释放，取消选中
+                                while (true) {
+                                    val event = awaitPointerEvent()
+                                    val change = event.changes.firstOrNull() ?: break
+                                    if (!change.pressed) {
+                                        change.consume()
+                                        break
+                                    }
+                                    change.consume()
+                                }
+                                onRoiSelected(null)
+                            }
+                        }
                     }
                 }
         ) {

@@ -1,42 +1,46 @@
 # Implementation Plan: MobileInspectionApp 当前阶段
 
-## 当前用户任务：模板配置支持先创建零件，再导入模板（2026-09-03）
+## 已完成任务：模板视角 ROI 长按删除回归整改（2026-09-03）
 
-用户反馈：进入“我的 → 模板配置”后仍必须先选择模板图片，才能在导入对话框中创建零件；期望流程是“先创建零件 → 进入零件详情 → 再导入或拍摄模板 View”。本轮暂停 B3 Presence Detection，只推进模板配置入口和零件上下文流程；完成后更新 `tasks/todo.md` 和 `docs/reports/b2/` 对应报告，暂停等待验收。
+状态：**SOFTWARE_COMPLETE / PHYSICAL_ACCEPTANCE_PASS**（2026-09-03，人工交互验收通过）
+
+用户确认：已有 ROI 和新增 ROI 均可点按/长按选中、确认删除并正确持久化。
+
+结果包导出（基础照片 ZIP，以及 manifest + Excel + 图片的完整结果包）是后续独立任务，不能在本轮并行实现。
+现场采集模板参考图拍照时上移、黑边消失和比例变化，作为后续独立任务处理。
+重复"新建零件"按钮作为后续独立任务处理。
 
 ### 审计结论与依赖
 
-- 当前活动链路为 `Profile → TemplateConfig → PartListScreen → PartDetailScreen`。
-- `PartListScreen` 目前只有“导入模板照片”入口；“新建零件”仅存在于导入对话框中，因此必须先选择图片。
-- `PartManagementScreen` 已有独立新建零件流程，但不满足“模板配置内先建零件”的目标入口。
-- 复用 `PartEntity`、`PartDao`、`InspectionRepository` 和现有导航；不新增数据库表或第二套零件模型。
-- 前序必须保留：已有零件导入多张图片、选择已有零件、View 顺序、拍摄/重拍/删除、逐 View ROI 和唯一 CameraX 架构。
+- 当前活动链路为 `Profile → TemplateConfig → PartListScreen → PartDetailScreen → TemplateDetailScreen → RoiEditorScreen`。
+- ROI 移动/缩放整改已完成；上一版删除逻辑已写入，但人工验收暴露出 Canvas 选中入口不可靠，不能只以 ViewModel 测试通过作为完成依据。
+- 复用现有 ROI 实体、DAO、Repository 和状态流；不新增数据库表、第二套 ROI 状态或新的手势框架。
+- 前序必须保留：新 ROI 绘制/保存、取消、选中、移动、四角缩放、边界约束、模板图片 contentRect 映射和唯一 CameraX 架构。
 
 ### 实施任务（按依赖顺序）
 
-1. [x] 在 `PartListScreen` 增加真实”新建零件”入口和创建对话框。
-2. [x] 校验零件 ID、名称和重复 ID，通过现有 Repository 写入 `PartEntity`；允许创建 0 View 的空零件。
-3. [x] 创建成功后导航到对应 `PartDetailScreen`，正确显示零件信息和 0 View 空状态。
-4. [x] 验证从该详情页继续导入多张图片时全部写入当前 `partId`，且已有导入/拍摄流程不回归。
-5. [x] 补充 JVM 自动化测试，执行三条 Gradle 命令，更新任务清单和整改报告；本轮不执行 adb。
-6. [x] 移除 PartListScreen 上”导入模板”按钮，只保留”新建零件”入口，避免顶部遮挡。
+1. [x] 修复 Canvas 命中：普通点按和长按已有 ROI 都能可靠识别当前框，长按后明确设置 `selectedRoiId`。
+2. [x] 保留右上角小垃圾桶图标作为删除入口；长按只负责选中和高亮，点击图标后进入删除确认。
+3. [x] 保留现有 ViewModel 删除成功/失败处理，确认失败不会错误清除本地状态。
+4. [x] 补充长按选中、删除、无选中、多 ROI、多 View 隔离和删除后重载自动化测试。
+5. [x] 执行三条 Gradle 命令，更新任务清单和整改报告；本轮不执行 adb。
 
 ### 验收标准
 
-- 模板配置零件列表无需先选图片即可新建零件。
-- 新建对话框能真实保存零件；空 ID、空名称、非法 ID、重复 ID 均有明确提示且不写入脏数据。
-- 新建成功后进入正确的零件详情页；零件无 View 时可正常显示 0 个视角，不创建空模板。
-- 从详情页导入多张图片后，所有 View 的 `partId` 正确，且原有 View 顺序、缩略图、拍摄和 ROI 功能不回归。
-- 失败流程不产生重复零件、无图片模板或孤儿文件。
+- 已有 ROI 可在当前 View 通过普通点按或长按可靠选中并高亮；右上角小垃圾桶图标可见，点击后进入清晰的删除确认。
+- 删除只作用于当前 View 的当前 ROI；删除成功后持久化并从 UI 移除，重进页面后不再出现。
+- 无选中 ROI 不会误删；删除失败有明确反馈并保留可恢复状态。
+- 新增、取消、移动、缩放、边界约束、contentRect 映射和多 View `templateId` 隔离不回归。
 - `:app:compileDebugKotlin --no-daemon`、`:app:testDebugUnitTest --no-daemon`、`:app:assembleDebug --no-daemon` 全部通过。
 - 完成后 Agent 必须回填 `tasks/todo.md` 完成清单、实际修改文件、测试结果、真机范围、未完成项和 Git 状态，并同步更新 `docs/reports/b2/` 报告。
 
 ### 预计文件范围
 
-- `app/src/main/java/com/wearable/inspection/mobile/ui/screens/PartListScreen.kt`
-- `app/src/main/java/com/wearable/inspection/mobile/ui/navigation/AppNavigation.kt`（仅在需要新增导航回调时）
-- `app/src/test/java/com/wearable/inspection/mobile/` 下与 Part 创建/导入归属相关的测试
-- `docs/reports/b2/` 下的模板配置整改报告
+- `app/src/main/java/com/wearable/inspection/mobile/ui/screens/RoiEditorScreen.kt`
+- `app/src/main/java/com/wearable/inspection/mobile/ui/screens/RoiEditorViewModel.kt`
+- `app/src/main/java/com/wearable/inspection/mobile/data/repository/InspectionRepository.kt`（仅在现有删除接口不足时）
+- `app/src/test/java/com/wearable/inspection/mobile/ui/screens/RoiEditorViewModelTest.kt` 及必要的 UI/手势测试
+- `docs/reports/b2/` 下的 ROI 整改报告
 
 ### 执行完成回填要求
 
@@ -99,7 +103,7 @@
 
 ## Overview
 
-B1 共享 CameraX 已完成技术验收。B2 Task 1 DPM 迁移 SOFTWARE_COMPLETE / PHYSICAL_ACCEPTANCE_PENDING。B2 Task 2 模板导入 + 透明叠加 MVP 软件层面已完成（提交 `bdf1bd89`）。DPM 绑定/已绑定码切件的源码路由已接入，模板导入与按序拍摄真机流程已通过；已绑定码实际切换和完整累积 instrumented 回归仍待补证。模板拍摄、缩略图、重拍、排序和 ROI 移动/缩放整改已完成对应软件任务；当前先执行“模板配置支持先创建零件，再导入模板”，不并行推进 B3 Presence Detection 或其他未完成业务。
+B1 共享 CameraX 已完成技术验收。B2 模板导入、透明叠加、模板配置层级、模板拍摄和 ROI 移动/缩放整改已完成对应软件任务。当前只执行“模板视角 ROI 长按删除回归整改”，不并行推进现场采集模板图布局、拍后比对、Detector、结果包导出或 B3 Presence Detection。
 
 ## Architecture Decisions
 
@@ -110,21 +114,26 @@ B1 共享 CameraX 已完成技术验收。B2 Task 1 DPM 迁移 SOFTWARE_COMPLETE
 
 ## Task List
 
-### 当前任务：模板配置支持先创建零件，再导入模板
+### 当前任务：模板视角 ROI 长按删除回归整改
 
-- [x] 模板配置零件列表可不依赖图片直接新建零件
-- [x] 新建零件校验 ID/名称/重复项并真实写入数据库
-- [x] 创建成功后进入正确 PartDetail，允许 0 View 空状态
-- [x] 后续多图导入全部关联当前 `partId`
-- [x] 原有导入、拍摄、重拍、删除、排序和 ROI 回归通过
-- [x] 补充自动化测试并通过三条 Gradle 命令
-- [x] Agent 回填 `tasks/todo.md` 和 `docs/reports/b2/` 报告
+- [ ] 普通点按和长按已有 ROI 均能可靠命中并选中
+- [ ] 长按选中后进入清晰的删除确认
+- [ ] 删除当前 View 的选中 ROI 并真实持久化
+- [ ] 删除失败和无选中状态处理正确
+- [ ] 新增、取消、移动、缩放、边界和多 View ROI 回归通过
+- [ ] 补充自动化测试并通过三条 Gradle 命令
+- [ ] Agent 回填 `tasks/todo.md` 和 `docs/reports/b2/` 报告
 
-### Checkpoint：模板配置入口整改完成
+### Checkpoint：ROI 长按删除回归整改完成
 
-- [x] 所有验收标准已由代码和测试证明
-- [x] 报告记录实际修改文件、测试结果、真机范围、未完成项和 Git 状态
+- [ ] 所有验收标准已由代码和测试证明
+- [ ] 报告记录实际修改文件、测试结果、真机范围、未完成项和 Git 状态
 - [ ] 等待用户验收后再决定是否提交 Git
+
+### 已完成任务：模板配置入口简化
+
+- [x] 已提交 `866c23fc`
+- [x] 模板配置页只保留“新建零件”入口，模板包导入独立页面保持可用
 
 ### 已完成整改任务：ROI 移动/缩放整改
 

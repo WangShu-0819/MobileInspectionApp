@@ -35,6 +35,10 @@ class RoiEditorViewModel(
     var selectedRoiId by mutableStateOf<String?>(null)
         private set
 
+    /** 删除错误信息，UI 消费后调用 clearDeleteError() 清除 */
+    var deleteError by mutableStateOf<String?>(null)
+        private set
+
     /** 是否处于绘制模式 */
     var isDrawingMode by mutableStateOf(false)
         private set
@@ -49,6 +53,11 @@ class RoiEditorViewModel(
             _rois.clear()
             _rois.addAll(list)
         }
+    }
+
+    /** 重新加载 ROI 列表（删除后刷新等场景） */
+    fun refreshRois() {
+        loadRois()
     }
 
     /** 切换绘制模式 */
@@ -96,13 +105,23 @@ class RoiEditorViewModel(
         isDrawingMode = false
     }
 
-    /** 删除选中的 ROI */
+    /** 清除删除错误 */
+    fun clearDeleteError() {
+        deleteError = null
+    }
+
+    /** 删除选中的 ROI；失败时保留 UI 状态并设置 deleteError */
     fun deleteSelectedRoi() {
         val id = selectedRoiId ?: return
         viewModelScope.launch {
-            repository.deleteRoi(id)
-            _rois.removeAll { it.id == id }
-            selectedRoiId = null
+            try {
+                repository.deleteRoi(id)
+                _rois.removeAll { it.id == id }
+                selectedRoiId = null
+                deleteError = null
+            } catch (e: Exception) {
+                deleteError = "删除失败：${e.message ?: "未知错误"}"
+            }
         }
     }
 

@@ -1,21 +1,69 @@
 package com.wearable.inspection.mobile.ui.screens
 
+import com.wearable.inspection.mobile.data.entity.RoiDefinitionEntity
+import com.wearable.inspection.mobile.data.repository.InspectionRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.never
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.`when`
+import org.mockito.ArgumentMatchers.anyString
 
 /**
  * NormalizedRect 和 ROI 编辑逻辑测试
  *
  * 覆盖：序列化/反序列化、move、resize、边界约束、最小尺寸、四角索引、
- * 多 ROI 独立性、move+resize 组合操作。
+ * 多 ROI 独立性、move+resize 组合操作、删除选中 ROI、无选中不误删、
+ * 删除失败保留状态、多 View templateId 隔离。
  *
- * ViewModel 持久化（moveRoi/resizeRoi → InspectionRepository.updateRoi）
+ * ViewModel 持久化（moveRoi/resizeRoi/deleteSelectedRoi → InspectionRepository）
  * 通过编译、assembleDebug 和 instrumented 测试验证。
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 class RoiEditorViewModelTest {
+
+    private val testDispatcher = StandardTestDispatcher()
+    private lateinit var mockRepository: InspectionRepository
+
+    @Before
+    fun setUp() {
+        Dispatchers.setMain(testDispatcher)
+        mockRepository = mock(InspectionRepository::class.java)
+    }
+
+    @After
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
+
+    /** 创建测试用 RoiDefinitionEntity */
+    private fun createTestRoi(
+        id: String,
+        templateId: String = "tpl_001",
+        normalizedRect: String = """{"left":0.1,"top":0.1,"right":0.5,"bottom":0.5}""",
+    ) = RoiDefinitionEntity(
+        id = id,
+        templateId = templateId,
+        name = "ROI $id",
+        order = 0,
+        shapeType = "RECT",
+        normalizedRect = normalizedRect,
+        inspectionType = "VISUAL",
+    )
 
     // ══════════════════════════════════════════
     // NormalizedRect JSON 序列化
@@ -433,5 +481,286 @@ class RoiEditorViewModelTest {
         val resized = rect.resize(3, 0.25f, 0.25f)
         val area = (resized.right - resized.left) * (resized.bottom - resized.top)
         assertTrue("面积 >= MIN_SIZE^2", area >= 0.02f * 0.02f)
+    }
+
+    // ══════════════════════════════════════════
+    // ViewModel 删除选中 ROI 测试
+    // ══════════════════════════════════════════
+
+    @Test
+    fun `删除选中 ROI - 成功后从列表移除并清除选中`() = runTest {
+        val roi1 = createTestRoi("roi_1")
+        val roi2 = createTestRoi("roi_2")
+        `when`(mockRepository.getRois("tpl_001")).thenReturn(listOf(roi1, roi2))
+
+        val viewModel = RoiEditorViewModel(mockRepository, "tpl_001")
+        advanceUntilIdle()
+
+        assertEquals(2, viewModel.rois.size)
+
+        viewModel.selectRoi("roi_1")
+        assertEquals("roi_1", viewModel.selectedRoiId)
+
+        viewModel.deleteSelectedRoi()
+        advanceUntilIdle()
+
+        verify(mockRepository).deleteRoi("roi_1")
+        assertEquals(1, viewModel.rois.size)
+        assertEquals("roi_2", viewModel.rois[0].id)
+        assertNull(viewModel.selectedRoiId)
+        assertNull(viewModel.deleteError)
+    }
+
+    @Test
+    fun `无选中 ROI 时调用删除不执行任何操作`() = runTest {
+        val roi1 = createTestRoi("roi_1")
+        `when`(mockRepository.getRois("tpl_001")).thenReturn(listOf(roi1))
+
+        val viewModel = RoiEditorViewModel(mockRepository, "tpl_001")
+        advanceUntilIdle()
+
+        assertNull(viewModel.selectedRoiId)
+        assertEquals(1, viewModel.rois.size)
+
+        viewModel.deleteSelectedRoi()
+        advanceUntilIdle()
+
+        verify(mockRepository, never()).deleteRoi(anyString())
+        assertEquals(1, viewModel.rois.size)
+        assertNull(viewModel.selectedRoiId)
+    }
+
+    @Test
+    fun `删除失败保留 UI 状态并设置错误信息`() = runTest {
+        val roi1 = createTestRoi("roi_1")
+        val roi2 = createTestRoi("roi_2")
+        `when`(mockRepository.getRois("tpl_001")).thenReturn(listOf(roi1, roi2))
+        `when`(mockRepository.deleteRoi("roi_1")).thenThrow(RuntimeException("DB 写入失败"))
+
+        val viewModel = RoiEditorViewModel(mockRepository, "tpl_001")
+        advanceUntilIdle()
+
+        viewModel.selectRoi("roi_1")
+        viewModel.deleteSelectedRoi()
+        advanceUntilIdle()
+
+        // 状态应保留，不伪造成功
+        assertEquals(2, viewModel.rois.size)
+        assertEquals("roi_1", viewModel.selectedRoiId)
+        assertNotNull(viewModel.deleteError)
+        assertTrue(viewModel.deleteError!!.contains("DB 写入失败"))
+    }
+
+    @Test
+    fun `清除删除错误`() = runTest {
+        val roi1 = createTestRoi("roi_1")
+        `when`(mockRepository.getRois("tpl_001")).thenReturn(listOf(roi1))
+        `when`(mockRepository.deleteRoi("roi_1")).thenThrow(RuntimeException("失败"))
+
+        val viewModel = RoiEditorViewModel(mockRepository, "tpl_001")
+        advanceUntilIdle()
+
+        viewModel.selectRoi("roi_1")
+        viewModel.deleteSelectedRoi()
+        advanceUntilIdle()
+        assertNotNull(viewModel.deleteError)
+
+        viewModel.clearDeleteError()
+        assertNull(viewModel.deleteError)
+    }
+
+    @Test
+    fun `删除后再新增新 ROI 不受影响`() = runTest {
+        val roi1 = createTestRoi("roi_1")
+        `when`(mockRepository.getRois("tpl_001")).thenReturn(listOf(roi1))
+
+        val viewModel = RoiEditorViewModel(mockRepository, "tpl_001")
+        advanceUntilIdle()
+
+        viewModel.selectRoi("roi_1")
+        viewModel.deleteSelectedRoi()
+        advanceUntilIdle()
+
+        assertEquals(0, viewModel.rois.size)
+        assertNull(viewModel.selectedRoiId)
+
+        // 绘制并保存新 ROI
+        viewModel.toggleDrawingMode()
+        viewModel.updateDrawingRect(NormalizedRect(0.2f, 0.2f, 0.6f, 0.6f))
+        viewModel.saveDrawingRect("新 ROI")
+        advanceUntilIdle()
+
+        assertEquals(1, viewModel.rois.size)
+        assertEquals("新 ROI", viewModel.rois[0].name)
+    }
+
+    // ══════════════════════════════════════════
+    // 多 View templateId 隔离测试
+    // ══════════════════════════════════════════
+
+    @Test
+    fun `不同 templateId 的 ViewModel 各自管理 ROI 列表`() = runTest {
+        val roiA = createTestRoi("roi_A", templateId = "tpl_A")
+        val roiB = createTestRoi("roi_B", templateId = "tpl_B")
+        `when`(mockRepository.getRois("tpl_A")).thenReturn(listOf(roiA))
+        `when`(mockRepository.getRois("tpl_B")).thenReturn(listOf(roiB))
+
+        val viewModelA = RoiEditorViewModel(mockRepository, "tpl_A")
+        val viewModelB = RoiEditorViewModel(mockRepository, "tpl_B")
+        advanceUntilIdle()
+
+        assertEquals(1, viewModelA.rois.size)
+        assertEquals(1, viewModelB.rois.size)
+        assertEquals("roi_A", viewModelA.rois[0].id)
+        assertEquals("roi_B", viewModelB.rois[0].id)
+
+        // 删除 tpl_A 的 ROI 不影响 tpl_B
+        viewModelA.selectRoi("roi_A")
+        viewModelA.deleteSelectedRoi()
+        advanceUntilIdle()
+
+        assertEquals(0, viewModelA.rois.size)
+        assertEquals(1, viewModelB.rois.size)
+        verify(mockRepository).deleteRoi("roi_A")
+    }
+
+    // ══════════════════════════════════════════
+    // 前序行为回归：选中、取消、移动、缩放
+    // ══════════════════════════════════════════
+
+    @Test
+    fun `选中和取消选中`() = runTest {
+        val roi1 = createTestRoi("roi_1")
+        `when`(mockRepository.getRois("tpl_001")).thenReturn(listOf(roi1))
+
+        val viewModel = RoiEditorViewModel(mockRepository, "tpl_001")
+        advanceUntilIdle()
+
+        viewModel.selectRoi("roi_1")
+        assertEquals("roi_1", viewModel.selectedRoiId)
+
+        viewModel.selectRoi(null)
+        assertNull(viewModel.selectedRoiId)
+    }
+
+    @Test
+    fun `切换绘制模式清除选中状态`() = runTest {
+        val roi1 = createTestRoi("roi_1")
+        `when`(mockRepository.getRois("tpl_001")).thenReturn(listOf(roi1))
+
+        val viewModel = RoiEditorViewModel(mockRepository, "tpl_001")
+        advanceUntilIdle()
+
+        viewModel.selectRoi("roi_1")
+        assertEquals("roi_1", viewModel.selectedRoiId)
+
+        viewModel.toggleDrawingMode()
+        assertNull(viewModel.selectedRoiId)
+        assertTrue(viewModel.isDrawingMode)
+    }
+
+    @Test
+    fun `取消绘制清除绘制矩形`() = runTest {
+        `when`(mockRepository.getRois("tpl_001")).thenReturn(emptyList())
+
+        val viewModel = RoiEditorViewModel(mockRepository, "tpl_001")
+        advanceUntilIdle()
+
+        viewModel.toggleDrawingMode()
+        viewModel.updateDrawingRect(NormalizedRect(0.1f, 0.1f, 0.5f, 0.5f))
+        assertNotNull(viewModel.drawingRect)
+
+        viewModel.cancelDrawing()
+        assertNull(viewModel.drawingRect)
+        assertFalse(viewModel.isDrawingMode)
+    }
+
+    // ══════════════════════════════════════════
+    // 删除后重新加载验证
+    // ══════════════════════════════════════════
+
+    @Test
+    fun `删除后重新加载 ROI 不再出现`() = runTest {
+        val roi1 = createTestRoi("roi_1")
+        val roi2 = createTestRoi("roi_2")
+        // 初始加载：两个 ROI
+        `when`(mockRepository.getRois("tpl_001")).thenReturn(listOf(roi1, roi2))
+
+        val viewModel = RoiEditorViewModel(mockRepository, "tpl_001")
+        advanceUntilIdle()
+        assertEquals(2, viewModel.rois.size)
+
+        // 删除 roi_1
+        viewModel.selectRoi("roi_1")
+        viewModel.deleteSelectedRoi()
+        advanceUntilIdle()
+        assertEquals(1, viewModel.rois.size)
+
+        // 模拟重新加载：repository 现在只返回 roi_2
+        `when`(mockRepository.getRois("tpl_001")).thenReturn(listOf(roi2))
+        viewModel.refreshRois()
+        advanceUntilIdle()
+
+        assertEquals(1, viewModel.rois.size)
+        assertEquals("roi_2", viewModel.rois[0].id)
+        // 确认被删除的 ROI 不再出现
+        assertTrue(viewModel.rois.none { it.id == "roi_1" })
+    }
+
+    // ══════════════════════════════════════════
+    // 前序行为回归：新增、移动、缩放
+    // ══════════════════════════════════════════
+
+    @Test
+    fun `新增 ROI 后列表包含新 ROI`() = runTest {
+        `when`(mockRepository.getRois("tpl_001")).thenReturn(emptyList())
+
+        val viewModel = RoiEditorViewModel(mockRepository, "tpl_001")
+        advanceUntilIdle()
+        assertEquals(0, viewModel.rois.size)
+
+        viewModel.toggleDrawingMode()
+        viewModel.updateDrawingRect(NormalizedRect(0.2f, 0.2f, 0.6f, 0.6f))
+        viewModel.saveDrawingRect("新增 ROI")
+        advanceUntilIdle()
+
+        assertEquals(1, viewModel.rois.size)
+        assertEquals("新增 ROI", viewModel.rois[0].name)
+    }
+
+    @Test
+    fun `移动 ROI 后 normalizedRect 更新`() = runTest {
+        val roi1 = createTestRoi("roi_1", normalizedRect = """{"left":0.2,"top":0.2,"right":0.6,"bottom":0.6}""")
+        `when`(mockRepository.getRois("tpl_001")).thenReturn(listOf(roi1))
+
+        val viewModel = RoiEditorViewModel(mockRepository, "tpl_001")
+        advanceUntilIdle()
+
+        viewModel.moveRoi("roi_1", 0.1f, 0.1f)
+        advanceUntilIdle()
+
+        val moved = NormalizedRect.fromJsonString(viewModel.rois[0].normalizedRect)!!
+        assertEquals(0.3f, moved.left, 0.001f)
+        assertEquals(0.3f, moved.top, 0.001f)
+        assertEquals(0.7f, moved.right, 0.001f)
+        assertEquals(0.7f, moved.bottom, 0.001f)
+    }
+
+    @Test
+    fun `缩放 ROI 后 normalizedRect 更新`() = runTest {
+        val roi1 = createTestRoi("roi_1", normalizedRect = """{"left":0.2,"top":0.2,"right":0.6,"bottom":0.6}""")
+        `when`(mockRepository.getRois("tpl_001")).thenReturn(listOf(roi1))
+
+        val viewModel = RoiEditorViewModel(mockRepository, "tpl_001")
+        advanceUntilIdle()
+
+        viewModel.resizeRoi("roi_1", 3, 0.8f, 0.8f)
+        advanceUntilIdle()
+
+        val resized = NormalizedRect.fromJsonString(viewModel.rois[0].normalizedRect)!!
+        assertEquals(0.2f, resized.left, 0.001f)
+        assertEquals(0.2f, resized.top, 0.001f)
+        assertEquals(0.8f, resized.right, 0.001f)
+        assertEquals(0.8f, resized.bottom, 0.001f)
     }
 }
