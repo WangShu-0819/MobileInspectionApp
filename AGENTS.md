@@ -24,8 +24,9 @@
 - B2 Task 2：旧模板导入 + 模板透明叠加 MVP — **SOFTWARE_COMPLETE**（2026-09-02）。V1-1 模板导入 MVP（`bdf1bd89`）；V1-2 模板透明叠加 + Alpha Slider（`bdf1bd89`）；V1-6 MVP Profile 信息架构简化（`94e3f5f3`）：ProfileScreen 收缩为 5 个 MVP 入口、移除硬编码 TemplateStats、接真实 DB 统计、TemplatePackageScreen 接通 ZIP 导入、AppSettingsScreen 移除未生效假开关。JVM 242 项（237 passed / 0 failed / 5 skipped）。遗留边界：legacy ROI 未迁移、imageFiles[] 仅取首图、模板包导出未实现。V1-3 拍后比对为下一软件阶段。实时轮廓投影/姿态匹配/单应性对齐继续标记为 DEFERRED / POST-MVP。
 - B3 Phase 1：钢印 OCR 核心算法迁移 — **完成**（2026-09-02，提交 `0df8e9c5`）。10 source files +9 test files（66 OCR tests）。包名 `com.wearable.inspection.mobile.ocr`。ML Kit text-recognition 依赖已启用。
 - B3 Phase 2：钢印 OCR CameraX/UI 集成 — **SOFTWARE_COMPLETE**（2026-09-02）。StampOcrFrameAnalyzer + StampOcrViewModel + StampOcrScreen + Navigation 路由。JVM 308 项（303 passed / 0 failed / 5 skipped）。APK SHA-256 `b27427fa5dbbea37111e0ab5425286a293af9c98cad6718e85bbf0005ceffb82`。
+- 当前 DPM 业务扩展：顶部入口保持不变；已接入按绑定 `dpmCode` 查询 Part、扫码命中后切换当前 Part 并重新加载其有序 Views；模板配置按 Part 提供扫码绑定/更换 DPM 码，冲突绑定拒绝。当前源码已通过 `:app:compileDebugKotlin`，完整构建和真机验收待本轮收口。
 - DPM 只支持手机相机实时扫一扫，不提供相册码图导入。
-- DPM 入口：顶部扫码图标 contentDescription 为"扫一扫"，只进入实时 DPM 扫描；OCR 图标 contentDescription 为"OCR 钢印"；模板样本相册导入属于"我的 > 模板配置"。
+- DPM 入口：顶部扫码图标 contentDescription 为"扫一扫"，只进入实时 DPM 扫描；命中已绑定码时只切换零件及模板，未知码只提示先在模板配置绑定；OCR 图标 contentDescription 为"OCR 钢印"；模板样本相册导入属于"我的 > 模板配置"。
 
 ## 真机包名门禁
 
@@ -56,15 +57,15 @@
 
 ## 当前唯一任务
 
-B2 Task 2（旧模板导入 + 模板透明叠加 MVP）软件层面已完成（提交 `bdf1bd89`）。当前任务：**LiveInspectionScreen MVP semantic/UI cleanup**，随后进入 V1-3 post-capture template/live-image comparison。
+B2 Task 2（旧模板导入 + 模板透明叠加 MVP）软件层面已完成（提交 `bdf1bd89`）。当前任务：**DPM 绑定与已绑定码切换收口，并同步当前工程文档**。
 
-LiveInspection cleanup 边界（只记录，本轮不改源码）：
-- OCR dead entry（`onClick = { /* TODO: OCR 钢印 */ }`）：隐藏/移除，不新增 OCR route
-- Template selector dead click（`onClick = { /* TODO: 打开模板选择器 */ }`）：接入真实数据或取消 clickable affordance
-- Image card dead click（`onClick = { /* TODO: 放大查看 */ }`）：移除无实现的 clickable affordance
-- `hasTemplates = true` 硬编码：改为真实模板数据状态
-- 假"已对齐，可拍摄"状态：改为"模板已就绪 / 可以拍照"等不误导语义
-- 固定白色矩形 / 绿色 ROI 占位图形：删除或改为真实 RoiDefinitionEntity + contentRect 映射
+当前任务边界：
+- 顶部 DPM 入口和整体现场采集界面保持不变。
+- 现场采集扫码命中已绑定 DPM 码时，只切换已有 Part 和该 Part 的有序模板 Views，并从 View 1/N 重新开始。
+- 未绑定码不创建零件、不进入未知码录入流程，只提示先在模板配置绑定。
+- 模板配置每个 Part 支持扫码绑定/更换 DPM 码；已被其他 Part 使用的码拒绝覆盖。
+- 继续复用现有 DPM 解码链和唯一 CameraController，不新增 DPM 算法或第二套 CameraX。
+- ROI 配置、现场 ROI 编辑、Detector、PASS/FAIL、拍后比对、检测记录和结果导出继续暂缓。
 
 识别算法以旧工程当前生产实现为行为基线：保留 ZXing `DataMatrixReader` 主解码、中心 ROI、预处理策略轮转、双极性尝试、全图降采样、ML Kit DATA_MATRIX 兜底、帧节流、响应门、连续 miss 对焦和旧版网格兜底。只允许为适配新 `CameraController`、`FrameAnalyzer`、包名和生命周期做必要改造，不得擅自调换解码顺序、删减旧策略或用全新简化算法替代。
 

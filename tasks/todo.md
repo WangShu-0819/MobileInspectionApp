@@ -1,6 +1,6 @@
-# 当前任务：LiveInspectionScreen MVP semantic/UI cleanup → V1-3
+# 当前任务：DPM 绑定/已绑定码切换收口 + 当前进度文档同步
 
-B2 Task 1 已 SOFTWARE_COMPLETE / PHYSICAL_ACCEPTANCE_PENDING（物理验收不阻塞后续功能开发）。B2 Task 2 软件层面已完成（提交 `bdf1bd89`）。B3 Phase 2 钢印 OCR CameraX/UI 集成 SOFTWARE_COMPLETE（2026-09-02）。下一软件阶段：LiveInspectionScreen cleanup → V1-3 post-capture comparison。
+B2 Task 1 已 SOFTWARE_COMPLETE / PHYSICAL_ACCEPTANCE_PENDING（物理验收不阻塞后续功能开发）。B2 Task 2 模板导入与透明叠加软件能力已完成。B3 Phase 2 钢印 OCR CameraX/UI 集成 SOFTWARE_COMPLETE（2026-09-02）。当前已完成 View 顺序持久化、真实 Part 选择和现场采集交互整理；DPM 绑定/已绑定码切换已接入，待完整构建与真机验收后收口，之后才进入 V1-3 拍后比对。
 
 ## Task 1：整理活跃源码边界
 
@@ -179,7 +179,7 @@ B1 已完成并关闭。
 - [x] 10 次冷启动稳定性验证（2026-09-02：10/10 通过，logcat 6 项门禁 0 违规）
 - [x] 更新 `docs/reports/b2/B2_TASK1_DPM_LEGACY_PARITY_REPORT.md` 和证据目录（本次提交）
 
-本 Task 不实现未知码绑定、已绑定码切件、冲突处理、OCR、模板、轮廓、ROI 或检测算法。允许的改动仅是解除旧 CameraX/Leion/USB/页面耦合并接入新工程；不得借重构删减旧识别策略。物理验收项不再阻塞后续功能开发。
+本 Task 的最新业务边界：现场采集顶部 DPM 入口保持不变；扫码命中已绑定码时只切换已有零件及其有序模板，未知码只提示先在模板配置绑定；模板配置提供扫码绑定/更换 DPM 码，冲突码拒绝覆盖。不实现扫码后新建零件、未知码录入、OCR、轮廓、ROI 或检测算法，不改变既有 DPM 解码策略。物理样本验收仍单独标记为 pending。
 
 ---
 
@@ -192,8 +192,10 @@ B1 已完成并关闭。
 当前 MVP 路线：
 
 ```
-模板导入/拍摄 → ROI 配置 → 模板原图透明叠加辅助现场取景 → 拍照 → 模板/实拍双图比对 → 本次 ROI 微调 → ROI 检测 → 保存结果
+模板导入/拍摄 → 选择 Part → 按 displayOrder 加载 Views → 模板原图透明叠加辅助现场取景 → 按序真实拍摄
 ```
+
+Template ROI 配置、拍后模板/实拍比对、ROI 映射、Detector、PASS/FAIL、检测记录和结果导出保留在后续计划中；现场人员不编辑 ROI。
 
 ### V1-1：导入旧模板包
 
@@ -231,23 +233,67 @@ B1 已完成并关闭。
 - [x] JVM 测试通过（242 项：237 passed / 0 failed / 5 skipped）
 - [x] 提交
 
-### V1-3：拍后比对（预留结构，本轮不完整实现）
+### 当前补充任务：模板 View 顺序持久化
 
-状态：待开始（下一软件阶段）
+状态：✅ 软件完成（2026-09-02）
+
+- [x] `InspectionTemplateEntity` 增加 `displayOrder`
+- [x] Room schema 版本升级和 v1 → v2 migration，旧数据按稳定创建时间/id 回填顺序
+- [x] ZIP / Directory manifest 保留显式 order；缺失或非法 order 回退到 manifest index
+- [x] flat-directory 使用稳定文件名排序生成 index
+- [x] `TemplateImportService` 写入 displayOrder，重复导入保持相同顺序
+- [x] TemplateDao 按 Part 返回 `displayOrder ASC, id ASC`
+- [x] 显式 order、缺失 order、flat-directory、重复 order、数据库查询和重复导入测试
+
+### 当前补充任务：现场采集选择和交互整理
+
+状态：✅ 软件完成（2026-09-02）
+
+- [x] 现场采集增加真实 Part 选择入口；选择 Part 后自动加载其全部启用 Views
+- [x] View 切换仅用于查看/切换当前视角，不把每个 View 误作独立模板集
+- [x] 模板配置和 Profile 统计使用真实 DB 数据，不再显示硬编码数量
+- [x] 模板详情显示 View 序号/总数和参考图片语义
+- [x] 完成提示改为紧凑的“本轮视角采集完成”，重新开始作为次要操作
+- [x] 相机预览支持设置“原比例 / 填充预览”，默认保留原比例
+- [x] 模板参考图支持“原比例 / 撑满”切换；原比例允许黑边，撑满模式仍保留模板透明叠加
+- [x] 零件管理和模板视角支持左滑删除并二次确认
+- [x] 采集完成提示统一为“零件采集完成”，不重复显示状态文案
+
+### 当前补充任务：DPM 绑定与已绑定码切换
+
+状态：自动化与模板导入/按序拍摄真机回归完成；结果导出按产品边界暂缓
+
+- [x] 保持现场采集顶部“扫一扫”入口和现有实时 DPM 解码链不变
+- [x] 扫码命中已绑定 DPM 码后，只切换已有 Part，并重新加载该 Part 的有序模板和 View 1/N 进度
+- [x] 未绑定 DPM 码不新建零件，只提示先在模板配置绑定
+- [x] 模板配置按 Part 显示 DPM 绑定状态，并提供扫码绑定/更换绑定入口
+- [x] 已被其他 Part 使用的 DPM 码拒绝覆盖
+- [x] Room DAO/Repository 增加 DPM 精确查询和更新能力
+- [x] 通过 PartSelectionBus 让已存在的现场采集 ViewModel 立即切换零件
+- [x] `:app:compileDebugKotlin` 已通过
+- [x] 补充/执行 DPM 绑定查询测试和完整 JVM 回归（PartDpmDaoTest 3/3；JVM 318 项：313 passed / 5 skipped / 0 failed）
+- [x] 生成新 APK 并按新包名门禁完成真机验证（`com.wearable.inspection.mobile`；模板导入 8 视角、按序拍摄 8/8、结果页复核通过）
+
+本轮已将 `DPM_data/` 的 6 张样本纳入离线基线运行；测试无异常退出，但当前 ZXing 全图及中心 ROI 两阶段均为 0/6 命中。该测试不覆盖 ML Kit/GRID 兜底，也不能替代实时相机样本验收。`sample_data/1/` 的 8 张模板图已在真机通过 SAF 导入，现场采集已完成 8/8 张真实拍摄并进入检测结果页；结果页仍为空状态且无导出按钮，因为 InspectionSession 完整结果写入和结果导出按当前产品边界暂缓。
+
+### V1-3：拍后比对（暂缓）
+
+状态：暂缓，待按序拍摄链路验收后开始
 
 - [ ] CaptureComparisonScreen：templateImage + capturedImage
 - [ ] 双图切换 / alpha overlay / blink comparison
-- [ ] 显示 template ROI
-- [ ] 用户对本次 session ROI 微调（templateRoi vs sessionRoi 分离）
+- [ ] 按模板 ROI 计算后续实拍图中的对应检测区域
 - [ ] 提交
 
-### V1-4：ROI → Detector → Result（DEFERRED）
+### V1-4：Template ROI → Detector → Result（DEFERRED）
 
-状态：待开始
+状态：暂缓
+
+现场不提供 ROI 框选、拖动、缩放或 Session ROI 编辑器。模板 ROI 只在模板配置阶段配置一次，后续由算法映射到实拍图。
 
 ### V1-5：结果查看（DEFERRED）
 
-状态：待开始
+状态：暂缓；检测记录和结果包导出待后续接入
 
 ---
 
@@ -274,26 +320,26 @@ B1 已完成并关闭。
 遗留边界：
 - 模板包导出功能尚未实现（仅导入已接通）
 - 结果管理页面为空状态 shell（待接入 ResultPackager）
-- LiveInspectionScreen 中仍有 OCR/模板选择器/放大查看等 dead click（下一任务处理）
+- Template ROI、Detector、PASS/FAIL、检测记录和结果导出仍未接入；按当前产品边界暂缓
 
 ---
 
-## LiveInspectionScreen cleanup 任务边界（下一代码任务）
+## LiveInspectionScreen cleanup 任务（已完成）
 
 ### A. OCR 钢印入口
-当前 `onClick = { /* TODO: OCR 钢印 */ }` 为 dead click。后续隐藏/移除，不新增 OCR route。
+保留已有独立 OCR 页面入口，不新增 OCR route。
 
 ### B. 模板选择器
-当前 `onClick = { /* TODO: 打开模板选择器 */ }` 为 dead click。后续接入真实 Room/ViewModel 数据或取消 clickable affordance，不得硬编码/建假列表。
+现场采集页使用真实 Part 下拉选择；Part 下的 Views 来自 Room 并按 displayOrder 加载，底部视角选择器只切换当前 View。
 
 ### C. 模板参考图片 Card
-当前 `onClick = { /* TODO: 放大查看 */ }` 为 dead click。后续移除无实现的 clickable affordance，不为此创建复杂全屏页面。
+模板参考图不再提供无实现的放大点击入口。
 
 ### D. hasTemplates 硬编码
-当前 `hasTemplates = true`（line 489），导致"暂无模板 → 前往模板配置"分支不可达。后续改为真实模板数据状态。
+使用当前 Part 的真实启用模板数据判断模板是否存在。
 
 ### E. 假"已对齐"状态
-当前 OverlayGraphics 绘制"已对齐，可拍摄"（line 403-413），但自动 contour/alignment = DEFERRED。后续改为"模板已就绪 / 可以拍照"等不误导语义。
+不显示自动对齐结论；现场语义为模板已就绪、按参考图调整零件位置后拍摄。
 
 ### F. 固定轮廓 / ROI 占位图形
-当前 OverlayGraphics 绘制固定白色矩形（line 373-378）和绿色 ROI（line 385，使用 PassColor）。后续删除或改为真实 RoiDefinitionEntity + contentRect 映射，不得用固定 rectangle 冒充检测 ROI。
+不使用固定轮廓或假 ROI 冒充检测结果；现阶段仅保留真实模板/已存在 ROI 的叠加数据，ROI 配置与检测能力暂缓。
