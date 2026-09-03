@@ -91,13 +91,17 @@ PartDpmDaoTest: 3/3 passed
 - 连续执行 8 次主拍照按钮；界面依次推进到 `视角 8/8`，最后显示 `零件采集完成 / 所有视角已拍摄完毕`。
 - `run-as com.wearable.inspection.mobile` 检查到 `files/captures/` 下新增 8 张 JPEG，文件大小约 7.8–8.7 MB。
 - 进入“我的 → 检测结果”后显示 `暂无检测结果`；页面没有导出按钮。原因是 InspectionSession 完整结果写入、PASS/FAIL 和结果导出仍按产品边界暂缓，不是本轮运行报错。
-- 现场采集顶部“扫一扫”成功进入实时 DPM 页面，未使用相册码图导入；`DPM_data/` 图片不能替代实时相机/物理样本，因此本轮不虚构 DPM 绑定码命中结果。
+- 现场采集顶部“扫一扫”成功进入实时 DPM 页面，未使用相册码图导入；本轮实时相机曾识别 `M968942280224B169AH005023044710`，并在模板配置的“扫码绑定”流程中保存成功，返回后该 Part 显示“DPM 绑定”和最新码。
+- 随后再次从现场采集进入顶部扫码页时，等待窗口内未重新捕获到码；由于当前视野内没有码，不把这次未命中记为软件异常，也不虚构“已绑定码切换 Part”回调已完成。`DPM_data/` 离线基线仍为 ZXing 0/6，不能替代实时相机/物理样本 A/B 验收。
 
 真机流程证据：
 
 - `docs/reports/b2/evidence/ui-polish-20260902/flow-live-ready.png`
 - `docs/reports/b2/evidence/ui-polish-20260902/flow-capture-complete.png`
 - `docs/reports/b2/evidence/ui-polish-20260902/flow-result-page.png`
+- `docs/reports/b2/evidence/ui-polish-20260902/flow-dpm-route.png`
+- `docs/reports/b2/evidence/ui-polish-20260902/flow-dpm-bind.png`
+- `docs/reports/b2/evidence/ui-polish-20260902/flow-live-final.png`
 
 模板顺序相关真机 instrumented 测试此前已单独通过：
 
@@ -126,7 +130,7 @@ adb -s ERLDU20429005890 shell am start -W -n com.wearable.inspection.mobile/com.
 结果：
 
 - 新包已安装：`com.wearable.inspection.mobile`
-- 新包 PID：非空，本轮复核为 `9729`
+- 新包 PID：非空，本轮复核为 `30530`
 - 旧包 PID：空
 - 前台 Activity：`com.wearable.inspection.mobile/.MainActivity`
 - APK：`app/build/outputs/apk/debug/app-debug.apk`
@@ -156,8 +160,8 @@ adb -s ERLDU20429005890 shell am start -W -n com.wearable.inspection.mobile/com.
 | 相机权限/相机状态 | 已保留既有实现；本轮 JVM/build 通过，完整 instrumented 累积回归因历史 camera round-trip 阻塞未完成 |
 | 4:3 画幅、PreviewView、contentRect | 未改动既有核心算法；`CameraPreview` 继续按设置支持原比例/填充预览 |
 | 模板 overlay | 未改动既有模板透明叠加路径；当前页面仍有真实参考图 |
-| DPM 已绑定码切换 | 源码已接入 Part 查询、选择事件和有序模板重载；本轮验证了实时 DPM 页面入口，物理样本命中仍待样本 |
-| 模板配置 DPM 绑定 | 源码已接入扫码绑定入口和冲突保护；本轮模板配置页面和导入流程可用，物理绑定码保存仍待样本 |
+| DPM 已绑定码切换 | 源码已接入 Part 查询、选择事件和有序模板重载；本轮验证实时扫码页入口，重新捕获码因当前视野无码未完成切换回调 |
+| 模板配置 DPM 绑定 | 已在实时相机中识别 `M968942280224B169AH005023044710`，绑定保存成功并返回后显示最新码；冲突保护由 DAO/自动化测试覆盖 |
 | 视角顺序 | 已通过 importer、migration、DAO 和重复导入测试 |
 | 资源释放/错误态 | 未改动既有 CameraController 生命周期与拍照错误态；待完整设备回归重新执行 |
 | 旧包门禁 | 已通过：旧包 PID 为空，截图/UI 证据均以新包为对象 |
@@ -168,6 +172,6 @@ adb -s ERLDU20429005890 shell am start -W -n com.wearable.inspection.mobile/com.
 - 本轮已完成“导入模板 → 按序拍摄 → 检测结果页”真机链路；结果导出入口尚未实现，不能记为导出通过。
 - 拍摄完成后的模板/实拍比较、Template ROI 映射、Detector、PASS/FAIL、InspectionSession 结果写入和结果包导出待后续阶段。
 - 现场不提供 ROI 框选、拖动、缩放或 Session ROI 编辑器。
-- DPM 物理样本 A/B 对照仍按 B2 Task 1 的 `PENDING_PHYSICAL_DPM_SAMPLE` 处理；本报告不虚构物理扫码结果。
-- 当前 DPM 代码修改后的完整 JVM、APK 构建和新包真机门禁已通过；DPM 物理样本命中及结果导出仍待后续边界解除。
+- DPM 物理样本 A/B 对照仍按 B2 Task 1 的 `PENDING_PHYSICAL_DPM_SAMPLE` 处理；本轮只记录实际实时相机识别和绑定保存，不替代完整 A/B 样本验收。
+- 当前 DPM 代码修改后的完整 JVM、APK 构建和新包真机门禁已通过；结果导出仍待后续边界解除，完整 DPM A/B 样本验收仍待现场样本。
 - 完整 connected instrumented 回归需要先解决设备 runner 在 camera round-trip 测试中的长时间阻塞。

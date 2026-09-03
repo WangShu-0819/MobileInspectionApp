@@ -159,7 +159,8 @@ if (resInfo != null) {
 | 项目 | 结果 | 日志证据 |
 |------|------|----------|
 | PreviewView 尺寸 | ✅ 1080x1039 | `CameraPreview: PreviewView size: 1080x1039` |
-| 流分辨率 | ✅ 8000x6000 (4:3) | `ImageCapture: createPipeline(...resolution=8000x6000...)` |
+| 拍照分辨率 | ✅ 8000x6000 (4:3) | `ImageCapture: createPipeline(...resolution=8000x6000...)`；该值是 ImageCapture 拍照通道，不代表实时视频流 |
+| 实时预览/分析分辨率 | ✅ 约 1440x1080 (4:3) | Camera2 实际创建的 Preview/Analysis 4:3 流；DPM 分析模式同样按设备协商到约 1440x1080 |
 | 流旋转 | ✅ 90° | `sourceRotationDegrees=90` |
 | contentRect | ✅ 779x1039 | `CameraPreview: contentRect: 779 x 1039` |
 | contentRect 比例 | ✅ 0.750 (3:4) | 779/1039 = 0.7498 ≈ 3:4 |
