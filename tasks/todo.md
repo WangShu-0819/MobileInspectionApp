@@ -74,7 +74,7 @@
   - Detector/PASS-FAIL 集成（后续任务）
   - 自动轮廓提取、自动对齐（DEFERRED）
   - Session ROI、结果导出（DEFERRED）
-  - Git 提交：本轮提交后回填
+- Git 提交：`c9aa335a`
 
 ---
 
@@ -129,7 +129,7 @@
 - 未完成项：
   - manifest + Excel + 图片完整结果包（当前产品边界暂缓）
   - 拍后比对（V1-3）、Detector（V1-4）、结果查看（V1-5）仍为 DEFERRED
-- Git 提交：`NOT_COMMITTED`（阶段 1 不提交）
+- Git 提交：`5772fbd5`
 
 ## 阶段 2：压缩采集页控件
 
@@ -160,7 +160,7 @@
 - 真机证据：`NOT_RUN_BY_SCOPE`（本轮禁止 adb）
 - 未完成项：
   - 回归测试：模板叠加、View 切换、零件选择（需真机验证）
-- Git 提交：`NOT_COMMITTED`（阶段 2 不提交）
+- Git 提交：`5772fbd5`
 
 ---
 

@@ -107,4 +107,4 @@ Column {
 
 ## Git 状态
 
-`NOT_COMMITTED`（阶段 2 不提交）
+`5772fbd5`

@@ -103,7 +103,7 @@
 8. 不允许用全局 Part 属性代替 ROI 属性；同一 View 中不同 ROI 可以有不同属性，每张图片的 ROI 仍保持独立。
 9. 增加自动化测试：属性枚举校验、默认未选择状态、新增/修改/重新加载持久化、按 `templateId`/View 隔离、删除后无残留，以及旧 ROI migration 回归。
 10. 只进行 MobileInspectionApp 源码、自动化测试和文档修改；不得修改旧工程，不得实现自动轮廓提取、实时对齐、Session ROI、结果导出或新的 CameraX。
-11. 完成后更新 `tasks/todo.md` 和 `docs/reports/b2/` 对应报告，报告必须列出实际修改文件、migration、测试结果、未完成的检测集成项和 Git 状态；不提交 Git，等待验收。
+11. 完成后更新 `tasks/todo.md` 和 `docs/reports/b2/` 对应报告，报告必须列出实际修改文件、migration、测试结果、未完成的检测集成项和 Git 状态；本任务已于 2026-09-04 通过验收并提交 `c9aa335a`。
 
 可直接交给执行 Agent 的任务描述：
 

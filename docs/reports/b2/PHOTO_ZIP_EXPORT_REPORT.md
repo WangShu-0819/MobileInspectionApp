@@ -130,4 +130,4 @@ captured_photos
 
 ## Git 状态
 
-`NOT_COMMITTED`（阶段 1 不提交）
+`5772fbd5`
