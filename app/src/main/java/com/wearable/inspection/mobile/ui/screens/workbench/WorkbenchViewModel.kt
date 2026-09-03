@@ -9,6 +9,7 @@ import com.wearable.inspection.mobile.data.repository.InspectionRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import com.wearable.inspection.mobile.data.settings.PartSelectionBus
 
 data class TodayStats(
     val templateCount: Int = 0,
@@ -39,6 +40,36 @@ class WorkbenchViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _selectedPartId = MutableStateFlow<String?>(settings.selectedPartId)
+
+    init {
+        // 持久化的零件可能已被删除或来自旧数据；启动时直接校验并回退。
+        viewModelScope.launch {
+            val availableParts = repository.getParts()
+            val configuredPartIds = repository.getAllTemplates()
+                .asSequence()
+                .filter { it.enabled }
+                .map { it.partId }
+                .toSet()
+            val selectedPart = availableParts.firstOrNull {
+                it.id == settings.selectedPartId && it.id in configuredPartIds
+            } ?: availableParts.firstOrNull { it.id in configuredPartIds }
+                ?: availableParts.firstOrNull { it.id == settings.selectedPartId }
+                ?: availableParts.firstOrNull()
+            if (selectedPart != null && selectedPart.id != _selectedPartId.value) {
+                _selectedPartId.value = selectedPart.id
+                settings.selectedPartId = selectedPart.id
+            }
+        }
+
+        // DPM 扫码页位于当前采集页之上，扫码返回后用事件立即切换已有 WorkbenchViewModel。
+        viewModelScope.launch {
+            PartSelectionBus.flow.collect { partId ->
+                if (repository.getPartById(partId) != null) {
+                    selectPart(partId)
+                }
+            }
+        }
+    }
     val selectedPart: StateFlow<PartEntity?> = _selectedPartId
         .filterNotNull()
         .distinctUntilChanged()
@@ -79,14 +110,12 @@ class WorkbenchViewModel(
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
-    // 选中模板的 ROI 列表
-    val rois: StateFlow<List<RoiDefinitionEntity>> = _selectedTemplateId
-        .filterNotNull()
-        .distinctUntilChanged()
-        .flatMapLatest { templateId ->
-            repository.observeRois(templateId)
-                .map { list -> list.filter { it.enabled } }
+    // 选中模板的 ROI 列表；默认按视角选中的模板也必须加载对应 ROI。
+    val rois: StateFlow<List<RoiDefinitionEntity>> = selectedTemplate
+        .flatMapLatest { template ->
+            template?.let { repository.observeRois(it.id) } ?: flowOf(emptyList())
         }
+        .map { list -> list.filter { it.enabled } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // 检测就绪状态（有模板即可拍摄；ROI 和 outlineData 为可选增强）
@@ -170,6 +199,11 @@ class WorkbenchViewModel(
     }
 
     fun selectTemplate(templateId: String) {
+        val viewIndex = templates.value.indexOfFirst { it.id == templateId }
+        if (viewIndex >= 0) {
+            _currentViewIndex.value = viewIndex
+            _allViewsCaptured.value = false
+        }
         _selectedTemplateId.value = templateId
     }
 

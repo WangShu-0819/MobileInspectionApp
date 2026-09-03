@@ -8,20 +8,16 @@ import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -45,6 +41,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.camera.view.PreviewView
 import com.wearable.inspection.mobile.BuildConfig
@@ -53,6 +51,7 @@ import com.wearable.inspection.mobile.camera.CameraError
 import com.wearable.inspection.mobile.camera.CameraMode
 import com.wearable.inspection.mobile.camera.CameraStateType
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 /**
  * 相机帧信息 — 用于 ROI 映射
@@ -69,11 +68,11 @@ data class FrameInfo(
  * 相机预览（可复用组件）
  *
  * 核心行为：
- * - PreviewView.ScaleType = FIT_CENTER，竖屏 3:4 完整显示，允许 letterbox
+ * - PreviewView.ScaleType 可选 FIT_CENTER（原比例）或 FILL_CENTER（铺满并裁边）
  * - connect() 成功只表示 BOUND；CameraStateType.OPEN 后才隐藏加载并触发 onCameraReady
  * - 权限请求、临时拒绝、永久拒绝（系统设置入口）、错误重试
  * - 实际 streamResolution/streamRotation + ContentRectCalculator
- * - 诊断日志（DEBUG）+ 四角/中央圆校准覆盖层（DEBUG）
+ * - 诊断日志（DEBUG）+ 四角校准覆盖层（DEBUG）
  * - 使用 sessionId 防止异步 disconnect 竞态
  */
 @Composable
@@ -82,6 +81,7 @@ fun CameraPreview(
     cameraMode: CameraMode = CameraMode.INSPECTION,
     templateImagePath: String? = null,
     overlayAlpha: Float = 0f,
+    previewScaleType: PreviewView.ScaleType = PreviewView.ScaleType.FIT_CENTER,
     onCameraReady: () -> Unit = {},
     onCameraError: (CameraError) -> Unit = {},
     onPermissionDenied: () -> Unit = {},
@@ -99,7 +99,6 @@ fun CameraPreview(
     var permissionRequested by remember { mutableStateOf(false) }
     var hasCameraPermission by remember { mutableStateOf(false) }
     var isPermanentlyDenied by remember { mutableStateOf(false) }
-    var hasCalledReady by remember { mutableStateOf(false) }
     var cameraError by remember { mutableStateOf<CameraError?>(null) }
     var contentRect by remember { mutableStateOf<android.graphics.Rect?>(null) }
     var currentSessionId by remember { mutableStateOf<String?>(null) }
@@ -135,12 +134,16 @@ fun CameraPreview(
     // CameraState 观察
     val cameraState by cameraController.cameraStateFlow.collectAsState()
 
-    // PreviewView（FIT_CENTER）
+    // PreviewView；显示模式变化时只调整缩放，不重新绑定 CameraX
     val previewView = remember {
         PreviewView(context).apply {
-            scaleType = PreviewView.ScaleType.FIT_CENTER
+            scaleType = previewScaleType
             implementationMode = PreviewView.ImplementationMode.PERFORMANCE
         }
+    }
+
+    LaunchedEffect(previewScaleType) {
+        previewView.scaleType = previewScaleType
     }
 
     // 权限请求
@@ -208,60 +211,62 @@ fun CameraPreview(
         )
     }
 
-    // CameraState 驱动加载状态（仅 OPEN 触发 onCameraReady）
-    LaunchedEffect(cameraState) {
+    // CameraState / 显示模式驱动加载状态（模式变化不重新绑定 CameraX）
+    LaunchedEffect(cameraState, previewScaleType) {
         when (cameraState) {
             CameraStateType.OPEN -> {
-                if (!hasCalledReady) {
-                    hasCalledReady = true
-                    cameraError = null
+                cameraError = null
 
-                    // 计算 contentRect
-                    val streamRes = cameraController.streamResolution
-                    val streamRot = cameraController.streamRotation
-                    if (streamRes != null) {
-                        val rotatedW: Int
-                        val rotatedH: Int
-                        if (streamRot == 90 || streamRot == 270) {
-                            rotatedW = streamRes.height
-                            rotatedH = streamRes.width
-                        } else {
-                            rotatedW = streamRes.width
-                            rotatedH = streamRes.height
-                        }
+                // 计算当前显示模式下的内容区域
+                val streamRes = cameraController.streamResolution
+                val streamRot = cameraController.streamRotation
+                if (streamRes != null) {
+                    val rotatedW: Int
+                    val rotatedH: Int
+                    if (streamRot == 90 || streamRot == 270) {
+                        rotatedW = streamRes.height
+                        rotatedH = streamRes.width
+                    } else {
+                        rotatedW = streamRes.width
+                        rotatedH = streamRes.height
+                    }
 
-                        // 等待 PreviewView 布局
-                        previewView.post {
-                            val viewW = previewView.width
-                            val viewH = previewView.height
-                            if (viewW > 0 && viewH > 0 && rotatedW > 0 && rotatedH > 0) {
-                                val bounds = calculateContentRectBounds(viewW, viewH, rotatedW, rotatedH)
-                                val rect = android.graphics.Rect(bounds.left, bounds.top, bounds.right, bounds.bottom)
-                                contentRect = rect
+                    // 等待 PreviewView 布局
+                    previewView.post {
+                        val viewW = previewView.width
+                        val viewH = previewView.height
+                        if (viewW > 0 && viewH > 0 && rotatedW > 0 && rotatedH > 0) {
+                            val bounds = if (previewScaleType == PreviewView.ScaleType.FIT_CENTER) {
+                                calculateContentRectBounds(viewW, viewH, rotatedW, rotatedH)
+                            } else {
+                                ContentRectBounds(0, 0, viewW, viewH)
+                            }
+                            val rect = android.graphics.Rect(bounds.left, bounds.top, bounds.right, bounds.bottom)
+                            contentRect = rect
 
-                                // 通知帧信息（用于 ROI 映射）
-                                onFrameInfo?.invoke(FrameInfo(
-                                    contentRect = rect,
-                                    streamResolution = streamRes,
-                                    streamRotation = streamRot,
-                                    previewWidth = viewW,
-                                    previewHeight = viewH,
-                                ))
+                            // 通知帧信息（用于 ROI 映射）
+                            onFrameInfo?.invoke(FrameInfo(
+                                contentRect = rect,
+                                streamResolution = streamRes,
+                                streamRotation = streamRot,
+                                previewWidth = viewW,
+                                previewHeight = viewH,
+                            ))
 
-                                if (BuildConfig.DEBUG) {
-                                    android.util.Log.d("CameraPreview", "=== 画幅诊断 ===")
-                                    android.util.Log.d("CameraPreview", "PreviewView: ${viewW}x${viewH}")
-                                    android.util.Log.d("CameraPreview", "流尺寸: ${streamRes.width}x${streamRes.height}")
-                                    android.util.Log.d("CameraPreview", "旋转: ${streamRot}°")
-                                    android.util.Log.d("CameraPreview", "旋转后: ${rotatedW}x${rotatedH}")
-                                    android.util.Log.d("CameraPreview", "contentRect: $contentRect")
-                                }
+                            if (BuildConfig.DEBUG) {
+                                android.util.Log.d("CameraPreview", "=== 画幅诊断 ===")
+                                android.util.Log.d("CameraPreview", "PreviewView: ${viewW}x${viewH}")
+                                android.util.Log.d("CameraPreview", "流尺寸: ${streamRes.width}x${streamRes.height}")
+                                android.util.Log.d("CameraPreview", "旋转: ${streamRot}°")
+                                android.util.Log.d("CameraPreview", "旋转后: ${rotatedW}x${rotatedH}")
+                                android.util.Log.d("CameraPreview", "scaleType: $previewScaleType")
+                                android.util.Log.d("CameraPreview", "contentRect: $contentRect")
                             }
                         }
                     }
-
-                    onCameraReady()
                 }
+
+                onCameraReady()
             }
             CameraStateType.ERROR -> {
                 cameraError = CameraError.Unknown("相机启动失败")
@@ -287,7 +292,6 @@ fun CameraPreview(
                     }
                 }
             }
-            hasCalledReady = false
             contentRect = null
             currentSessionId = null
         }
@@ -296,7 +300,6 @@ fun CameraPreview(
     // 重试函数
     val onRetry: () -> Unit = {
         cameraError = null
-        hasCalledReady = false
         contentRect = null
         currentSessionId = null
         // 触发重新连接
@@ -304,7 +307,7 @@ fun CameraPreview(
         permissionLauncher.launch(Manifest.permission.CAMERA)
     }
 
-    Box(modifier = modifier) {
+    Box(modifier = modifier.clipToBounds()) {
         // 相机预览
         AndroidView(
             factory = { previewView },
@@ -320,30 +323,26 @@ fun CameraPreview(
             if (rectWidth > 0f && rectHeight > 0f) {
                 val bmpWidth = currentBitmap.width.toFloat()
                 val bmpHeight = currentBitmap.height.toFloat()
-                // 保持纵横比，fit inside contentRect
-                val scale = minOf(rectWidth / bmpWidth, rectHeight / bmpHeight)
+                // 原比例完整显示；填充模式与相机一样放大并裁切边缘
+                val scale = if (previewScaleType == PreviewView.ScaleType.FILL_CENTER) {
+                    maxOf(rectWidth / bmpWidth, rectHeight / bmpHeight)
+                } else {
+                    minOf(rectWidth / bmpWidth, rectHeight / bmpHeight)
+                }
                 val drawWidth = bmpWidth * scale
                 val drawHeight = bmpHeight * scale
                 // 居中
                 val offsetX = currentContentRect.left + (rectWidth - drawWidth) / 2f
                 val offsetY = currentContentRect.top + (rectHeight - drawHeight) / 2f
 
-                val density = LocalDensity.current
-                with(density) {
-                    androidx.compose.foundation.Image(
-                        bitmap = currentBitmap.asImageBitmap(),
-                        contentDescription = "模板叠加",
-                        modifier = Modifier
-                            .offset(
-                                x = offsetX.toInt().toDp(),
-                                y = offsetY.toInt().toDp(),
-                            )
-                            .size(
-                                width = drawWidth.toInt().toDp(),
-                                height = drawHeight.toInt().toDp(),
-                            )
-                            .alpha(overlayAlpha.coerceIn(0f, 0.8f)),
-                        contentScale = ContentScale.FillBounds,
+                // 在父坐标中直接绘制，允许 FILL_CENTER 的裁切区域为负坐标，
+                // 避免使用负 offset 的 Compose Image 时 overlay 被 SurfaceView 遮挡。
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    drawImage(
+                        image = currentBitmap.asImageBitmap(),
+                        dstOffset = IntOffset(offsetX.roundToInt(), offsetY.roundToInt()),
+                        dstSize = IntSize(drawWidth.roundToInt(), drawHeight.roundToInt()),
+                        alpha = overlayAlpha.coerceIn(0f, 0.8f),
                     )
                 }
             }
@@ -455,11 +454,6 @@ fun CameraPreview(
                     drawLine(color, Offset(rect.right.toFloat(), rect.bottom.toFloat()),
                         Offset(rect.right.toFloat(), rect.bottom.toFloat() - cornerLen), strokeW)
 
-                    // 中央圆（不变形检测）
-                    val cx = (rect.left + rect.right) / 2f
-                    val cy = (rect.top + rect.bottom) / 2f
-                    val radius = minOf(rect.width(), rect.height()) / 4f
-                    drawCircle(Color.Yellow, radius, Offset(cx, cy), style = Stroke(2f))
                 }
             }
         }
