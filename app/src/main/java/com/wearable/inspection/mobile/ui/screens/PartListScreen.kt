@@ -84,6 +84,7 @@ fun PartListScreen(
     onBack: () -> Unit,
     onPartClick: (String) -> Unit,
     onBindDpm: (String) -> Unit,
+    onPartCreated: (String) -> Unit = {},
 ) {
     val customColors = LocalCustomColors.current
     val context = LocalContext.current
@@ -99,6 +100,10 @@ fun PartListScreen(
     var showImportDialog by remember { mutableStateOf(false) }
     var selectedUris by remember { mutableStateOf<List<android.net.Uri>>(emptyList()) }
     var showNewPartDialog by remember { mutableStateOf(false) }
+    var showCreatePartDialog by remember { mutableStateOf(false) }
+    var createPartId by remember { mutableStateOf("") }
+    var createPartName by remember { mutableStateOf("") }
+    var createPartError by remember { mutableStateOf<String?>(null) }
     var newPartId by remember { mutableStateOf("") }
     var newPartName by remember { mutableStateOf("") }
     var newPartError by remember { mutableStateOf<String?>(null) }
@@ -166,6 +171,20 @@ fun PartListScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "返回"
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = {
+                        newPartId = ""
+                        newPartName = ""
+                        newPartError = null
+                        showCreatePartDialog = true
+                    }) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "新建零件",
+                            tint = Primary,
                         )
                     }
                 }
