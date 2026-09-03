@@ -95,14 +95,50 @@ fun AppRoot() {
             }
 
             // 二级页面
+            // TemplateConfig 重定向到 PartList
             composable(Screen.TemplateConfig.route) {
-                TemplateConfigScreen(
+                PartListScreen(
+                    onBack = { navController.popBackStack() },
+                    onPartClick = { partId ->
+                        navController.navigate(Screen.PartDetail.createRoute(partId))
+                    },
+                    onBindDpm = { partId ->
+                        navController.navigate(Screen.DpmBind.createRoute(partId))
+                    },
+                )
+            }
+
+            // 零件列表
+            composable(Screen.PartList.route) {
+                PartListScreen(
+                    onBack = { navController.popBackStack() },
+                    onPartClick = { partId ->
+                        navController.navigate(Screen.PartDetail.createRoute(partId))
+                    },
+                    onBindDpm = { partId ->
+                        navController.navigate(Screen.DpmBind.createRoute(partId))
+                    },
+                )
+            }
+
+            // 零件详情（视角网格）
+            composable(
+                route = Screen.PartDetail.route,
+                arguments = listOf(navArgument(Screen.PartDetail.ARG_PART_ID) { type = NavType.StringType })
+            ) { backStackEntry ->
+                val partId = backStackEntry.arguments?.getString(Screen.PartDetail.ARG_PART_ID)
+                    ?: return@composable
+                PartDetailScreen(
+                    partId = partId,
                     onBack = { navController.popBackStack() },
                     onTemplateClick = { templateId ->
                         navController.navigate(Screen.TemplateDetail.createRoute(templateId))
                     },
-                    onBindDpm = { partId ->
-                        navController.navigate(Screen.DpmBind.createRoute(partId))
+                    onCaptureNew = { pid ->
+                        navController.navigate(Screen.TemplateCapture.createRoute(pid))
+                    },
+                    onBindDpm = { pid ->
+                        navController.navigate(Screen.DpmBind.createRoute(pid))
                     },
                 )
             }
@@ -160,7 +196,26 @@ fun AppRoot() {
                 val templateId = backStackEntry.arguments?.getString(Screen.TemplateDetail.ARG_TEMPLATE_ID) ?: return@composable
                 TemplateDetailScreen(
                     templateId = templateId,
-                    onBack = { navController.popBackStack() }
+                    onBack = { navController.popBackStack() },
+                    onRecapture = { partId, tplId ->
+                        navController.navigate(Screen.TemplateCapture.createRecaptureRoute(partId, tplId))
+                    },
+                    onEditRoi = { tplId ->
+                        navController.navigate(Screen.RoiEditor.createRoute(tplId))
+                    },
+                )
+            }
+
+            // ROI 编辑器
+            composable(
+                route = Screen.RoiEditor.route,
+                arguments = listOf(navArgument(Screen.RoiEditor.ARG_TEMPLATE_ID) { type = NavType.StringType })
+            ) { backStackEntry ->
+                val templateId = backStackEntry.arguments?.getString(Screen.RoiEditor.ARG_TEMPLATE_ID)
+                    ?: return@composable
+                RoiEditorScreen(
+                    templateId = templateId,
+                    onBack = { navController.popBackStack() },
                 )
             }
 
@@ -239,6 +294,28 @@ fun AppRoot() {
                     onResult = { text ->
                         // OCR 结果回调，后续可导航到结果页
                     }
+                )
+            }
+
+            composable(
+                route = Screen.TemplateCapture.route,
+                arguments = listOf(
+                    navArgument(Screen.TemplateCapture.ARG_PART_ID) { type = NavType.StringType },
+                    navArgument(Screen.TemplateCapture.ARG_TEMPLATE_ID) {
+                        type = NavType.StringType
+                        defaultValue = ""
+                    }
+                )
+            ) { backStackEntry ->
+                val partId = backStackEntry.arguments?.getString(Screen.TemplateCapture.ARG_PART_ID)
+                    ?: return@composable
+                val templateId = backStackEntry.arguments?.getString(Screen.TemplateCapture.ARG_TEMPLATE_ID)
+                    ?.takeIf { it.isNotEmpty() }
+                TemplateCaptureScreen(
+                    partId = partId,
+                    templateId = templateId,
+                    onBack = { navController.popBackStack() },
+                    onCaptureSuccess = { navController.popBackStack() },
                 )
             }
         }

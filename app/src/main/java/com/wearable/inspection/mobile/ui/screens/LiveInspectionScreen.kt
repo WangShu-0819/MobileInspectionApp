@@ -1145,12 +1145,4 @@ private fun TemplateOverlayControls(
 }
 
 
-/**
- * 归一化矩形数据类
- */
-data class NormalizedRect(
-    val left: Float,
-    val top: Float,
-    val right: Float,
-    val bottom: Float
-)
+// NormalizedRect 已移至 RoiEditorViewModel.kt

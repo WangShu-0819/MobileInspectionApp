@@ -9,10 +9,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Photo
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -61,7 +66,9 @@ import java.util.Locale
 @Composable
 fun TemplateDetailScreen(
     templateId: String,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onRecapture: (String, String) -> Unit = { _, _ -> },
+    onEditRoi: (String) -> Unit = {},
 ) {
     val customColors = LocalCustomColors.current
     val context = LocalContext.current
@@ -99,7 +106,7 @@ fun TemplateDetailScreen(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
-                            imageVector = Icons.Default.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "返回"
                         )
                     }
@@ -179,12 +186,34 @@ fun TemplateDetailScreen(
                             .padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text(
-                            text = "参考图片",
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Medium,
-                            color = TextPrimary
-                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                text = "参考图片",
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Medium,
+                                color = TextPrimary
+                            )
+                            Button(
+                                onClick = { onRecapture(t.partId, t.id) },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Primary,
+                                    contentColor = androidx.compose.ui.graphics.Color.White,
+                                ),
+                                shape = RoundedCornerShape(6.dp),
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.CameraAlt,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp),
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("重拍", style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
                         Text(
                             text = t.mainImagePath,
                             style = MaterialTheme.typography.bodySmall,
@@ -208,12 +237,34 @@ fun TemplateDetailScreen(
                             .padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text(
-                            text = "ROI 区域 (${rois.size})",
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Medium,
-                            color = TextPrimary
-                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                text = "ROI 区域 (${rois.size})",
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Medium,
+                                color = TextPrimary
+                            )
+                            Button(
+                                onClick = { onEditRoi(t.id) },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Primary,
+                                    contentColor = androidx.compose.ui.graphics.Color.White,
+                                ),
+                                shape = RoundedCornerShape(6.dp),
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Edit,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp),
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("编辑 ROI", style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
                         if (rois.isEmpty()) {
                             Text(
                                 text = "暂无 ROI 配置",

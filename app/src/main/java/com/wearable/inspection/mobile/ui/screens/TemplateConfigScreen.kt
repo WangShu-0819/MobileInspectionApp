@@ -19,10 +19,24 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Photo
 import androidx.compose.material.icons.filled.PhotoLibrary
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.draw.clip
+import java.io.File
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -98,6 +112,8 @@ fun TemplateConfigScreen(
     onBack: () -> Unit,
     onTemplateClick: (String) -> Unit,
     onBindDpm: (String) -> Unit,
+    onCaptureNew: (String) -> Unit = {},
+    onRecapture: (String, String) -> Unit = { _, _ -> },
 ) {
     val customColors = LocalCustomColors.current
     val context = LocalContext.current
@@ -188,7 +204,7 @@ fun TemplateConfigScreen(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
-                            imageVector = Icons.Default.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "返回"
                         )
                     }
@@ -206,24 +222,29 @@ fun TemplateConfigScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item {
-                Button(
-                    onClick = { imagePicker.launch("image/*") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp),
-                    enabled = !importing,
-                    colors = ButtonDefaults.buttonColors(containerColor = Primary),
-                    shape = RoundedCornerShape(8.dp)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.PhotoLibrary,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Text(
-                        text = "导入模板照片",
-                        modifier = Modifier.padding(start = 8.dp)
-                    )
+                    Button(
+                        onClick = { imagePicker.launch("image/*") },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp),
+                        enabled = !importing,
+                        colors = ButtonDefaults.buttonColors(containerColor = Primary),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PhotoLibrary,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Text(
+                            text = "导入模板照片",
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    }
                 }
             }
 
@@ -282,6 +303,16 @@ fun TemplateConfigScreen(
                         onTemplateClick = onTemplateClick,
                         onTemplateDelete = { templateToDelete = it },
                         onBindDpm = onBindDpm,
+                        onCaptureNew = { onCaptureNew(group.partId) },
+                        onRecapture = { templateId -> onRecapture(group.partId, templateId) },
+                        onReorder = { newOrder ->
+                            scope.launch {
+                                withContext(Dispatchers.IO) {
+                                    repository.reorderTemplates(newOrder)
+                                }
+                                reloadTemplates()
+                            }
+                        },
                     )
                 }
             }
@@ -412,6 +443,9 @@ private fun PartGroupCard(
     onTemplateClick: (String) -> Unit,
     onTemplateDelete: (InspectionTemplateEntity) -> Unit,
     onBindDpm: (String) -> Unit,
+    onCaptureNew: () -> Unit = {},
+    onRecapture: (String) -> Unit = {},
+    onReorder: (List<Pair<String, Int>>) -> Unit = {},
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -426,7 +460,7 @@ private fun PartGroupCard(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // 零件标题 + 视角数
+            // 零件标题 + 视角数 + 新增视角
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -445,8 +479,21 @@ private fun PartGroupCard(
                 Text(
                     text = "${group.templates.size} 个视角",
                     style = MaterialTheme.typography.labelMedium,
-                    color = Primary
+                    color = Primary,
+                    modifier = Modifier.padding(end = 4.dp),
                 )
+                // 新增视角按钮
+                IconButton(
+                    onClick = onCaptureNew,
+                    modifier = Modifier.size(32.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CameraAlt,
+                        contentDescription = "拍摄新视角",
+                        tint = Primary,
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
             }
 
             Row(
@@ -484,13 +531,41 @@ private fun PartGroupCard(
 
             Divider()
 
-            // 各视角列表
+            // 各视角列表（带缩略图、重拍和排序）
             group.templates.forEachIndexed { index, template ->
-                TemplateSwipeRow(
+                TemplateRowWithThumbnail(
                     index = index,
                     template = template,
+                    totalCount = group.templates.size,
                     onClick = { onTemplateClick(template.id) },
                     onDelete = { onTemplateDelete(template) },
+                    onRecapture = { onRecapture(template.id) },
+                    onMoveUp = {
+                        if (index > 0) {
+                            val orders = group.templates.mapIndexed { i, t ->
+                                val newOrder = when (i) {
+                                    index -> index - 1
+                                    index - 1 -> index
+                                    else -> i
+                                }
+                                t.id to newOrder
+                            }
+                            onReorder(orders)
+                        }
+                    },
+                    onMoveDown = {
+                        if (index < group.templates.lastIndex) {
+                            val orders = group.templates.mapIndexed { i, t ->
+                                val newOrder = when (i) {
+                                    index -> index + 1
+                                    index + 1 -> index
+                                    else -> i
+                                }
+                                t.id to newOrder
+                            }
+                            onReorder(orders)
+                        }
+                    },
                 )
                 if (index < group.templates.lastIndex) {
                     Divider(color = DividerColor)
@@ -502,11 +577,15 @@ private fun PartGroupCard(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TemplateSwipeRow(
+private fun TemplateRowWithThumbnail(
     index: Int,
     template: InspectionTemplateEntity,
+    totalCount: Int,
     onClick: () -> Unit,
     onDelete: () -> Unit,
+    onRecapture: () -> Unit,
+    onMoveUp: () -> Unit,
+    onMoveDown: () -> Unit,
 ) {
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = { value ->
@@ -516,6 +595,9 @@ private fun TemplateSwipeRow(
             false
         }
     )
+    val imageExists = remember(template.mainImagePath) {
+        File(template.mainImagePath).exists()
+    }
 
     SwipeToDismissBox(
         state = dismissState,
@@ -550,19 +632,88 @@ private fun TemplateSwipeRow(
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(6.dp))
                     .clickable { onClick() }
-                    .heightIn(min = 48.dp)
+                    .heightIn(min = 56.dp)
                     .padding(vertical = 4.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(
-                    text = "${index + 1}. ${template.name}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = TextPrimary,
-                    modifier = Modifier.weight(1f),
+                // 缩略图
+                TemplateThumbnail(
+                    imagePath = template.mainImagePath,
+                    size = 48.dp,
                 )
+
+                // 名称和状态
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                ) {
+                    Text(
+                        text = "${index + 1}. ${template.name}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = TextPrimary,
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        text = if (imageExists) "已配置" else "无图片",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (imageExists) PassColor else TextSecondary,
+                    )
+                }
+
+                // 重拍按钮
+                IconButton(
+                    onClick = onRecapture,
+                    modifier = Modifier.size(32.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CameraAlt,
+                        contentDescription = "重拍",
+                        tint = Primary,
+                        modifier = Modifier.size(16.dp),
+                    )
+                }
+
+                // 排序按钮
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(0.dp),
+                ) {
+                    if (index > 0) {
+                        IconButton(
+                            onClick = onMoveUp,
+                            modifier = Modifier.size(24.dp),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ArrowUpward,
+                                contentDescription = "上移",
+                                tint = PlaceholderColor,
+                                modifier = Modifier.size(14.dp),
+                            )
+                        }
+                    } else {
+                        Spacer(modifier = Modifier.size(24.dp))
+                    }
+                    if (index < totalCount - 1) {
+                        IconButton(
+                            onClick = onMoveDown,
+                            modifier = Modifier.size(24.dp),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ArrowDownward,
+                                contentDescription = "下移",
+                                tint = PlaceholderColor,
+                                modifier = Modifier.size(14.dp),
+                            )
+                        }
+                    } else {
+                        Spacer(modifier = Modifier.size(24.dp))
+                    }
+                }
+
+                // 进入箭头
                 Icon(
-                    imageVector = Icons.Default.ArrowForward,
+                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                     contentDescription = null,
                     tint = PlaceholderColor,
                     modifier = Modifier.size(16.dp),
@@ -570,6 +721,50 @@ private fun TemplateSwipeRow(
             }
         },
     )
+}
+
+/**
+ * 模板缩略图
+ *
+ * 加载真实本地图片，失败时显示占位图标。
+ */
+@Composable
+private fun TemplateThumbnail(
+    imagePath: String,
+    size: androidx.compose.ui.unit.Dp,
+) {
+    val bitmap = remember(imagePath) {
+        try {
+            val opts = android.graphics.BitmapFactory.Options().apply {
+                inSampleSize = 4
+            }
+            android.graphics.BitmapFactory.decodeFile(imagePath, opts)
+        } catch (_: Exception) { null }
+    }
+
+    Box(
+        modifier = Modifier
+            .size(size)
+            .clip(RoundedCornerShape(6.dp))
+            .background(androidx.compose.ui.graphics.Color.Black),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (bitmap != null) {
+            Image(
+                bitmap = bitmap.asImageBitmap(),
+                contentDescription = "模板缩略图",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop,
+            )
+        } else {
+            Icon(
+                imageVector = Icons.Default.Photo,
+                contentDescription = null,
+                tint = PlaceholderColor,
+                modifier = Modifier.size(20.dp),
+            )
+        }
+    }
 }
 
 @Composable
