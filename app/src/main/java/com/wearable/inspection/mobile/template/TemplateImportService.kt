@@ -261,6 +261,7 @@ class TemplateImportService(private val context: Context) {
                 // 更新零件信息（不覆盖已有 dpmCode）
                 partDao.update(existingPart.copy(
                     name = pkg.partName,
+                    dpmCode = pkg.dpmCode ?: existingPart.dpmCode,
                     updatedAt = now,
                 ))
             } else {
@@ -289,22 +290,47 @@ class TemplateImportService(private val context: Context) {
                     continue
                 }
 
-                val templateId = "${pkg.partId}_region_${index}_${UUID.randomUUID()}"
+                val templateId = region.templateId
+                    ?.takeIf { it.isNotBlank() && templateDao.getById(it) == null }
+                    ?: "${pkg.partId}_region_${index}_${UUID.randomUUID()}"
                 val template = InspectionTemplateEntity(
                     id = templateId,
                     partId = pkg.partId,
                     name = region.regionName,
                     mainImagePath = mainImageFile.absolutePath,
                     displayOrder = index,
-                    createdAt = now,
-                    updatedAt = now,
+                    outlineData = region.outlineData,
+                    createdAt = region.createdAt ?: now,
+                    updatedAt = region.updatedAt ?: now,
+                    enabled = region.enabled,
                 )
                 templateDao.insert(template)
                 templateCount++
 
-                // 从 template.json 的 roi 字段创建 ROI（如果有）
-                // 注意：当前 TemplateRegionData 不携带 roi 信息
-                // 未来可在 TemplateRegionData 中添加 roi 字段
+                region.rois.forEachIndexed { roiIndex, roi ->
+                    val importedRoiId = roi.id
+                        ?.takeIf { it.isNotBlank() && roiDao.getById(it) == null }
+                        ?: "${templateId}_roi_${roiIndex}_${UUID.randomUUID()}"
+                    roiDao.insert(
+                        RoiDefinitionEntity(
+                            id = importedRoiId,
+                            templateId = templateId,
+                            name = roi.name,
+                            order = roiIndex,
+                            shapeType = roi.shapeType,
+                            normalizedRect = roi.normalizedRect,
+                            points = roi.points,
+                            inspectionType = roi.inspectionType,
+                            expectedValue = roi.expectedValue,
+                            configJson = roi.configJson,
+                            preprocessJson = roi.preprocessJson,
+                            enabled = roi.enabled,
+                            createdAt = roi.createdAt ?: now,
+                            targetType = roi.targetType,
+                        )
+                    )
+                    roiCount++
+                }
             }
 
             Log.i(TAG, "导入成功：partId=${pkg.partId}, templates=$templateCount, rois=$roiCount")

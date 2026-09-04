@@ -7,13 +7,38 @@ import java.util.zip.ZipInputStream
 import org.json.JSONException
 import org.json.JSONObject
 
-/** 模板包中一个视角的解析结果（regionName 是与本地视角匹配的唯一键；roi 仅校验不落库） */
+/** 模板包中一个 ROI 的可移植配置。 */
+data class TemplateRoiData(
+    val id: String?,
+    val name: String,
+    val order: Int,
+    val shapeType: String,
+    val normalizedRect: String,
+    val points: String?,
+    val inspectionType: String,
+    val expectedValue: String?,
+    val configJson: String?,
+    val preprocessJson: String?,
+    val enabled: Boolean,
+    val createdAt: Long?,
+    val targetType: String?,
+)
+
+/** 模板包中一个视角的解析结果。 */
 data class TemplateRegionData(
     val regionName: String,
-    /** 已解压到 workDir 的实际文件，保持 template.json 中 imageFiles 的顺序 */
+    /** 已解压到 workDir 的实际文件，保持 template.json 中 imageFiles 的顺序。 */
     val imageFiles: List<File>,
     /** 解析后用于持久化的视角顺序；从 0 开始。 */
     val displayOrder: Int = 0,
+    /** 导出包中的模板主键；旧包无此字段时为空。 */
+    val templateId: String? = null,
+    val outlineData: String? = null,
+    val enabled: Boolean = true,
+    val createdAt: Long? = null,
+    val updatedAt: Long? = null,
+    /** 当前视角的全部 ROI；旧包无 rois 字段时为空。 */
+    val rois: List<TemplateRoiData> = emptyList(),
 )
 
 /** 离线模板包解析结果（结构与目录无关，落库由 Repository 编排） */
@@ -33,7 +58,7 @@ class TemplatePackageImportException(message: String) : Exception(message)
  * 离线 template.zip 模板包解析器（纯 JVM，无 Android API，可 JVM 单测）。
  *
  * zip 规范（Windows 桌面端导出）：根目录 template.json + images/ 图片文件夹。
- * template.json：{ partId, partName, dpmCode?, regions: [{ regionName, imageFiles: ["images/x.jpg"], order?, roi? }] }
+ * template.json：{ formatVersion: 2, partId, partName, dpmCode?, regions: [{ regionName, imageFiles: ["images/x.jpg"], order?, rois? }] }
  *
  * 安全护栏：
  * - 条目名校验（`..` 段 / 绝对路径 / 反斜杠 → 硬拒绝，防路径穿越）；
@@ -171,7 +196,7 @@ object TemplatePackageImporter {
         }
     }
 
-    private fun parseManifest(text: String, extracted: Map<String, File>): TemplatePackage {
+    internal fun parseManifest(text: String, extracted: Map<String, File>): TemplatePackage {
         val warnings = mutableListOf<String>()
         val obj = try {
             JSONObject(text)
@@ -208,6 +233,7 @@ object TemplatePackageImporter {
                     continue
                 }
                 validateRoi(region, regionName, warnings)
+                val rois = parseRois(region, regionName, warnings)
                 val imageFiles = mutableListOf<File>()
                 region.optJSONArray("imageFiles")?.let { refs ->
                     for (j in 0 until refs.length()) {
@@ -226,7 +252,16 @@ object TemplatePackageImporter {
                 regions += IndexedRegion(
                     originalIndex = i,
                     displayOrder = regionOrder(region, i),
-                    region = TemplateRegionData(regionName, imageFiles)
+                    region = TemplateRegionData(
+                        regionName = regionName,
+                        imageFiles = imageFiles,
+                        templateId = nullableString(region, "templateId"),
+                        outlineData = nullableString(region, "outlineData"),
+                        enabled = region.optBoolean("enabled", true),
+                        createdAt = nullableLong(region, "createdAt"),
+                        updatedAt = nullableLong(region, "updatedAt"),
+                        rois = rois,
+                    )
                 )
             }
         }
@@ -252,7 +287,7 @@ object TemplatePackageImporter {
         }
     }
 
-    /** roi 仅解析校验（TemplateImage 无 roi 列，匹配链路暂不消费），非法仅警告不失败 */
+    /** 兼容旧包中的单 roi 字段：仅校验并告警；新包使用 rois 数组并完整解析。 */
     private fun validateRoi(region: JSONObject, regionName: String, warnings: MutableList<String>) {
         val roi = region.optJSONObject("roi") ?: return
         val ok = runCatching {
@@ -269,5 +304,81 @@ object TemplatePackageImporter {
         if (!ok) {
             warnings += "视角「$regionName」的 roi 数值非法，已忽略"
         }
+    }
+
+    private fun parseRois(
+        region: JSONObject,
+        regionName: String,
+        warnings: MutableList<String>,
+    ): List<TemplateRoiData> {
+        val array = region.optJSONArray("rois") ?: return emptyList()
+        val result = mutableListOf<TemplateRoiData>()
+        for (index in 0 until array.length()) {
+            val roi = array.optJSONObject(index)
+            if (roi == null) {
+                warnings += "视角「$regionName」存在非法 ROI（index $index），已跳过"
+                continue
+            }
+
+            val name = roi.optString("name").trim()
+            val normalized = normalizedRectJson(roi.opt("normalizedRect"))
+            if (name.isEmpty() || normalized == null) {
+                warnings += "视角「$regionName」存在缺少名称或坐标非法的 ROI（index $index），已跳过"
+                continue
+            }
+
+            result += TemplateRoiData(
+                id = roi.optString("id").trim().ifEmpty { null },
+                name = name,
+                order = nonNegativeInt(roi.opt("order"), index),
+                shapeType = roi.optString("shapeType", "RECT"),
+                normalizedRect = normalized,
+                points = nullableString(roi, "points"),
+                inspectionType = roi.optString("inspectionType", "PRESENCE_GENERIC"),
+                expectedValue = nullableString(roi, "expectedValue"),
+                configJson = nullableString(roi, "configJson"),
+                preprocessJson = nullableString(roi, "preprocessJson"),
+                enabled = roi.optBoolean("enabled", true),
+                createdAt = nullableLong(roi, "createdAt"),
+                targetType = nullableString(roi, "targetType"),
+            )
+        }
+        return result.sortedBy { it.order }.mapIndexed { index, roi -> roi.copy(order = index) }
+    }
+
+    private fun normalizedRectJson(value: Any?): String? {
+        val obj = when (value) {
+            is JSONObject -> value
+            is String -> runCatching { JSONObject(value) }.getOrNull()
+            else -> null
+        } ?: return null
+
+        val values = runCatching {
+            listOf(
+                obj.getDouble("left"),
+                obj.getDouble("top"),
+                obj.getDouble("right"),
+                obj.getDouble("bottom"),
+            )
+        }.getOrNull() ?: return null
+        if (values.any { !it.isFinite() || it !in 0.0..1.0 }) return null
+        if (values[0] >= values[2] || values[1] >= values[3]) return null
+        return obj.toString()
+    }
+
+    private fun nullableString(obj: JSONObject, key: String): String? = when {
+        !obj.has(key) || obj.isNull(key) -> null
+        else -> obj.optString(key).trim().ifEmpty { null }
+    }
+
+    private fun nonNegativeInt(value: Any?, fallback: Int): Int = when (value) {
+        is Number -> value.toInt().takeIf { it >= 0 } ?: fallback
+        is String -> value.toIntOrNull()?.takeIf { it >= 0 } ?: fallback
+        else -> fallback
+    }
+
+    private fun nullableLong(obj: JSONObject, key: String): Long? = when {
+        !obj.has(key) || obj.isNull(key) -> null
+        else -> obj.optLong(key).takeIf { it > 0L }
     }
 }

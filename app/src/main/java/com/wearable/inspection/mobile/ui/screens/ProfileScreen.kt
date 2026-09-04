@@ -154,7 +154,7 @@ fun ProfileScreen(
                     ProfileItem(
                         icon = Icons.Default.FolderOpen,
                         title = "模板包",
-                        subtitle = "导入模板数据",
+                        subtitle = "导入、导出和删除模板包",
                         onClick = onOpenTemplatePackages
                     ),
                     ProfileItem(

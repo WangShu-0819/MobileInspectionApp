@@ -48,4 +48,45 @@ sealed class Screen(val route: String) {
         fun createRecaptureRoute(partId: String, templateId: String) =
             "template_capture/${android.net.Uri.encode(partId)}/${android.net.Uri.encode(templateId)}"
     }
+
+    /** View 人工确认 */
+    object ViewConfirmation : Screen(
+        "view_confirmation/{batchId}/{photoId}/{photoPath}/{viewIndex}/{templateId}/{templateName}/{partId}/{totalViews}"
+    ) {
+        const val ARG_BATCH_ID = "batchId"
+        const val ARG_PHOTO_ID = "photoId"
+        const val ARG_PHOTO_PATH = "photoPath"
+        const val ARG_VIEW_INDEX = "viewIndex"
+        const val ARG_TEMPLATE_ID = "templateId"
+        const val ARG_TEMPLATE_NAME = "templateName"
+        const val ARG_PART_ID = "partId"
+        const val ARG_TOTAL_VIEWS = "totalViews"
+
+        fun createRoute(
+            batchId: String,
+            photoId: Long,
+            photoPath: String,
+            viewIndex: Int,
+            templateId: String,
+            templateName: String,
+            partId: String,
+            totalViews: Int
+        ): String {
+            val encodedPath = android.net.Uri.encode(photoPath)
+            val encodedTemplateName = android.net.Uri.encode(templateName)
+            return "view_confirmation/$batchId/$photoId/$encodedPath/$viewIndex/$templateId/$encodedTemplateName/$partId/$totalViews"
+        }
+    }
+
+    /** 检测结果导出 */
+    object ExportResult : Screen("export_result/{batchId}/{partId}/{partName}") {
+        const val ARG_BATCH_ID = "batchId"
+        const val ARG_PART_ID = "partId"
+        const val ARG_PART_NAME = "partName"
+
+        fun createRoute(batchId: String, partId: String, partName: String): String {
+            val encodedName = android.net.Uri.encode(partName)
+            return "export_result/$batchId/$partId/$encodedName"
+        }
+    }
 }
