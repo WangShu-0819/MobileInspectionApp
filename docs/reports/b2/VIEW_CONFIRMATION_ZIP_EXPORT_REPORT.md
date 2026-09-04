@@ -929,3 +929,66 @@ views/view_02/...
 - ADB、APK 构建/安装、真机验收：`NOT_RUN_BY_SCOPE`。
 - 自动 ROI 检测、Detector、PASS/FAIL 自动计算、真实照片持久化和导出边界未改变。
 - Git 未提交；等待用户人工验收。
+
+## 29. 模板包导入失败修复（2026-09-04）
+
+状态：**源码整改完成 / AUTOMATION_AND_PHYSICAL_ACCEPTANCE_PENDING**。
+
+### 29.1 根因与修复
+
+模板包导入失败不是单一原因：SAF 返回的临时文件可能为空或与上一次导入发生文件名碰撞；解析器对历史 manifest 的图片引用格式过于严格，反斜杠、大小写差异或单字符串 `imageFiles` 会被当成缺图；另外，解析出无有效图片的包后仍可能先删除旧 View，导致失败表现不稳定且有数据风险。
+
+本轮修复：
+
+- `TemplatePackageScreen` 使用 `File.createTempFile`，检查实际复制字节数和文件长度。
+- `TemplatePackageImporter` 将损坏/非 ZIP 转换为明确错误，并兼容图片引用中的 Windows 分隔符、大小写差异和单字符串格式。
+- `TemplateImportService` 在数据库操作前拒绝无有效视角图片的包；Part、View、ROI 替换放入 Room 事务，失败时旧模板保留并清理新复制图片。
+
+### 29.2 实际修改文件
+
+- `app/src/main/java/com/wearable/inspection/mobile/template/TemplatePackageImporter.kt`
+- `app/src/main/java/com/wearable/inspection/mobile/template/TemplateImportService.kt`
+- `app/src/main/java/com/wearable/inspection/mobile/ui/screens/TemplatePackageScreen.kt`
+- `app/src/main/java/com/wearable/inspection/mobile/ui/screens/TemplateConfigScreen.kt`
+- `app/src/test/java/com/wearable/inspection/mobile/template/TemplatePackageImporterTest.kt`
+- `app/src/test/java/com/wearable/inspection/mobile/template/TemplatePackageManagementTest.kt`
+- `app/src/androidTest/java/com/wearable/inspection/mobile/template/TemplateViewOrderTest.kt`
+- `tasks/todo.md`
+
+### 29.3 验证与边界
+
+- `git diff --check`：通过。
+- Gradle/JVM 自动化测试、ADB、APK 构建/安装、真机交互与视觉验收：`NOT_RUN_BY_SCOPE`。
+- 本轮未提交 Git；未修改旧工程。待自动化和现场复测确认。
+
+## 30. 切换零件后模板图片与 ROI 偶发缺失修复（2026-09-04）
+
+状态：**源码整改完成 / AUTOMATION_AND_PHYSICAL_ACCEPTANCE_PENDING**。
+
+### 30.1 根因
+
+现场采集页的 CameraX 预览在切换零件时不会重建，但零件选择回调把页面层的 `contentRect` 清空。`CameraPreview` 的画幅回调由相机状态/显示模式驱动，切换零件本身不会再次触发，因此新的 ROI 虽然已经查询到，也没有可用画幅可绘制。
+
+同时，零件、模板、选中模板和 ROI 使用多条独立的 `StateFlow`。切换零件时旧模板流可能晚于零件 ID 更新，导致重组短暂看到旧模板、空模板或旧 ROI；快速切换时该窗口会表现为模板图片和 ROI 偶发不加载。
+
+### 30.2 修复结果
+
+- `LiveInspectionScreen` 切换零件时不再清空仍对当前 CameraX 预览有效的 `contentRect`。
+- `WorkbenchViewModel.templates` 在切换零件后先发出空列表，再订阅新零件模板，并过滤 `enabled` 和当前 `partId`。
+- `selectedTemplate` 组合当前零件 ID，拒绝任何不属于当前零件的模板，避免旧模板驱动图片和 ROI 查询。
+- `selectPart` 先清除模板选择、视角索引和完成状态，再更新零件 ID，减少跨流重组中的旧状态。
+
+### 30.3 实际修改文件
+
+- `app/src/main/java/com/wearable/inspection/mobile/ui/screens/LiveInspectionScreen.kt`
+- `app/src/main/java/com/wearable/inspection/mobile/ui/screens/workbench/WorkbenchViewModel.kt`
+- `app/src/test/java/com/wearable/inspection/mobile/ui/screens/LiveInspectionCaptureStateTest.kt`
+- `app/src/test/java/com/wearable/inspection/mobile/ui/screens/workbench/WorkbenchViewModelAdvanceTest.kt`
+- `tasks/todo.md`
+
+### 30.4 验证与边界
+
+- `git diff --check`：通过；仅有 Git 的 LF/CRLF 转换提示，无 whitespace error。
+- Gradle/JVM 自动化测试、ADB、APK 构建/安装、真机交互与视觉验收：`NOT_RUN_BY_SCOPE`。
+- 未修改 CameraX 所有权、相机模式、ROI 坐标映射、模板导入持久化或旧工程。
+- Git：未提交；保留工作区中模板导入修复等已有改动，待自动化和现场复测确认。
