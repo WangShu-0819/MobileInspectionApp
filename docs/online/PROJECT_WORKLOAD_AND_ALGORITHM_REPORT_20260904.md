@@ -7,6 +7,8 @@
 应用包名：`com.wearable.inspection.mobile`
 文档定位：项目阶段总结、现场使用说明、算法结果与验收边界
 
+PDF 版：[下载带图片的 A4 排版 PDF](../../output/pdf/PROJECT_WORKLOAD_AND_ALGORITHM_REPORT_20260904.pdf)
+
 > 本文按“项目成果 → 业务流程 → ROI 算法 → 验证结论”的顺序整理。图片来自项目方提供的 `9.4 v1/图片` 目录；算法图来自仓库中的 B3 离线评估产物。
 
 ## 一页结论

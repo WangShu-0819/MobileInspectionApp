@@ -3,6 +3,7 @@
 ## 在线总结
 
 - `online/PROJECT_WORKLOAD_AND_ALGORITHM_REPORT_20260904.md`：工程工作量、现场使用流程、Thread/Nut/Feature ROI 算法结果和当前验收边界。
+- `../output/pdf/PROJECT_WORKLOAD_AND_ALGORITHM_REPORT_20260904.pdf`：上述总结的 A4 带图片 PDF 版。
 
 ## 需求
 
