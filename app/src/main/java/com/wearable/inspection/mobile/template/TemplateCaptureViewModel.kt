@@ -78,9 +78,9 @@ class TemplateCaptureViewModel(
         val current = _state.value
         if (current is CaptureState.Capturing) return
 
+        // 先锁定状态再启动协程，避免连续点击同时新增两个 View。
+        _state.value = CaptureState.Capturing
         viewModelScope.launch {
-            _state.value = CaptureState.Capturing
-
             val tempFile = repository.generateTempFile()
             val captureResult = cameraController.takePhoto(sessionId, tempFile)
 
