@@ -20,7 +20,8 @@ class InspectionRepository(
     private val sessionDao: InspectionSessionDao,
     private val roiRecordDao: RoiRecordDao,
     private val captureBatchDao: CaptureBatchDao,
-    private val capturedPhotoDao: CapturedPhotoDao
+    private val capturedPhotoDao: CapturedPhotoDao,
+    private val viewRoiConfirmDao: ViewRoiConfirmDao
 ) {
     private val imageStore: MobileImageStore by lazy { MobileImageStore(context) }
     // ---- 零件 ----
@@ -43,7 +44,7 @@ class InspectionRepository(
     }
 
     suspend fun deletePart(partId: String) {
-        partDao.deleteById(partId)
+        deleteTemplatePackage(partId)
     }
 
     // ---- 模板 ----
@@ -72,6 +73,20 @@ class InspectionRepository(
 
     suspend fun deleteTemplate(id: String) {
         templateDao.deleteById(id)
+    }
+
+    /**
+     * 删除一个零件的模板包：按稳定 partId 删除零件、模板、ROI 和受管理模板图片。
+     * 采集批次使用 SET_NULL 外键，因此历史采集照片和批次记录不会被删除。
+     */
+    suspend fun deleteTemplatePackage(partId: String) {
+        partDao.getById(partId) ?: throw IllegalArgumentException("零件不存在: $partId")
+        val imagePaths = templateDao.getByPartId(partId)
+            .map { it.mainImagePath }
+            .distinct()
+
+        partDao.deleteById(partId)
+        imagePaths.forEach { deleteTemplateImage(it) }
     }
 
     // ---- ROI ----
@@ -132,6 +147,9 @@ class InspectionRepository(
 
     fun observeCaptureBatches(): Flow<List<CaptureBatchEntity>> = captureBatchDao.observeAll()
 
+    fun observeCaptureBatchesSince(sinceMillis: Long): Flow<List<CaptureBatchEntity>> =
+        captureBatchDao.observeByStartTimeSince(sinceMillis)
+
     suspend fun getCaptureBatch(batchId: String): CaptureBatchEntity? =
         captureBatchDao.getById(batchId)
 
@@ -143,8 +161,52 @@ class InspectionRepository(
         captureBatchDao.update(batch)
     }
 
+    suspend fun finishCaptureBatch(batchId: String) {
+        val batch = captureBatchDao.getById(batchId)
+            ?: throw IllegalArgumentException("批次不存在: $batchId")
+        if (batch.endTime == null) {
+            captureBatchDao.update(batch.copy(endTime = System.currentTimeMillis()))
+        }
+    }
+
     suspend fun deleteCaptureBatch(batchId: String) {
         captureBatchDao.deleteById(batchId)
+    }
+
+    /**
+     * 完全删除采集批次及其关联数据和文件
+     *
+     * 1. 查询该批次所有照片记录（用于获取文件路径）
+     * 2. 删除批次记录（CASCADE 自动删除 captured_photos 和 view_roi_confirms）
+     * 3. 删除照片实际文件
+     *
+     * @return 实际删除的照片文件数量
+     * @throws IllegalArgumentException 如果批次不存在
+     */
+    suspend fun deleteCaptureBatchCompletely(batchId: String): Int {
+        val batch = captureBatchDao.getById(batchId)
+            ?: throw IllegalArgumentException("批次不存在: $batchId")
+
+        // 获取照片路径（在删除 DB 记录之前）
+        val photos = capturedPhotoDao.getByBatchId(batchId)
+        val filePaths = photos.map { it.filePath }
+
+        // 删除批次记录（CASCADE 自动清理 captured_photos 和 view_roi_confirms）
+        captureBatchDao.deleteById(batchId)
+
+        // 删除照片实际文件
+        var deletedFileCount = 0
+        for (path in filePaths) {
+            try {
+                val file = File(path)
+                if (file.exists() && file.delete()) {
+                    deletedFileCount++
+                }
+            } catch (_: SecurityException) {
+                // 文件删除失败不阻塞整体操作
+            }
+        }
+        return deletedFileCount
     }
 
     // ---- 已采集照片 ----
@@ -155,8 +217,11 @@ class InspectionRepository(
     suspend fun getCapturedPhotos(batchId: String): List<CapturedPhotoEntity> =
         capturedPhotoDao.getByBatchId(batchId)
 
-    suspend fun insertCapturedPhoto(photo: CapturedPhotoEntity) {
-        capturedPhotoDao.insert(photo)
+    suspend fun getCapturedPhoto(photoId: Long): CapturedPhotoEntity? =
+        capturedPhotoDao.getById(photoId)
+
+    suspend fun insertCapturedPhoto(photo: CapturedPhotoEntity): Long {
+        return capturedPhotoDao.insert(photo)
     }
 
     // ---- 排序 ----
@@ -232,6 +297,28 @@ class InspectionRepository(
             "${context.packageName}.fileprovider",
             file
         )
+    }
+
+    // ---- View ROI 人工确认 ----
+
+    fun observeViewRoiConfirms(batchId: String): Flow<List<ViewRoiConfirmEntity>> =
+        viewRoiConfirmDao.observeByBatchId(batchId)
+
+    suspend fun getViewRoiConfirms(batchId: String): List<ViewRoiConfirmEntity> =
+        viewRoiConfirmDao.getByBatchId(batchId)
+
+    suspend fun getViewRoiConfirmsByView(batchId: String, viewIndex: Int): List<ViewRoiConfirmEntity> =
+        viewRoiConfirmDao.getByBatchAndViewIndex(batchId, viewIndex)
+
+    suspend fun getConfirmedViewIndices(batchId: String): List<Int> =
+        viewRoiConfirmDao.getConfirmedViewIndices(batchId)
+
+    suspend fun insertViewRoiConfirms(confirms: List<ViewRoiConfirmEntity>) {
+        viewRoiConfirmDao.insertAll(confirms)
+    }
+
+    suspend fun deleteViewRoiConfirmsByView(batchId: String, viewIndex: Int) {
+        viewRoiConfirmDao.deleteByBatchAndViewIndex(batchId, viewIndex)
     }
 
 }

@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -71,8 +72,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.wearable.inspection.mobile.MobileInspectionApp
 import com.wearable.inspection.mobile.data.settings.PreviewDisplayMode
@@ -93,13 +92,14 @@ import com.wearable.inspection.mobile.ui.theme.PendingColor
 import com.wearable.inspection.mobile.ui.theme.PlaceholderColor
 import com.wearable.inspection.mobile.ui.theme.BackgroundVariant1
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import com.wearable.inspection.mobile.BuildConfig
 import com.wearable.inspection.mobile.camera.CameraController
 import com.wearable.inspection.mobile.camera.CameraStateType
 import com.wearable.inspection.mobile.data.image.MobileImageStore
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import com.wearable.inspection.mobile.ui.screens.workbench.ViewCompletionResult
 
 /**
  * 拍照 UI 状态
@@ -107,7 +107,7 @@ import kotlinx.coroutines.launch
 enum class CaptureUiState {
     IDLE,       // 空闲，可拍照
     CAPTURING,  // 拍摄中，禁用按钮
-    SAVED,      // 已保存，短暂显示后回到 IDLE
+    SAVED,      // 已保存，等待确认页切换；返回现场页后恢复 IDLE
     ERROR       // 出错，显示错误信息，可重试
 }
 
@@ -135,6 +135,8 @@ fun LiveInspectionScreen(
         partId: String,
         totalViews: Int
     ) -> Unit = { _, _, _, _, _, _, _, _ -> },
+    onNavigateToExport: (batchId: String, partId: String, partName: String) -> Unit = { _, _, _ -> },
+    isScreenVisible: Boolean = true,
 ) {
     val context = LocalContext.current
     val inspectionState by viewModel.inspectionState.collectAsState()
@@ -161,46 +163,27 @@ fun LiveInspectionScreen(
     var captureState by remember { mutableStateOf(CaptureUiState.IDLE) }
     var captureError by remember { mutableStateOf<String?>(null) }
     var savedPath by remember { mutableStateOf<String?>(null) }
-
-    // 采集批次
-    var currentBatchId by remember { mutableStateOf<String?>(null) }
+    var captureSavedMessage by remember { mutableStateOf("照片已保存，进入人工确认") }
+    var captureNavigationPending by remember { mutableStateOf(false) }
 
     // 模板选择 bottom sheet
     var showTemplateSheet by remember { mutableStateOf(false) }
     var showPartMenu by remember { mutableStateOf(false) }
 
+    // 确认页/导出页返回现场采集时，统一恢复唯一主操作按钮的可用状态。
+    // 不依赖生命周期回调，避免导航返回时出现“拍照”按钮短暂重复可点。
+    LaunchedEffect(isScreenVisible) {
+        if (isScreenVisible) {
+            captureNavigationPending = false
+            captureState = CaptureUiState.IDLE
+            captureError = null
+            savedPath = null
+        }
+    }
+
     // CameraController 和 ImageStore
     val cameraController = remember { CameraController.getInstance(context) }
     val imageStore = remember { MobileImageStore(context) }
-
-    // 从确认页返回后自动推进到下一视角
-    var pendingAdvance by remember { mutableStateOf(false) }
-    val lifecycleOwner = LocalLifecycleOwner.current
-    androidx.compose.runtime.DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME && pendingAdvance) {
-                pendingAdvance = false
-                val hasNext = viewModel.advanceToNextView()
-                if (!hasNext) {
-                    // 所有视角完成，更新批次结束时间
-                    currentBatchId?.let { bid ->
-                        coroutineScope.launch {
-                            repository.getCaptureBatch(bid)?.let { batch ->
-                                repository.updateCaptureBatch(batch.copy(endTime = System.currentTimeMillis()))
-                            }
-                        }
-                    }
-                }
-                captureState = CaptureUiState.IDLE
-                captureError = null
-                savedPath = null
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
-    }
 
     // CameraState
     val cameraState by cameraController.cameraStateFlow.collectAsState()
@@ -208,6 +191,7 @@ fun LiveInspectionScreen(
     // 拍照函数
     val onCapture: () -> Unit = {
         val currentSessionId = sessionId
+        val stateAtCapture = viewModel.inspectionState.value
         if (currentSessionId == null) {
             captureError = "相机未就绪"
             captureState = CaptureUiState.ERROR
@@ -219,81 +203,141 @@ fun LiveInspectionScreen(
             savedPath = null
 
             coroutineScope.launch {
-                // 确保有采集批次
-                val batchId = currentBatchId ?: run {
+                val template = stateAtCapture.selectedTemplate
+                val part = selectedPart
+                    ?.takeIf { it.id == template?.partId }
+                    ?: template?.let { repository.getPartById(it.partId) }
+                if (template == null || part == null) {
+                    captureError = "当前视角或零件信息不可用"
+                    captureState = CaptureUiState.ERROR
+                    return@launch
+                }
+
+                val capturedViewIndex = stateAtCapture.currentViewIndex
+                val capturedTotalViews = stateAtCapture.totalViews
+                val capturedTemplateId = template.id
+
+                // 确保批次属于当前零件；切换零件的竞态不能复用旧批次。
+                val batchId = viewModel.getActiveCaptureBatchId()?.let { existingId ->
+                    repository.getCaptureBatch(existingId)
+                        ?.takeIf { it.partId == part.id && it.endTime == null }
+                        ?.batchId
+                } ?: run {
                     val newBatchId = "batch_${System.currentTimeMillis()}_${java.util.UUID.randomUUID().toString().take(8)}"
-                    val part = selectedPart
                     repository.insertCaptureBatch(
                         com.wearable.inspection.mobile.data.entity.CaptureBatchEntity(
                             batchId = newBatchId,
-                            partId = part?.id,
-                            partName = part?.name,
+                            partId = part.id,
+                            partName = part.name,
                             startTime = System.currentTimeMillis(),
-                            viewCount = inspectionState.totalViews
+                            viewCount = capturedTotalViews
                         )
                     )
-                    currentBatchId = newBatchId
                     newBatchId
                 }
+                viewModel.setActiveCaptureBatchId(batchId)
 
-                val tempFile = imageStore.generateTempFile()
-                val result = cameraController.takePhoto(currentSessionId, tempFile)
-                result.fold(
-                    onSuccess = { file ->
-                        val storeResult = imageStore.storeCapturedImage(file)
+                // 直接让 CameraX 写入最终受管理目录，避免拍照后再复制一份大 JPEG。
+                val captureFile = imageStore.generateCaptureFile()
+                val result = cameraController.takePhoto(currentSessionId, captureFile)
+                if (result.isSuccess) {
+                    val file = result.getOrNull()
+                    if (file == null) {
+                        imageStore.delete(captureFile.absolutePath)
+                        captureError = "拍照失败"
+                        captureState = CaptureUiState.ERROR
+                    } else {
+                        // JPEG 校验、EXIF 读取和同目录原子重命名可能处理大文件，不能阻塞 Compose 主线程。
+                        val storeResult = withContext(Dispatchers.IO) {
+                            imageStore.storeCapturedImage(file)
+                        }
                         if (storeResult != null) {
                             savedPath = storeResult.finalPath
 
-                            // 记录照片到批次
-                            val template = inspectionState.selectedTemplate
-                            val capturedPhoto = com.wearable.inspection.mobile.data.entity.CapturedPhotoEntity(
-                                batchId = batchId,
-                                filePath = storeResult.finalPath,
-                                viewIndex = inspectionState.currentViewIndex,
-                                templateId = template?.id,
-                                templateName = template?.name,
-                                capturedAt = storeResult.capturedAt
-                            )
-                            repository.insertCapturedPhoto(capturedPhoto)
-
-                            captureState = CaptureUiState.SAVED
-
-                            // 导航到人工确认页面
-                            val tpl = template
-                            val part = selectedPart
-                            if (tpl != null && part != null) {
-                                // 非最后一个视角时，标记待推进（确认后返回时自动 advanceToNextView）
-                                // 最后一个视角时，确认页直接导航到 ExportResultScreen，不需要回来 advance
-                                val isLastView = inspectionState.currentViewIndex >= inspectionState.totalViews - 1
-                                if (!isLastView) {
-                                    pendingAdvance = true
-                                }
-                                onNavigateToConfirm(
-                                    batchId,
-                                    capturedPhoto.photoId,
-                                    storeResult.finalPath,
-                                    inspectionState.currentViewIndex,
-                                    tpl.id,
-                                    tpl.name,
-                                    part.id,
-                                    inspectionState.totalViews
+                            try {
+                                // Room 返回真实自增 photoId，随后从数据库回读做关联校验。
+                                val capturedPhoto = com.wearable.inspection.mobile.data.entity.CapturedPhotoEntity(
+                                    batchId = batchId,
+                                    filePath = storeResult.finalPath,
+                                    viewIndex = capturedViewIndex,
+                                    templateId = capturedTemplateId,
+                                    templateName = template.name,
+                                    capturedAt = storeResult.capturedAt
                                 )
+                                val photoId = repository.insertCapturedPhoto(capturedPhoto)
+                                check(photoId > 0L) { "照片 ID 无效" }
+                                val persistedPhoto = repository.getCapturedPhoto(photoId)
+                                    ?: error("照片记录不存在")
+                                check(
+                                    persistedPhoto.photoId == photoId &&
+                                        persistedPhoto.batchId == batchId &&
+                                        persistedPhoto.viewIndex == capturedViewIndex &&
+                                        persistedPhoto.templateId == capturedTemplateId &&
+                                        persistedPhoto.filePath == storeResult.finalPath
+                                ) { "照片记录关联校验失败" }
+
+                                // 只查询正在拍摄的 templateId；其他 View 或零件的 ROI 不参与分支。
+                                val rois = repository.getRois(capturedTemplateId).filter { it.enabled }
+                                if (rois.isEmpty()) {
+                                    // 无 ROI：短暂提示后直接完成当前 View，不生成确认记录。
+                                    captureSavedMessage = "照片已保存，进入下一视角"
+                                    captureState = CaptureUiState.SAVED
+                                    when (viewModel.completeView(capturedViewIndex)) {
+                                        ViewCompletionResult.ADVANCED -> {
+                                            captureState = CaptureUiState.IDLE
+                                            captureError = null
+                                            savedPath = null
+                                        }
+                                        ViewCompletionResult.COMPLETED -> {
+                                            repository.finishCaptureBatch(batchId)
+                                            captureState = CaptureUiState.IDLE
+                                            onNavigateToExport(batchId, part.id, part.name)
+                                        }
+                                        ViewCompletionResult.IGNORED -> {
+                                            captureError = "当前视角已变化，照片已保存但未推进"
+                                            captureState = CaptureUiState.ERROR
+                                        }
+                                    }
+                                } else {
+                                    // 有 ROI：照片已落库后进入人工确认页。
+                                    captureSavedMessage = "照片已保存，进入人工确认"
+                                    // 先锁住现场页操作栏，再发起导航；相机回调不能覆盖这个过渡状态。
+                                    captureNavigationPending = true
+                                    captureState = CaptureUiState.SAVED
+                                    captureError = null
+                                    savedPath = null
+                                    onNavigateToConfirm(
+                                        batchId,
+                                        persistedPhoto.photoId,
+                                        persistedPhoto.filePath,
+                                        capturedViewIndex,
+                                        capturedTemplateId,
+                                        template.name,
+                                        part.id,
+                                        capturedTotalViews
+                                    )
+                                }
+                            } catch (error: Exception) {
+                                captureError = "照片记录保存失败：${error.message ?: "未知错误"}"
+                                captureState = CaptureUiState.ERROR
                             }
                         } else {
-                            imageStore.deleteTempFile(file)
+                            withContext(Dispatchers.IO) {
+                                imageStore.delete(file.absolutePath)
+                            }
                             captureError = "图片保存失败"
                             captureState = CaptureUiState.ERROR
                         }
-                    },
-                    onFailure = { error ->
-                        imageStore.deleteTempFile(tempFile)
-                        captureError = "拍照失败"
-                        captureState = CaptureUiState.ERROR
-                        if (BuildConfig.DEBUG) {
-                            android.util.Log.e("LiveInspection", "Capture failed", error)
-                        }
                     }
-                )
+                } else {
+                    val error = result.exceptionOrNull() ?: IllegalStateException("拍照失败")
+                    imageStore.delete(captureFile.absolutePath)
+                    captureError = "拍照失败"
+                    captureState = CaptureUiState.ERROR
+                    if (BuildConfig.DEBUG) {
+                        android.util.Log.e("LiveInspection", "Capture failed", error)
+                    }
+                }
             }
         }
     }
@@ -303,17 +347,13 @@ fun LiveInspectionScreen(
         captureState = CaptureUiState.IDLE
         captureError = null
         savedPath = null
+        captureSavedMessage = "照片已保存，进入人工确认"
     }
 
     // 重置采集批次（切换零件或手动重置时）
     val onResetBatch: () -> Unit = {
-        currentBatchId = null
+        viewModel.clearActiveCaptureBatch()
         onResetCapture()
-    }
-
-    // 切换零件时重置批次
-    LaunchedEffect(selectedPart?.id) {
-        currentBatchId = null
     }
 
     val captureEnabled = sessionId != null &&
@@ -328,6 +368,7 @@ fun LiveInspectionScreen(
         cameraState != CameraStateType.OPEN -> "相机初始化中"
         captureState == CaptureUiState.CAPTURING -> "拍摄中…"
         !inspectionState.isTemplateReady -> "请先配置模板"
+        captureState == CaptureUiState.SAVED -> "进入确认…"
         else -> "拍照"
     }
 
@@ -389,6 +430,17 @@ fun LiveInspectionScreen(
                 }
             )
         },
+        bottomBar = {
+            // 导航离开现场页或进入确认页时立即移除拍照栏，避免过渡帧出现第二个可见操作层。
+            if (isScreenVisible && !captureNavigationPending && captureState != CaptureUiState.SAVED) {
+                CaptureActionBar(
+                    enabled = captureEnabled,
+                    label = captureLabel,
+                    onCapture = onCapture,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
         containerColor = customColors.pageBackground
     ) { paddingValues ->
         Column(
@@ -409,10 +461,12 @@ fun LiveInspectionScreen(
                     contentRect = null
                     sessionId = id
                     if (id == null) {
-                        captureState = CaptureUiState.ERROR
-                        captureError = "相机连接失败"
-                    } else {
-                        // 新会话就绪，重置拍照状态
+                        if (!captureNavigationPending) {
+                            captureState = CaptureUiState.ERROR
+                            captureError = "相机连接失败"
+                        }
+                    } else if (!captureNavigationPending && captureState != CaptureUiState.CAPTURING) {
+                        // 新会话就绪只在没有拍照/导航过渡时重置，避免覆盖 SAVED 状态。
                         onResetCapture()
                     }
                 }
@@ -428,12 +482,14 @@ fun LiveInspectionScreen(
                 allViewsCaptured = inspectionState.allViewsCaptured,
                 captureState = captureState,
                 captureError = captureError,
+                captureSavedMessage = captureSavedMessage,
+                captureNavigationPending = captureNavigationPending,
                 onTemplateMissing = onOpenTemplates,
                 onRetry = onResetCapture,
                 onShowTemplateSheet = { showTemplateSheet = true },
                 onResetViews = {
                     viewModel.resetViewIndex()
-                    onResetCapture()
+                    onResetBatch()
                 }
             )
 
@@ -444,14 +500,6 @@ fun LiveInspectionScreen(
                 onAlphaChange = { overlayAlpha = it },
                 onToggleVisibility = { templateVisible = !templateVisible },
                 modifier = Modifier.fillMaxWidth(),
-            )
-
-            // 唯一主操作：固定在透明度控制栏下方，不覆盖实时画面
-            CaptureActionBar(
-                enabled = captureEnabled,
-                label = captureLabel,
-                onCapture = onCapture,
-                modifier = Modifier.fillMaxWidth()
             )
 
             // 模板选择 Bottom Sheet
@@ -550,8 +598,10 @@ private fun CaptureActionBar(
     Row(
         modifier = modifier
             .background(SurfaceWhite)
-            .padding(horizontal = 12.dp, vertical = 2.dp),
-        horizontalArrangement = Arrangement.Center
+            .height(52.dp)
+            .padding(horizontal = 12.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Button(
             onClick = onCapture,
@@ -567,17 +617,31 @@ private fun CaptureActionBar(
             ),
             shape = RoundedCornerShape(6.dp)
         ) {
-            Icon(
-                imageVector = Icons.Default.CameraAlt,
-                contentDescription = null,
-                modifier = Modifier.size(18.dp)
-            )
-            Spacer(modifier = Modifier.width(6.dp))
-            Text(
-                text = label,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium
-            )
+            // 固定内容槽位，拍照/拍摄中/未就绪文案变化不会移动按钮内部布局。
+            Box(
+                modifier = Modifier
+                    .width(160.dp)
+                    .height(20.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CameraAlt,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Text(
+                        text = label,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
         }
     }
 }
@@ -746,6 +810,8 @@ private fun TemplateReferenceSection(
     allViewsCaptured: Boolean = false,
     captureState: CaptureUiState = CaptureUiState.IDLE,
     captureError: String? = null,
+    captureSavedMessage: String = "照片已保存，进入人工确认",
+    captureNavigationPending: Boolean = false,
     onTemplateMissing: () -> Unit = {},
     onRetry: () -> Unit = {},
     onShowTemplateSheet: () -> Unit = {},
@@ -767,8 +833,7 @@ private fun TemplateReferenceSection(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(
-                modifier = Modifier
-                    .heightIn(min = 28.dp),
+                modifier = Modifier.height(32.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (totalViews > 0) {
@@ -812,7 +877,9 @@ private fun TemplateReferenceSection(
 
         // 全部完成提示
         if (allViewsCaptured) {
-            AllViewsCapturedCard(onReset = onResetViews)
+            AllViewsCapturedCard(
+                onReset = onResetViews,
+            )
         }
         // 模板内容或空状态
         else if (template == null) {
@@ -825,14 +892,15 @@ private fun TemplateReferenceSection(
                 modifier = Modifier.weight(1f),
                 template = template,
                 fillImage = referenceFill,
+                showName = templates.size <= 1,
             )
         }
 
-        // 拍照状态提示（固定最小高度，避免状态切换时模板参考图上移）
+        // 拍照状态提示（固定高度，避免状态切换时底部操作栏跳动）
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = 28.dp),
+                .height(28.dp),
             contentAlignment = Alignment.Center
         ) {
             when (captureState) {
@@ -854,7 +922,7 @@ private fun TemplateReferenceSection(
                     }
                 }
                 CaptureUiState.SAVED -> {
-                    if (!allViewsCaptured) {
+                    if (!allViewsCaptured && !captureNavigationPending) {
                         Row(
                             horizontalArrangement = Arrangement.Center,
                             verticalAlignment = Alignment.CenterVertically
@@ -867,24 +935,35 @@ private fun TemplateReferenceSection(
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = "已保存，切换下一视角",
+                                text = captureSavedMessage,
                                 style = MaterialTheme.typography.bodySmall,
-                                color = PassColor
+                                color = PassColor,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                     }
                 }
                 CaptureUiState.ERROR -> {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
                             text = captureError ?: "拍照失败",
                             style = MaterialTheme.typography.bodySmall,
-                            color = FailColor
+                            color = FailColor,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.widthIn(max = 180.dp),
                         )
-                        TextButton(onClick = onRetry, modifier = Modifier.height(24.dp)) {
+                        TextButton(
+                            onClick = onRetry,
+                            modifier = Modifier
+                                .width(56.dp)
+                                .height(28.dp),
+                        ) {
                             Text("重试", color = Primary, fontSize = 12.sp)
                         }
                     }
@@ -908,7 +987,7 @@ private fun TemplateSelector(
         modifier = Modifier
             .clip(RoundedCornerShape(4.dp))
             .clickable { onClick() }
-            .heightIn(min = 28.dp)
+            .height(32.dp)
             .padding(horizontal = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(2.dp)
@@ -987,6 +1066,7 @@ private fun TemplateContent(
     modifier: Modifier = Modifier,
     template: InspectionTemplateEntity,
     fillImage: Boolean = false,
+    showName: Boolean = true,
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -996,7 +1076,8 @@ private fun TemplateContent(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = 180.dp, max = 210.dp)
+                .weight(1f)
+                .heightIn(min = 180.dp)
                 .clip(RoundedCornerShape(12.dp)),
             colors = CardDefaults.cardColors(containerColor = Color.Black)
         ) {
@@ -1004,17 +1085,23 @@ private fun TemplateContent(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                val bitmap = remember(template.mainImagePath) {
-                    try {
-                        val opts = android.graphics.BitmapFactory.Options().apply {
-                            inSampleSize = 2 // 保留更高分辨率，适配放大的参考图
-                        }
-                        android.graphics.BitmapFactory.decodeFile(template.mainImagePath, opts)
-                    } catch (_: Exception) { null }
+                var bitmap by remember(template.mainImagePath) {
+                    mutableStateOf<android.graphics.Bitmap?>(null)
                 }
-                if (bitmap != null) {
+                LaunchedEffect(template.mainImagePath) {
+                    bitmap = withContext(Dispatchers.IO) {
+                        try {
+                            val opts = android.graphics.BitmapFactory.Options().apply {
+                                inSampleSize = 2 // 保留更高分辨率，适配放大的参考图
+                            }
+                            android.graphics.BitmapFactory.decodeFile(template.mainImagePath, opts)
+                        } catch (_: Exception) { null }
+                    }
+                }
+                val currentBitmap = bitmap
+                if (currentBitmap != null) {
                     androidx.compose.foundation.Image(
-                        bitmap = bitmap.asImageBitmap(),
+                        bitmap = currentBitmap.asImageBitmap(),
                         contentDescription = "模板参考图",
                         modifier = Modifier.fillMaxSize(),
                         contentScale = if (fillImage) ContentScale.Crop else ContentScale.Fit
@@ -1030,15 +1117,17 @@ private fun TemplateContent(
             }
         }
 
-        // 视角名称
-        Text(
-            text = template.name,
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.Medium,
-            color = TextPrimary,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
+        // 多视角时名称已经显示在顶部切换器，单视角保留名称说明。
+        if (showName) {
+            Text(
+                text = template.name,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+                color = TextPrimary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
     }
 }
 
@@ -1046,16 +1135,19 @@ private fun TemplateContent(
  * 所有视角采集完成提示
  */
 @Composable
-private fun AllViewsCapturedCard(onReset: () -> Unit) {
+private fun AllViewsCapturedCard(onReset: () -> Unit, modifier: Modifier = Modifier) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .height(64.dp),
         colors = CardDefaults.cardColors(containerColor = BackgroundVariant1),
         shape = RoundedCornerShape(6.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 10.dp, vertical = 4.dp),
+                .fillMaxHeight()
+                .padding(horizontal = 12.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
@@ -1065,21 +1157,35 @@ private fun AllViewsCapturedCard(onReset: () -> Unit) {
                 tint = PassColor,
                 modifier = Modifier.size(18.dp)
             )
-            Column(modifier = Modifier.weight(1f)) {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .widthIn(min = 0.dp),
+                verticalArrangement = Arrangement.Center,
+            ) {
                 Text(
                     text = "零件采集完成",
                     style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.Medium,
                     color = TextPrimary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
                 Text(
                     text = "所有视角已拍摄完毕",
                     style = MaterialTheme.typography.labelSmall,
                     fontSize = 10.sp,
                     color = TextSecondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
-            TextButton(onClick = onReset, modifier = Modifier.height(28.dp)) {
+            TextButton(
+                onClick = onReset,
+                modifier = Modifier
+                    .width(84.dp)
+                    .height(48.dp),
+            ) {
                 Text("重新开始", color = Primary, fontSize = 12.sp)
             }
         }
@@ -1195,7 +1301,7 @@ private fun TemplateOverlayControls(
     Row(
         modifier = modifier
             .background(BackgroundVariant1)
-            .heightIn(min = 36.dp)
+            .height(48.dp)
             .padding(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp)

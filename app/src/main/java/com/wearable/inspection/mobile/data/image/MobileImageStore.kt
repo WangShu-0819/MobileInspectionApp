@@ -27,13 +27,13 @@ data class StoredImageResult(
  * 职责：
  * 1. 临时 JPEG 文件生成
  * 2. JPEG 可解码和 EXIF 方向校验
- * 3. 原子移动到正式路径（使用 .part 中间文件）
+ * 3. 原子移动到正式路径（同目录优先 rename，跨目录时使用 .part 中间文件）
  * 4. 失败清理临时文件和 .part 文件
  * 5. 路径合法性检查
  *
  * 文件事务流程：
- * 1. 生成唯一临时文件 → 2. 校验临时文件 → 3. 复制到 .part 文件 →
- * 4. 校验 .part 文件 → 5. 重命名为最终文件（原子操作）
+ * 1. 生成唯一临时文件 → 2. 校验临时文件 → 3. 同目录重命名到最终文件；
+ * 跨目录时回退为复制到 .part 文件 → 4. 重命名为最终文件（原子操作）
  *
  * 任何失败都会清理 .part 和临时文件。
  */
@@ -68,6 +68,18 @@ class MobileImageStore(private val context: Context) {
         val ts = SimpleDateFormat("yyyyMMdd_HHmmss_SSS", Locale.US).format(Date())
         val uuid = UUID.randomUUID().toString().take(8)
         return File(getTempDir(), "$TEMP_PREFIX${ts}_$uuid$TEMP_SUFFIX")
+    }
+
+    /**
+     * 生成现场照片的受管理临时路径。
+     *
+     * CameraX 直接写入受管理的 captures 临时路径，避免拍照完成后再把大 JPEG
+     * 从 cache 复制到 captures；调用方仍必须在 IO 调度器上完成落盘。
+     */
+    fun generateCaptureFile(): File {
+        val ts = SimpleDateFormat("yyyyMMdd_HHmmss_SSS", Locale.US).format(Date())
+        val uuid = UUID.randomUUID().toString().take(8)
+        return File(getCapturesDir(), "$TEMP_PREFIX${ts}_$uuid$TEMP_SUFFIX")
     }
 
     /**
@@ -147,6 +159,10 @@ class MobileImageStore(private val context: Context) {
         return String.format(CAPTURE_FILE_PATTERN, ts, uuid)
     }
 
+    private fun generateFinalFile(): File {
+        return File(getCapturesDir(), generateFinalFileName())
+    }
+
     /**
      * 原子移动临时文件到正式路径
      *
@@ -165,7 +181,7 @@ class MobileImageStore(private val context: Context) {
     fun atomicMoveToFinal(tempFile: File): File? {
         if (!tempFile.exists()) return null
 
-        val finalFile = File(getCapturesDir(), generateFinalFileName())
+        val finalFile = generateFinalFile()
         val partFile = File(finalFile.absolutePath + PART_SUFFIX)
 
         try {
@@ -173,6 +189,12 @@ class MobileImageStore(private val context: Context) {
             if (finalFile.exists()) {
                 tempFile.delete()
                 return null
+            }
+
+            // 同一应用数据分区通常可以直接重命名，避免复制大 JPEG。
+            // 如果底层文件系统不允许跨目录 rename，再回退到 .part 复制流程。
+            if (tempFile.renameTo(finalFile)) {
+                return finalFile
             }
 
             // 复制到 .part 文件
@@ -220,7 +242,7 @@ class MobileImageStore(private val context: Context) {
      * 完整的拍照存储流程
      *
      * 1. 校验临时文件
-     * 2. 原子移动到正式路径（使用 .part 中间文件）
+     * 2. 原子移动到正式路径（同目录优先 rename）
      * 3. 返回结果
      */
     fun storeCapturedImage(tempFile: File): StoredImageResult? {
@@ -229,7 +251,8 @@ class MobileImageStore(private val context: Context) {
             return null
         }
         val finalFile = atomicMoveToFinal(tempFile) ?: return null
-        return validateJpeg(finalFile)
+        // 文件内容已经在移动前校验过；不要再次解码整张大图。
+        return validation.copy(finalPath = finalFile.absolutePath)
     }
 
     // ========== 删除 ==========

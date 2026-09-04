@@ -15,9 +15,10 @@ import com.wearable.inspection.mobile.data.entity.*
         InspectionSessionEntity::class,
         RoiInspectionRecordEntity::class,
         CaptureBatchEntity::class,
-        CapturedPhotoEntity::class
+        CapturedPhotoEntity::class,
+        ViewRoiConfirmEntity::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -28,6 +29,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun roiRecordDao(): RoiRecordDao
     abstract fun captureBatchDao(): CaptureBatchDao
     abstract fun capturedPhotoDao(): CapturedPhotoDao
+    abstract fun viewRoiConfirmDao(): ViewRoiConfirmDao
 
     companion object {
         @Volatile

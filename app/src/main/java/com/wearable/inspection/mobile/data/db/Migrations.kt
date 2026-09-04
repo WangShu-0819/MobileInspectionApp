@@ -101,6 +101,41 @@ val MIGRATION_4_5 = object : Migration(4, 5) {
 }
 
 /**
+ * 数据库 Migration v5 → v6
+ *
+ * 新增 view_roi_confirms 表，支持单零件多 View 人工确认与 ZIP 导出。
+ * 每个 ROI 一条记录，包含人工 OK/NG 结果、总体结果和确认时间。
+ */
+val MIGRATION_5_6 = object : Migration(5, 6) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS view_roi_confirms (
+                id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                batchId TEXT NOT NULL,
+                photoId INTEGER NOT NULL,
+                photoPath TEXT NOT NULL,
+                viewIndex INTEGER NOT NULL,
+                templateId TEXT NOT NULL,
+                templateName TEXT NOT NULL,
+                roiId TEXT NOT NULL,
+                roiName TEXT NOT NULL,
+                roiTargetType TEXT,
+                roiNormalizedRect TEXT NOT NULL,
+                roiPixelRect TEXT NOT NULL,
+                softwareResult TEXT,
+                humanResult TEXT NOT NULL,
+                confirmTime INTEGER NOT NULL,
+                overallResult TEXT NOT NULL,
+                overallConfirmTime INTEGER NOT NULL,
+                FOREIGN KEY (batchId) REFERENCES capture_batches(batchId) ON DELETE CASCADE
+            )
+            """.trimIndent()
+        )
+    }
+}
+
+/**
  * 所有 Migration 列表
  * 新增 Migration 时必须在此添加
  */
@@ -109,5 +144,6 @@ val ALL_MIGRATIONS = arrayOf<Migration>(
     MIGRATION_1_2,
     MIGRATION_2_3,
     MIGRATION_3_4,
-    MIGRATION_4_5
+    MIGRATION_4_5,
+    MIGRATION_5_6
 )

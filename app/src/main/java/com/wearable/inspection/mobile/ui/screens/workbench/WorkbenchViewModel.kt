@@ -30,6 +30,13 @@ data class InspectionState(
     val allViewsCaptured: Boolean = false
 )
 
+/** 当前 View 完成后的推进结果。 */
+enum class ViewCompletionResult {
+    ADVANCED,
+    COMPLETED,
+    IGNORED,
+}
+
 @OptIn(ExperimentalCoroutinesApi::class)
 class WorkbenchViewModel(
     private val repository: InspectionRepository,
@@ -95,6 +102,19 @@ class WorkbenchViewModel(
 
     private val _allViewsCaptured = MutableStateFlow(false)
     val allViewsCaptured: StateFlow<Boolean> = _allViewsCaptured.asStateFlow()
+
+    // 采集批次跨 LiveInspectionScreen 与确认页导航保存，避免页面重建后新建批次。
+    private var activeCaptureBatchId: String? = null
+
+    fun getActiveCaptureBatchId(): String? = activeCaptureBatchId
+
+    fun setActiveCaptureBatchId(batchId: String) {
+        activeCaptureBatchId = batchId
+    }
+
+    fun clearActiveCaptureBatch() {
+        activeCaptureBatchId = null
+    }
 
     // 选中的模板（由 viewIndex 或手动选择驱动）
     private val _selectedTemplateId = MutableStateFlow<String?>(null)
@@ -192,6 +212,7 @@ class WorkbenchViewModel(
     fun selectPart(partId: String) {
         settings.selectedPartId = partId
         _selectedPartId.value = partId
+        clearActiveCaptureBatch()
         // 切换零件时清空模板选择和视角进度
         _selectedTemplateId.value = null
         _currentViewIndex.value = 0
@@ -222,6 +243,23 @@ class WorkbenchViewModel(
         } else {
             _allViewsCaptured.value = true
             false
+        }
+    }
+
+    /**
+     * 以拍摄时的 View 索引完成一次推进。
+     *
+     * 只有当前索引仍与拍摄索引一致时才允许推进，避免确认回调重复或过期时跳过 View。
+     */
+    fun completeView(viewIndex: Int): ViewCompletionResult {
+        if (_allViewsCaptured.value || _currentViewIndex.value != viewIndex) {
+            return ViewCompletionResult.IGNORED
+        }
+        return if (advanceToNextView()) {
+            ViewCompletionResult.ADVANCED
+        } else {
+            clearActiveCaptureBatch()
+            ViewCompletionResult.COMPLETED
         }
     }
 

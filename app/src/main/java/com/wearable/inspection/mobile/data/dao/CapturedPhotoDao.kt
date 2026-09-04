@@ -12,8 +12,11 @@ interface CapturedPhotoDao {
     @Query("SELECT * FROM captured_photos WHERE batchId = :batchId ORDER BY viewIndex ASC")
     suspend fun getByBatchId(batchId: String): List<CapturedPhotoEntity>
 
+    @Query("SELECT * FROM captured_photos WHERE photoId = :photoId")
+    suspend fun getById(photoId: Long): CapturedPhotoEntity?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(photo: CapturedPhotoEntity)
+    suspend fun insert(photo: CapturedPhotoEntity): Long
 
     @Delete
     suspend fun delete(photo: CapturedPhotoEntity)

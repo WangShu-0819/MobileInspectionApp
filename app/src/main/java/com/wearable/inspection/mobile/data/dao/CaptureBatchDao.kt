@@ -9,6 +9,9 @@ interface CaptureBatchDao {
     @Query("SELECT * FROM capture_batches ORDER BY startTime DESC")
     fun observeAll(): Flow<List<CaptureBatchEntity>>
 
+    @Query("SELECT * FROM capture_batches WHERE startTime >= :sinceMillis ORDER BY startTime DESC")
+    fun observeByStartTimeSince(sinceMillis: Long): Flow<List<CaptureBatchEntity>>
+
     @Query("SELECT * FROM capture_batches WHERE batchId = :batchId")
     suspend fun getById(batchId: String): CaptureBatchEntity?
 
