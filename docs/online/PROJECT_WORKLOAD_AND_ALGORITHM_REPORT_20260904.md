@@ -226,6 +226,20 @@ Thread 的代表性精修结果：
 
 其中 `shift` 是 raw Hough 圆心到 refined 圆心的距离，不是相对人工真值的误差。Key 没有像素级圆心/半径标注，因此不能把它写成准确率或真实定位误差。
 
+#### Thread 负样本图与说明
+
+![Thread 通用合成负样本结果](../../docs/reports/b3/feature_presence/evaluation/negative_thread/negative_thread_contact_sheet.jpg)
+
+*图 23：Thread 通用合成负样本。样本覆盖普通圆孔、亮圆、非同心环、单段圆弧、径向边缘、背景圆环、模糊纹理、普通垫圈、线性纹理、断裂圆环、随机噪声和径向辐条。*
+
+这组负样本专门用于检查“有圆形边缘但没有可靠螺纹纹理”时是否会被误判为 Thread。12 张图片全部没有返回 `PASS`，其中普通圆孔、亮圆、非同心环等主要因缺少重复纹理证据而进入 `REVIEW`；线性纹理因候选圆穿过不支持的背景结构而被拦截；随机噪声因中心暗孔和纹理振幅证据不足而被拦截。这里的 `REVIEW` 表示需要人工复核，不表示检测通过。
+
+![Thread 原图派生负样本结果](../../docs/reports/b3/feature_presence/evaluation/negative_thread/original_based/thread_original_based_negative_contact_sheet.jpg)
+
+*图 24：Thread 原图派生“无螺纹孔”负样本。目标区域的内侧纹理被移除，其他区域尽量保持原图不变。*
+
+这组测试更接近真实误检风险：从 16 张 Thread 正样本中动态生成无螺纹版本，16/16 通过了“移除区域以外像素不变”的完整性检查，但检测结果为 14 张 `PASS`、2 张 `REVIEW`。许多绿色 refined 圆跳到了原图中仍然存在的邻近圆形结构，说明当前全图搜索会把相似邻近结构当成螺纹。该结果不是生成失败，而是算法当前的明确限制；后续应优先使用模板 ROI、空间约束或更严格的目标关联。
+
 ### 4.3 Nut（螺母）结果
 
 ![Nut Key 批量结果 contact sheet](../../docs/reports/b3/feature_presence/evaluation/debug/key/nut_key_batch_contact_sheet.jpg)
@@ -250,6 +264,20 @@ Nut 负样本结果：
 |---|---:|---|---|
 | 通用合成负样本 | 8 | 8/8 无候选、无最终框 | 当前 `expectedCount=0` 的空结果语义为 `REVIEW`，不是误检 PASS |
 | 原图派生无螺母零件 | 5 | 5/5 无候选、无最终框 | 保持原图其他区域像素，移除完整螺母/垫圈组件 |
+
+#### Nut 负样本图与说明
+
+![Nut 通用合成负样本结果](../../docs/reports/b3/feature_presence/evaluation/negative_nut/nut_negative_contact_sheet.jpg)
+
+*图 25：Nut 通用合成负样本。样本覆盖普通圆形、单纯亮斑、金属高光、嵌套高光、非六边形背景、偏心孔、仅垫圈和无孔六边形。*
+
+8 张通用负样本均没有候选，也没有最终框。检测器要求近六边形主体、中心孔和几何证据同时成立，因此圆形、亮斑、垫圈或无中心孔的图像不会生成螺母框。由于这组回归使用 `expectedCount=0`，空结果保留系统既有的 `REVIEW` 状态；应理解为“没有检测到目标，等待人工复核”，不能把 `REVIEW` 当成误检 `PASS`。
+
+![Nut 原图派生无螺母负样本结果](../../docs/reports/b3/feature_presence/evaluation/negative_nut/original_based/nut_original_based_negative_contact_sheet.jpg)
+
+*图 26：Nut 原图派生无螺母零件负样本。每张图按正样本检测到的主体框动态推导移除区域，并用原图邻域修复。*
+
+5 张原图派生负样本均没有候选和最终框，移除区域以外的原始像素逐张保持不变。这个结果说明当前 Nut 规则对“没有螺母但保留零件背景”的样本具有较好的保守性；不过它仍然只是小规模离线回归，不能替代真实现场负样本评估。
 
 ### 4.4 Feature（部件）结果
 
