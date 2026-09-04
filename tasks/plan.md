@@ -2,17 +2,24 @@
 
 ## 当前任务：拍照后人工确认 + 持久化（IN_PROGRESS）
 
-2026-09-04：模板 ROI 属性选择已完成并通过验收。本阶段只推进拍照后人工确认和持久化，完整照片 + Excel ZIP 作为后续独立任务。
+2026-09-04：模板 ROI 属性选择已完成并通过验收。本阶段收口拍照后人工确认、无 ROI View 直接推进和完整照片 ZIP。
 
 执行边界：
 
-- 每拍完一个 View 后进入人工确认界面，不自动把 ROI 结果或总体结果判为 OK/NG。
+- 有 ROI 的 View 拍完后进入人工确认界面；无 ROI 的 View 拍完并确认照片落库后直接进入下一 View，不创建人工结果。
+- View 推进由同一个 WorkbenchViewModel 按拍摄时的 `viewIndex` 显式完成，最后一个 View 更新批次结束时间并进入导出页。
 - 复用现有批次、照片、InspectionSession、ROI 记录、DAO 和 Repository；不创建第二套 ROI 数据模型或新的 CameraX。
 - 展示当前照片全部 ROI，使用 normalizedRect 映射到实际 image contentRect，并保存 ROI/总体人工结果及确认时间。
 - 软件检测结果保持 null/未执行；不实现自动检测、Homography、自动对齐、自动轮廓或 Session ROI 编辑。
 - 只修改源码、自动化测试和文档；不运行 Gradle、ADB、APK 或真机测试，不提交 Git。
 
 完成后必须更新 `tasks/todo.md` 和 `docs/reports/b2/` 报告，列出实际修改文件、测试状态、未完成项和 Git 状态，暂停等待验收。
+
+## 后续需求：采集批次/零件 ZIP 清理
+
+状态：**REQUIREMENT_RECORDED / NOT_IMPLEMENTED**（2026-09-04）。
+
+在当前人工确认任务完成后，再实现采集批次清理：点击批次卡片选中，在“采集批次”栏最右侧显示垃圾桶；确认后按稳定 `batchId` 删除对应批次/ZIP，成功刷新列表，失败保留选中状态并提示错误。必须先审计现有 ZIP 文件路径/URI 和批次级删除语义，不能全局扫描或误删其他批次、模板图片和 ROI。复用现有批次、照片 DAO、Repository 和导出服务，不新增第二套数据模型。
 
 ## 已完成任务：模板视角 ROI 长按删除回归整改（2026-09-03）
 
@@ -325,3 +332,32 @@ DEFERRED / POST-MVP（不阻塞 V1 交付）：
 | 报告与真实状态冲突 | 中 | 进度只由 todo 验收项决定 |
 | 一次性目录重构破坏构建 | 中 | 按 feature 小批移动并逐次编译 |
 | 新旧 App 共存时误开旧包 | 高 | 完整组件名启动、前台包校验；旧包证据不得计入新工程验收 |
+
+## 2026-09-04 追加优化计划：采集过渡与模板包闭环
+
+### 目标
+
+在当前“单零件多 View 人工确认 + ZIP 导出”任务内，收口现场采集与 ROI 确认的页面过渡，并补齐模板包的导出、删除和导出包再导入能力。
+
+### Task 1：采集页面过渡收口
+
+- 现场拍照成功后，隐藏 LiveInspectionScreen 的拍照操作栏，直接进入 ViewConfirmationScreen；不改变照片落库、batchId、photoId 和 ROI 分支。
+- ROI 确认保存事件触发后，隐藏确认页操作栏并只执行一次导航；根级三 Tab 导航仅在三个一级页面显示。
+- 补充源码契约测试，覆盖过渡期间没有重复“拍照”/“确认并继续”操作层，及确认后返回现场采集页。
+
+### Task 2：模板包格式与数据闭环
+
+- 复用现有 `TemplatePackageImporter`、`DirectoryTemplateImporter` 和 `TemplateImportService`，扩展 manifest 保存每个 View 的图片、顺序、模板 ID 和全部 ROI 字段（含 `targetType`）。
+- 新增纯 JVM `TemplatePackageExporter`，使用标准 `java.util.zip`/`org.json`，缺失图片时明确失败，不生成不完整包。
+- 导入导出包时恢复零件、DPM、模板、图片及 ROI；保留旧包无 `rois` 字段的兼容行为。
+
+### Task 3：模板包管理 UI 与删除
+
+- 在现有模板包页面列出按零件分组的模板包，提供导出到 SAF、删除确认和成功/失败状态。
+- Repository 按稳定 `partId` 删除该零件模板、ROI 及受管理模板图片，不误删采集照片或历史批次。
+- 补充 exporter/importer 和删除语义的 JVM 契约测试；本轮按项目限制不运行 Gradle、ADB 或真机。
+
+### 验收边界
+
+- 不新增 CameraX、批次模型、ROI 模型或自动检测；不伪造 PASS/FAIL。
+- 不修改旧工程，不清理工作区历史脏改动，不提交 Git。

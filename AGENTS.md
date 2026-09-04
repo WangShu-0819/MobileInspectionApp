@@ -119,6 +119,24 @@
 - 后续实现需明确确认对象是整张照片还是每个 ROI，并保存照片、ROI、检测状态、人工确认结果和时间的关联。
 - 本需求不改变当前 ROI 属性、ROI 编辑、检测算法和官方 DCIM 评估口径。
 
+## 新增后续需求：采集批次/零件 ZIP 清理
+
+状态：**REQUIREMENT_RECORDED / NOT_IMPLEMENTED**（2026-09-04）。本需求暂不与当前人工确认任务并行实现。
+
+目标：在“追溯记录 → 采集批次”列表中，允许用户清理不需要的零件采集批次/ZIP。
+
+交互要求：
+
+1. 点击采集批次卡片后选中该批次，并显示清晰的选中状态。
+2. 选中批次后，在“采集批次”栏最右侧显示垃圾桶小图标；未选中时隐藏或禁用。
+3. 点击垃圾桶后弹出删除确认框，显示零件名称、批次信息和照片数量。
+4. 确认后只删除当前选中的稳定 `batchId` 对应的批次/ZIP，不得按列表位置、零件名称或全局目录误删。
+5. 删除成功后刷新列表、清除选中状态并给出明确提示；删除失败时保留选中状态并显示错误。
+6. 先审计 ZIP 是否有真实文件路径或 URI：有则删除对应受管理文件；没有则明确删除批次记录及关联数据的实际语义，不得伪造删除 ZIP 成功。
+7. 不得影响其他零件、其他批次、模板图片、模板 ROI 或正在进行的导出任务。
+
+实现边界：复用现有 `TraceRecordsScreen`、`CaptureBatchEntity`、`CapturedPhotoEntity`、批次/照片 DAO、`InspectionRepository` 和导出服务；不新增第二套批次模型，不实现左滑手势、人工确认、Excel、Detector 或新的 CameraX，除非后续任务明确要求。
+
 识别算法以旧工程当前生产实现为行为基线：保留 ZXing `DataMatrixReader` 主解码、中心 ROI、预处理策略轮转、双极性尝试、全图降采样、ML Kit DATA_MATRIX 兜底、帧节流、响应门、连续 miss 对焦和旧版网格兜底。只允许为适配新 `CameraController`、`FrameAnalyzer`、包名和生命周期做必要改造，不得擅自调换解码顺序、删减旧策略或用全新简化算法替代。
 
 不得实现自动轮廓提取、实时轮廓投影、Homography、SIFT 姿态对齐、自动 ALIGNED 判断、ROI 自动跟踪、新 ROI 检测算法、OCR、TTS、ResultPackager、ForegroundService。不得创建第二套 CameraX；`tools/contour_extraction/` 的算法源码和验证产物继续冻结为 DEFERRED / POST-MVP。
