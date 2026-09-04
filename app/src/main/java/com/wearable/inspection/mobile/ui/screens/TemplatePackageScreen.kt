@@ -114,11 +114,14 @@ fun TemplatePackageScreen(
         operationMessage = null
         scope.launch {
             try {
-                val tempFile = File(context.cacheDir, "import_${System.currentTimeMillis()}.zip")
+                val tempFile = File.createTempFile("template_import_", ".zip", context.cacheDir)
                 try {
-                    context.contentResolver.openInputStream(uri)?.use { input ->
+                    val copiedBytes = context.contentResolver.openInputStream(uri)?.use { input ->
                         FileOutputStream(tempFile).use { output -> input.copyTo(output) }
                     } ?: throw IllegalStateException("无法读取文件")
+                    if (copiedBytes <= 0L || tempFile.length() <= 0L) {
+                        throw IllegalStateException("所选模板包为空")
+                    }
 
                     val result = TemplateImportService(context).importFromZip(tempFile, database)
                     importState = if (result.success) {

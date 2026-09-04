@@ -91,8 +91,16 @@ class WorkbenchViewModel(
         .filterNotNull()
         .distinctUntilChanged()
         .flatMapLatest { partId ->
-            repository.observeTemplates(partId)
-                .map { list -> list.filter { it.enabled } }
+            // 切换零件时先清空上一零件的模板，避免旧模板与新零件短暂混合。
+            flow {
+                emit(emptyList())
+                emitAll(
+                    repository.observeTemplates(partId)
+                        .map { list ->
+                            list.filter { it.enabled && it.partId == partId }
+                        }
+                )
+            }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
@@ -119,12 +127,16 @@ class WorkbenchViewModel(
     // 选中的模板（由 viewIndex 或手动选择驱动）
     private val _selectedTemplateId = MutableStateFlow<String?>(null)
     val selectedTemplate: StateFlow<InspectionTemplateEntity?> = combine(
+        _selectedPartId,
         templates,
         _selectedTemplateId,
         _currentViewIndex
-    ) { templateList, selectedId, viewIndex ->
-        if (selectedId != null) {
-            templateList.find { it.id == selectedId }
+    ) { partId, templateList, selectedId, viewIndex ->
+        // 防止切换期间旧模板流晚到，模板必须属于当前零件才能进入 UI。
+        if (partId == null || templateList.any { it.partId != partId }) {
+            null
+        } else if (selectedId != null) {
+            templateList.find { it.id == selectedId && it.partId == partId }
         } else {
             templateList.getOrNull(viewIndex) ?: templateList.firstOrNull()
         }
@@ -210,13 +222,13 @@ class WorkbenchViewModel(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), InspectionState())
 
     fun selectPart(partId: String) {
-        settings.selectedPartId = partId
-        _selectedPartId.value = partId
-        clearActiveCaptureBatch()
-        // 切换零件时清空模板选择和视角进度
+        // 先清掉依赖模板的状态，再切换零件 ID，避免一次重组中拿到旧模板/旧 ROI。
         _selectedTemplateId.value = null
         _currentViewIndex.value = 0
         _allViewsCaptured.value = false
+        settings.selectedPartId = partId
+        _selectedPartId.value = partId
+        clearActiveCaptureBatch()
     }
 
     fun selectTemplate(templateId: String) {

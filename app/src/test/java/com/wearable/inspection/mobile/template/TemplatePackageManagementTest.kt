@@ -48,5 +48,10 @@ class TemplatePackageManagementTest {
         assertTrue(source.contains("normalizedRect = roi.normalizedRect"))
         assertTrue(source.contains("targetType = roi.targetType"))
         assertTrue(source.contains("configJson = roi.configJson"))
+        assertTrue("导入前应拒绝没有有效图片的模板包", source.contains("模板包未包含可导入的有效视角图片"))
+        assertTrue("替换模板和 ROI 必须在 Room 事务内", source.contains("database.withTransaction"))
+
+        val imageImportSource = readMain("ui/screens/TemplateConfigScreen.kt")
+        assertTrue("相册模板导入异常时必须解除进行中状态", imageImportSource.contains("finally"))
     }
 }

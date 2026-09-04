@@ -413,19 +413,24 @@ fun TemplateConfigScreen(
                         importing = true
                         importMessage = null
                         scope.launch {
-                            val result = TemplateImportService(context).importFromImageUris(
-                                uris = uris,
-                                partId = partId,
-                                partName = partNameInput,
-                                database = database,
-                            )
-                            importMessage = if (result.success) {
-                                "导入成功：${result.partId}，${result.templateCount} 个视角"
-                            } else {
-                                "导入失败：${result.errorMessage ?: "未知错误"}"
+                            try {
+                                val result = TemplateImportService(context).importFromImageUris(
+                                    uris = uris,
+                                    partId = partId,
+                                    partName = partNameInput,
+                                    database = database,
+                                )
+                                importMessage = if (result.success) {
+                                    "导入成功：${result.partId}，${result.templateCount} 个视角"
+                                } else {
+                                    "导入失败：${result.errorMessage ?: "未知错误"}"
+                                }
+                                reloadTemplates()
+                            } catch (e: Exception) {
+                                importMessage = "导入失败：${e.message ?: "无法读取所选图片"}"
+                            } finally {
+                                importing = false
                             }
-                            importing = false
-                            reloadTemplates()
                         }
                     },
                     enabled = !importing

@@ -105,6 +105,32 @@ class TemplatePackageImporterTest {
     }
 
     @Test
+    fun `历史包图片引用支持反斜杠和大小写差异`() {
+        val bytes = byteArrayOf(8, 6, 7, 5)
+        val manifest = JSONObject().apply {
+            put("partId", "PART_88A92")
+            put("partName", "兼容包")
+            put("regions", JSONArray().put(
+                JSONObject()
+                    .put("regionName", "兼容视角")
+                    .put("imageFiles", "images\\reference.jpg")
+            ))
+        }
+        val zip = buildZip(
+            mapOf(
+                "template.json" to manifest.toString().toByteArray(),
+                "images/REFERENCE.JPG" to bytes,
+            )
+        )
+
+        val pkg = TemplatePackageImporter.parse(zip, tmp.newFolder("work"))
+
+        assertEquals(1, pkg.regions.single().imageFiles.size)
+        assertArrayEquals(bytes, pkg.regions.single().imageFiles.single().readBytes())
+        assertTrue(pkg.warnings.isEmpty())
+    }
+
+    @Test
     fun `显式 order - 按 manifest order 排列`() {
         val zip = buildZip(
             mapOf(
@@ -202,6 +228,13 @@ class TemplatePackageImporterTest {
     fun `非法 JSON - 异常`() {
         val zip = buildZip(mapOf("template.json" to "not-json{{{".toByteArray()))
         assertImportFails(zip, "不是合法 JSON")
+    }
+
+    @Test
+    fun `损坏 zip - 返回可读错误`() {
+        val zip = tmp.newFile("broken.zip").apply { writeText("not a zip") }
+
+        assertImportFails(zip, "不是有效的 ZIP")
     }
 
     @Test

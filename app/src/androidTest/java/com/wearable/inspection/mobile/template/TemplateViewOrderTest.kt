@@ -18,6 +18,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
+import org.junit.Assert.assertFalse
 
 /** 模板视角顺序的 Room、重导入和扁平目录真机回归。 */
 @RunWith(AndroidJUnit4::class)
@@ -90,6 +91,40 @@ class TemplateViewOrderTest {
             db.templateDao().getByPartId("flat_part")
                 .map { File(it.mainImagePath).name.substringAfterLast('_') },
         )
+    }
+
+    @Test
+    fun importWithoutUsableImage_failsBeforeReplacingExistingTemplates() = runBlocking {
+        val partId = "preserve_part"
+        db.partDao().insert(PartEntity(id = partId, name = "旧零件"))
+        db.templateDao().insert(
+            InspectionTemplateEntity(
+                id = "old_template",
+                partId = partId,
+                name = "旧视角",
+                mainImagePath = "/tmp/old.jpg",
+            )
+        )
+
+        val directory = File(testRoot, "invalid_package").apply { mkdirs() }
+        File(directory, "template.json").writeText(
+            JSONObject().apply {
+                put("partId", partId)
+                put("partName", "新零件")
+                put("regions", JSONArray().put(
+                    JSONObject()
+                        .put("regionName", "新视角")
+                        .put("imageFiles", JSONArray().put("images/missing.jpg"))
+                ))
+            }.toString()
+        )
+
+        val result = TemplateImportService(ApplicationProvider.getApplicationContext()).importFromDirectory(directory, db)
+
+        assertFalse(result.success)
+        assertTrue(result.errorMessage.orEmpty().contains("有效视角图片"))
+        assertEquals(listOf("旧视角"), db.templateDao().getByPartId(partId).map { it.name })
+        assertEquals("旧零件", db.partDao().getById(partId)?.name)
     }
 
     private fun template(idSuffix: String, displayOrder: Int) = InspectionTemplateEntity(

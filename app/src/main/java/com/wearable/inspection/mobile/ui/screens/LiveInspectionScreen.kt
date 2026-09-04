@@ -397,7 +397,6 @@ fun LiveInspectionScreen(
                                 onSelect = { partId ->
                                     viewModel.selectPart(partId)
                                     showPartMenu = false
-                                    contentRect = null
                                     onResetCapture()
                                 },
                                 modifier = Modifier.weight(1f, fill = false),

@@ -3,6 +3,7 @@ package com.wearable.inspection.mobile.template
 import android.content.Context
 import android.net.Uri
 import android.util.Log
+import androidx.room.withTransaction
 import com.wearable.inspection.mobile.data.db.AppDatabase
 import com.wearable.inspection.mobile.data.entity.InspectionTemplateEntity
 import com.wearable.inspection.mobile.data.entity.PartEntity
@@ -56,9 +57,11 @@ class TemplateImportService(private val context: Context) {
      */
     suspend fun importFromZip(zipFile: File, database: AppDatabase): ImportResult =
         withContext(Dispatchers.IO) {
-            val workDir = File(context.cacheDir, "template_import_${System.currentTimeMillis()}")
+            val workDir = File(context.cacheDir, "template_import_${UUID.randomUUID()}")
             try {
-                workDir.mkdirs()
+                if (!workDir.mkdirs()) {
+                    throw IllegalStateException("无法创建模板包临时目录")
+                }
                 val pkg = TemplatePackageImporter.parse(zipFile, workDir)
                 importPackage(pkg, database)
             } finally {
@@ -235,17 +238,31 @@ class TemplateImportService(private val context: Context) {
         val roiDao = database.roiDao()
 
         try {
+            if (pkg.regions.isEmpty()) {
+                throw IllegalArgumentException("模板包未包含任何视角")
+            }
+            if (pkg.regions.none { region ->
+                    region.imageFiles.any { imageFile -> imageFile.isFile && imageFile.length() > 0L }
+                }) {
+                throw IllegalArgumentException("模板包未包含可导入的有效视角图片")
+            }
+
             // 1. 准备图片存储目录
-            val imagesDir = File(context.filesDir, TEMPLATE_IMAGES_DIR).apply { mkdirs() }
+            val imagesDir = File(context.filesDir, TEMPLATE_IMAGES_DIR).apply {
+                if (!exists() && !mkdirs()) {
+                    throw IllegalStateException("无法创建模板图片存储目录")
+                }
+            }
 
             // 2. 复制所有图片到 App 私有目录
             val imageMapping = mutableMapOf<File, File>() // 原文件 → 新文件
             for (region in pkg.regions) {
                 for (imageFile in region.imageFiles) {
-                    if (!imageFile.exists() || imageFile.length() == 0L) {
+                    if (!imageFile.isFile || imageFile.length() == 0L) {
                         Log.w(TAG, "跳过无效图片：${imageFile.absolutePath}")
                         continue
                     }
+                    if (imageMapping.containsKey(imageFile)) continue
                     val destName = "${UUID.randomUUID()}_${imageFile.name}"
                     val destFile = File(imagesDir, destName)
                     imageFile.copyTo(destFile, overwrite = false)
@@ -254,82 +271,88 @@ class TemplateImportService(private val context: Context) {
                 }
             }
 
-            // 3. Upsert 零件
-            val now = System.currentTimeMillis()
-            val existingPart = partDao.getById(pkg.partId)
-            if (existingPart != null) {
-                // 更新零件信息（不覆盖已有 dpmCode）
-                partDao.update(existingPart.copy(
-                    name = pkg.partName,
-                    dpmCode = pkg.dpmCode ?: existingPart.dpmCode,
-                    updatedAt = now,
-                ))
-            } else {
-                partDao.insert(PartEntity(
-                    id = pkg.partId,
-                    name = pkg.partName,
-                    dpmCode = pkg.dpmCode,
-                    createdAt = now,
-                    updatedAt = now,
-                ))
-            }
-
-            // 4. 删除该零件下已有模板（重新导入时清理旧数据）
-            templateDao.deleteByPartId(pkg.partId)
-
-            // 5. 为每个 region 创建模板和 ROI
             var templateCount = 0
             var roiCount = 0
-            for ((index, region) in pkg.regions.withIndex()) {
-                // 找到该 region 复制后的第一张图片作为 mainImage
-                val mainImageFile = region.imageFiles.firstNotNullOfOrNull { original ->
-                    imageMapping[original]
-                }
-                if (mainImageFile == null) {
-                    Log.w(TAG, "视角「${region.regionName}」无有效图片，跳过")
-                    continue
+            val skippedRegions = mutableListOf<String>()
+
+            // 数据库替换必须是一个事务：图片复制失败或任一行写入失败时，旧模板仍保留。
+            database.withTransaction {
+                // 3. Upsert 零件
+                val now = System.currentTimeMillis()
+                val existingPart = partDao.getById(pkg.partId)
+                if (existingPart != null) {
+                    // 更新零件信息（不覆盖已有 dpmCode）
+                    partDao.update(existingPart.copy(
+                        name = pkg.partName,
+                        dpmCode = pkg.dpmCode ?: existingPart.dpmCode,
+                        updatedAt = now,
+                    ))
+                } else {
+                    partDao.insert(PartEntity(
+                        id = pkg.partId,
+                        name = pkg.partName,
+                        dpmCode = pkg.dpmCode,
+                        createdAt = now,
+                        updatedAt = now,
+                    ))
                 }
 
-                val templateId = region.templateId
-                    ?.takeIf { it.isNotBlank() && templateDao.getById(it) == null }
-                    ?: "${pkg.partId}_region_${index}_${UUID.randomUUID()}"
-                val template = InspectionTemplateEntity(
-                    id = templateId,
-                    partId = pkg.partId,
-                    name = region.regionName,
-                    mainImagePath = mainImageFile.absolutePath,
-                    displayOrder = index,
-                    outlineData = region.outlineData,
-                    createdAt = region.createdAt ?: now,
-                    updatedAt = region.updatedAt ?: now,
-                    enabled = region.enabled,
-                )
-                templateDao.insert(template)
-                templateCount++
+                // 4. 删除该零件下已有模板（重新导入时清理旧数据）
+                templateDao.deleteByPartId(pkg.partId)
 
-                region.rois.forEachIndexed { roiIndex, roi ->
-                    val importedRoiId = roi.id
-                        ?.takeIf { it.isNotBlank() && roiDao.getById(it) == null }
-                        ?: "${templateId}_roi_${roiIndex}_${UUID.randomUUID()}"
-                    roiDao.insert(
-                        RoiDefinitionEntity(
-                            id = importedRoiId,
-                            templateId = templateId,
-                            name = roi.name,
-                            order = roiIndex,
-                            shapeType = roi.shapeType,
-                            normalizedRect = roi.normalizedRect,
-                            points = roi.points,
-                            inspectionType = roi.inspectionType,
-                            expectedValue = roi.expectedValue,
-                            configJson = roi.configJson,
-                            preprocessJson = roi.preprocessJson,
-                            enabled = roi.enabled,
-                            createdAt = roi.createdAt ?: now,
-                            targetType = roi.targetType,
-                        )
+                // 5. 为每个 region 创建模板和 ROI
+                for ((index, region) in pkg.regions.withIndex()) {
+                    // 找到该 region 复制后的第一张图片作为 mainImage
+                    val mainImageFile = region.imageFiles.firstNotNullOfOrNull { original ->
+                        imageMapping[original]
+                    }
+                    if (mainImageFile == null) {
+                        Log.w(TAG, "视角「${region.regionName}」无有效图片，跳过")
+                        skippedRegions += region.regionName
+                        continue
+                    }
+
+                    val templateId = region.templateId
+                        ?.takeIf { it.isNotBlank() && templateDao.getById(it) == null }
+                        ?: "${pkg.partId}_region_${index}_${UUID.randomUUID()}"
+                    val template = InspectionTemplateEntity(
+                        id = templateId,
+                        partId = pkg.partId,
+                        name = region.regionName,
+                        mainImagePath = mainImageFile.absolutePath,
+                        displayOrder = index,
+                        outlineData = region.outlineData,
+                        createdAt = region.createdAt ?: now,
+                        updatedAt = region.updatedAt ?: now,
+                        enabled = region.enabled,
                     )
-                    roiCount++
+                    templateDao.insert(template)
+                    templateCount++
+
+                    region.rois.forEachIndexed { roiIndex, roi ->
+                        val importedRoiId = roi.id
+                            ?.takeIf { it.isNotBlank() && roiDao.getById(it) == null }
+                            ?: "${templateId}_roi_${roiIndex}_${UUID.randomUUID()}"
+                        roiDao.insert(
+                            RoiDefinitionEntity(
+                                id = importedRoiId,
+                                templateId = templateId,
+                                name = roi.name,
+                                order = roiIndex,
+                                shapeType = roi.shapeType,
+                                normalizedRect = roi.normalizedRect,
+                                points = roi.points,
+                                inspectionType = roi.inspectionType,
+                                expectedValue = roi.expectedValue,
+                                configJson = roi.configJson,
+                                preprocessJson = roi.preprocessJson,
+                                enabled = roi.enabled,
+                                createdAt = roi.createdAt ?: now,
+                                targetType = roi.targetType,
+                            )
+                        )
+                        roiCount++
+                    }
                 }
             }
 
@@ -340,7 +363,7 @@ class TemplateImportService(private val context: Context) {
                 partId = pkg.partId,
                 templateCount = templateCount,
                 roiCount = roiCount,
-                warnings = pkg.warnings,
+                warnings = pkg.warnings + skippedRegions.map { "视角「$it」无有效图片，已跳过" },
             )
         } catch (e: Exception) {
             Log.e(TAG, "导入失败，回滚", e)

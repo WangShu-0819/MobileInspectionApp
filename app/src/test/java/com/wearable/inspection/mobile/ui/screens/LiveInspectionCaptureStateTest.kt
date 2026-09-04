@@ -184,6 +184,19 @@ class LiveInspectionCaptureStateTest {
     }
 
     @Test
+    fun `switching part keeps the camera content rect for roi overlay`() {
+        val source = readSource()
+        val selectStart = source.indexOf("onSelect = { partId ->")
+        val resetCall = source.indexOf("onResetCapture()", selectStart)
+        assertTrue("零件选择回调应存在", selectStart > 0)
+        assertTrue("零件选择回调应重置拍照状态", resetCall > selectStart)
+        assertFalse(
+            "相机预览没有重建时不能清空仍然有效的 contentRect，否则 ROI 框不会恢复",
+            source.substring(selectStart, resetCall).contains("contentRect = null")
+        )
+    }
+
+    @Test
     fun `captured image file processing does not block the main thread`() {
         val source = readSource()
         assertTrue(

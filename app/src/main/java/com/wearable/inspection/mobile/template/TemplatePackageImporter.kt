@@ -3,6 +3,7 @@ package com.wearable.inspection.mobile.template
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileInputStream
+import java.io.IOException
 import java.util.zip.ZipInputStream
 import org.json.JSONException
 import org.json.JSONObject
@@ -84,69 +85,83 @@ object TemplatePackageImporter {
      * @throws TemplatePackageImportException 结构/安全校验失败
      */
     fun parse(zipFile: File, workDir: File): TemplatePackage {
+        if (!zipFile.isFile || zipFile.length() <= 0L) {
+            throw TemplatePackageImportException("模板包文件不存在或为空")
+        }
+
         var entryCount = 0
         var totalBytes = 0L
         var manifestBytes: ByteArray? = null
         val extracted = LinkedHashMap<String, File>() // basename → 解压文件（JSON 引用匹配用）
         val usedNames = HashSet<String>()
 
-        ZipInputStream(FileInputStream(zipFile).buffered()).use { zip ->
-            var entry = zip.nextEntry
-            while (entry != null) {
-                entryCount++
-                if (entryCount > MAX_ENTRIES) {
-                    throw TemplatePackageImportException("模板包条目数超过上限 $MAX_ENTRIES")
-                }
-                val name = entry.name
-                validateEntryName(name)
-                when {
-                    name == MANIFEST_ENTRY -> {
-                        if (manifestBytes != null) {
-                            throw TemplatePackageImportException("模板包存在多个 $MANIFEST_ENTRY")
-                        }
-                        manifestBytes = readLimited(zip, MAX_JSON_BYTES, MANIFEST_ENTRY)
+        try {
+            ZipInputStream(FileInputStream(zipFile).buffered()).use { zip ->
+                var entry = zip.nextEntry
+                while (entry != null) {
+                    entryCount++
+                    if (entryCount > MAX_ENTRIES) {
+                        throw TemplatePackageImportException("模板包条目数超过上限 $MAX_ENTRIES")
                     }
-
-                    name.startsWith(IMAGES_PREFIX) && name.length > IMAGES_PREFIX.length -> {
-                        val basename = name.substring(name.lastIndexOf('/') + 1)
-                        if (basename.isEmpty()) { /* "images//" 之类，忽略 */ } else {
-                            val unique = uniqueBasename(basename, usedNames)
-                            val imagesDir = File(workDir, "images").apply { mkdirs() }
-                            val target = File(imagesDir, unique)
-                            // 双保险：扁平化 + 条目名校验已防穿越，此处再断言规范路径
-                            if (!target.canonicalPath.startsWith(imagesDir.canonicalPath + File.separator)) {
-                                throw TemplatePackageImportException("模板包条目名非法（路径穿越）：$name")
+                    val name = entry.name
+                    validateEntryName(name)
+                    when {
+                        name == MANIFEST_ENTRY -> {
+                            if (manifestBytes != null) {
+                                throw TemplatePackageImportException("模板包存在多个 $MANIFEST_ENTRY")
                             }
-                            var written = 0L
-                            target.outputStream().use { out ->
-                                val buf = ByteArray(DEFAULT_BUFFER_SIZE)
-                                while (true) {
-                                    val n = zip.read(buf)
-                                    if (n < 0) break
-                                    out.write(buf, 0, n)
-                                    written += n
-                                    if (written > MAX_IMAGE_BYTES) {
-                                        throw TemplatePackageImportException("图片 $name 超过单文件上限 $MAX_IMAGE_BYTES 字节")
+                            manifestBytes = readLimited(zip, MAX_JSON_BYTES, MANIFEST_ENTRY)
+                        }
+
+                        name.startsWith(IMAGES_PREFIX) && name.length > IMAGES_PREFIX.length -> {
+                            val basename = name.substring(name.lastIndexOf('/') + 1)
+                            if (basename.isEmpty()) { /* "images//" 之类，忽略 */ } else {
+                                val unique = uniqueBasename(basename, usedNames)
+                                val imagesDir = File(workDir, "images").apply {
+                                    if (!exists() && !mkdirs()) {
+                                        throw IOException("无法创建模板图片临时目录")
                                     }
                                 }
+                                val target = File(imagesDir, unique)
+                                // 双保险：扁平化 + 条目名校验已防穿越，此处再断言规范路径
+                                if (!target.canonicalPath.startsWith(imagesDir.canonicalPath + File.separator)) {
+                                    throw TemplatePackageImportException("模板包条目名非法（路径穿越）：$name")
+                                }
+                                var written = 0L
+                                target.outputStream().use { out ->
+                                    val buf = ByteArray(DEFAULT_BUFFER_SIZE)
+                                    while (true) {
+                                        val n = zip.read(buf)
+                                        if (n < 0) break
+                                        out.write(buf, 0, n)
+                                        written += n
+                                        if (written > MAX_IMAGE_BYTES) {
+                                            throw TemplatePackageImportException("图片 $name 超过单文件上限 $MAX_IMAGE_BYTES 字节")
+                                        }
+                                    }
+                                }
+                                totalBytes += written
+                                if (totalBytes > MAX_TOTAL_BYTES) {
+                                    throw TemplatePackageImportException("模板包解压总量超过上限 $MAX_TOTAL_BYTES 字节")
+                                }
+                                extracted[unique] = target
                             }
-                            totalBytes += written
-                            if (totalBytes > MAX_TOTAL_BYTES) {
-                                throw TemplatePackageImportException("模板包解压总量超过上限 $MAX_TOTAL_BYTES 字节")
-                            }
-                            extracted[unique] = target
                         }
+
+                        else -> { /* README 等非模板内容忽略 */ }
                     }
-
-                    else -> { /* README 等非模板内容忽略 */ }
+                    zip.closeEntry()
+                    entry = zip.nextEntry
                 }
-                zip.closeEntry()
-                entry = zip.nextEntry
             }
-        }
 
-        val manifest = manifestBytes ?: throw TemplatePackageImportException("模板包缺少 $MANIFEST_ENTRY")
-        return parseManifest(String(manifest, Charsets.UTF_8), extracted)
+            val manifest = manifestBytes ?: throw TemplatePackageImportException("模板包缺少 $MANIFEST_ENTRY")
+            return parseManifest(String(manifest, Charsets.UTF_8), extracted)
+        } catch (e: TemplatePackageImportException) {
+            throw e
+        } catch (e: IOException) {
+            throw TemplatePackageImportException("模板包无法读取，可能不是有效的 ZIP 或文件已损坏：${e.message ?: "未知读取错误"}")
+        }
     }
 
     /** 读满 limit 字节即抛（防 zip 炸弹的 JSON 内容） */
@@ -235,19 +250,17 @@ object TemplatePackageImporter {
                 validateRoi(region, regionName, warnings)
                 val rois = parseRois(region, regionName, warnings)
                 val imageFiles = mutableListOf<File>()
-                region.optJSONArray("imageFiles")?.let { refs ->
-                    for (j in 0 until refs.length()) {
-                        val ref = refs.optString(j).trim()
-                        if (ref.isEmpty()) continue
-                        // 兼容 "images/x.jpg" 与裸 "x.jpg"：一律按 basename 匹配解压结果
-                        val basename = ref.removePrefix(IMAGES_PREFIX).substringAfterLast('/')
-                        val file = extracted[basename]
-                        if (file == null) {
-                            warnings += "视角「$regionName」缺图 $ref（已跳过）"
-                            continue
-                        }
-                        imageFiles += file
+                imageReferences(region).forEach { ref ->
+                    // manifest 只用于取 basename，不把路径直接拼到本地文件系统；允许旧包的 Windows 分隔符。
+                    val normalizedRef = ref.replace('\\', '/')
+                    val basename = normalizedRef.removePrefix(IMAGES_PREFIX).substringAfterLast('/')
+                    val file = extracted[basename]
+                        ?: extracted.entries.firstOrNull { it.key.equals(basename, ignoreCase = true) }?.value
+                    if (file == null) {
+                        warnings += "视角「$regionName」缺图 $ref（已跳过）"
+                        return@forEach
                     }
+                    imageFiles += file
                 }
                 regions += IndexedRegion(
                     originalIndex = i,
@@ -269,6 +282,15 @@ object TemplatePackageImporter {
             .sortedWith(compareBy<IndexedRegion> { it.displayOrder }.thenBy { it.originalIndex })
             .mapIndexed { index, item -> item.region.copy(displayOrder = index) }
         return TemplatePackage(partId, partName, dpmCode, orderedRegions, warnings)
+    }
+
+    /** 兼容 imageFiles 为数组或单个字符串的历史 manifest。 */
+    private fun imageReferences(region: JSONObject): List<String> = when (val raw = region.opt("imageFiles")) {
+        is org.json.JSONArray -> (0 until raw.length()).mapNotNull { index ->
+            raw.optString(index).trim().takeIf { it.isNotEmpty() }
+        }
+        is String -> listOf(raw.trim()).filter { it.isNotEmpty() }
+        else -> emptyList()
     }
 
     private data class IndexedRegion(

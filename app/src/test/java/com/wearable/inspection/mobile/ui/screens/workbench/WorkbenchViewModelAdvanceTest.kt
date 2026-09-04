@@ -2,6 +2,7 @@ package com.wearable.inspection.mobile.ui.screens.workbench
 
 import com.wearable.inspection.mobile.data.entity.InspectionTemplateEntity
 import com.wearable.inspection.mobile.data.entity.PartEntity
+import com.wearable.inspection.mobile.data.entity.RoiDefinitionEntity
 import com.wearable.inspection.mobile.data.repository.InspectionRepository
 import com.wearable.inspection.mobile.data.settings.SettingsStore
 import kotlinx.coroutines.Dispatchers
@@ -249,5 +250,57 @@ class WorkbenchViewModelAdvanceTest {
         assertEquals(2, vm.currentViewIndex.value)
 
         job.cancel()
+    }
+
+    @Test
+    fun `selectPart reloads templates and rois from the new part`() = runTest {
+        val part1 = createPart("p1")
+        val part2 = createPart("p2")
+        val template1 = createTemplate("t1", "p1")
+        val template2 = createTemplate("t2", "p2")
+        val roi2 = RoiDefinitionEntity(
+            id = "roi2",
+            templateId = "t2",
+            name = "ROI 2",
+            order = 0,
+            normalizedRect = "{\"left\":0.1,\"top\":0.1,\"right\":0.4,\"bottom\":0.4}",
+            inspectionType = "FEATURE",
+        )
+        val partsFlow = MutableStateFlow(listOf(part1, part2))
+
+        runBlocking {
+            `when`(mockRepository.getParts()).thenReturn(listOf(part1, part2))
+            `when`(mockRepository.getAllTemplates()).thenReturn(listOf(template1, template2))
+            `when`(mockRepository.getPartById("p1")).thenReturn(part1)
+            `when`(mockRepository.getPartById("p2")).thenReturn(part2)
+        }
+        `when`(mockRepository.observeParts()).thenReturn(partsFlow)
+        `when`(mockRepository.observeTemplates("p1")).thenReturn(flowOf(listOf(template1)))
+        `when`(mockRepository.observeTemplates("p2")).thenReturn(flowOf(listOf(template2)))
+        `when`(mockRepository.observeRois("t1")).thenReturn(flowOf(emptyList()))
+        `when`(mockRepository.observeRois("t2")).thenReturn(flowOf(listOf(roi2)))
+        `when`(mockSettings.selectedPartId).thenReturn("p1")
+
+        val vm = WorkbenchViewModel(mockRepository, mockSettings)
+        val jobs = listOf(
+            launch { vm.templates.collect {} },
+            launch { vm.selectedTemplate.collect {} },
+            launch { vm.rois.collect {} },
+        )
+        advanceUntilIdle()
+
+        assertEquals("p1", vm.selectedTemplate.value?.partId)
+        assertEquals("t1", vm.selectedTemplate.value?.id)
+
+        vm.selectPart("p2")
+        advanceUntilIdle()
+
+        assertEquals("p2", vm.selectedPart.value?.id)
+        assertEquals(listOf("t2"), vm.templates.value.map { it.id })
+        assertEquals("p2", vm.selectedTemplate.value?.partId)
+        assertEquals("t2", vm.selectedTemplate.value?.id)
+        assertEquals(listOf("roi2"), vm.rois.value.map { it.id })
+
+        jobs.forEach { it.cancel() }
     }
 }
