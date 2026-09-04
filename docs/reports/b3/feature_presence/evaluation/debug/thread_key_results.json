@@ -1,0 +1,786 @@
+[
+  {
+    "file": "thread_1.png",
+    "status": "PASS",
+    "score": 0.6482516784288839,
+    "message": "refined circular aperture and internal periodic texture are present",
+    "box": [
+      26,
+      30,
+      40,
+      40
+    ],
+    "rawHough": {
+      "x": 46.20000076293945,
+      "y": 52.20000076293945,
+      "radius": 19.719999313354492,
+      "source": 0.0
+    },
+    "refined": {
+      "x": 46.20000076293945,
+      "y": 50.20000076293945,
+      "radius": 19.92727210304954
+    },
+    "shiftPx": 2.0,
+    "radiusDelta": 0.2072727896950468,
+    "scores": {
+      "geometry": 0.5825438797986243,
+      "darkCore": 0.5692477131982193,
+      "texture": 0.8222459312839059,
+      "sharpness": 0.9966600058400771,
+      "centralAperture": 0.9982608695652175,
+      "textureAngularConsistency": 0.06428571428571428,
+      "ringGradient": 0.8508273959159851,
+      "concentricity": 0.42766620217411383
+    },
+    "quality": {
+      "angularCoverage": 0.8541666666666666,
+      "radialConsistency": 0.32609090909090954,
+      "radialSpread": 0.1482599999999999,
+      "backgroundPenalty": 0.0723391477432516,
+      "plainCirclePenalty": 0.0,
+      "texturePeriodicitySupport": 1.0
+    },
+    "imageSize": [
+      91,
+      84
+    ],
+    "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\evaluation\\debug\\thread_key\\thread_1.jpg",
+    "seconds": 7.0834553
+  },
+  {
+    "file": "thread_2.png",
+    "status": "PASS",
+    "score": 0.7739713216919426,
+    "message": "refined circular aperture and internal periodic texture are present",
+    "box": [
+      53,
+      64,
+      55,
+      55
+    ],
+    "rawHough": {
+      "x": 89.5,
+      "y": 84.5,
+      "radius": 44.900001525878906,
+      "source": 0.0
+    },
+    "refined": {
+      "x": 80.56855575868373,
+      "y": 91.49177330895795,
+      "radius": 27.71545541936701
+    },
+    "shiftPx": 11.342644763881056,
+    "radiusDelta": -17.184546106511895,
+    "scores": {
+      "geometry": 0.603169338927695,
+      "darkCore": 0.7320286880261531,
+      "texture": 1.0,
+      "sharpness": 1.0,
+      "centralAperture": 0.8660869565217388,
+      "textureAngularConsistency": 0.6928571428571428,
+      "ringGradient": 0.8817504048347473,
+      "concentricity": 0.6130193191085826
+    },
+    "quality": {
+      "angularCoverage": 0.8958333333333334,
+      "radialConsistency": 0.32609090909090865,
+      "radialSpread": 0.1482600000000001,
+      "backgroundPenalty": 0.08836983071687894,
+      "plainCirclePenalty": 0.0,
+      "texturePeriodicitySupport": 1.0
+    },
+    "imageSize": [
+      203,
+      177
+    ],
+    "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\evaluation\\debug\\thread_key\\thread_2.jpg",
+    "seconds": 13.5168564
+  },
+  {
+    "file": "thread_3.jpg",
+    "status": "PASS",
+    "score": 0.5973045076208006,
+    "message": "refined circular aperture and internal periodic texture are present",
+    "box": [
+      340,
+      394,
+      136,
+      136
+    ],
+    "rawHough": {
+      "x": 404.24804687500006,
+      "y": 462.35351562500006,
+      "radius": 70.88867314159872,
+      "source": 0.0
+    },
+    "refined": {
+      "x": 407.56835937500006,
+      "y": 462.35351562500006,
+      "radius": 68.00000000000001
+    },
+    "shiftPx": 3.3203125000000004,
+    "radiusDelta": -2.8886731415987006,
+    "scores": {
+      "geometry": 0.6331148319261404,
+      "darkCore": 0.5984878047608524,
+      "texture": 0.8517739847384039,
+      "sharpness": 0.23515135278966046,
+      "centralAperture": 0.9982608695652175,
+      "textureAngularConsistency": 0.0,
+      "ringGradient": 0.9718652367591858,
+      "concentricity": 0.3887680130599131
+    },
+    "quality": {
+      "angularCoverage": 0.9583333333333334,
+      "radialConsistency": 0.4009696969696971,
+      "radialSpread": 0.13178666666666664,
+      "backgroundPenalty": 0.0922852291415135,
+      "plainCirclePenalty": 0.0,
+      "texturePeriodicitySupport": 1.0
+    },
+    "imageSize": [
+      850,
+      850
+    ],
+    "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\evaluation\\debug\\thread_key\\thread_3.jpg",
+    "seconds": 29.737722299999998
+  },
+  {
+    "file": "thread_4.jpg",
+    "status": "PASS",
+    "score": 0.6137595058646872,
+    "message": "refined circular aperture and internal periodic texture are present",
+    "box": [
+      956,
+      985,
+      251,
+      251
+    ],
+    "rawHough": {
+      "x": 1081.1767578125,
+      "y": 1110.2294921875,
+      "radius": 104.58984691649675,
+      "source": 0.0
+    },
+    "refined": {
+      "x": 1081.1767578125,
+      "y": 1110.2294921875,
+      "radius": 125.5078162997961
+    },
+    "shiftPx": 0.0,
+    "radiusDelta": 20.917969383299347,
+    "scores": {
+      "geometry": 0.7002210073942593,
+      "darkCore": 0.6151363813441443,
+      "texture": 0.9677226467523447,
+      "sharpness": 0.2844226550954481,
+      "centralAperture": 0.9982608695652173,
+      "textureAngularConsistency": 0.0,
+      "ringGradient": 0.9906517863273621,
+      "concentricity": 0.28946100029968036
+    },
+    "quality": {
+      "angularCoverage": 1.0,
+      "radialConsistency": 0.5186363636363633,
+      "radialSpread": 0.10590000000000005,
+      "backgroundPenalty": 0.07568470594783623,
+      "plainCirclePenalty": 0.0,
+      "texturePeriodicitySupport": 1.0
+    },
+    "imageSize": [
+      2125,
+      2125
+    ],
+    "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\evaluation\\debug\\thread_key\\thread_4.jpg",
+    "seconds": 29.4847738
+  },
+  {
+    "file": "thread_5.jpg",
+    "status": "PASS",
+    "score": 0.6733213751115388,
+    "message": "refined circular aperture and internal periodic texture are present",
+    "box": [
+      504,
+      489,
+      209,
+      209
+    ],
+    "rawHough": {
+      "x": 570.8935546875,
+      "y": 623.9462890625,
+      "radius": 261.8037109375,
+      "source": 0.0
+    },
+    "refined": {
+      "x": 608.7300507421315,
+      "y": 594.0196894000358,
+      "radius": 104.72148437500002
+    },
+    "shiftPx": 48.24108001537231,
+    "radiusDelta": -157.08222656249998,
+    "scores": {
+      "geometry": 0.5411043891434855,
+      "darkCore": 0.8024156741640225,
+      "texture": 0.8741587301587301,
+      "sharpness": 0.7900182100375532,
+      "centralAperture": 0.737391304347826,
+      "textureAngularConsistency": 0.5428571428571429,
+      "ringGradient": 0.9206305146217346,
+      "concentricity": 0.5768872488844116
+    },
+    "quality": {
+      "angularCoverage": 0.9166666666666666,
+      "radialConsistency": 0.46087272727272766,
+      "radialSpread": 0.11860799999999991,
+      "backgroundPenalty": 0.2395945343410685,
+      "plainCirclePenalty": 0.0,
+      "texturePeriodicitySupport": 1.0
+    },
+    "imageSize": [
+      1181,
+      1181
+    ],
+    "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\evaluation\\debug\\thread_key\\thread_5.jpg",
+    "seconds": 35.455484999999996
+  },
+  {
+    "file": "thread_6.jpg",
+    "status": "PASS",
+    "score": 0.5555501236927082,
+    "message": "refined circular aperture and internal periodic texture are present",
+    "box": [
+      613,
+      638,
+      211,
+      211
+    ],
+    "rawHough": {
+      "x": 723.7216796875,
+      "y": 743.0947265625,
+      "radius": 81.09003695100546,
+      "source": 0.0
+    },
+    "refined": {
+      "x": 718.1865234375,
+      "y": 743.0947265625,
+      "radius": 105.33402217060328
+    },
+    "shiftPx": 5.53515625,
+    "radiusDelta": 24.24398521959781,
+    "scores": {
+      "geometry": 0.3007889647832507,
+      "darkCore": 0.3441580168641552,
+      "texture": 1.0,
+      "sharpness": 0.3936870670005301,
+      "centralAperture": 0.6211400966183576,
+      "textureAngularConsistency": 0.5785714285714285,
+      "ringGradient": 0.4861346185207367,
+      "concentricity": 0.5
+    },
+    "quality": {
+      "angularCoverage": 0.4375,
+      "radialConsistency": 0.32609090909090976,
+      "radialSpread": 0.14825999999999986,
+      "backgroundPenalty": 0.01115082803967822,
+      "plainCirclePenalty": 0.0,
+      "texturePeriodicitySupport": 1.0
+    },
+    "imageSize": [
+      1417,
+      1417
+    ],
+    "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\evaluation\\debug\\thread_key\\thread_6.jpg",
+    "seconds": 34.906613500000006
+  },
+  {
+    "file": "thread_7.jpg",
+    "status": "PASS",
+    "score": 0.6491213584377451,
+    "message": "refined circular aperture and internal periodic texture are present",
+    "box": [
+      398,
+      376,
+      229,
+      229
+    ],
+    "rawHough": {
+      "x": 518.12109375,
+      "y": 529.69921875,
+      "radius": 123.30703419446945,
+      "source": 0.0
+    },
+    "refined": {
+      "x": 512.4858962004405,
+      "y": 490.9090996696035,
+      "radius": 114.69010087728502
+    },
+    "shiftPx": 39.19730589841477,
+    "radiusDelta": -8.616933317184436,
+    "scores": {
+      "geometry": 0.6062450524145981,
+      "darkCore": 0.6270716432091548,
+      "texture": 0.9302375938681049,
+      "sharpness": 0.1741893643495714,
+      "centralAperture": 0.6495652173913045,
+      "textureAngularConsistency": 0.6285714285714286,
+      "ringGradient": 0.7690005302429199,
+      "concentricity": 0.5782657420534956
+    },
+    "quality": {
+      "angularCoverage": 0.7291666666666666,
+      "radialConsistency": 0.6630454545454549,
+      "radialSpread": 0.07412999999999992,
+      "backgroundPenalty": 0.0027365986456473665,
+      "plainCirclePenalty": 0.0,
+      "texturePeriodicitySupport": 1.0
+    },
+    "imageSize": [
+      988,
+      988
+    ],
+    "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\evaluation\\debug\\thread_key\\thread_7.jpg",
+    "seconds": 33.7251555
+  },
+  {
+    "file": "thread_8.jpg",
+    "status": "PASS",
+    "score": 0.6124083440008475,
+    "message": "refined circular aperture and internal periodic texture are present",
+    "box": [
+      585,
+      498,
+      203,
+      203
+    ],
+    "rawHough": {
+      "x": 678.5888671875,
+      "y": 603.8818359375,
+      "radius": 89.64843908324838,
+      "source": 0.0
+    },
+    "refined": {
+      "x": 686.7249503968254,
+      "y": 599.5338076636905,
+      "radius": 101.60156344994903
+    },
+    "shiftPx": 9.225031157612094,
+    "radiusDelta": 11.953124366700644,
+    "scores": {
+      "geometry": 0.8038790634537173,
+      "darkCore": 0.4833312895508181,
+      "texture": 1.0,
+      "sharpness": 0.41632301669356264,
+      "centralAperture": 0.0,
+      "textureAngularConsistency": 0.5571428571428572,
+      "ringGradient": 0.9518217444419861,
+      "concentricity": 0.5288477898397046
+    },
+    "quality": {
+      "angularCoverage": 0.9791666666666666,
+      "radialConsistency": 0.7304363636363633,
+      "radialSpread": 0.05930400000000006,
+      "backgroundPenalty": 0.00012935496245821318,
+      "plainCirclePenalty": 0.0,
+      "texturePeriodicitySupport": 1.0
+    },
+    "imageSize": [
+      1195,
+      2125
+    ],
+    "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\evaluation\\debug\\thread_key\\thread_8.jpg",
+    "seconds": 18.89542129999998
+  },
+  {
+    "file": "thread_9.jpg",
+    "status": "PASS",
+    "score": 0.6567171875103139,
+    "message": "refined circular aperture and internal periodic texture are present",
+    "box": [
+      464,
+      417,
+      158,
+      158
+    ],
+    "rawHough": {
+      "x": 547.06640625,
+      "y": 489.17578125,
+      "radius": 89.34452977776527,
+      "source": 0.0
+    },
+    "refined": {
+      "x": 542.5746875,
+      "y": 496.1553125,
+      "radius": 79.04
+    },
+    "shiftPx": 8.299963481776743,
+    "radiusDelta": -10.304529777765273,
+    "scores": {
+      "geometry": 0.6591077188905802,
+      "darkCore": 0.6134338885435966,
+      "texture": 1.0,
+      "sharpness": 0.502419874507701,
+      "centralAperture": 0.5079806763285025,
+      "textureAngularConsistency": 0.3642857142857143,
+      "ringGradient": 0.9828804135322571,
+      "concentricity": 0.5076344971467445
+    },
+    "quality": {
+      "angularCoverage": 1.0,
+      "radialConsistency": 0.2512121212121212,
+      "radialSpread": 0.16473333333333334,
+      "backgroundPenalty": 0.03332381785046636,
+      "plainCirclePenalty": 0.0,
+      "texturePeriodicitySupport": 1.0
+    },
+    "imageSize": [
+      988,
+      988
+    ],
+    "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\evaluation\\debug\\thread_key\\thread_9.jpg",
+    "seconds": 38.68568620000002
+  },
+  {
+    "file": "thread_10.jpg",
+    "status": "PASS",
+    "score": 0.7078078606790343,
+    "message": "refined circular aperture and internal periodic texture are present",
+    "box": [
+      477,
+      472,
+      430,
+      430
+    ],
+    "rawHough": {
+      "x": 690.5107421875,
+      "y": 751.3974609375,
+      "radius": 268.455078125,
+      "source": 0.0
+    },
+    "refined": {
+      "x": 691.993925516261,
+      "y": 686.791187867867,
+      "radius": 214.99553267045457
+    },
+    "shiftPx": 64.6232957433671,
+    "radiusDelta": -53.45954545454544,
+    "scores": {
+      "geometry": 0.4120955990705278,
+      "darkCore": 0.7608784905025099,
+      "texture": 1.0,
+      "sharpness": 0.2050387647742755,
+      "centralAperture": 0.9538937198067631,
+      "textureAngularConsistency": 0.7142857142857143,
+      "ringGradient": 0.7337386012077332,
+      "concentricity": 0.8952027512987663
+    },
+    "quality": {
+      "angularCoverage": 0.6458333333333334,
+      "radialConsistency": 0.4945681818181822,
+      "radialSpread": 0.11119499999999992,
+      "backgroundPenalty": 0.15779266871060385,
+      "plainCirclePenalty": 0.0,
+      "texturePeriodicitySupport": 1.0
+    },
+    "imageSize": [
+      1417,
+      1417
+    ],
+    "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\evaluation\\debug\\thread_key\\thread_10.jpg",
+    "seconds": 37.26904710000002
+  },
+  {
+    "file": "thread_11.jpg",
+    "status": "PASS",
+    "score": 0.5607458556517665,
+    "message": "refined circular aperture and internal periodic texture are present",
+    "box": [
+      598,
+      478,
+      177,
+      177
+    ],
+    "rawHough": {
+      "x": 690.8388671875,
+      "y": 566.2802734375,
+      "radius": 58.12734550982714,
+      "source": 0.0
+    },
+    "refined": {
+      "x": 686.2255859375,
+      "y": 566.2802734375,
+      "radius": 88.29820365294815
+    },
+    "shiftPx": 4.61328125,
+    "radiusDelta": 30.170858143121013,
+    "scores": {
+      "geometry": 0.5111201838046504,
+      "darkCore": 0.4602263535244586,
+      "texture": 0.9385138241929785,
+      "sharpness": 0.1346107098981156,
+      "centralAperture": 0.28019323671497587,
+      "textureAngularConsistency": 0.7142857142857143,
+      "ringGradient": 0.9265729784965515,
+      "concentricity": 0.49460473569092483
+    },
+    "quality": {
+      "angularCoverage": 0.8541666666666666,
+      "radialConsistency": 0.3260909090909092,
+      "radialSpread": 0.14825999999999998,
+      "backgroundPenalty": 0.15716570653021336,
+      "plainCirclePenalty": 0.0,
+      "texturePeriodicitySupport": 1.0
+    },
+    "imageSize": [
+      1181,
+      1181
+    ],
+    "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\evaluation\\debug\\thread_key\\thread_11.jpg",
+    "seconds": 38.90188660000001
+  },
+  {
+    "file": "thread_12.jpg",
+    "status": "PASS",
+    "score": 0.6694676648106602,
+    "message": "refined circular aperture and internal periodic texture are present",
+    "box": [
+      626,
+      516,
+      227,
+      227
+    ],
+    "rawHough": {
+      "x": 790.1435546875,
+      "y": 624.0888671875,
+      "radius": 69.74297086149454,
+      "source": 0.0
+    },
+    "refined": {
+      "x": 739.2754673775286,
+      "y": 629.6240234375,
+      "radius": 113.36
+    },
+    "shiftPx": 51.16835214550872,
+    "radiusDelta": 43.61702913850546,
+    "scores": {
+      "geometry": 0.481226960845924,
+      "darkCore": 0.527588037804104,
+      "texture": 1.0,
+      "sharpness": 1.0,
+      "centralAperture": 0.632231884057971,
+      "textureAngularConsistency": 0.55,
+      "ringGradient": 0.7440890669822693,
+      "concentricity": 0.4703378587308559
+    },
+    "quality": {
+      "angularCoverage": 0.75,
+      "radialConsistency": 0.32609090909090976,
+      "radialSpread": 0.14825999999999986,
+      "backgroundPenalty": 0.06431060055221775,
+      "plainCirclePenalty": 0.0,
+      "texturePeriodicitySupport": 1.0
+    },
+    "imageSize": [
+      1417,
+      1417
+    ],
+    "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\evaluation\\debug\\thread_key\\thread_12.jpg",
+    "seconds": 37.62576280000002
+  },
+  {
+    "file": "thread_14.jpg",
+    "status": "PASS",
+    "score": 0.6402847433150534,
+    "message": "refined circular aperture and internal periodic texture are present",
+    "box": [
+      666,
+      717,
+      255,
+      255
+    ],
+    "rawHough": {
+      "x": 826.5761718750001,
+      "y": 804.7832031250001,
+      "radius": 61.020313687622554,
+      "source": 0.0
+    },
+    "refined": {
+      "x": 793.1395304780455,
+      "y": 844.4464070219548,
+      "radius": 127.52000000000002
+    },
+    "shiftPx": 51.87657208490111,
+    "radiusDelta": 66.49968631237746,
+    "scores": {
+      "geometry": 0.7508240949509294,
+      "darkCore": 0.6154346418127559,
+      "texture": 1.0,
+      "sharpness": 0.39358230354111584,
+      "centralAperture": 0.9982608695652175,
+      "textureAngularConsistency": 0.0,
+      "ringGradient": 0.9756115078926086,
+      "concentricity": 0.307839584749054
+    },
+    "quality": {
+      "angularCoverage": 0.9791666666666666,
+      "radialConsistency": 0.7004848484848492,
+      "radialSpread": 0.06589333333333318,
+      "backgroundPenalty": 0.03267991114080998,
+      "plainCirclePenalty": 0.0,
+      "texturePeriodicitySupport": 1.0
+    },
+    "imageSize": [
+      1594,
+      1594
+    ],
+    "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\evaluation\\debug\\thread_key\\thread_14.jpg",
+    "seconds": 30.34402590000002
+  },
+  {
+    "file": "thread_15.jpg",
+    "status": "PASS",
+    "score": 0.6055554656591557,
+    "message": "refined circular aperture and internal periodic texture are present",
+    "box": [
+      835,
+      658,
+      173,
+      173
+    ],
+    "rawHough": {
+      "x": 963.5605468750001,
+      "y": 786.1035156250001,
+      "radius": 54.17109256237746,
+      "source": 0.0
+    },
+    "refined": {
+      "x": 922.1227742094547,
+      "y": 744.6657429594547,
+      "radius": 86.72823121940719
+    },
+    "shiftPx": 58.60186009814741,
+    "radiusDelta": 32.557138657029725,
+    "scores": {
+      "geometry": 0.6071425854460177,
+      "darkCore": 0.6962274957153581,
+      "texture": 0.8610691728117986,
+      "sharpness": 0.25663314765201356,
+      "centralAperture": 0.9982608695652175,
+      "textureAngularConsistency": 0.0,
+      "ringGradient": 0.9991207122802734,
+      "concentricity": 0.41217819256598276
+    },
+    "quality": {
+      "angularCoverage": 1.0,
+      "radialConsistency": 0.4384090909090915,
+      "radialSpread": 0.12354999999999987,
+      "backgroundPenalty": 0.18502008143143778,
+      "plainCirclePenalty": 0.0,
+      "texturePeriodicitySupport": 1.0
+    },
+    "imageSize": [
+      1594,
+      1594
+    ],
+    "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\evaluation\\debug\\thread_key\\thread_15.jpg",
+    "seconds": 34.168862599999954
+  },
+  {
+    "file": "thread_16.jpg",
+    "status": "PASS",
+    "score": 0.6379893302806889,
+    "message": "refined circular aperture and internal periodic texture are present",
+    "box": [
+      708,
+      739,
+      218,
+      218
+    ],
+    "rawHough": {
+      "x": 761.1972656250001,
+      "y": 786.1035156250001,
+      "radius": 85.61523437500001,
+      "source": 0.0
+    },
+    "refined": {
+      "x": 816.8471679687501,
+      "y": 847.9799804687501,
+      "radius": 108.93371093750002
+    },
+    "shiftPx": 83.22024112214976,
+    "radiusDelta": 23.31847656250001,
+    "scores": {
+      "geometry": 0.7145853364621507,
+      "darkCore": 0.5456029529334717,
+      "texture": 0.9536133137030051,
+      "sharpness": 0.720195172633612,
+      "centralAperture": 0.3438454106280193,
+      "textureAngularConsistency": 0.35,
+      "ringGradient": 0.9987382888793945,
+      "concentricity": 0.6754842252274786
+    },
+    "quality": {
+      "angularCoverage": 1.0,
+      "radialConsistency": 0.6149090909090908,
+      "radialSpread": 0.08472000000000002,
+      "backgroundPenalty": 0.10518673464655877,
+      "plainCirclePenalty": 0.0,
+      "texturePeriodicitySupport": 1.0
+    },
+    "imageSize": [
+      1594,
+      1594
+    ],
+    "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\evaluation\\debug\\thread_key\\thread_16.jpg",
+    "seconds": 38.81722330000002
+  },
+  {
+    "file": "thread_17.jpg",
+    "status": "PASS",
+    "score": 0.6572835644876277,
+    "message": "refined circular aperture and internal periodic texture are present",
+    "box": [
+      344,
+      463,
+      294,
+      294
+    ],
+    "rawHough": {
+      "x": 486.8623046875,
+      "y": 513.8525390625,
+      "radius": 142.01015941798687,
+      "source": 0.0
+    },
+    "refined": {
+      "x": 491.0146484375,
+      "y": 610.3114864341915,
+      "radius": 147.12886640115218
+    },
+    "shiftPx": 96.54828059925721,
+    "radiusDelta": 5.118706983165315,
+    "scores": {
+      "geometry": 0.567765633466119,
+      "darkCore": 0.5043679552325777,
+      "texture": 1.0,
+      "sharpness": 0.4338983746087179,
+      "centralAperture": 0.9982608695652175,
+      "textureAngularConsistency": 0.3214285714285714,
+      "ringGradient": 0.7741028666496277,
+      "concentricity": 0.47826750114412164
+    },
+    "quality": {
+      "angularCoverage": 0.6875,
+      "radialConsistency": 0.7304363636363633,
+      "radialSpread": 0.05930400000000005,
+      "backgroundPenalty": 0.08915442524074768,
+      "plainCirclePenalty": 0.0,
+      "texturePeriodicitySupport": 1.0
+    },
+    "imageSize": [
+      1063,
+      1063
+    ],
+    "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\evaluation\\debug\\thread_key\\thread_17.jpg",
+    "seconds": 33.24094009999999
+  }
+]

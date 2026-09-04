@@ -1,0 +1,2966 @@
+{
+  "mode": "EXPLORATORY_FULL_IMAGE_VISUALIZATION_ONLY",
+  "algorithmVersion": "presence-offline.3",
+  "key": {
+    "imageCount": 3,
+    "detectorRuns": 6,
+    "records": [
+      {
+        "fileName": "nut_1.png",
+        "subset": "key",
+        "originalShape": [
+          136,
+          376,
+          3
+        ],
+        "processedShape": [
+          136,
+          376,
+          3
+        ],
+        "scale": 1.0,
+        "nut": {
+          "status": "PASS",
+          "score": 0.7459224619646544,
+          "message": "configured nut count and near-hexagonal geometry match",
+          "metrics": {
+            "tealRawCoverage": 0.014881883604505632,
+            "tealDilatedCoverage": 0.0203770337922403,
+            "candidateCountBeforeNms": 2.0,
+            "candidateCount": 2.0,
+            "averageGeometryScore": 0.752797030309242,
+            "averageCenterHoleScore": 0.7164991767265669,
+            "minCenterHoleScore": 0.6308503352165221,
+            "averageCircularity": 0.8587694211590906,
+            "averageEdgeDensity": 0.20034204537413097,
+            "quality": 1.0
+          },
+          "boxes": [
+            [
+              217,
+              49,
+              71,
+              71
+            ],
+            [
+              61,
+              55,
+              76,
+              72
+            ]
+          ],
+          "algorithm": "NutPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 23,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\key\\nut_1.nut.jpg"
+        },
+        "thread": {
+          "status": "PASS",
+          "score": 0.5715375127304321,
+          "message": "circular aperture and internal periodic texture are present",
+          "metrics": {
+            "tealRawCoverage": 0.014881883604505632,
+            "tealDilatedCoverage": 0.0203770337922403,
+            "circleCandidates": 169.0,
+            "refinedCandidates": 10.0,
+            "circleCenterX": 74.90953545232274,
+            "circleCenterY": 43.54767726161369,
+            "circleRadius": 23.968000183105467,
+            "refinedCircleCenterX": 74.90953545232274,
+            "refinedCircleCenterY": 43.54767726161369,
+            "refinedCircleRadius": 23.968000183105467,
+            "rawCircleCenterX": 82.5,
+            "rawCircleCenterY": 54.5,
+            "rawCircleRadius": 30.200000762939453,
+            "rawLegacyScore": 0.5532706755590021,
+            "refinementShiftPx": 13.32548405932479,
+            "refinementRadiusDelta": -6.232000579833986,
+            "circleGeometryScore": 0.5512256794137735,
+            "circleAngularCoverage": 0.6527777777777778,
+            "circleRadialConsistency": 0.39889753186776733,
+            "innerDarkRatio": 0.5209452201933404,
+            "darkCoreScore": 0.7442211530034281,
+            "darkCoreContrast": 0.7833333333333333,
+            "darkCoreUniformity": 0.975,
+            "darkCoreAlignment": 0.6762505796361733,
+            "darkCoreOffset": 3.4918317749522196,
+            "ringGradientScore": 1.0,
+            "texturePeriodicityScore": 0.3588888889551163,
+            "quality": 1.0,
+            "sharpness": 0.43889209666851
+          },
+          "boxes": [
+            [
+              51,
+              20,
+              48,
+              48
+            ]
+          ],
+          "algorithm": "ThreadPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 3162,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\key\\nut_1.thread.jpg"
+        },
+        "officialEvaluation": "key_self_check"
+      },
+      {
+        "fileName": "thread_1.png",
+        "subset": "key",
+        "originalShape": [
+          84,
+          91,
+          3
+        ],
+        "processedShape": [
+          84,
+          91,
+          3
+        ],
+        "scale": 1.0,
+        "nut": {
+          "status": "REVIEW",
+          "score": 0.6752776199407485,
+          "message": "expectedCount is not configured; candidate count is informational",
+          "metrics": {
+            "tealRawCoverage": 0.00026164311878597594,
+            "tealDilatedCoverage": 0.0015698587127158557,
+            "candidateCountBeforeNms": 1.0,
+            "candidateCount": 1.0,
+            "averageGeometryScore": 0.6429698241375108,
+            "averageCenterHoleScore": 0.6256683951733158,
+            "minCenterHoleScore": 0.6256683951733158,
+            "averageCircularity": 0.6409629343556821,
+            "averageEdgeDensity": 0.34108527131782945,
+            "quality": 1.0
+          },
+          "boxes": [
+            [
+              37,
+              33,
+              43,
+              30
+            ]
+          ],
+          "algorithm": "NutPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 2,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\key\\thread_1.nut.jpg"
+        },
+        "thread": {
+          "status": "PASS",
+          "score": 0.5449641516623225,
+          "message": "circular aperture and internal periodic texture are present",
+          "metrics": {
+            "tealRawCoverage": 0.00026164311878597594,
+            "tealDilatedCoverage": 0.0015698587127158557,
+            "circleCandidates": 36.0,
+            "refinedCandidates": 10.0,
+            "circleCenterX": 43.93092078971863,
+            "circleCenterY": 50.6618408164978,
+            "circleRadius": 20.11439929962158,
+            "refinedCircleCenterX": 43.93092078971863,
+            "refinedCircleCenterY": 50.6618408164978,
+            "refinedCircleRadius": 20.11439929962158,
+            "rawCircleCenterX": 46.20000076293945,
+            "rawCircleCenterY": 52.20000076293945,
+            "rawCircleRadius": 19.719999313354492,
+            "rawLegacyScore": 0.6031438089733512,
+            "refinementShiftPx": 2.7412880085297884,
+            "refinementRadiusDelta": 0.3943999862670893,
+            "circleGeometryScore": 0.5727285974056199,
+            "circleAngularCoverage": 0.75,
+            "circleRadialConsistency": 0.30682149351404986,
+            "innerDarkRatio": 0.36930091185410335,
+            "darkCoreScore": 0.2954475029677368,
+            "darkCoreContrast": 0.4166666666666667,
+            "darkCoreUniformity": 0.0,
+            "darkCoreAlignment": 0.10126924506759072,
+            "darkCoreOffset": 8.134843170402373,
+            "ringGradientScore": 0.7120855331420899,
+            "texturePeriodicityScore": 0.6300000059604645,
+            "quality": 1.0,
+            "sharpness": 0.9966600058400771
+          },
+          "boxes": [
+            [
+              24,
+              31,
+              40,
+              40
+            ]
+          ],
+          "algorithm": "ThreadPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 1630,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\key\\thread_1.thread.jpg"
+        },
+        "officialEvaluation": "key_self_check"
+      },
+      {
+        "fileName": "thread_2.png",
+        "subset": "key",
+        "originalShape": [
+          177,
+          203,
+          3
+        ],
+        "processedShape": [
+          177,
+          203,
+          3
+        ],
+        "scale": 1.0,
+        "nut": {
+          "status": "REVIEW",
+          "score": 0.0,
+          "message": "expectedCount is not configured; candidate count is informational",
+          "metrics": {
+            "tealRawCoverage": 0.05029083521193398,
+            "tealDilatedCoverage": 0.0617850880854972,
+            "candidateCountBeforeNms": 0.0,
+            "candidateCount": 0.0,
+            "averageGeometryScore": 0.0,
+            "averageCenterHoleScore": 0.0,
+            "minCenterHoleScore": 0.0,
+            "averageCircularity": 0.0,
+            "averageEdgeDensity": 0.0,
+            "quality": 1.0
+          },
+          "boxes": [],
+          "algorithm": "NutPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 3,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\key\\thread_2.nut.jpg"
+        },
+        "thread": {
+          "status": "PASS",
+          "score": 0.7049438583186833,
+          "message": "circular aperture and internal periodic texture are present",
+          "metrics": {
+            "tealRawCoverage": 0.05029083521193398,
+            "tealDilatedCoverage": 0.0617850880854972,
+            "circleCandidates": 62.0,
+            "refinedCandidates": 10.0,
+            "circleCenterX": 82.51500024795533,
+            "circleCenterY": 94.46999950408936,
+            "circleRadius": 24.15,
+            "refinedCircleCenterX": 82.51500024795533,
+            "refinedCircleCenterY": 94.46999950408936,
+            "refinedCircleRadius": 24.15,
+            "rawCircleCenterX": 93.5,
+            "rawCircleCenterY": 74.5,
+            "rawCircleRadius": 33.79999923706055,
+            "rawLegacyScore": 0.7040936406224646,
+            "refinementShiftPx": 22.791908646397975,
+            "refinementRadiusDelta": -9.649999237060548,
+            "circleGeometryScore": 0.651894418525145,
+            "circleAngularCoverage": 0.8194444444444444,
+            "circleRadialConsistency": 0.4005693796461959,
+            "innerDarkRatio": 0.7647679324894515,
+            "darkCoreScore": 0.7867516954129071,
+            "darkCoreContrast": 1.0,
+            "darkCoreUniformity": 0.35,
+            "darkCoreAlignment": 0.9154754377738118,
+            "darkCoreOffset": 0.9185706799931006,
+            "ringGradientScore": 1.0,
+            "texturePeriodicityScore": 0.5577777731418609,
+            "quality": 1.0,
+            "sharpness": 1.0
+          },
+          "boxes": [
+            [
+              58,
+              70,
+              48,
+              48
+            ]
+          ],
+          "algorithm": "ThreadPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 2477,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\key\\thread_2.thread.jpg"
+        },
+        "officialEvaluation": "key_self_check"
+      }
+    ]
+  },
+  "dcim": {
+    "imageCount": 30,
+    "detectorRuns": 60,
+    "processedLongestEdge": 960,
+    "expectedCountNotConfigured": true,
+    "records": [
+      {
+        "fileName": "IMG_20260828_103109.jpg",
+        "subset": "dcim",
+        "originalShape": [
+          3072,
+          4096,
+          3
+        ],
+        "processedShape": [
+          720,
+          960,
+          3
+        ],
+        "scale": 0.234375,
+        "nut": {
+          "status": "REVIEW",
+          "score": 0.7571246213647453,
+          "message": "expectedCount is not configured; candidate count is informational",
+          "metrics": {
+            "tealRawCoverage": 0.00542824074074074,
+            "tealDilatedCoverage": 0.009673032407407408,
+            "candidateCountBeforeNms": 1.0,
+            "candidateCount": 1.0,
+            "averageGeometryScore": 0.8031131782058284,
+            "averageCenterHoleScore": 0.758366132268493,
+            "minCenterHoleScore": 0.758366132268493,
+            "averageCircularity": 0.8665411254298898,
+            "averageEdgeDensity": 0.11165772212283841,
+            "quality": 1.0
+          },
+          "boxes": [
+            [
+              138,
+              465,
+              129,
+              104
+            ]
+          ],
+          "algorithm": "NutPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 22,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103109.nut.jpg"
+        },
+        "thread": {
+          "status": "PASS",
+          "score": 0.6899621776164333,
+          "message": "circular aperture and internal periodic texture are present",
+          "metrics": {
+            "tealRawCoverage": 0.00542824074074074,
+            "tealDilatedCoverage": 0.009673032407407408,
+            "circleCandidates": 57.0,
+            "refinedCandidates": 10.0,
+            "circleCenterX": 626.7299980163574,
+            "circleCenterY": 440.7299980163574,
+            "circleRadius": 187.02399780273436,
+            "refinedCircleCenterX": 626.7299980163574,
+            "refinedCircleCenterY": 440.7299980163574,
+            "refinedCircleRadius": 187.02399780273436,
+            "rawCircleCenterX": 457.5,
+            "rawCircleCenterY": 279.5,
+            "rawCircleRadius": 254.1999969482422,
+            "rawLegacyScore": 0.6669768500840038,
+            "refinementShiftPx": 233.7389665609287,
+            "refinementRadiusDelta": -67.17599914550783,
+            "circleGeometryScore": 0.6166735205465574,
+            "circleAngularCoverage": 0.4305555555555556,
+            "circleRadialConsistency": 0.8958504680330603,
+            "innerDarkRatio": 0.7832461284545422,
+            "darkCoreScore": 0.8975391562955739,
+            "darkCoreContrast": 0.9888888888888889,
+            "darkCoreUniformity": 0.9166666666666666,
+            "darkCoreAlignment": 0.9539736766900975,
+            "darkCoreOffset": 3.873612145310619,
+            "ringGradientScore": 0.864199161529541,
+            "texturePeriodicityScore": 0.45387753935466985,
+            "quality": 1.0,
+            "sharpness": 0.4407239580670811
+          },
+          "boxes": [
+            [
+              440,
+              254,
+              374,
+              374
+            ]
+          ],
+          "algorithm": "ThreadPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 28491,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103109.thread.jpg"
+        },
+        "officialEvaluation": "not_evaluable_without_roi_or_labels"
+      },
+      {
+        "fileName": "IMG_20260828_103112.jpg",
+        "subset": "dcim",
+        "originalShape": [
+          3072,
+          4096,
+          3
+        ],
+        "processedShape": [
+          720,
+          960,
+          3
+        ],
+        "scale": 0.234375,
+        "nut": {
+          "status": "REVIEW",
+          "score": 0.0,
+          "message": "expectedCount is not configured; candidate count is informational",
+          "metrics": {
+            "tealRawCoverage": 0.004024884259259259,
+            "tealDilatedCoverage": 0.005810185185185186,
+            "candidateCountBeforeNms": 0.0,
+            "candidateCount": 0.0,
+            "averageGeometryScore": 0.0,
+            "averageCenterHoleScore": 0.0,
+            "minCenterHoleScore": 0.0,
+            "averageCircularity": 0.0,
+            "averageEdgeDensity": 0.0,
+            "quality": 1.0
+          },
+          "boxes": [],
+          "algorithm": "NutPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 13,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103112.nut.jpg"
+        },
+        "thread": {
+          "status": "PASS",
+          "score": 0.6692493821054257,
+          "message": "circular aperture and internal periodic texture are present",
+          "metrics": {
+            "tealRawCoverage": 0.004024884259259259,
+            "tealDilatedCoverage": 0.005810185185185186,
+            "circleCandidates": 58.0,
+            "refinedCandidates": 10.0,
+            "circleCenterX": 303.6252821670429,
+            "circleCenterY": 470.67419112114374,
+            "circleRadius": 104.63800018310546,
+            "refinedCircleCenterX": 303.6252821670429,
+            "refinedCircleCenterY": 470.67419112114374,
+            "refinedCircleRadius": 104.63800018310546,
+            "rawCircleCenterX": 323.5,
+            "rawCircleCenterY": 475.5,
+            "rawCircleRadius": 96.9000015258789,
+            "rawLegacyScore": 0.6540433549671748,
+            "refinementShiftPx": 20.45220868940349,
+            "refinementRadiusDelta": 7.737998657226555,
+            "circleGeometryScore": 0.5688493757038215,
+            "circleAngularCoverage": 0.4166666666666667,
+            "circleRadialConsistency": 0.7971234392595536,
+            "innerDarkRatio": 0.7937514022885349,
+            "darkCoreScore": 0.8473295172529307,
+            "darkCoreContrast": 0.8555555555555556,
+            "darkCoreUniformity": 0.95,
+            "darkCoreAlignment": 0.780985684465906,
+            "darkCoreOffset": 10.312748995031662,
+            "ringGradientScore": 0.8882030487060547,
+            "texturePeriodicityScore": 0.44983563894631545,
+            "quality": 1.0,
+            "sharpness": 0.2947309688564452
+          },
+          "boxes": [
+            [
+              199,
+              366,
+              209,
+              209
+            ]
+          ],
+          "algorithm": "ThreadPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 34101,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103112.thread.jpg"
+        },
+        "officialEvaluation": "not_evaluable_without_roi_or_labels"
+      },
+      {
+        "fileName": "IMG_20260828_103115.jpg",
+        "subset": "dcim",
+        "originalShape": [
+          3072,
+          4096,
+          3
+        ],
+        "processedShape": [
+          720,
+          960,
+          3
+        ],
+        "scale": 0.234375,
+        "nut": {
+          "status": "REVIEW",
+          "score": 0.6983112842083036,
+          "message": "expectedCount is not configured; candidate count is informational",
+          "metrics": {
+            "tealRawCoverage": 0.004024884259259259,
+            "tealDilatedCoverage": 0.006067708333333333,
+            "candidateCountBeforeNms": 1.0,
+            "candidateCount": 1.0,
+            "averageGeometryScore": 0.7131411612551062,
+            "averageCenterHoleScore": 0.6987576434990871,
+            "minCenterHoleScore": 0.6987576434990871,
+            "averageCircularity": 0.8210685063361598,
+            "averageEdgeDensity": 0.14654481321147989,
+            "quality": 1.0
+          },
+          "boxes": [
+            [
+              883,
+              377,
+              77,
+              81
+            ]
+          ],
+          "algorithm": "NutPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 18,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103115.nut.jpg"
+        },
+        "thread": {
+          "status": "PASS",
+          "score": 0.7061281076364607,
+          "message": "circular aperture and internal periodic texture are present",
+          "metrics": {
+            "tealRawCoverage": 0.004024884259259259,
+            "tealDilatedCoverage": 0.006067708333333333,
+            "circleCandidates": 54.0,
+            "refinedCandidates": 10.0,
+            "circleCenterX": 354.5,
+            "circleCenterY": 345.5,
+            "circleRadius": 324.8400146484375,
+            "refinedCircleCenterX": 354.5,
+            "refinedCircleCenterY": 345.5,
+            "refinedCircleRadius": 324.8400146484375,
+            "rawCircleCenterX": 358.5,
+            "rawCircleCenterY": 347.5,
+            "rawCircleRadius": 270.70001220703125,
+            "rawLegacyScore": 0.6822115521442066,
+            "refinementShiftPx": 4.47213595499958,
+            "refinementRadiusDelta": 54.14000244140624,
+            "circleGeometryScore": 0.6109529093174044,
+            "circleAngularCoverage": 0.3888888888888889,
+            "circleRadialConsistency": 0.9440489399601777,
+            "innerDarkRatio": 0.8277485509439233,
+            "darkCoreScore": 0.9209054066956955,
+            "darkCoreContrast": 1.0,
+            "darkCoreUniformity": 0.9833333333333333,
+            "darkCoreAlignment": 0.9196671784611162,
+            "darkCoreOffset": 11.7428917164486,
+            "ringGradientScore": 0.8495512247085572,
+            "texturePeriodicityScore": 0.47329513871001505,
+            "quality": 1.0,
+            "sharpness": 0.2811441258570018
+          },
+          "boxes": [
+            [
+              30,
+              21,
+              650,
+              650
+            ]
+          ],
+          "algorithm": "ThreadPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 19650,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103115.thread.jpg"
+        },
+        "officialEvaluation": "not_evaluable_without_roi_or_labels"
+      },
+      {
+        "fileName": "IMG_20260828_103118.jpg",
+        "subset": "dcim",
+        "originalShape": [
+          3072,
+          4096,
+          3
+        ],
+        "processedShape": [
+          720,
+          960,
+          3
+        ],
+        "scale": 0.234375,
+        "nut": {
+          "status": "REVIEW",
+          "score": 0.6326771788711578,
+          "message": "expectedCount is not configured; candidate count is informational",
+          "metrics": {
+            "tealRawCoverage": 0.005151909722222223,
+            "tealDilatedCoverage": 0.008077256944444444,
+            "candidateCountBeforeNms": 1.0,
+            "candidateCount": 1.0,
+            "averageGeometryScore": 0.6037771195665932,
+            "averageCenterHoleScore": 0.6567303340984194,
+            "minCenterHoleScore": 0.6567303340984194,
+            "averageCircularity": 0.8830608909882404,
+            "averageEdgeDensity": 0.1354882154882155,
+            "quality": 1.0
+          },
+          "boxes": [
+            [
+              271,
+              322,
+              99,
+              75
+            ]
+          ],
+          "algorithm": "NutPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 21,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103118.nut.jpg"
+        },
+        "thread": {
+          "status": "PASS",
+          "score": 0.7426305456450978,
+          "message": "circular aperture and internal periodic texture are present",
+          "metrics": {
+            "tealRawCoverage": 0.005151909722222223,
+            "tealDilatedCoverage": 0.008077256944444444,
+            "circleCandidates": 69.0,
+            "refinedCandidates": 10.0,
+            "circleCenterX": 753.2049980163574,
+            "circleCenterY": 614.8524990081787,
+            "circleRadius": 99.89999999999999,
+            "refinedCircleCenterX": 753.2049980163574,
+            "refinedCircleCenterY": 614.8524990081787,
+            "refinedCircleRadius": 99.89999999999999,
+            "rawCircleCenterX": 684.5,
+            "rawCircleCenterY": 580.5,
+            "rawCircleRadius": 105.69999694824219,
+            "rawLegacyScore": 0.7422265410569991,
+            "refinementShiftPx": 76.8145229792817,
+            "refinementRadiusDelta": -5.799996948242196,
+            "circleGeometryScore": 0.8726407159894893,
+            "circleAngularCoverage": 0.8888888888888888,
+            "circleRadialConsistency": 0.84826845664039,
+            "innerDarkRatio": 0.551070637460005,
+            "darkCoreScore": 0.7596056794975294,
+            "darkCoreContrast": 0.8777777777777778,
+            "darkCoreUniformity": 0.95,
+            "darkCoreAlignment": 0.7707636233089615,
+            "darkCoreOffset": 10.305321314145635,
+            "ringGradientScore": 0.645874309539795,
+            "texturePeriodicityScore": 0.6422222229838372,
+            "quality": 1.0,
+            "sharpness": 0.9381360733076411
+          },
+          "boxes": [
+            [
+              653,
+              515,
+              200,
+              200
+            ]
+          ],
+          "algorithm": "ThreadPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 23893,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103118.thread.jpg"
+        },
+        "officialEvaluation": "not_evaluable_without_roi_or_labels"
+      },
+      {
+        "fileName": "IMG_20260828_103122.jpg",
+        "subset": "dcim",
+        "originalShape": [
+          3072,
+          4096,
+          3
+        ],
+        "processedShape": [
+          720,
+          960,
+          3
+        ],
+        "scale": 0.234375,
+        "nut": {
+          "status": "REVIEW",
+          "score": 0.0,
+          "message": "expectedCount is not configured; candidate count is informational",
+          "metrics": {
+            "tealRawCoverage": 0.00443287037037037,
+            "tealDilatedCoverage": 0.007115162037037037,
+            "candidateCountBeforeNms": 0.0,
+            "candidateCount": 0.0,
+            "averageGeometryScore": 0.0,
+            "averageCenterHoleScore": 0.0,
+            "minCenterHoleScore": 0.0,
+            "averageCircularity": 0.0,
+            "averageEdgeDensity": 0.0,
+            "quality": 1.0
+          },
+          "boxes": [],
+          "algorithm": "NutPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 14,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103122.nut.jpg"
+        },
+        "thread": {
+          "status": "PASS",
+          "score": 0.7057538113756862,
+          "message": "circular aperture and internal periodic texture are present",
+          "metrics": {
+            "tealRawCoverage": 0.00443287037037037,
+            "tealDilatedCoverage": 0.007115162037037037,
+            "circleCandidates": 63.0,
+            "refinedCandidates": 10.0,
+            "circleCenterX": 556.6924980163574,
+            "circleCenterY": 568.3075019836426,
+            "circleRadius": 100.77499999999999,
+            "refinedCircleCenterX": 556.6924980163574,
+            "refinedCircleCenterY": 568.3075019836426,
+            "refinedCircleRadius": 100.77499999999999,
+            "rawCircleCenterX": 619.5,
+            "rawCircleCenterY": 511.5,
+            "rawCircleRadius": 187.10000610351562,
+            "rawLegacyScore": 0.6998116432308763,
+            "refinementShiftPx": 84.6869209916551,
+            "refinementRadiusDelta": -86.32500610351563,
+            "circleGeometryScore": 0.6858985085000086,
+            "circleAngularCoverage": 0.5972222222222222,
+            "circleRadialConsistency": 0.818912937916688,
+            "innerDarkRatio": 0.6728350266086115,
+            "darkCoreScore": 0.7899932367555241,
+            "darkCoreContrast": 1.0,
+            "darkCoreUniformity": 0.5833333333333333,
+            "darkCoreAlignment": 0.9251398423458634,
+            "darkCoreOffset": 3.3948145744180263,
+            "ringGradientScore": 0.7838135719299316,
+            "texturePeriodicityScore": 0.5861111134290695,
+            "quality": 1.0,
+            "sharpness": 0.9436645165404437
+          },
+          "boxes": [
+            [
+              456,
+              468,
+              202,
+              202
+            ]
+          ],
+          "algorithm": "ThreadPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 25080,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103122.thread.jpg"
+        },
+        "officialEvaluation": "not_evaluable_without_roi_or_labels"
+      },
+      {
+        "fileName": "IMG_20260828_103127.jpg",
+        "subset": "dcim",
+        "originalShape": [
+          3072,
+          4096,
+          3
+        ],
+        "processedShape": [
+          720,
+          960,
+          3
+        ],
+        "scale": 0.234375,
+        "nut": {
+          "status": "REVIEW",
+          "score": 0.0,
+          "message": "expectedCount is not configured; candidate count is informational",
+          "metrics": {
+            "tealRawCoverage": 0.0052502893518518515,
+            "tealDilatedCoverage": 0.008122106481481482,
+            "candidateCountBeforeNms": 0.0,
+            "candidateCount": 0.0,
+            "averageGeometryScore": 0.0,
+            "averageCenterHoleScore": 0.0,
+            "minCenterHoleScore": 0.0,
+            "averageCircularity": 0.0,
+            "averageEdgeDensity": 0.0,
+            "quality": 1.0
+          },
+          "boxes": [],
+          "algorithm": "NutPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 22,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103127.nut.jpg"
+        },
+        "thread": {
+          "status": "PASS",
+          "score": 0.7133002409771684,
+          "message": "circular aperture and internal periodic texture are present",
+          "metrics": {
+            "tealRawCoverage": 0.0052502893518518515,
+            "tealDilatedCoverage": 0.008122106481481482,
+            "circleCandidates": 59.0,
+            "refinedCandidates": 10.0,
+            "circleCenterX": 467.5350009918213,
+            "circleCenterY": 479.5,
+            "circleRadius": 98.89999999999999,
+            "refinedCircleCenterX": 467.5350009918213,
+            "refinedCircleCenterY": 479.5,
+            "refinedCircleRadius": 98.89999999999999,
+            "rawCircleCenterX": 510.5,
+            "rawCircleCenterY": 477.5,
+            "rawCircleRadius": 66.0999984741211,
+            "rawLegacyScore": 0.7044059478724914,
+            "refinementShiftPx": 43.01152333704072,
+            "refinementRadiusDelta": 32.8000015258789,
+            "circleGeometryScore": 0.6776496452613967,
+            "circleAngularCoverage": 0.5694444444444444,
+            "circleRadialConsistency": 0.8399574464868254,
+            "innerDarkRatio": 0.6591108878563355,
+            "darkCoreScore": 0.803112573446716,
+            "darkCoreContrast": 0.8555555555555556,
+            "darkCoreUniformity": 0.7833333333333333,
+            "darkCoreAlignment": 0.9700850273408484,
+            "darkCoreOffset": 1.3313658581955419,
+            "ringGradientScore": 0.9024985790252685,
+            "texturePeriodicityScore": 0.6211111077666283,
+            "quality": 1.0,
+            "sharpness": 0.3329767305713774
+          },
+          "boxes": [
+            [
+              369,
+              381,
+              198,
+              198
+            ]
+          ],
+          "algorithm": "ThreadPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 40086,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103127.thread.jpg"
+        },
+        "officialEvaluation": "not_evaluable_without_roi_or_labels"
+      },
+      {
+        "fileName": "IMG_20260828_103130.jpg",
+        "subset": "dcim",
+        "originalShape": [
+          3072,
+          4096,
+          3
+        ],
+        "processedShape": [
+          720,
+          960,
+          3
+        ],
+        "scale": 0.234375,
+        "nut": {
+          "status": "REVIEW",
+          "score": 0.0,
+          "message": "expectedCount is not configured; candidate count is informational",
+          "metrics": {
+            "tealRawCoverage": 0.00669849537037037,
+            "tealDilatedCoverage": 0.01095775462962963,
+            "candidateCountBeforeNms": 0.0,
+            "candidateCount": 0.0,
+            "averageGeometryScore": 0.0,
+            "averageCenterHoleScore": 0.0,
+            "minCenterHoleScore": 0.0,
+            "averageCircularity": 0.0,
+            "averageEdgeDensity": 0.0,
+            "quality": 1.0
+          },
+          "boxes": [],
+          "algorithm": "NutPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 12,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103130.nut.jpg"
+        },
+        "thread": {
+          "status": "PASS",
+          "score": 0.7153296544042985,
+          "message": "circular aperture and internal periodic texture are present",
+          "metrics": {
+            "tealRawCoverage": 0.00669849537037037,
+            "tealDilatedCoverage": 0.01095775462962963,
+            "circleCandidates": 72.0,
+            "refinedCandidates": 10.0,
+            "circleCenterX": 445.49000396728513,
+            "circleCenterY": 497.50499801635743,
+            "circleRadius": 109.61599853515624,
+            "refinedCircleCenterX": 445.49000396728513,
+            "refinedCircleCenterY": 497.50499801635743,
+            "refinedCircleRadius": 109.61599853515624,
+            "rawCircleCenterX": 535.5,
+            "rawCircleCenterY": 455.5,
+            "rawCircleRadius": 135.39999389648438,
+            "rawLegacyScore": 0.7138998943887184,
+            "refinementShiftPx": 99.3288439687261,
+            "refinementRadiusDelta": -25.783995361328138,
+            "circleGeometryScore": 0.7516037860686042,
+            "circleAngularCoverage": 0.6944444444444444,
+            "circleRadialConsistency": 0.837342798504844,
+            "innerDarkRatio": 0.6836750345109668,
+            "darkCoreScore": 0.7806546140932502,
+            "darkCoreContrast": 0.8888888888888888,
+            "darkCoreUniformity": 0.9333333333333333,
+            "darkCoreAlignment": 0.45923624715529,
+            "darkCoreOffset": 26.674361432861097,
+            "ringGradientScore": 1.0,
+            "texturePeriodicityScore": 0.5583333331346512,
+            "quality": 1.0,
+            "sharpness": 0.3046191734175317
+          },
+          "boxes": [
+            [
+              336,
+              388,
+              219,
+              219
+            ]
+          ],
+          "algorithm": "ThreadPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 29230,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103130.thread.jpg"
+        },
+        "officialEvaluation": "not_evaluable_without_roi_or_labels"
+      },
+      {
+        "fileName": "IMG_20260828_103134.jpg",
+        "subset": "dcim",
+        "originalShape": [
+          3072,
+          4096,
+          3
+        ],
+        "processedShape": [
+          720,
+          960,
+          3
+        ],
+        "scale": 0.234375,
+        "nut": {
+          "status": "REVIEW",
+          "score": 0.6524884689896959,
+          "message": "expectedCount is not configured; candidate count is informational",
+          "metrics": {
+            "tealRawCoverage": 0.008022280092592593,
+            "tealDilatedCoverage": 0.012274305555555556,
+            "candidateCountBeforeNms": 1.0,
+            "candidateCount": 1.0,
+            "averageGeometryScore": 0.5866135181038572,
+            "averageCenterHoleScore": 0.976098343729973,
+            "minCenterHoleScore": 0.976098343729973,
+            "averageCircularity": 0.4881742878733872,
+            "averageEdgeDensity": 0.22736842105263158,
+            "quality": 1.0
+          },
+          "boxes": [
+            [
+              50,
+              217,
+              76,
+              50
+            ]
+          ],
+          "algorithm": "NutPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 17,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103134.nut.jpg"
+        },
+        "thread": {
+          "status": "PASS",
+          "score": 0.7408165909754693,
+          "message": "circular aperture and internal periodic texture are present",
+          "metrics": {
+            "tealRawCoverage": 0.008022280092592593,
+            "tealDilatedCoverage": 0.012274305555555556,
+            "circleCandidates": 48.0,
+            "refinedCandidates": 10.0,
+            "circleCenterX": 144.5,
+            "circleCenterY": 251.21499900817872,
+            "circleRadius": 99.89999999999999,
+            "refinedCircleCenterX": 144.5,
+            "refinedCircleCenterY": 251.21499900817872,
+            "refinedCircleRadius": 99.89999999999999,
+            "rawCircleCenterX": 146.5,
+            "rawCircleCenterY": 289.5,
+            "rawCircleRadius": 117.80000305175781,
+            "rawLegacyScore": 0.732259349499055,
+            "refinementShiftPx": 38.33720517909145,
+            "refinementRadiusDelta": -17.90000305175782,
+            "circleGeometryScore": 0.7359707200914738,
+            "circleAngularCoverage": 0.6666666666666666,
+            "circleRadialConsistency": 0.8399268002286847,
+            "innerDarkRatio": 0.6368725393700787,
+            "darkCoreScore": 0.8114471182106567,
+            "darkCoreContrast": 1.0,
+            "darkCoreUniformity": 0.7666666666666666,
+            "darkCoreAlignment": 0.9838254683098375,
+            "darkCoreOffset": 0.7271260721312519,
+            "ringGradientScore": 0.6184775352478027,
+            "texturePeriodicityScore": 0.6741666620969773,
+            "quality": 1.0,
+            "sharpness": 1.0
+          },
+          "boxes": [
+            [
+              45,
+              151,
+              200,
+              200
+            ]
+          ],
+          "algorithm": "ThreadPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 29936,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103134.thread.jpg"
+        },
+        "officialEvaluation": "not_evaluable_without_roi_or_labels"
+      },
+      {
+        "fileName": "IMG_20260828_103138.jpg",
+        "subset": "dcim",
+        "originalShape": [
+          3072,
+          4096,
+          3
+        ],
+        "processedShape": [
+          720,
+          960,
+          3
+        ],
+        "scale": 0.234375,
+        "nut": {
+          "status": "REVIEW",
+          "score": 0.0,
+          "message": "expectedCount is not configured; candidate count is informational",
+          "metrics": {
+            "tealRawCoverage": 0.0029094328703703704,
+            "tealDilatedCoverage": 0.004205729166666667,
+            "candidateCountBeforeNms": 0.0,
+            "candidateCount": 0.0,
+            "averageGeometryScore": 0.0,
+            "averageCenterHoleScore": 0.0,
+            "minCenterHoleScore": 0.0,
+            "averageCircularity": 0.0,
+            "averageEdgeDensity": 0.0,
+            "quality": 1.0
+          },
+          "boxes": [],
+          "algorithm": "NutPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 11,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103138.nut.jpg"
+        },
+        "thread": {
+          "status": "PASS",
+          "score": 0.6591931959745195,
+          "message": "circular aperture and internal periodic texture are present",
+          "metrics": {
+            "tealRawCoverage": 0.0029094328703703704,
+            "tealDilatedCoverage": 0.004205729166666667,
+            "circleCandidates": 58.0,
+            "refinedCandidates": 10.0,
+            "circleCenterX": 112.11499900817871,
+            "circleCenterY": 356.6925004959106,
+            "circleRadius": 99.89999999999999,
+            "refinedCircleCenterX": 112.11499900817871,
+            "refinedCircleCenterY": 356.6925004959106,
+            "refinedCircleRadius": 99.89999999999999,
+            "rawCircleCenterX": 72.5,
+            "rawCircleCenterY": 380.5,
+            "rawCircleRadius": 67.0999984741211,
+            "rawLegacyScore": 0.6405063752441376,
+            "refinementShiftPx": 46.21845063451626,
+            "refinementRadiusDelta": 32.8000015258789,
+            "circleGeometryScore": 0.590257108817624,
+            "circleAngularCoverage": 0.3888888888888889,
+            "circleRadialConsistency": 0.8923094387107269,
+            "innerDarkRatio": 0.5088560885608856,
+            "darkCoreScore": 0.77961877396069,
+            "darkCoreContrast": 1.0,
+            "darkCoreUniformity": 0.8833333333333333,
+            "darkCoreAlignment": 0.916442796594569,
+            "darkCoreOffset": 3.7563140790911533,
+            "ringGradientScore": 0.5353607654571533,
+            "texturePeriodicityScore": 0.6207174015287631,
+            "quality": 1.0,
+            "sharpness": 0.28803557970511356
+          },
+          "boxes": [
+            [
+              12,
+              257,
+              200,
+              200
+            ]
+          ],
+          "algorithm": "ThreadPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 25532,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103138.thread.jpg"
+        },
+        "officialEvaluation": "not_evaluable_without_roi_or_labels"
+      },
+      {
+        "fileName": "IMG_20260828_103145.jpg",
+        "subset": "dcim",
+        "originalShape": [
+          3072,
+          4096,
+          3
+        ],
+        "processedShape": [
+          720,
+          960,
+          3
+        ],
+        "scale": 0.234375,
+        "nut": {
+          "status": "REVIEW",
+          "score": 0.0,
+          "message": "expectedCount is not configured; candidate count is informational",
+          "metrics": {
+            "tealRawCoverage": 0.010234375,
+            "tealDilatedCoverage": 0.012375578703703703,
+            "candidateCountBeforeNms": 0.0,
+            "candidateCount": 0.0,
+            "averageGeometryScore": 0.0,
+            "averageCenterHoleScore": 0.0,
+            "minCenterHoleScore": 0.0,
+            "averageCircularity": 0.0,
+            "averageEdgeDensity": 0.0,
+            "quality": 1.0
+          },
+          "boxes": [],
+          "algorithm": "NutPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 13,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103145.nut.jpg"
+        },
+        "thread": {
+          "status": "PASS",
+          "score": 0.6514733355967,
+          "message": "circular aperture and internal periodic texture are present",
+          "metrics": {
+            "tealRawCoverage": 0.010234375,
+            "tealDilatedCoverage": 0.012375578703703703,
+            "circleCandidates": 61.0,
+            "refinedCandidates": 10.0,
+            "circleCenterX": 520.6449995040894,
+            "circleCenterY": 424.5,
+            "circleRadius": 117.77200073242187,
+            "refinedCircleCenterX": 520.6449995040894,
+            "refinedCircleCenterY": 424.5,
+            "refinedCircleRadius": 117.77200073242187,
+            "rawCircleCenterX": 557.5,
+            "rawCircleCenterY": 426.5,
+            "rawCircleRadius": 113.4000015258789,
+            "rawLegacyScore": 0.636014762884231,
+            "refinementShiftPx": 36.90922732262996,
+            "refinementRadiusDelta": 4.3719992065429665,
+            "circleGeometryScore": 0.5949227842387418,
+            "circleAngularCoverage": 0.4305555555555556,
+            "circleRadialConsistency": 0.841473627263521,
+            "innerDarkRatio": 0.6998760732937949,
+            "darkCoreScore": 0.8171374249918238,
+            "darkCoreContrast": 0.9,
+            "darkCoreUniformity": 0.9666666666666667,
+            "darkCoreAlignment": 0.6056084644690134,
+            "darkCoreOffset": 20.901726095137352,
+            "ringGradientScore": 1.0,
+            "texturePeriodicityScore": 0.4418963642971989,
+            "quality": 1.0,
+            "sharpness": 0.12494722221950949
+          },
+          "boxes": [
+            [
+              403,
+              307,
+              236,
+              236
+            ]
+          ],
+          "algorithm": "ThreadPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 34174,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103145.thread.jpg"
+        },
+        "officialEvaluation": "not_evaluable_without_roi_or_labels"
+      },
+      {
+        "fileName": "IMG_20260828_103149.jpg",
+        "subset": "dcim",
+        "originalShape": [
+          3072,
+          4096,
+          3
+        ],
+        "processedShape": [
+          720,
+          960,
+          3
+        ],
+        "scale": 0.234375,
+        "nut": {
+          "status": "REVIEW",
+          "score": 0.5605087765191269,
+          "message": "expectedCount is not configured; candidate count is informational",
+          "metrics": {
+            "tealRawCoverage": 0.009249131944444445,
+            "tealDilatedCoverage": 0.012337962962962964,
+            "candidateCountBeforeNms": 1.0,
+            "candidateCount": 1.0,
+            "averageGeometryScore": 0.6141833210273726,
+            "averageCenterHoleScore": 0.49103359272296454,
+            "minCenterHoleScore": 0.49103359272296454,
+            "averageCircularity": 0.6469996281208187,
+            "averageEdgeDensity": 0.08438818565400844,
+            "quality": 1.0
+          },
+          "boxes": [
+            [
+              456,
+              295,
+              84,
+              79
+            ]
+          ],
+          "algorithm": "NutPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 16,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103149.nut.jpg"
+        },
+        "thread": {
+          "status": "PASS",
+          "score": 0.6704746384462282,
+          "message": "circular aperture and internal periodic texture are present",
+          "metrics": {
+            "tealRawCoverage": 0.009249131944444445,
+            "tealDilatedCoverage": 0.012337962962962964,
+            "circleCandidates": 54.0,
+            "refinedCandidates": 10.0,
+            "circleCenterX": 619.1049980163574,
+            "circleCenterY": 501.8950019836426,
+            "circleRadius": 83.96000366210937,
+            "refinedCircleCenterX": 619.1049980163574,
+            "refinedCircleCenterY": 501.8950019836426,
+            "refinedCircleRadius": 83.96000366210937,
+            "rawCircleCenterX": 665.5,
+            "rawCircleCenterY": 455.5,
+            "rawCircleRadius": 68.30000305175781,
+            "rawLegacyScore": 0.6641952262951206,
+            "refinementShiftPx": 65.61244103159402,
+            "refinementRadiusDelta": 15.66000061035156,
+            "circleGeometryScore": 0.5582572918973081,
+            "circleAngularCoverage": 0.4305555555555556,
+            "circleRadialConsistency": 0.7498098964099369,
+            "innerDarkRatio": 0.6242054854157597,
+            "darkCoreScore": 0.7500844386901977,
+            "darkCoreContrast": 0.9888888888888889,
+            "darkCoreUniformity": 0.8333333333333334,
+            "darkCoreAlignment": 0.45844354244709884,
+            "darkCoreOffset": 20.46108697172125,
+            "ringGradientScore": 0.7548699378967285,
+            "texturePeriodicityScore": 0.6355555579066277,
+            "quality": 1.0,
+            "sharpness": 0.1808370659805089
+          },
+          "boxes": [
+            [
+              535,
+              418,
+              168,
+              168
+            ]
+          ],
+          "algorithm": "ThreadPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 25950,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103149.thread.jpg"
+        },
+        "officialEvaluation": "not_evaluable_without_roi_or_labels"
+      },
+      {
+        "fileName": "IMG_20260828_103156.jpg",
+        "subset": "dcim",
+        "originalShape": [
+          3072,
+          4096,
+          3
+        ],
+        "processedShape": [
+          720,
+          960,
+          3
+        ],
+        "scale": 0.234375,
+        "nut": {
+          "status": "REVIEW",
+          "score": 0.0,
+          "message": "expectedCount is not configured; candidate count is informational",
+          "metrics": {
+            "tealRawCoverage": 0.004853877314814815,
+            "tealDilatedCoverage": 0.007097800925925926,
+            "candidateCountBeforeNms": 0.0,
+            "candidateCount": 0.0,
+            "averageGeometryScore": 0.0,
+            "averageCenterHoleScore": 0.0,
+            "minCenterHoleScore": 0.0,
+            "averageCircularity": 0.0,
+            "averageEdgeDensity": 0.0,
+            "quality": 1.0
+          },
+          "boxes": [],
+          "algorithm": "NutPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 13,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103156.nut.jpg"
+        },
+        "thread": {
+          "status": "PASS",
+          "score": 0.6879632433351317,
+          "message": "circular aperture and internal periodic texture are present",
+          "metrics": {
+            "tealRawCoverage": 0.004853877314814815,
+            "tealDilatedCoverage": 0.007097800925925926,
+            "circleCandidates": 55.0,
+            "refinedCandidates": 10.0,
+            "circleCenterX": 546.5,
+            "circleCenterY": 387.5325019836426,
+            "circleRadius": 285.87999267578124,
+            "refinedCircleCenterX": 546.5,
+            "refinedCircleCenterY": 387.5325019836426,
+            "refinedCircleRadius": 285.87999267578124,
+            "rawCircleCenterX": 546.5,
+            "rawCircleCenterY": 467.5,
+            "rawCircleRadius": 239.89999389648438,
+            "rawLegacyScore": 0.6692304367165973,
+            "refinementShiftPx": 79.96749801635741,
+            "refinementRadiusDelta": 45.979998779296864,
+            "circleGeometryScore": 0.6203507329664046,
+            "circleAngularCoverage": 0.4166666666666667,
+            "circleRadialConsistency": 0.9258768324160115,
+            "innerDarkRatio": 0.8904991585527107,
+            "darkCoreScore": 0.9069359565654459,
+            "darkCoreContrast": 0.8444444444444444,
+            "darkCoreUniformity": 0.9833333333333333,
+            "darkCoreAlignment": 0.9007969488864408,
+            "darkCoreOffset": 12.762075386591752,
+            "ringGradientScore": 1.0,
+            "texturePeriodicityScore": 0.3683347572949943,
+            "quality": 1.0,
+            "sharpness": 0.48923310322541697
+          },
+          "boxes": [
+            [
+              261,
+              102,
+              572,
+              572
+            ]
+          ],
+          "algorithm": "ThreadPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 24088,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103156.thread.jpg"
+        },
+        "officialEvaluation": "not_evaluable_without_roi_or_labels"
+      },
+      {
+        "fileName": "IMG_20260828_103203.jpg",
+        "subset": "dcim",
+        "originalShape": [
+          3072,
+          4096,
+          3
+        ],
+        "processedShape": [
+          720,
+          960,
+          3
+        ],
+        "scale": 0.234375,
+        "nut": {
+          "status": "REVIEW",
+          "score": 0.0,
+          "message": "expectedCount is not configured; candidate count is informational",
+          "metrics": {
+            "tealRawCoverage": 0.00439525462962963,
+            "tealDilatedCoverage": 0.007123842592592592,
+            "candidateCountBeforeNms": 0.0,
+            "candidateCount": 0.0,
+            "averageGeometryScore": 0.0,
+            "averageCenterHoleScore": 0.0,
+            "minCenterHoleScore": 0.0,
+            "averageCircularity": 0.0,
+            "averageEdgeDensity": 0.0,
+            "quality": 1.0
+          },
+          "boxes": [],
+          "algorithm": "NutPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 12,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103203.nut.jpg"
+        },
+        "thread": {
+          "status": "PASS",
+          "score": 0.7169404015354096,
+          "message": "circular aperture and internal periodic texture are present",
+          "metrics": {
+            "tealRawCoverage": 0.00439525462962963,
+            "tealDilatedCoverage": 0.007123842592592592,
+            "circleCandidates": 69.0,
+            "refinedCandidates": 10.0,
+            "circleCenterX": 502.0704260651629,
+            "circleCenterY": 412.2629072681704,
+            "circleRadius": 98.89999999999999,
+            "refinedCircleCenterX": 502.0704260651629,
+            "refinedCircleCenterY": 412.2629072681704,
+            "refinedCircleRadius": 98.89999999999999,
+            "rawCircleCenterX": 496.5,
+            "rawCircleCenterY": 366.5,
+            "rawCircleRadius": 114.5,
+            "rawLegacyScore": 0.7077749092813908,
+            "refinementShiftPx": 46.100686851527605,
+            "refinementRadiusDelta": -15.600000000000009,
+            "circleGeometryScore": 0.7232371770073671,
+            "circleAngularCoverage": 0.6527777777777778,
+            "circleRadialConsistency": 0.8289262758517513,
+            "innerDarkRatio": 0.7234670181384548,
+            "darkCoreScore": 0.8300007632239436,
+            "darkCoreContrast": 1.0,
+            "darkCoreUniformity": 0.85,
+            "darkCoreAlignment": 0.6197377185493812,
+            "darkCoreOffset": 16.92357283595979,
+            "ringGradientScore": 1.0,
+            "texturePeriodicityScore": 0.533123338815223,
+            "quality": 1.0,
+            "sharpness": 0.28170674315019556
+          },
+          "boxes": [
+            [
+              403,
+              313,
+              198,
+              198
+            ]
+          ],
+          "algorithm": "ThreadPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 29449,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103203.thread.jpg"
+        },
+        "officialEvaluation": "not_evaluable_without_roi_or_labels"
+      },
+      {
+        "fileName": "IMG_20260828_103205.jpg",
+        "subset": "dcim",
+        "originalShape": [
+          3072,
+          4096,
+          3
+        ],
+        "processedShape": [
+          720,
+          960,
+          3
+        ],
+        "scale": 0.234375,
+        "nut": {
+          "status": "REVIEW",
+          "score": 0.6602370638090126,
+          "message": "expectedCount is not configured; candidate count is informational",
+          "metrics": {
+            "tealRawCoverage": 0.006283275462962963,
+            "tealDilatedCoverage": 0.007679398148148148,
+            "candidateCountBeforeNms": 1.0,
+            "candidateCount": 1.0,
+            "averageGeometryScore": 0.6929196347010173,
+            "averageCenterHoleScore": 0.6366849304876433,
+            "minCenterHoleScore": 0.6366849304876433,
+            "averageCircularity": 0.8135128150477658,
+            "averageEdgeDensity": 0.09949531362653208,
+            "quality": 1.0
+          },
+          "boxes": [
+            [
+              197,
+              186,
+              73,
+              57
+            ]
+          ],
+          "algorithm": "NutPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 14,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103205.nut.jpg"
+        },
+        "thread": {
+          "status": "PASS",
+          "score": 0.7143104598264651,
+          "message": "circular aperture and internal periodic texture are present",
+          "metrics": {
+            "tealRawCoverage": 0.006283275462962963,
+            "tealDilatedCoverage": 0.007679398148148148,
+            "circleCandidates": 66.0,
+            "refinedCandidates": 10.0,
+            "circleCenterX": 529.5,
+            "circleCenterY": 457.57749900817873,
+            "circleRadius": 112.40799926757812,
+            "refinedCircleCenterX": 529.5,
+            "refinedCircleCenterY": 457.57749900817873,
+            "refinedCircleRadius": 112.40799926757812,
+            "rawCircleCenterX": 531.5,
+            "rawCircleCenterY": 414.5,
+            "rawCircleRadius": 138.6999969482422,
+            "rawLegacyScore": 0.700924152204727,
+            "refinementShiftPx": 43.1239019663068,
+            "refinementRadiusDelta": -26.291997680664068,
+            "circleGeometryScore": 0.6557366272424606,
+            "circleAngularCoverage": 0.5416666666666666,
+            "circleRadialConsistency": 0.8268415681061516,
+            "innerDarkRatio": 0.7335146159075459,
+            "darkCoreScore": 0.846389424973916,
+            "darkCoreContrast": 1.0,
+            "darkCoreUniformity": 0.8333333333333334,
+            "darkCoreAlignment": 0.7311224902332372,
+            "darkCoreOffset": 13.600792314418728,
+            "ringGradientScore": 1.0,
+            "texturePeriodicityScore": 0.5694150335170078,
+            "quality": 1.0,
+            "sharpness": 0.12277479025901514
+          },
+          "boxes": [
+            [
+              417,
+              345,
+              225,
+              225
+            ]
+          ],
+          "algorithm": "ThreadPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 36091,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103205.thread.jpg"
+        },
+        "officialEvaluation": "not_evaluable_without_roi_or_labels"
+      },
+      {
+        "fileName": "IMG_20260828_103209.jpg",
+        "subset": "dcim",
+        "originalShape": [
+          3072,
+          4096,
+          3
+        ],
+        "processedShape": [
+          720,
+          960,
+          3
+        ],
+        "scale": 0.234375,
+        "nut": {
+          "status": "REVIEW",
+          "score": 0.582170733313664,
+          "message": "expectedCount is not configured; candidate count is informational",
+          "metrics": {
+            "tealRawCoverage": 0.0030627893518518517,
+            "tealDilatedCoverage": 0.004191261574074074,
+            "candidateCountBeforeNms": 1.0,
+            "candidateCount": 1.0,
+            "averageGeometryScore": 0.6317691215303454,
+            "averageCenterHoleScore": 0.5774476120658949,
+            "minCenterHoleScore": 0.5774476120658949,
+            "averageCircularity": 0.6484759342409817,
+            "averageEdgeDensity": 0.07005813953488373,
+            "quality": 1.0
+          },
+          "boxes": [
+            [
+              27,
+              321,
+              86,
+              80
+            ]
+          ],
+          "algorithm": "NutPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 13,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103209.nut.jpg"
+        },
+        "thread": {
+          "status": "REVIEW",
+          "score": 0.49157481828293836,
+          "message": "thread evidence is between configured thresholds",
+          "metrics": {
+            "tealRawCoverage": 0.0030627893518518517,
+            "tealDilatedCoverage": 0.004191261574074074,
+            "circleCandidates": 68.0,
+            "refinedCandidates": 10.0,
+            "circleCenterX": 210.60000610351562,
+            "circleCenterY": 522.5999755859375,
+            "circleRadius": 187.16000366210938,
+            "refinedCircleCenterX": 210.60000610351562,
+            "refinedCircleCenterY": 522.5999755859375,
+            "refinedCircleRadius": 187.16000366210938,
+            "rawCircleCenterX": 210.60000610351562,
+            "rawCircleCenterY": 522.5999755859375,
+            "rawCircleRadius": 187.16000366210938,
+            "rawLegacyScore": 0.4828264132362423,
+            "refinementShiftPx": 0.0,
+            "refinementRadiusDelta": 0.0,
+            "circleGeometryScore": 0.41095410994171955,
+            "circleAngularCoverage": 0.09722222222222222,
+            "circleRadialConsistency": 0.8815519415209654,
+            "innerDarkRatio": 0.5094290020680711,
+            "darkCoreScore": 0.6462525642865389,
+            "darkCoreContrast": 0.7666666666666666,
+            "darkCoreUniformity": 0.9833333333333333,
+            "darkCoreAlignment": 0.28137991969360476,
+            "darkCoreOffset": 60.523621587814624,
+            "ringGradientScore": 0.5943776130676269,
+            "texturePeriodicityScore": 0.27394309912236237,
+            "quality": 1.0,
+            "sharpness": 0.10593063883902258
+          },
+          "boxes": [
+            [
+              23,
+              335,
+              374,
+              374
+            ]
+          ],
+          "algorithm": "ThreadPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 23141,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103209.thread.jpg"
+        },
+        "officialEvaluation": "not_evaluable_without_roi_or_labels"
+      },
+      {
+        "fileName": "IMG_20260828_103218.jpg",
+        "subset": "dcim",
+        "originalShape": [
+          3072,
+          4096,
+          3
+        ],
+        "processedShape": [
+          720,
+          960,
+          3
+        ],
+        "scale": 0.234375,
+        "nut": {
+          "status": "REVIEW",
+          "score": 0.5654803993684533,
+          "message": "expectedCount is not configured; candidate count is informational",
+          "metrics": {
+            "tealRawCoverage": 0.0052430555555555555,
+            "tealDilatedCoverage": 0.00779369212962963,
+            "candidateCountBeforeNms": 1.0,
+            "candidateCount": 1.0,
+            "averageGeometryScore": 0.6896222230763212,
+            "averageCenterHoleScore": 0.498425468689517,
+            "minCenterHoleScore": 0.498425468689517,
+            "averageCircularity": 0.35394738694565153,
+            "averageEdgeDensity": 0.08743430482560917,
+            "quality": 1.0
+          },
+          "boxes": [
+            [
+              366,
+              314,
+              115,
+              91
+            ]
+          ],
+          "algorithm": "NutPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 16,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103218.nut.jpg"
+        },
+        "thread": {
+          "status": "PASS",
+          "score": 0.7106357181310389,
+          "message": "circular aperture and internal periodic texture are present",
+          "metrics": {
+            "tealRawCoverage": 0.0052430555555555555,
+            "tealDilatedCoverage": 0.00779369212962963,
+            "circleCandidates": 63.0,
+            "refinedCandidates": 10.0,
+            "circleCenterX": 568.9975009918213,
+            "circleCenterY": 326.49500198364257,
+            "circleRadius": 99.89999999999999,
+            "refinedCircleCenterX": 568.9975009918213,
+            "refinedCircleCenterY": 326.49500198364257,
+            "refinedCircleRadius": 99.89999999999999,
+            "rawCircleCenterX": 610.5,
+            "rawCircleCenterY": 409.5,
+            "rawCircleRadius": 127.69999694824219,
+            "rawLegacyScore": 0.6959311267264942,
+            "refinementShiftPx": 92.8024090184052,
+            "refinementRadiusDelta": -27.799996948242196,
+            "circleGeometryScore": 0.6464391443833516,
+            "circleAngularCoverage": 0.5416666666666666,
+            "circleRadialConsistency": 0.803597860958379,
+            "innerDarkRatio": 0.7066642052796751,
+            "darkCoreScore": 0.8428752241975593,
+            "darkCoreContrast": 0.9666666666666667,
+            "darkCoreUniformity": 0.9833333333333333,
+            "darkCoreAlignment": 0.7624380410951683,
+            "darkCoreOffset": 10.679597862566705,
+            "ringGradientScore": 0.7355448722839355,
+            "texturePeriodicityScore": 0.5844444403052331,
+            "quality": 1.0,
+            "sharpness": 0.3854132778702075
+          },
+          "boxes": [
+            [
+              469,
+              227,
+              200,
+              200
+            ]
+          ],
+          "algorithm": "ThreadPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 36818,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103218.thread.jpg"
+        },
+        "officialEvaluation": "not_evaluable_without_roi_or_labels"
+      },
+      {
+        "fileName": "IMG_20260828_103223.jpg",
+        "subset": "dcim",
+        "originalShape": [
+          3072,
+          4096,
+          3
+        ],
+        "processedShape": [
+          720,
+          960,
+          3
+        ],
+        "scale": 0.234375,
+        "nut": {
+          "status": "REVIEW",
+          "score": 0.777038227540689,
+          "message": "expectedCount is not configured; candidate count is informational",
+          "metrics": {
+            "tealRawCoverage": 0.003660300925925926,
+            "tealDilatedCoverage": 0.0056843171296296294,
+            "candidateCountBeforeNms": 1.0,
+            "candidateCount": 1.0,
+            "averageGeometryScore": 0.7600412340174165,
+            "averageCenterHoleScore": 0.8774343776914808,
+            "minCenterHoleScore": 0.8774343776914808,
+            "averageCircularity": 0.8266275805561312,
+            "averageEdgeDensity": 0.2084942084942085,
+            "quality": 1.0
+          },
+          "boxes": [
+            [
+              515,
+              269,
+              77,
+              74
+            ]
+          ],
+          "algorithm": "NutPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 14,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103223.nut.jpg"
+        },
+        "thread": {
+          "status": "REVIEW",
+          "score": 0.48543736593698095,
+          "message": "thread evidence is between configured thresholds",
+          "metrics": {
+            "tealRawCoverage": 0.003660300925925926,
+            "tealDilatedCoverage": 0.0056843171296296294,
+            "circleCandidates": 55.0,
+            "refinedCandidates": 10.0,
+            "circleCenterX": 514.0126342773438,
+            "circleCenterY": 189.6999969482422,
+            "circleRadius": 180.656005859375,
+            "refinedCircleCenterX": 514.0126342773438,
+            "refinedCircleCenterY": 189.6999969482422,
+            "refinedCircleRadius": 180.656005859375,
+            "rawCircleCenterX": 503.3999938964844,
+            "rawCircleCenterY": 190.1999969482422,
+            "rawCircleRadius": 148.8800048828125,
+            "rawLegacyScore": 0.471668616606038,
+            "refinementShiftPx": 10.624412259200366,
+            "refinementRadiusDelta": 31.7760009765625,
+            "circleGeometryScore": 0.4250698273835174,
+            "circleAngularCoverage": 0.09722222222222222,
+            "circleRadialConsistency": 0.91684123512546,
+            "innerDarkRatio": 0.5015330787607457,
+            "darkCoreScore": 0.6692397288125316,
+            "darkCoreContrast": 0.6444444444444444,
+            "darkCoreUniformity": 0.8833333333333333,
+            "darkCoreAlignment": 0.7057282914115539,
+            "darkCoreOffset": 23.922878179951176,
+            "ringGradientScore": 0.7781736850738525,
+            "texturePeriodicityScore": 0.2292146623359877,
+            "quality": 1.0,
+            "sharpness": 0.1327687768343681
+          },
+          "boxes": [
+            [
+              333,
+              9,
+              361,
+              361
+            ]
+          ],
+          "algorithm": "ThreadPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 27795,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103223.thread.jpg"
+        },
+        "officialEvaluation": "not_evaluable_without_roi_or_labels"
+      },
+      {
+        "fileName": "IMG_20260828_103228.jpg",
+        "subset": "dcim",
+        "originalShape": [
+          3072,
+          4096,
+          3
+        ],
+        "processedShape": [
+          720,
+          960,
+          3
+        ],
+        "scale": 0.234375,
+        "nut": {
+          "status": "REVIEW",
+          "score": 0.0,
+          "message": "expectedCount is not configured; candidate count is informational",
+          "metrics": {
+            "tealRawCoverage": 0.003324652777777778,
+            "tealDilatedCoverage": 0.005685763888888889,
+            "candidateCountBeforeNms": 0.0,
+            "candidateCount": 0.0,
+            "averageGeometryScore": 0.0,
+            "averageCenterHoleScore": 0.0,
+            "minCenterHoleScore": 0.0,
+            "averageCircularity": 0.0,
+            "averageEdgeDensity": 0.0,
+            "quality": 1.0
+          },
+          "boxes": [],
+          "algorithm": "NutPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 14,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103228.nut.jpg"
+        },
+        "thread": {
+          "status": "PASS",
+          "score": 0.7149841368549833,
+          "message": "circular aperture and internal periodic texture are present",
+          "metrics": {
+            "tealRawCoverage": 0.003324652777777778,
+            "tealDilatedCoverage": 0.005685763888888889,
+            "circleCandidates": 58.0,
+            "refinedCandidates": 10.0,
+            "circleCenterX": 708.5,
+            "circleCenterY": 472.65,
+            "circleRadius": 115.86,
+            "refinedCircleCenterX": 708.5,
+            "refinedCircleCenterY": 472.65,
+            "refinedCircleRadius": 115.86,
+            "rawCircleCenterX": 714.5,
+            "rawCircleCenterY": 500.5,
+            "rawCircleRadius": 98.0,
+            "rawLegacyScore": 0.7068177564018913,
+            "refinementShiftPx": 28.488989101054486,
+            "refinementRadiusDelta": 17.86,
+            "circleGeometryScore": 0.6206231114146928,
+            "circleAngularCoverage": 0.4861111111111111,
+            "circleRadialConsistency": 0.8223911118700655,
+            "innerDarkRatio": 0.6418566327931887,
+            "darkCoreScore": 0.7885132232804558,
+            "darkCoreContrast": 1.0,
+            "darkCoreUniformity": 0.95,
+            "darkCoreAlignment": 0.6404082453295519,
+            "darkCoreOffset": 18.74803531325315,
+            "ringGradientScore": 0.4986874580383301,
+            "texturePeriodicityScore": 0.7005555492639541,
+            "quality": 1.0,
+            "sharpness": 0.2974984329260973
+          },
+          "boxes": [
+            [
+              593,
+              357,
+              232,
+              232
+            ]
+          ],
+          "algorithm": "ThreadPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 31539,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103228.thread.jpg"
+        },
+        "officialEvaluation": "not_evaluable_without_roi_or_labels"
+      },
+      {
+        "fileName": "IMG_20260828_103231.jpg",
+        "subset": "dcim",
+        "originalShape": [
+          3072,
+          4096,
+          3
+        ],
+        "processedShape": [
+          720,
+          960,
+          3
+        ],
+        "scale": 0.234375,
+        "nut": {
+          "status": "REVIEW",
+          "score": 0.0,
+          "message": "expectedCount is not configured; candidate count is informational",
+          "metrics": {
+            "tealRawCoverage": 0.005837673611111111,
+            "tealDilatedCoverage": 0.009942129629629629,
+            "candidateCountBeforeNms": 0.0,
+            "candidateCount": 0.0,
+            "averageGeometryScore": 0.0,
+            "averageCenterHoleScore": 0.0,
+            "minCenterHoleScore": 0.0,
+            "averageCircularity": 0.0,
+            "averageEdgeDensity": 0.0,
+            "quality": 1.0
+          },
+          "boxes": [],
+          "algorithm": "NutPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 17,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103231.nut.jpg"
+        },
+        "thread": {
+          "status": "PASS",
+          "score": 0.6931296538940613,
+          "message": "circular aperture and internal periodic texture are present",
+          "metrics": {
+            "tealRawCoverage": 0.005837673611111111,
+            "tealDilatedCoverage": 0.009942129629629629,
+            "circleCandidates": 70.0,
+            "refinedCandidates": 10.0,
+            "circleCenterX": 330.4899990081787,
+            "circleCenterY": 445.5200019836426,
+            "circleRadius": 98.89999999999999,
+            "refinedCircleCenterX": 330.4899990081787,
+            "refinedCircleCenterY": 445.5200019836426,
+            "refinedCircleRadius": 98.89999999999999,
+            "rawCircleCenterX": 309.5,
+            "rawCircleCenterY": 501.5,
+            "rawCircleRadius": 89.19999694824219,
+            "rawLegacyScore": 0.6789069091053437,
+            "refinementShiftPx": 59.78578623949609,
+            "refinementRadiusDelta": 9.700003051757804,
+            "circleGeometryScore": 0.5926280691079374,
+            "circleAngularCoverage": 0.4305555555555556,
+            "circleRadialConsistency": 0.8357368394365101,
+            "innerDarkRatio": 0.6988072818581293,
+            "darkCoreScore": 0.8255860470944422,
+            "darkCoreContrast": 1.0,
+            "darkCoreUniformity": 0.9166666666666666,
+            "darkCoreAlignment": 0.6868111055391148,
+            "darkCoreOffset": 13.93847174798169,
+            "ringGradientScore": 0.7448607921600342,
+            "texturePeriodicityScore": 0.5880555596947671,
+            "quality": 1.0,
+            "sharpness": 0.35796684905603765
+          },
+          "boxes": [
+            [
+              232,
+              347,
+              198,
+              198
+            ]
+          ],
+          "algorithm": "ThreadPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 32284,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103231.thread.jpg"
+        },
+        "officialEvaluation": "not_evaluable_without_roi_or_labels"
+      },
+      {
+        "fileName": "IMG_20260828_103241.jpg",
+        "subset": "dcim",
+        "originalShape": [
+          3072,
+          4096,
+          3
+        ],
+        "processedShape": [
+          720,
+          960,
+          3
+        ],
+        "scale": 0.234375,
+        "nut": {
+          "status": "REVIEW",
+          "score": 0.0,
+          "message": "expectedCount is not configured; candidate count is informational",
+          "metrics": {
+            "tealRawCoverage": 0.0009606481481481482,
+            "tealDilatedCoverage": 0.0020167824074074072,
+            "candidateCountBeforeNms": 0.0,
+            "candidateCount": 0.0,
+            "averageGeometryScore": 0.0,
+            "averageCenterHoleScore": 0.0,
+            "minCenterHoleScore": 0.0,
+            "averageCircularity": 0.0,
+            "averageEdgeDensity": 0.0,
+            "quality": 1.0
+          },
+          "boxes": [],
+          "algorithm": "NutPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 17,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103241.nut.jpg"
+        },
+        "thread": {
+          "status": "PASS",
+          "score": 0.7427029767884047,
+          "message": "circular aperture and internal periodic texture are present",
+          "metrics": {
+            "tealRawCoverage": 0.0009606481481481482,
+            "tealDilatedCoverage": 0.0020167824074074072,
+            "circleCandidates": 75.0,
+            "refinedCandidates": 10.0,
+            "circleCenterX": 715.5,
+            "circleCenterY": 550.6975009918212,
+            "circleRadius": 83.96000366210937,
+            "refinedCircleCenterX": 715.5,
+            "refinedCircleCenterY": 550.6975009918212,
+            "refinedCircleRadius": 83.96000366210937,
+            "rawCircleCenterX": 717.5,
+            "rawCircleCenterY": 528.5,
+            "rawCircleRadius": 68.30000305175781,
+            "rawLegacyScore": 0.7426549455406358,
+            "refinementShiftPx": 22.287419103204954,
+            "refinementRadiusDelta": 15.66000061035156,
+            "circleGeometryScore": 0.8939329225972377,
+            "circleAngularCoverage": 0.9444444444444444,
+            "circleRadialConsistency": 0.8181656398264276,
+            "innerDarkRatio": 0.5185669456066946,
+            "darkCoreScore": 0.7505217953784061,
+            "darkCoreContrast": 0.7777777777777778,
+            "darkCoreUniformity": 0.9833333333333333,
+            "darkCoreAlignment": 0.8376704621448221,
+            "darkCoreOffset": 6.1331348667551655,
+            "ringGradientScore": 0.7829309463500976,
+            "texturePeriodicityScore": 0.6494444411993028,
+            "quality": 1.0,
+            "sharpness": 1.0
+          },
+          "boxes": [
+            [
+              632,
+              467,
+              168,
+              168
+            ]
+          ],
+          "algorithm": "ThreadPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 38732,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103241.thread.jpg"
+        },
+        "officialEvaluation": "not_evaluable_without_roi_or_labels"
+      },
+      {
+        "fileName": "IMG_20260828_103308.jpg",
+        "subset": "dcim",
+        "originalShape": [
+          4096,
+          3072,
+          3
+        ],
+        "processedShape": [
+          960,
+          720,
+          3
+        ],
+        "scale": 0.234375,
+        "nut": {
+          "status": "REVIEW",
+          "score": 0.0,
+          "message": "expectedCount is not configured; candidate count is informational",
+          "metrics": {
+            "tealRawCoverage": 7.233796296296296e-05,
+            "tealDilatedCoverage": 0.00017939814814814815,
+            "candidateCountBeforeNms": 0.0,
+            "candidateCount": 0.0,
+            "averageGeometryScore": 0.0,
+            "averageCenterHoleScore": 0.0,
+            "minCenterHoleScore": 0.0,
+            "averageCircularity": 0.0,
+            "averageEdgeDensity": 0.0,
+            "quality": 1.0
+          },
+          "boxes": [],
+          "algorithm": "NutPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 13,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103308.nut.jpg"
+        },
+        "thread": {
+          "status": "PASS",
+          "score": 0.600098473999336,
+          "message": "circular aperture and internal periodic texture are present",
+          "metrics": {
+            "tealRawCoverage": 7.233796296296296e-05,
+            "tealDilatedCoverage": 0.00017939814814814815,
+            "circleCandidates": 64.0,
+            "refinedCandidates": 10.0,
+            "circleCenterX": 285.3850009918213,
+            "circleCenterY": 616.3850009918212,
+            "circleRadius": 94.5199981689453,
+            "refinedCircleCenterX": 285.3850009918213,
+            "refinedCircleCenterY": 616.3850009918212,
+            "refinedCircleRadius": 94.5199981689453,
+            "rawCircleCenterX": 337.5,
+            "rawCircleCenterY": 668.5,
+            "rawCircleRadius": 77.0999984741211,
+            "rawLegacyScore": 0.6041167448520302,
+            "refinementShiftPx": 73.70173840042675,
+            "refinementRadiusDelta": 17.419999694824213,
+            "circleGeometryScore": 0.5915077421347993,
+            "circleAngularCoverage": 0.4444444444444444,
+            "circleRadialConsistency": 0.8121026886703315,
+            "innerDarkRatio": 0.5826576886079429,
+            "darkCoreScore": 0.662007835403116,
+            "darkCoreContrast": 0.8777777777777778,
+            "darkCoreUniformity": 0.30000000000000004,
+            "darkCoreAlignment": 0.873805360595252,
+            "darkCoreOffset": 5.36756268846037,
+            "ringGradientScore": 0.7392465591430664,
+            "texturePeriodicityScore": 0.43666666686534883,
+            "quality": 1.0,
+            "sharpness": 0.09070373342219643
+          },
+          "boxes": [
+            [
+              191,
+              522,
+              189,
+              189
+            ]
+          ],
+          "algorithm": "ThreadPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 35016,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103308.thread.jpg"
+        },
+        "officialEvaluation": "not_evaluable_without_roi_or_labels"
+      },
+      {
+        "fileName": "IMG_20260828_103313.jpg",
+        "subset": "dcim",
+        "originalShape": [
+          4096,
+          3072,
+          3
+        ],
+        "processedShape": [
+          960,
+          720,
+          3
+        ],
+        "scale": 0.234375,
+        "nut": {
+          "status": "REVIEW",
+          "score": 0.0,
+          "message": "expectedCount is not configured; candidate count is informational",
+          "metrics": {
+            "tealRawCoverage": 0.0011979166666666666,
+            "tealDilatedCoverage": 0.0018923611111111112,
+            "candidateCountBeforeNms": 0.0,
+            "candidateCount": 0.0,
+            "averageGeometryScore": 0.0,
+            "averageCenterHoleScore": 0.0,
+            "minCenterHoleScore": 0.0,
+            "averageCircularity": 0.0,
+            "averageEdgeDensity": 0.0,
+            "quality": 1.0
+          },
+          "boxes": [],
+          "algorithm": "NutPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 12,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103313.nut.jpg"
+        },
+        "thread": {
+          "status": "PASS",
+          "score": 0.6635183444953221,
+          "message": "circular aperture and internal periodic texture are present",
+          "metrics": {
+            "tealRawCoverage": 0.0011979166666666666,
+            "tealDilatedCoverage": 0.0018923611111111112,
+            "circleCandidates": 55.0,
+            "refinedCandidates": 10.0,
+            "circleCenterX": 157.58249950408936,
+            "circleCenterY": 828.5,
+            "circleRadius": 101.40800109863281,
+            "refinedCircleCenterX": 157.58249950408936,
+            "refinedCircleCenterY": 828.5,
+            "refinedCircleRadius": 101.40800109863281,
+            "rawCircleCenterX": 191.5,
+            "rawCircleCenterY": 824.5,
+            "rawCircleRadius": 85.9000015258789,
+            "rawLegacyScore": 0.6657737210673883,
+            "refinementShiftPx": 34.15255246522724,
+            "refinementRadiusDelta": 15.507999572753903,
+            "circleGeometryScore": 0.7307098353817062,
+            "circleAngularCoverage": 0.6666666666666666,
+            "circleRadialConsistency": 0.8267745884542655,
+            "innerDarkRatio": 0.38090974212034384,
+            "darkCoreScore": 0.6503273395545117,
+            "darkCoreContrast": 0.6222222222222222,
+            "darkCoreUniformity": 1.0,
+            "darkCoreAlignment": 0.8759360012985049,
+            "darkCoreOffset": 5.661486952479897,
+            "ringGradientScore": 0.45830020904541013,
+            "texturePeriodicityScore": 0.6711111164093018,
+            "quality": 1.0,
+            "sharpness": 0.35798599535890846
+          },
+          "boxes": [
+            [
+              56,
+              727,
+              203,
+              203
+            ]
+          ],
+          "algorithm": "ThreadPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 27725,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103313.thread.jpg"
+        },
+        "officialEvaluation": "not_evaluable_without_roi_or_labels"
+      },
+      {
+        "fileName": "IMG_20260828_103318.jpg",
+        "subset": "dcim",
+        "originalShape": [
+          4096,
+          3072,
+          3
+        ],
+        "processedShape": [
+          960,
+          720,
+          3
+        ],
+        "scale": 0.234375,
+        "nut": {
+          "status": "REVIEW",
+          "score": 0.6244871107482319,
+          "message": "expectedCount is not configured; candidate count is informational",
+          "metrics": {
+            "tealRawCoverage": 0.00220630787037037,
+            "tealDilatedCoverage": 0.004146412037037037,
+            "candidateCountBeforeNms": 1.0,
+            "candidateCount": 1.0,
+            "averageGeometryScore": 0.6327351201043605,
+            "averageCenterHoleScore": 0.6640117437167183,
+            "minCenterHoleScore": 0.6640117437167183,
+            "averageCircularity": 0.7277219017363131,
+            "averageEdgeDensity": 0.12032520325203253,
+            "quality": 1.0
+          },
+          "boxes": [
+            [
+              286,
+              370,
+              82,
+              60
+            ]
+          ],
+          "algorithm": "NutPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 16,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103318.nut.jpg"
+        },
+        "thread": {
+          "status": "PASS",
+          "score": 0.7324593495331105,
+          "message": "circular aperture and internal periodic texture are present",
+          "metrics": {
+            "tealRawCoverage": 0.00220630787037037,
+            "tealDilatedCoverage": 0.004146412037037037,
+            "circleCandidates": 64.0,
+            "refinedCandidates": 10.0,
+            "circleCenterX": 292.2225525589297,
+            "circleCenterY": 537.8965810150775,
+            "circleRadius": 199.7359912109375,
+            "refinedCircleCenterX": 292.2225525589297,
+            "refinedCircleCenterY": 537.8965810150775,
+            "refinedCircleRadius": 199.7359912109375,
+            "rawCircleCenterX": 282.5,
+            "rawCircleCenterY": 514.5,
+            "rawCircleRadius": 266.29998779296875,
+            "rawLegacyScore": 0.7194110417676891,
+            "refinementShiftPx": 25.336298692907636,
+            "refinementRadiusDelta": -66.56399658203125,
+            "circleGeometryScore": 0.6180745553527547,
+            "circleAngularCoverage": 0.4305555555555556,
+            "circleRadialConsistency": 0.8993530550485533,
+            "innerDarkRatio": 0.7750688768835327,
+            "darkCoreScore": 0.8594863430969127,
+            "darkCoreContrast": 1.0,
+            "darkCoreUniformity": 0.9833333333333333,
+            "darkCoreAlignment": 0.8477265309550824,
+            "darkCoreOffset": 13.686521523666576,
+            "ringGradientScore": 0.41425042152404784,
+            "texturePeriodicityScore": 0.6340715198032651,
+            "quality": 1.0,
+            "sharpness": 0.36783728849099667
+          },
+          "boxes": [
+            [
+              92,
+              338,
+              399,
+              399
+            ]
+          ],
+          "algorithm": "ThreadPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 41773,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103318.thread.jpg"
+        },
+        "officialEvaluation": "not_evaluable_without_roi_or_labels"
+      },
+      {
+        "fileName": "IMG_20260828_103322.jpg",
+        "subset": "dcim",
+        "originalShape": [
+          4096,
+          3072,
+          3
+        ],
+        "processedShape": [
+          960,
+          720,
+          3
+        ],
+        "scale": 0.234375,
+        "nut": {
+          "status": "REVIEW",
+          "score": 0.0,
+          "message": "expectedCount is not configured; candidate count is informational",
+          "metrics": {
+            "tealRawCoverage": 0.002533275462962963,
+            "tealDilatedCoverage": 0.003839699074074074,
+            "candidateCountBeforeNms": 0.0,
+            "candidateCount": 0.0,
+            "averageGeometryScore": 0.0,
+            "averageCenterHoleScore": 0.0,
+            "minCenterHoleScore": 0.0,
+            "averageCircularity": 0.0,
+            "averageEdgeDensity": 0.0,
+            "quality": 1.0
+          },
+          "boxes": [],
+          "algorithm": "NutPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 16,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103322.nut.jpg"
+        },
+        "thread": {
+          "status": "PASS",
+          "score": 0.6180416782848938,
+          "message": "circular aperture and internal periodic texture are present",
+          "metrics": {
+            "tealRawCoverage": 0.002533275462962963,
+            "tealDilatedCoverage": 0.003839699074074074,
+            "circleCandidates": 73.0,
+            "refinedCandidates": 10.0,
+            "circleCenterX": 572.5,
+            "circleCenterY": 432.5,
+            "circleRadius": 101.89999999999999,
+            "refinedCircleCenterX": 572.5,
+            "refinedCircleCenterY": 432.5,
+            "refinedCircleRadius": 101.89999999999999,
+            "rawCircleCenterX": 566.5,
+            "rawCircleCenterY": 432.5,
+            "rawCircleRadius": 117.80000305175781,
+            "rawLegacyScore": 0.6056243407907984,
+            "refinementShiftPx": 6.0,
+            "refinementRadiusDelta": -15.900003051757821,
+            "circleGeometryScore": 0.5851248543374442,
+            "circleAngularCoverage": 0.4444444444444444,
+            "circleRadialConsistency": 0.7961454691769438,
+            "innerDarkRatio": 0.4766808712121212,
+            "darkCoreScore": 0.7217653912863551,
+            "darkCoreContrast": 0.8,
+            "darkCoreUniformity": 0.95,
+            "darkCoreAlignment": 0.7762882396052349,
+            "darkCoreOffset": 10.258302772901958,
+            "ringGradientScore": 0.7039736747741699,
+            "texturePeriodicityScore": 0.5363888889551163,
+            "quality": 1.0,
+            "sharpness": 0.2463790999248405
+          },
+          "boxes": [
+            [
+              471,
+              331,
+              204,
+              204
+            ]
+          ],
+          "algorithm": "ThreadPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 37669,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103322.thread.jpg"
+        },
+        "officialEvaluation": "not_evaluable_without_roi_or_labels"
+      },
+      {
+        "fileName": "IMG_20260828_103326.jpg",
+        "subset": "dcim",
+        "originalShape": [
+          4096,
+          3072,
+          3
+        ],
+        "processedShape": [
+          960,
+          720,
+          3
+        ],
+        "scale": 0.234375,
+        "nut": {
+          "status": "REVIEW",
+          "score": 0.0,
+          "message": "expectedCount is not configured; candidate count is informational",
+          "metrics": {
+            "tealRawCoverage": 0.0037586805555555555,
+            "tealDilatedCoverage": 0.0064670138888888885,
+            "candidateCountBeforeNms": 0.0,
+            "candidateCount": 0.0,
+            "averageGeometryScore": 0.0,
+            "averageCenterHoleScore": 0.0,
+            "minCenterHoleScore": 0.0,
+            "averageCircularity": 0.0,
+            "averageEdgeDensity": 0.0,
+            "quality": 1.0
+          },
+          "boxes": [],
+          "algorithm": "NutPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 16,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103326.nut.jpg"
+        },
+        "thread": {
+          "status": "PASS",
+          "score": 0.7433974867973753,
+          "message": "circular aperture and internal periodic texture are present",
+          "metrics": {
+            "tealRawCoverage": 0.0037586805555555555,
+            "tealDilatedCoverage": 0.0064670138888888885,
+            "circleCandidates": 67.0,
+            "refinedCandidates": 10.0,
+            "circleCenterX": 372.8035272609958,
+            "circleCenterY": 601.6463060544145,
+            "circleRadius": 199.396005859375,
+            "refinedCircleCenterX": 372.8035272609958,
+            "refinedCircleCenterY": 601.6463060544145,
+            "refinedCircleRadius": 199.396005859375,
+            "rawCircleCenterX": 369.5,
+            "rawCircleCenterY": 578.5,
+            "rawCircleRadius": 187.10000610351562,
+            "rawLegacyScore": 0.7441383153495844,
+            "refinementShiftPx": 23.380863464140216,
+            "refinementRadiusDelta": 12.295999755859384,
+            "circleGeometryScore": 0.6507956550335375,
+            "circleAngularCoverage": 0.4861111111111111,
+            "circleRadialConsistency": 0.8978224709171772,
+            "innerDarkRatio": 0.8349318136187431,
+            "darkCoreScore": 0.8134111238783343,
+            "darkCoreContrast": 1.0,
+            "darkCoreUniformity": 0.5333333333333333,
+            "darkCoreAlignment": 0.7839889878975895,
+            "darkCoreOffset": 19.382279865687796,
+            "ringGradientScore": 0.8583320617675781,
+            "texturePeriodicityScore": 0.6338888847827913,
+            "quality": 1.0,
+            "sharpness": 0.9262296193176837
+          },
+          "boxes": [
+            [
+              173,
+              402,
+              399,
+              399
+            ]
+          ],
+          "algorithm": "ThreadPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 42532,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103326.thread.jpg"
+        },
+        "officialEvaluation": "not_evaluable_without_roi_or_labels"
+      },
+      {
+        "fileName": "IMG_20260828_103331.jpg",
+        "subset": "dcim",
+        "originalShape": [
+          4096,
+          3072,
+          3
+        ],
+        "processedShape": [
+          960,
+          720,
+          3
+        ],
+        "scale": 0.234375,
+        "nut": {
+          "status": "REVIEW",
+          "score": 0.0,
+          "message": "expectedCount is not configured; candidate count is informational",
+          "metrics": {
+            "tealRawCoverage": 0.0016478587962962964,
+            "tealDilatedCoverage": 0.0028110532407407407,
+            "candidateCountBeforeNms": 0.0,
+            "candidateCount": 0.0,
+            "averageGeometryScore": 0.0,
+            "averageCenterHoleScore": 0.0,
+            "minCenterHoleScore": 0.0,
+            "averageCircularity": 0.0,
+            "averageEdgeDensity": 0.0,
+            "quality": 1.0
+          },
+          "boxes": [],
+          "algorithm": "NutPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 14,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103331.nut.jpg"
+        },
+        "thread": {
+          "status": "PASS",
+          "score": 0.5753897709577214,
+          "message": "circular aperture and internal periodic texture are present",
+          "metrics": {
+            "tealRawCoverage": 0.0016478587962962964,
+            "tealDilatedCoverage": 0.0028110532407407407,
+            "circleCandidates": 65.0,
+            "refinedCandidates": 10.0,
+            "circleCenterX": 212.6350009918213,
+            "circleCenterY": 805.5,
+            "circleRadius": 128.55599853515625,
+            "refinedCircleCenterX": 212.6350009918213,
+            "refinedCircleCenterY": 805.5,
+            "refinedCircleRadius": 128.55599853515625,
+            "rawCircleCenterX": 257.5,
+            "rawCircleCenterY": 803.5,
+            "rawCircleRadius": 144.1999969482422,
+            "rawLegacyScore": 0.5679236586821018,
+            "refinementShiftPx": 44.90955506352603,
+            "refinementRadiusDelta": -15.643998413085939,
+            "circleGeometryScore": 0.6004419898766238,
+            "circleAngularCoverage": 0.4305555555555556,
+            "circleRadialConsistency": 0.8552716413582259,
+            "innerDarkRatio": 0.3714975845410628,
+            "darkCoreScore": 0.6508318545971229,
+            "darkCoreContrast": 0.5333333333333333,
+            "darkCoreUniformity": 0.95,
+            "darkCoreAlignment": 0.8358838615653602,
+            "darkCoreOffset": 9.494151323489572,
+            "ringGradientScore": 1.0,
+            "texturePeriodicityScore": 0.48305555194616323,
+            "quality": 1.0,
+            "sharpness": 0.2723683338150821
+          },
+          "boxes": [
+            [
+              84,
+              677,
+              257,
+              257
+            ]
+          ],
+          "algorithm": "ThreadPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 32164,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103331.thread.jpg"
+        },
+        "officialEvaluation": "not_evaluable_without_roi_or_labels"
+      },
+      {
+        "fileName": "IMG_20260828_103335.jpg",
+        "subset": "dcim",
+        "originalShape": [
+          4096,
+          3072,
+          3
+        ],
+        "processedShape": [
+          960,
+          720,
+          3
+        ],
+        "scale": 0.234375,
+        "nut": {
+          "status": "REVIEW",
+          "score": 0.546127350618659,
+          "message": "expectedCount is not configured; candidate count is informational",
+          "metrics": {
+            "tealRawCoverage": 0.003042534722222222,
+            "tealDilatedCoverage": 0.0048017939814814815,
+            "candidateCountBeforeNms": 1.0,
+            "candidateCount": 1.0,
+            "averageGeometryScore": 0.6518926704619361,
+            "averageCenterHoleScore": 0.30113297733995653,
+            "minCenterHoleScore": 0.30113297733995653,
+            "averageCircularity": 0.6696987921039459,
+            "averageEdgeDensity": 0.0668927831166384,
+            "quality": 1.0
+          },
+          "boxes": [
+            [
+              127,
+              607,
+              61,
+              87
+            ]
+          ],
+          "algorithm": "NutPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 17,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103335.nut.jpg"
+        },
+        "thread": {
+          "status": "PASS",
+          "score": 0.6480264402126139,
+          "message": "circular aperture and internal periodic texture are present",
+          "metrics": {
+            "tealRawCoverage": 0.003042534722222222,
+            "tealDilatedCoverage": 0.0048017939814814815,
+            "circleCandidates": 63.0,
+            "refinedCandidates": 10.0,
+            "circleCenterX": 592.5100009918212,
+            "circleCenterY": 832.5100009918212,
+            "circleRadius": 109.03999633789063,
+            "refinedCircleCenterX": 592.5100009918212,
+            "refinedCircleCenterY": 832.5100009918212,
+            "refinedCircleRadius": 109.03999633789063,
+            "rawCircleCenterX": 623.5,
+            "rawCircleCenterY": 863.5,
+            "rawCircleRadius": 89.19999694824219,
+            "rawLegacyScore": 0.6508088815914916,
+            "refinementShiftPx": 43.826476895295166,
+            "refinementRadiusDelta": 19.83999938964844,
+            "circleGeometryScore": 0.8057532059508116,
+            "circleAngularCoverage": 0.7777777777777778,
+            "circleRadialConsistency": 0.8477163482103621,
+            "innerDarkRatio": 0.3886650134325274,
+            "darkCoreScore": 0.6524926790517,
+            "darkCoreContrast": 0.6777777777777778,
+            "darkCoreUniformity": 0.9666666666666667,
+            "darkCoreAlignment": 0.8065196009221033,
+            "darkCoreOffset": 9.493695903108366,
+            "ringGradientScore": 0.4822737693786621,
+            "texturePeriodicityScore": 0.5397222214937211,
+            "quality": 1.0,
+            "sharpness": 0.3299802628863298
+          },
+          "boxes": [
+            [
+              483,
+              723,
+              218,
+              218
+            ]
+          ],
+          "algorithm": "ThreadPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 22181,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103335.thread.jpg"
+        },
+        "officialEvaluation": "not_evaluable_without_roi_or_labels"
+      },
+      {
+        "fileName": "IMG_20260828_103340.jpg",
+        "subset": "dcim",
+        "originalShape": [
+          4096,
+          3072,
+          3
+        ],
+        "processedShape": [
+          960,
+          720,
+          3
+        ],
+        "scale": 0.234375,
+        "nut": {
+          "status": "REVIEW",
+          "score": 0.0,
+          "message": "expectedCount is not configured; candidate count is informational",
+          "metrics": {
+            "tealRawCoverage": 0.005390625,
+            "tealDilatedCoverage": 0.008055555555555555,
+            "candidateCountBeforeNms": 0.0,
+            "candidateCount": 0.0,
+            "averageGeometryScore": 0.0,
+            "averageCenterHoleScore": 0.0,
+            "minCenterHoleScore": 0.0,
+            "averageCircularity": 0.0,
+            "averageEdgeDensity": 0.0,
+            "quality": 1.0
+          },
+          "boxes": [],
+          "algorithm": "NutPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 15,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103340.nut.jpg"
+        },
+        "thread": {
+          "status": "PASS",
+          "score": 0.7594510661421122,
+          "message": "circular aperture and internal periodic texture are present",
+          "metrics": {
+            "tealRawCoverage": 0.005390625,
+            "tealDilatedCoverage": 0.008055555555555555,
+            "circleCandidates": 61.0,
+            "refinedCandidates": 10.0,
+            "circleCenterX": 155.19000396728515,
+            "circleCenterY": 795.5,
+            "circleRadius": 136.8919970703125,
+            "refinedCircleCenterX": 155.19000396728515,
+            "refinedCircleCenterY": 795.5,
+            "refinedCircleRadius": 136.8919970703125,
+            "rawCircleCenterX": 255.5,
+            "rawCircleCenterY": 793.5,
+            "rawCircleRadius": 157.39999389648438,
+            "rawLegacyScore": 0.7616625781232633,
+            "refinementShiftPx": 100.32993224398824,
+            "refinementRadiusDelta": -20.507996826171876,
+            "circleGeometryScore": 0.8364310694031019,
+            "circleAngularCoverage": 0.7916666666666666,
+            "circleRadialConsistency": 0.9035776735077546,
+            "innerDarkRatio": 0.6685996985780749,
+            "darkCoreScore": 0.7830736955886624,
+            "darkCoreContrast": 1.0,
+            "darkCoreUniformity": 0.7,
+            "darkCoreAlignment": 0.6546215576471727,
+            "darkCoreOffset": 21.27579512342055,
+            "ringGradientScore": 0.9287569046020507,
+            "texturePeriodicityScore": 0.6452777755260468,
+            "quality": 1.0,
+            "sharpness": 0.5461180494397301
+          },
+          "boxes": [
+            [
+              18,
+              659,
+              274,
+              274
+            ]
+          ],
+          "algorithm": "ThreadPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 37398,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103340.thread.jpg"
+        },
+        "officialEvaluation": "not_evaluable_without_roi_or_labels"
+      },
+      {
+        "fileName": "IMG_20260828_103344.jpg",
+        "subset": "dcim",
+        "originalShape": [
+          4096,
+          3072,
+          3
+        ],
+        "processedShape": [
+          960,
+          720,
+          3
+        ],
+        "scale": 0.234375,
+        "nut": {
+          "status": "REVIEW",
+          "score": 0.0,
+          "message": "expectedCount is not configured; candidate count is informational",
+          "metrics": {
+            "tealRawCoverage": 0.005567129629629629,
+            "tealDilatedCoverage": 0.009127604166666666,
+            "candidateCountBeforeNms": 0.0,
+            "candidateCount": 0.0,
+            "averageGeometryScore": 0.0,
+            "averageCenterHoleScore": 0.0,
+            "minCenterHoleScore": 0.0,
+            "averageCircularity": 0.0,
+            "averageEdgeDensity": 0.0,
+            "quality": 1.0
+          },
+          "boxes": [],
+          "algorithm": "NutPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 14,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103344.nut.jpg"
+        },
+        "thread": {
+          "status": "PASS",
+          "score": 0.6538645711217543,
+          "message": "circular aperture and internal periodic texture are present",
+          "metrics": {
+            "tealRawCoverage": 0.005567129629629629,
+            "tealDilatedCoverage": 0.009127604166666666,
+            "circleCandidates": 71.0,
+            "refinedCandidates": 10.0,
+            "circleCenterX": 355.97237076648844,
+            "circleCenterY": 357.07605466429,
+            "circleRadius": 113.24400146484375,
+            "refinedCircleCenterX": 355.97237076648844,
+            "refinedCircleCenterY": 357.07605466429,
+            "refinedCircleRadius": 113.24400146484375,
+            "rawCircleCenterX": 358.5,
+            "rawCircleCenterY": 352.5,
+            "rawCircleRadius": 112.30000305175781,
+            "rawLegacyScore": 0.6430970831899185,
+            "refinementShiftPx": 5.227732379595608,
+            "refinementRadiusDelta": 0.9439984130859358,
+            "circleGeometryScore": 0.6320118156385831,
+            "circleAngularCoverage": 0.5,
+            "circleRadialConsistency": 0.8300295390964577,
+            "innerDarkRatio": 0.4519741564967696,
+            "darkCoreScore": 0.7243675081690542,
+            "darkCoreContrast": 0.7111111111111111,
+            "darkCoreUniformity": 0.9833333333333333,
+            "darkCoreAlignment": 0.9866563011320777,
+            "darkCoreOffset": 0.6799922343654407,
+            "ringGradientScore": 0.6513768672943115,
+            "texturePeriodicityScore": 0.6349999979138374,
+            "quality": 1.0,
+            "sharpness": 0.11520485813881622
+          },
+          "boxes": [
+            [
+              243,
+              244,
+              226,
+              226
+            ]
+          ],
+          "algorithm": "ThreadPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 34031,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103344.thread.jpg"
+        },
+        "officialEvaluation": "not_evaluable_without_roi_or_labels"
+      },
+      {
+        "fileName": "IMG_20260828_103354.jpg",
+        "subset": "dcim",
+        "originalShape": [
+          4096,
+          3072,
+          3
+        ],
+        "processedShape": [
+          960,
+          720,
+          3
+        ],
+        "scale": 0.234375,
+        "nut": {
+          "status": "REVIEW",
+          "score": 0.0,
+          "message": "expectedCount is not configured; candidate count is informational",
+          "metrics": {
+            "tealRawCoverage": 0.006380208333333333,
+            "tealDilatedCoverage": 0.01070601851851852,
+            "candidateCountBeforeNms": 0.0,
+            "candidateCount": 0.0,
+            "averageGeometryScore": 0.0,
+            "averageCenterHoleScore": 0.0,
+            "minCenterHoleScore": 0.0,
+            "averageCircularity": 0.0,
+            "averageEdgeDensity": 0.0,
+            "quality": 1.0
+          },
+          "boxes": [],
+          "algorithm": "NutPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 17,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103354.nut.jpg"
+        },
+        "thread": {
+          "status": "PASS",
+          "score": 0.7367993908535106,
+          "message": "circular aperture and internal periodic texture are present",
+          "metrics": {
+            "tealRawCoverage": 0.006380208333333333,
+            "tealDilatedCoverage": 0.01070601851851852,
+            "circleCandidates": 76.0,
+            "refinedCandidates": 10.0,
+            "circleCenterX": 287.08058170035486,
+            "circleCenterY": 390.86367844468447,
+            "circleRadius": 256.36,
+            "refinedCircleCenterX": 287.08058170035486,
+            "refinedCircleCenterY": 390.86367844468447,
+            "refinedCircleRadius": 256.36,
+            "rawCircleCenterX": 356.5,
+            "rawCircleCenterY": 398.5,
+            "rawCircleRadius": 296.0,
+            "rawLegacyScore": 0.7167804857303389,
+            "refinementShiftPx": 69.8381632344185,
+            "refinementRadiusDelta": -39.639999999999986,
+            "circleGeometryScore": 0.652699795122481,
+            "circleAngularCoverage": 0.4722222222222222,
+            "circleRadialConsistency": 0.9234161544728692,
+            "innerDarkRatio": 0.7963879961133119,
+            "darkCoreScore": 0.9074016288908555,
+            "darkCoreContrast": 1.0,
+            "darkCoreUniformity": 0.9333333333333333,
+            "darkCoreAlignment": 0.8787904226013027,
+            "darkCoreOffset": 13.982979267868519,
+            "ringGradientScore": 1.0,
+            "texturePeriodicityScore": 0.5729118272175553,
+            "quality": 1.0,
+            "sharpness": 1.0
+          },
+          "boxes": [
+            [
+              31,
+              135,
+              513,
+              513
+            ]
+          ],
+          "algorithm": "ThreadPresenceDetector",
+          "algorithmVersion": "presence-offline.3",
+          "durationMs": 36077,
+          "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\debug\\dcim\\IMG_20260828_103354.thread.jpg"
+        },
+        "officialEvaluation": "not_evaluable_without_roi_or_labels"
+      }
+    ]
+  },
+  "officialEvaluationUnchanged": {
+    "dcimTargetCount": 120,
+    "status": "INSUFFICIENT_DATA",
+    "allTargets": "unknown / ROI=null / UNANNOTATED / SKIPPED",
+    "accuracyMetricsComputed": false
+  },
+  "artifacts": {
+    "keyNutContactSheet": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\key_nut_contact_sheet.jpg",
+    "keyThreadContactSheet": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\key_thread_contact_sheet.jpg",
+    "dcimNutContactSheet": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\dcim_nut_contact_sheet.jpg",
+    "dcimThreadContactSheet": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\dcim_thread_contact_sheet.jpg",
+    "dcimNutThreadContactSheet": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\exploratory_nut_thread_20260903\\dcim_nut_thread_contact_sheet.jpg"
+  }
+}

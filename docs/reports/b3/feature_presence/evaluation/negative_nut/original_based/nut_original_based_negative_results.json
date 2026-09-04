@@ -1,0 +1,297 @@
+[
+  {
+    "sourceFile": "nut_1.png",
+    "sourceSha256": "9ef946a04fda838004424bfb00285e70e3ef00da1c7d2f1457b6c8fc479ecde1",
+    "negativeFile": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\evaluation\\negative_nut\\original_based\\nut_no_nuts__nut_1.png",
+    "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\evaluation\\negative_nut\\original_based\\debug\\nut_no_nuts__nut_1.jpg",
+    "imageShape": [
+      136,
+      376,
+      3
+    ],
+    "removalMode": "detector-box-derived-full-component-ellipse",
+    "componentScale": 0.88,
+    "inpaintRadius": 25,
+    "removedComponents": [
+      {
+        "box": [
+          221,
+          54,
+          64,
+          57
+        ],
+        "center": [
+          253,
+          82
+        ],
+        "axes": [
+          56,
+          50
+        ],
+        "sourceIndex": 1
+      },
+      {
+        "box": [
+          65,
+          57,
+          69,
+          62
+        ],
+        "center": [
+          100,
+          88
+        ],
+        "axes": [
+          61,
+          55
+        ],
+        "sourceIndex": 2
+      }
+    ],
+    "changedPixelCount": 19286,
+    "changedPixelFraction": 0.37715112640801,
+    "outsideRemovalMaskUnchanged": true,
+    "status": "REVIEW",
+    "score": 0.0,
+    "candidateCountBeforeNms": 0.0,
+    "candidateCount": 0.0,
+    "boxes": [],
+    "message": "candidate count matches but polygon or center-hole quality is uncertain"
+  },
+  {
+    "sourceFile": "nut_3.jpg",
+    "sourceSha256": "df30d84b7322e2a68c8b5f347d082bfb315dfb27252e3c6054b99d841620338e",
+    "negativeFile": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\evaluation\\negative_nut\\original_based\\nut_no_nuts__nut_3.png",
+    "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\evaluation\\negative_nut\\original_based\\debug\\nut_no_nuts__nut_3.jpg",
+    "imageShape": [
+      988,
+      1317,
+      3
+    ],
+    "removalMode": "detector-box-derived-full-component-ellipse",
+    "componentScale": 0.88,
+    "inpaintRadius": 25,
+    "removedComponents": [
+      {
+        "box": [
+          831,
+          362,
+          173,
+          202
+        ],
+        "center": [
+          918,
+          463
+        ],
+        "axes": [
+          152,
+          178
+        ],
+        "sourceIndex": 1
+      },
+      {
+        "box": [
+          302,
+          394,
+          227,
+          192
+        ],
+        "center": [
+          416,
+          490
+        ],
+        "axes": [
+          200,
+          169
+        ],
+        "sourceIndex": 2
+      }
+    ],
+    "changedPixelCount": 191327,
+    "changedPixelFraction": 0.14703933919255824,
+    "outsideRemovalMaskUnchanged": true,
+    "status": "REVIEW",
+    "score": 0.0,
+    "candidateCountBeforeNms": 0.0,
+    "candidateCount": 0.0,
+    "boxes": [],
+    "message": "candidate count matches but polygon or center-hole quality is uncertain"
+  },
+  {
+    "sourceFile": "nut_4.jpg",
+    "sourceSha256": "6eef67bebb872dca7e678aa32e361a2207331eeda5ebae53ec10abc809104820",
+    "negativeFile": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\evaluation\\negative_nut\\original_based\\nut_no_nuts__nut_4.png",
+    "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\evaluation\\negative_nut\\original_based\\debug\\nut_no_nuts__nut_4.jpg",
+    "imageShape": [
+      1700,
+      1274,
+      3
+    ],
+    "removalMode": "detector-box-derived-full-component-ellipse",
+    "componentScale": 0.88,
+    "inpaintRadius": 25,
+    "removedComponents": [
+      {
+        "box": [
+          426,
+          1034,
+          298,
+          323
+        ],
+        "center": [
+          575,
+          1196
+        ],
+        "axes": [
+          262,
+          284
+        ],
+        "sourceIndex": 1
+      },
+      {
+        "box": [
+          549,
+          446,
+          250,
+          228
+        ],
+        "center": [
+          674,
+          560
+        ],
+        "axes": [
+          220,
+          201
+        ],
+        "sourceIndex": 2
+      }
+    ],
+    "changedPixelCount": 369134,
+    "changedPixelFraction": 0.17043771354695725,
+    "outsideRemovalMaskUnchanged": true,
+    "status": "REVIEW",
+    "score": 0.0,
+    "candidateCountBeforeNms": 0.0,
+    "candidateCount": 0.0,
+    "boxes": [],
+    "message": "candidate count matches but polygon or center-hole quality is uncertain"
+  },
+  {
+    "sourceFile": "nut_5.jpg",
+    "sourceSha256": "0b5f5ba46fed0e5acaee01659eaf21bb5bee40a610ba73d2fb0bbe3828923966",
+    "negativeFile": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\evaluation\\negative_nut\\original_based\\nut_no_nuts__nut_5.png",
+    "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\evaluation\\negative_nut\\original_based\\debug\\nut_no_nuts__nut_5.jpg",
+    "imageShape": [
+      988,
+      1317,
+      3
+    ],
+    "removalMode": "detector-box-derived-full-component-ellipse",
+    "componentScale": 0.88,
+    "inpaintRadius": 25,
+    "removedComponents": [
+      {
+        "box": [
+          900,
+          396,
+          156,
+          153
+        ],
+        "center": [
+          978,
+          472
+        ],
+        "axes": [
+          137,
+          135
+        ],
+        "sourceIndex": 1
+      },
+      {
+        "box": [
+          429,
+          400,
+          154,
+          150
+        ],
+        "center": [
+          506,
+          475
+        ],
+        "axes": [
+          136,
+          132
+        ],
+        "sourceIndex": 2
+      }
+    ],
+    "changedPixelCount": 115006,
+    "changedPixelFraction": 0.08838483979354378,
+    "outsideRemovalMaskUnchanged": true,
+    "status": "REVIEW",
+    "score": 0.0,
+    "candidateCountBeforeNms": 0.0,
+    "candidateCount": 0.0,
+    "boxes": [],
+    "message": "candidate count matches but polygon or center-hole quality is uncertain"
+  },
+  {
+    "sourceFile": "nut_6.jpg",
+    "sourceSha256": "0fec8cf387225372aaaa728a14da57c9a0305b115cb1f545496569cda11e4cf1",
+    "negativeFile": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\evaluation\\negative_nut\\original_based\\nut_no_nuts__nut_6.png",
+    "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\evaluation\\negative_nut\\original_based\\debug\\nut_no_nuts__nut_6.jpg",
+    "imageShape": [
+      988,
+      1318,
+      3
+    ],
+    "removalMode": "detector-box-derived-full-component-ellipse",
+    "componentScale": 0.88,
+    "inpaintRadius": 25,
+    "removedComponents": [
+      {
+        "box": [
+          312,
+          406,
+          171,
+          166
+        ],
+        "center": [
+          398,
+          489
+        ],
+        "axes": [
+          150,
+          146
+        ],
+        "sourceIndex": 1
+      },
+      {
+        "box": [
+          793,
+          424,
+          187,
+          160
+        ],
+        "center": [
+          886,
+          504
+        ],
+        "axes": [
+          165,
+          141
+        ],
+        "sourceIndex": 2
+      }
+    ],
+    "changedPixelCount": 142090,
+    "changedPixelFraction": 0.10911668397092884,
+    "outsideRemovalMaskUnchanged": true,
+    "status": "REVIEW",
+    "score": 0.0,
+    "candidateCountBeforeNms": 0.0,
+    "candidateCount": 0.0,
+    "boxes": [],
+    "message": "candidate count matches but polygon or center-hole quality is uncertain"
+  }
+]

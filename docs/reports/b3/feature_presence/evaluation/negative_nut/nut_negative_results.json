@@ -1,0 +1,74 @@
+[
+  {
+    "file": "nut_negative_bright_spot.png",
+    "status": "REVIEW",
+    "score": 0.0,
+    "candidateCountBeforeNms": 0.0,
+    "candidateCount": 0.0,
+    "boxes": [],
+    "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\evaluation\\negative_nut\\debug\\nut_negative_bright_spot.jpg"
+  },
+  {
+    "file": "nut_negative_hex_no_hole.png",
+    "status": "REVIEW",
+    "score": 0.0,
+    "candidateCountBeforeNms": 0.0,
+    "candidateCount": 0.0,
+    "boxes": [],
+    "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\evaluation\\negative_nut\\debug\\nut_negative_hex_no_hole.jpg"
+  },
+  {
+    "file": "nut_negative_metal_glare.png",
+    "status": "REVIEW",
+    "score": 0.0,
+    "candidateCountBeforeNms": 0.0,
+    "candidateCount": 0.0,
+    "boxes": [],
+    "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\evaluation\\negative_nut\\debug\\nut_negative_metal_glare.jpg"
+  },
+  {
+    "file": "nut_negative_nested_glare.png",
+    "status": "REVIEW",
+    "score": 0.0,
+    "candidateCountBeforeNms": 0.0,
+    "candidateCount": 0.0,
+    "boxes": [],
+    "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\evaluation\\negative_nut\\debug\\nut_negative_nested_glare.jpg"
+  },
+  {
+    "file": "nut_negative_nonhex_background.png",
+    "status": "REVIEW",
+    "score": 0.0,
+    "candidateCountBeforeNms": 0.0,
+    "candidateCount": 0.0,
+    "boxes": [],
+    "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\evaluation\\negative_nut\\debug\\nut_negative_nonhex_background.jpg"
+  },
+  {
+    "file": "nut_negative_offcenter_hole.png",
+    "status": "REVIEW",
+    "score": 0.0,
+    "candidateCountBeforeNms": 0.0,
+    "candidateCount": 0.0,
+    "boxes": [],
+    "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\evaluation\\negative_nut\\debug\\nut_negative_offcenter_hole.jpg"
+  },
+  {
+    "file": "nut_negative_plain_circle.png",
+    "status": "REVIEW",
+    "score": 0.0,
+    "candidateCountBeforeNms": 0.0,
+    "candidateCount": 0.0,
+    "boxes": [],
+    "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\evaluation\\negative_nut\\debug\\nut_negative_plain_circle.jpg"
+  },
+  {
+    "file": "nut_negative_washer_only.png",
+    "status": "REVIEW",
+    "score": 0.0,
+    "candidateCountBeforeNms": 0.0,
+    "candidateCount": 0.0,
+    "boxes": [],
+    "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\evaluation\\negative_nut\\debug\\nut_negative_washer_only.jpg"
+  }
+]

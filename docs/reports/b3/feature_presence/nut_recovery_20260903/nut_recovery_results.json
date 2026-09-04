@@ -1,0 +1,168 @@
+{
+  "mode": "CONTROLLED_NUT_RECOVERY",
+  "algorithmVersion": "presence-offline.3",
+  "note": "Exploratory only. Manual ROIs are evidence crops; official DCIM remains unknown/ROI-null/UNANNOTATED/SKIPPED.",
+  "rows": [
+    {
+      "fileName": "IMG_20260828_103223.jpg",
+      "imageShape": [
+        3072,
+        4096,
+        3
+      ],
+      "manualRoiPixels": [
+        1900,
+        1000,
+        900,
+        1250
+      ],
+      "fullImage": {
+        "status": "FAIL",
+        "score": 0.6319957453710916,
+        "candidateCount": 4.0,
+        "candidateCountBeforeNms": 11.0,
+        "boxes": [
+          [
+            2077,
+            1786,
+            355,
+            346
+          ],
+          [
+            2200,
+            1148,
+            323,
+            316
+          ],
+          [
+            983,
+            0,
+            420,
+            267
+          ],
+          [
+            1743,
+            0,
+            388,
+            377
+          ]
+        ],
+        "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\nut_recovery_20260903\\full_original\\IMG_20260828_103223.jpg.nut.jpg"
+      },
+      "manualRoi": {
+        "status": "PASS",
+        "score": 0.8311096615503866,
+        "candidateCount": 2.0,
+        "candidateCountBeforeNms": 11.0,
+        "boxesInRoi": [
+          [
+            177,
+            786,
+            355,
+            347
+          ],
+          [
+            297,
+            151,
+            327,
+            314
+          ]
+        ],
+        "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\nut_recovery_20260903\\manual_roi\\IMG_20260828_103223.jpg.roi.nut.jpg"
+      }
+    },
+    {
+      "fileName": "IMG_20260828_103228.jpg",
+      "imageShape": [
+        3072,
+        4096,
+        3
+      ],
+      "manualRoiPixels": [
+        2500,
+        1100,
+        1500,
+        800
+      ],
+      "fullImage": {
+        "status": "FAIL",
+        "score": 0.0,
+        "candidateCount": 0.0,
+        "candidateCountBeforeNms": 0.0,
+        "boxes": [],
+        "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\nut_recovery_20260903\\full_original\\IMG_20260828_103228.jpg.nut.jpg"
+      },
+      "manualRoi": {
+        "status": "PASS",
+        "score": 0.7685218821765365,
+        "candidateCount": 2.0,
+        "candidateCountBeforeNms": 11.0,
+        "boxesInRoi": [
+          [
+            763,
+            266,
+            221,
+            214
+          ],
+          [
+            308,
+            276,
+            201,
+            208
+          ]
+        ],
+        "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\nut_recovery_20260903\\manual_roi\\IMG_20260828_103228.jpg.roi.nut.jpg"
+      }
+    },
+    {
+      "fileName": "IMG_20260828_103231.jpg",
+      "imageShape": [
+        3072,
+        4096,
+        3
+      ],
+      "manualRoiPixels": [
+        450,
+        1100,
+        1250,
+        850
+      ],
+      "fullImage": {
+        "status": "FAIL",
+        "score": 0.6828857628474274,
+        "candidateCount": 1.0,
+        "candidateCountBeforeNms": 1.0,
+        "boxes": [
+          [
+            1534,
+            2731,
+            278,
+            339
+          ]
+        ],
+        "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\nut_recovery_20260903\\full_original\\IMG_20260828_103231.jpg.nut.jpg"
+      },
+      "manualRoi": {
+        "status": "PASS",
+        "score": 0.7895370237498547,
+        "candidateCount": 2.0,
+        "candidateCountBeforeNms": 15.0,
+        "boxesInRoi": [
+          [
+            704,
+            166,
+            240,
+            229
+          ],
+          [
+            202,
+            160,
+            241,
+            228
+          ]
+        ],
+        "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\nut_recovery_20260903\\manual_roi\\IMG_20260828_103231.jpg.roi.nut.jpg"
+      }
+    }
+  ]
+}

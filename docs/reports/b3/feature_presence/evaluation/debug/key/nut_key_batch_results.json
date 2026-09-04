@@ -1,0 +1,242 @@
+[
+  {
+    "file": "nut_1.png",
+    "expectedCount": 2,
+    "status": "PASS",
+    "score": 0.6945368714639827,
+    "candidateCountBeforeNms": 28.0,
+    "candidateCount": 2.0,
+    "bodyCandidateCountBeforeNms": 13.0,
+    "selectedBodyCount": 2.0,
+    "averageGeometryScore": 0.6377874229734086,
+    "averageCenterHoleScore": 0.7597252476811969,
+    "minCenterHoleScore": 0.7264742000579834,
+    "boxes": [
+      [
+        221,
+        54,
+        64,
+        57
+      ],
+      [
+        65,
+        57,
+        69,
+        62
+      ]
+    ],
+    "boxScores": [
+      0.7539467849513489,
+      0.6351269579766164
+    ],
+    "boxGeometryScores": [
+      0.6957355695532682,
+      0.5798392763935492
+    ],
+    "boxCenterHoleScores": [
+      0.7929762953044105,
+      0.7264742000579834
+    ],
+    "boxBodyEvidenceScores": [
+      0.7931991032359753,
+      0.626002288207748
+    ],
+    "boxHexAngles": [
+      0.0,
+      0.0
+    ],
+    "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\evaluation\\debug\\key\\nut_batch__nut_1.png.jpg"
+  },
+  {
+    "file": "nut_3.jpg",
+    "expectedCount": 2,
+    "status": "PASS",
+    "score": 0.5928564751601609,
+    "candidateCountBeforeNms": 21.0,
+    "candidateCount": 2.0,
+    "bodyCandidateCountBeforeNms": 8.0,
+    "selectedBodyCount": 2.0,
+    "averageGeometryScore": 0.6131409965883683,
+    "averageCenterHoleScore": 0.5602751883958471,
+    "minCenterHoleScore": 0.5556407069579248,
+    "boxes": [
+      [
+        831,
+        362,
+        173,
+        202
+      ],
+      [
+        302,
+        394,
+        227,
+        192
+      ]
+    ],
+    "boxScores": [
+      0.5670265936232728,
+      0.6186863566970491
+    ],
+    "boxGeometryScores": [
+      0.5623554040493566,
+      0.66392658912738
+    ],
+    "boxCenterHoleScores": [
+      0.5556407069579248,
+      0.5649096698337694
+    ],
+    "boxBodyEvidenceScores": [
+      0.6234243006332365,
+      0.8395995255446388
+    ],
+    "boxHexAngles": [
+      0.0,
+      0.0
+    ],
+    "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\evaluation\\debug\\key\\nut_batch__nut_3.jpg.jpg"
+  },
+  {
+    "file": "nut_4.jpg",
+    "expectedCount": 2,
+    "status": "PASS",
+    "score": 0.5876430665332231,
+    "candidateCountBeforeNms": 18.0,
+    "candidateCount": 2.0,
+    "bodyCandidateCountBeforeNms": 9.0,
+    "selectedBodyCount": 2.0,
+    "averageGeometryScore": 0.576621627180705,
+    "averageCenterHoleScore": 0.5424309917228132,
+    "minCenterHoleScore": 0.4828900811165316,
+    "boxes": [
+      [
+        426,
+        1034,
+        298,
+        323
+      ],
+      [
+        549,
+        446,
+        250,
+        228
+      ]
+    ],
+    "boxScores": [
+      0.6591182053289731,
+      0.5161679277374731
+    ],
+    "boxGeometryScores": [
+      0.6226647293716823,
+      0.5305785249897277
+    ],
+    "boxCenterHoleScores": [
+      0.6019719023290948,
+      0.4828900811165316
+    ],
+    "boxBodyEvidenceScores": [
+      0.7698151197012509,
+      0.600110022300028
+    ],
+    "boxHexAngles": [
+      0.0,
+      0.0
+    ],
+    "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\evaluation\\debug\\key\\nut_batch__nut_4.jpg.jpg"
+  },
+  {
+    "file": "nut_5.jpg",
+    "expectedCount": 2,
+    "status": "REVIEW",
+    "score": 0.47849836331366974,
+    "candidateCountBeforeNms": 19.0,
+    "candidateCount": 2.0,
+    "bodyCandidateCountBeforeNms": 7.0,
+    "selectedBodyCount": 2.0,
+    "averageGeometryScore": 0.4902693811017133,
+    "averageCenterHoleScore": 0.43296199710959793,
+    "minCenterHoleScore": 0.417280093063006,
+    "boxes": [
+      [
+        900,
+        396,
+        156,
+        153
+      ],
+      [
+        429,
+        400,
+        154,
+        150
+      ]
+    ],
+    "boxScores": [
+      0.4998044701270265,
+      0.457192256500313
+    ],
+    "boxGeometryScores": [
+      0.5355571622327562,
+      0.44498159997067044
+    ],
+    "boxCenterHoleScores": [
+      0.417280093063006,
+      0.4486439011561898
+    ],
+    "boxBodyEvidenceScores": [
+      0.6181479341387547,
+      0.564374931911686
+    ],
+    "boxHexAngles": [
+      0.0,
+      0.0
+    ],
+    "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\evaluation\\debug\\key\\nut_batch__nut_5.jpg.jpg"
+  },
+  {
+    "file": "nut_6.jpg",
+    "expectedCount": 2,
+    "status": "REVIEW",
+    "score": 0.45977581590917527,
+    "candidateCountBeforeNms": 24.0,
+    "candidateCount": 2.0,
+    "bodyCandidateCountBeforeNms": 11.0,
+    "selectedBodyCount": 2.0,
+    "averageGeometryScore": 0.4402392574787287,
+    "averageCenterHoleScore": 0.524673590547873,
+    "minCenterHoleScore": 0.48700878641943135,
+    "boxes": [
+      [
+        312,
+        406,
+        171,
+        166
+      ],
+      [
+        793,
+        424,
+        187,
+        160
+      ]
+    ],
+    "boxScores": [
+      0.4743752805187357,
+      0.44517635129961486
+    ],
+    "boxGeometryScores": [
+      0.4621620961792045,
+      0.4183164187782529
+    ],
+    "boxCenterHoleScores": [
+      0.5623383946763145,
+      0.48700878641943135
+    ],
+    "boxBodyEvidenceScores": [
+      0.5863931166919168,
+      0.5350079452838251
+    ],
+    "boxHexAngles": [
+      0.0,
+      0.0
+    ],
+    "debugPath": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\feature_presence\\evaluation\\debug\\key\\nut_batch__nut_6.jpg.jpg"
+  }
+]

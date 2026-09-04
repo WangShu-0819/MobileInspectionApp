@@ -9,7 +9,7 @@
 ## 范围与工作区恢复
 
 - 工作目录：`D:\study\Textile_defects\Wearable Inspection\MobileInspectionApp`
-- Key：5 张 PNG，全部可读；Key 图片本身是完整 ROI，统一使用 `[0.0, 0.0, 1.0, 1.0]`。
+- Nut Key：自动发现 5 张 `nut_*.png|jpg|jpeg`，全部可读；Key 图片本身是完整 ROI，统一使用 `[0.0, 0.0, 1.0, 1.0]`。
 - DCIM：30 张 JPG，全部可读；视频已排除。
 - DCIM 没有人工 ROI 和人工标签，因此不执行无 ROI 的目标检测。
 - 指定 7 个越界 App Kotlin 文件在本轮开始时均不存在且均未被 Git 跟踪：
@@ -27,6 +27,8 @@
 - `tools/feature_presence/prepare_dataset.py`
 - `tools/feature_presence/README.md`
 - `docs/reports/b3/feature_presence/OFFLINE_PROTOTYPE_REPORT.md`
+- `docs/reports/b3/feature_presence/THREAD_REFINEMENT_REPORT.md`
+- `docs/reports/b3/feature_presence/NUT_REFINEMENT_REPORT.md`
 
 ### 命令生成或更新的离线产物
 
@@ -37,26 +39,27 @@
 - `docs/reports/b3/feature_presence/evaluation/offline_evaluation.csv`
 - `docs/reports/b3/feature_presence/debug/` 和 `evaluation/debug/` 下的 debug 图片
 
-算法版本为 `presence-offline.2`。没有新增依赖、虚拟环境、`site-packages` 或 Conda 环境。
+算法版本为 `presence-offline.3`。没有新增依赖、虚拟环境、`site-packages` 或 Conda 环境。
 
 ## 三个算法
 
 ### ThreadPresenceDetector
 
-使用 OpenCV `HoughCircles` 生成圆孔候选，并计算：
+使用 OpenCV `HoughCircles` 生成圆孔候选，再对候选执行局部圆心/半径精修，并计算：
 
 - 圆形几何证据：圆周角度边缘覆盖率和半径一致性；
 - 中心暗孔比例；
 - 同心环/径向周期纹理、纹理边缘密度和跃迁数；
+- 暗孔与圆心共心度、环带梯度响应和径向边缘离散惩罚；
 - 图像质量与 Laplacian sharpness。
 
 综合分数输出 `PASS`、`FAIL` 或 `REVIEW`，无候选时为 `FAIL`，模糊、纹理不足或几何证据不足时不会 `PASS`。普通圆孔即使有圆形边界，也必须同时满足内部纹理证据。
 
 ### NutPresenceDetector
 
-使用 CLAHE、Otsu threshold、Canny 和 `findContours`，再用 `approxPolyDP` 筛选 5～7 边的近六边形候选。候选还需要满足面积、长宽比、填充率、solidity、圆度和中心小圆孔证据；重叠候选使用可配置 IoU NMS 去重。
+使用 CLAHE、Otsu threshold、Canny 和多亮度阈值分支，再用 `RETR_TREE`/`approxPolyDP`、solidity、凸包恢复和中心孔证据筛选 5～7 边的近六边形主体。重叠候选使用可配置 IoU/containment NMS 去重；最终六边形角度在 `[-20,-10,0,10,20]` 中由 Canny 边缘支持选择，主体 box 限制在证据组件内，避免框住局部亮斑、垫圈或背景轮廓。
 
-`expectedCount` 只来自运行时 `config`。未配置时固定返回 `REVIEW`；数量不符时返回 `FAIL`；数量正确且质量足够时返回 `PASS`。`nut_1.png` 的 `observedTemplateCount=2` 仅由评估脚本作为 Key 自检运行时校验值传入，未写死到 detector 或 manifest。
+`expectedCount` 只来自运行时 `config`。未配置时固定返回 `REVIEW`；数量不符时返回 `FAIL`；数量正确但几何/中心孔质量低于门槛时保留 `REVIEW`，不会抬高 score。用户确认的五张 Nut Key 样本均使用 `expectedCount=2` 进行离线回归，未写死到 detector 或样本分支。
 
 ### FeaturePresenceDetector
 
@@ -73,13 +76,13 @@
 
 ## Key 自检结果
 
-评估脚本默认使用 Key manifest 中 `nut.observedTemplateCount=2` 作为一次性运行时配置，结果如下：
+评估脚本对自动发现的五张 Nut Key 样本使用用户确认的 `expectedCount=2` 作为一次性运行时配置；全部最终数量为 2，逐框几何/中心孔分数、角度和完整 boxes 见 `NUT_REFINEMENT_REPORT.md`。
 
 | 文件 | detector | 结果 | 关键结果 |
 |---|---|---|---|
-| `thread_1.png` | ThreadPresenceDetector | `PASS` | 有效圆孔/纹理证据，score 约 `0.5481` |
-| `thread_2.png` | ThreadPresenceDetector | `PASS` | 有效圆孔/纹理证据，score 约 `0.5281` |
-| `nut_1.png` | NutPresenceDetector | `PASS` | `candidateCount=2`，score 约 `0.7459` |
+| `thread_1.png` | ThreadPresenceDetector | `PASS` | 精修圆 `(43.93, 50.66, r20.11)`，score `0.5450` |
+| `thread_2.png` | ThreadPresenceDetector | `PASS` | 精修圆 `(82.52, 94.47, r24.15)`，score `0.7049` |
+| `nut_1.png` | NutPresenceDetector | `PASS` | `candidateCount=2`，主体恢复框，score `0.6945`，默认六边形角度 `0°`；全部 Nut Key 结果见 `NUT_REFINEMENT_REPORT.md` |
 | `feature_1.png` | FeaturePresenceDetector | `PASS` | pHash、模板匹配、AKAZE/RANSAC 均有证据 |
 | `feature_2.png` | FeaturePresenceDetector | `PASS` | pHash、模板匹配、AKAZE/RANSAC 均有证据 |
 
@@ -104,7 +107,7 @@
 & D:\ProgramData\anaconda3\envs\dinov2\python.exe -m unittest discover -s tools\feature_presence -p "test_*.py" -v
 ```
 
-结果：`Ran 7 tests ... OK`，7/7 通过，退出码 0。
+历史基线结果：`Ran 10 tests ... OK`，10/10 通过；Nut 角度微调后的专项为 `Ran 7 tests ... OK`，新增原图派生负样本专项 `4/4 OK`，此前完整验收命令为 `Ran 17 tests in 1188.689s — OK`；本轮未修改 Thread。
 
 ```powershell
 & D:\ProgramData\anaconda3\envs\dinov2\python.exe tools\feature_presence\prepare_dataset.py --self-test
