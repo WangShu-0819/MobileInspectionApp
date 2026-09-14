@@ -125,11 +125,16 @@ class DpmScanEvidenceContractTest {
     @Test
     fun `exit flow saves evidence before disconnect`() {
         val source = read("src/main/java/com/wearable/inspection/mobile/ui/screens/DpmScanScreen.kt")
-        val saveIdx = source.indexOf("saveEvidence(")
+        val saveIdx = source.indexOf("saveEvidenceInScope(")
         val disconnectIdx = source.indexOf("disconnect(")
-        assertTrue("必须调用 saveEvidence", saveIdx > 0)
+        assertTrue("必须在 ViewModel scope 中请求保存证据", saveIdx > 0)
         assertTrue("必须调用 disconnect", disconnectIdx > 0)
         assertTrue("证据保存必须在 disconnect 之前", saveIdx < disconnectIdx)
+
+        val viewModelSource = read("src/main/java/com/wearable/inspection/mobile/dpm/DpmScanViewModel.kt")
+        val persistIdx = viewModelSource.indexOf("saveEvidence(sessionId, evidenceFrames)")
+        val cleanupIdx = viewModelSource.indexOf("afterSave()")
+        assertTrue("回调必须先持久化证据", persistIdx > 0 && persistIdx < cleanupIdx)
     }
 
     @Test

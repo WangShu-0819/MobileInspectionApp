@@ -245,6 +245,21 @@ class DpmScanViewModel(private val app: Application) : AndroidViewModel(app) {
     }
 
     /**
+     * Persist evidence from a screen disposal and then release the camera session.
+     * The callback is suspend because CameraController cleanup suspends.
+     */
+    fun saveEvidenceInScope(
+        sessionId: String,
+        evidenceFrames: DpmFrameAnalyzer.EvidenceFrames?,
+        afterSave: suspend () -> Unit,
+    ) {
+        viewModelScope.launch {
+            saveEvidence(sessionId, evidenceFrames)
+            afterSave()
+        }
+    }
+
+    /**
      * 切换闪光灯（suspend，等待 CameraX 异步结果）
      *
      * 检查 hasFlashUnit，等待 enableTorch 异步完成，

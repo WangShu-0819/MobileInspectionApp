@@ -144,26 +144,27 @@ class DpmEvidenceExportService(
         zos.write(0xBB)
         zos.write(0xBF)
 
-        OutputStreamWriter(zos, Charsets.UTF_8).use { writer ->
-            writer.appendLine("scanSessionId,frameTimeMs,frameSource,status,decodedContent,decodeSource,frameZipPath,frameStatus,roiZipPath,roiStatus")
-            for (row in rows) {
-                writer.appendLine(
-                    listOf(
-                        csvEscape(row.scanSessionId),
-                        row.frameTimeMs.toString(),
-                        csvEscape(row.frameSource),
-                        csvEscape(row.status),
-                        csvEscape(row.decodedContent),
-                        csvEscape(row.decodeSource),
-                        csvEscape(row.frameZipPath),
-                        csvEscape(row.frameStatus),
-                        csvEscape(row.roiZipPath),
-                        csvEscape(row.roiStatus)
-                    ).joinToString(",")
-                )
-            }
-            writer.flush()
+        // Do not close this writer: it wraps the ZipOutputStream owned by the caller.
+        // Closing it here also closes the ZIP before the manifest entry can be finalized.
+        val writer = OutputStreamWriter(zos, Charsets.UTF_8)
+        writer.appendLine("scanSessionId,frameTimeMs,frameSource,status,decodedContent,decodeSource,frameZipPath,frameStatus,roiZipPath,roiStatus")
+        for (row in rows) {
+            writer.appendLine(
+                listOf(
+                    csvEscape(row.scanSessionId),
+                    row.frameTimeMs.toString(),
+                    csvEscape(row.frameSource),
+                    csvEscape(row.status),
+                    csvEscape(row.decodedContent),
+                    csvEscape(row.decodeSource),
+                    csvEscape(row.frameZipPath),
+                    csvEscape(row.frameStatus),
+                    csvEscape(row.roiZipPath),
+                    csvEscape(row.roiStatus)
+                ).joinToString(",")
+            )
         }
+        writer.flush()
     }
 
     private fun csvEscape(value: String): String {

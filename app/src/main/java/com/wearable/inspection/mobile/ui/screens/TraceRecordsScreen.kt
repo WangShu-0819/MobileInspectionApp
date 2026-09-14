@@ -193,17 +193,23 @@ fun TraceRecordsScreen() {
                 val exportResult = dpmExportService.exportEvidenceZip(tempFile)
                 if (exportResult is DpmEvidenceExportResult.Success) {
                     try {
-                        context.contentResolver.openOutputStream(uri)?.use { os ->
+                        val outputStream = context.contentResolver.openOutputStream(uri)
+                            ?: throw IllegalStateException("无法打开所选保存位置")
+                        outputStream.use { os ->
                             tempFile.inputStream().use { it.copyTo(os) }
                         }
                         tempFile.delete()
                         exportResult
                     } catch (e: Exception) {
                         tempFile.delete()
-                        DpmEvidenceExportResult.Failure("写入文件失败：${e.localizedMessage}")
+                        runCatching { context.contentResolver.delete(uri, null, null) }
+                        DpmEvidenceExportResult.Failure("写入文件失败：${e.localizedMessage ?: "未知错误"}")
                     }
                 } else {
                     tempFile.delete()
+                    // CreateDocument creates an empty document before export starts.
+                    // Remove it when there is no data or ZIP generation fails.
+                    runCatching { context.contentResolver.delete(uri, null, null) }
                     exportResult
                 }
             }

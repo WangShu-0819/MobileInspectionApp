@@ -102,3 +102,24 @@ ZIP 生成只读取原始文件，不删除、不移动。临时 ZIP 文件在�
 - Room migration 不新增（复用现有 dpm_scan_evidence 表）
 - 检测结果 ZIP 内容不扩展
 - 不新增人工 DPM 码值复核、ROI 检测或 MobileSAM
+
+---
+
+## 6. SAF 导出空 ZIP 修复（2026-09-15）
+
+### 根因与修复
+
+`writeManifestCsv()` 使用 `OutputStreamWriter(zos).use`，其 `close()` 会关闭底层 `ZipOutputStream`。返回后服务再关闭 `manifest.csv` 条目时抛出异常，删除缓存 ZIP；但 `ACTION_CREATE_DOCUMENT` 已经预创建了目标文件，因此用户会看到空 ZIP。
+
+- manifest writer 现在只执行 `flush()`，由外层 ZIP 流负责关闭和写中央目录。
+- SAF `openOutputStream()` 返回 null 时明确失败，不再将未写入的目标当成功；写入异常、空证据或 ZIP 生成失败时，尽力删除 SAF 预创建的空文档。
+- 新增真实归档回归测试：运行导出服务后实际打开 ZIP，检查图像字节、会话目录和 manifest 行。
+- 工作区已有的 `DpmScanScreen.kt` 改动调用了 `saveEvidenceInScope()`，但 ViewModel 中原先缺少该方法，导致 Kotlin 编译失败。已在 `DpmScanViewModel` 补齐按 ViewModel scope 保存、完成后清理的回调，并将退出流程契约测试更新为验证先保存再清理。保留了 `DpmScanScreen.kt` 上既有未提交修改。
+
+### 本轮验证与 Git
+
+- `:app:testDebugUnitTest --tests "com.wearable.inspection.mobile.data.export.DpmEvidenceExport*" --no-daemon`：通过，DPM 导出服务测试 17 项全部通过。
+- `:app:testDebugUnitTest --no-daemon`：746 项完成，14 项失败、5 项跳过。失败数与此前报告的预存 14 项一致；新增 ZIP 回归测试和更新后的 DPM 退出流程契约测试通过。
+- `git diff --check`：通过；仅有既有 CRLF 转换提示。
+- 未运行 ADB、安装 APK 或真机复测；等待用户重新导出 ZIP 验收。
+- 本轮提交仅包含本任务文件；工作区其余既存改动保留。

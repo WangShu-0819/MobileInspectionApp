@@ -1,4 +1,16 @@
-# 当前任务：DPM 扫码证据可操作导出
+# 当前任务：DPM 扫码证据 ZIP 空文件修复
+
+状态：**SOFTWARE_COMPLETE / WAITING_USER_ACCEPTANCE**（2026-09-15，修复 SAF 导出空 ZIP）。
+
+目标：定位并修复 DPM 扫码证据 ZIP 实际为空的问题，确保导出后 ZIP 可读取，包含会话图片和 manifest.csv；SAF 写入失败时显示明确失败，不留下误导性的空 ZIP。
+
+执行边界：仅修改 DPM ZIP 导出服务、对应 SAF 写入逻辑、自动化测试和本任务报告。为兼容工作区已有的 `DpmScanScreen.saveEvidenceInScope()` 调用，可补齐 `DpmScanViewModel` 对应回调；保留 `DpmScanScreen.kt` 上已有未提交改动。复用既有证据 DAO/Repository/SAF 流程；不改扫码算法、Room schema、导出框架或其他零件 ZIP。
+
+完成记录：`OutputStreamWriter.use` 原先会关闭外层 `ZipOutputStream`，导致 manifest 条目关闭失败并删除临时 ZIP；已改为只 flush writer，由 ZIP 所有者统一关闭。SAF 写入流为空时明确报错，空记录/导出失败时清理 SAF 预创建文件。新增真实 ZIP 解包测试验证帧、manifest 和索引内容。补齐工作区已有 DpmScanScreen 保存回调对应的 ViewModel 方法，并更新其生命周期契约测试。完整测试：746 项完成，14 项失败（与此前报告的预存失败数一致），5 项跳过；导出相关 17 项与 DPM 退出流程契约测试通过。Git 提交信息见本轮完成汇报。
+
+---
+
+# 已完成任务：DPM 扫码证据可操作导出
 
 状态：**DONE**（2026-09-15，实现完成，自动化验证通过，待用户验收）。
 

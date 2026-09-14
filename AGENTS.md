@@ -57,11 +57,11 @@
 
 ## 当前唯一任务
 
-**DPM 扫码证据可操作导出** — **DONE**（2026-09-15，实现完成，自动化验证通过，待用户验收）。
+**DPM 扫码证据 ZIP 空文件修复** — **SOFTWARE_COMPLETE / WAITING_USER_ACCEPTANCE**（2026-09-15）。
 
-目标：在现有导出入口增加"导出 DPM 扫码证据"操作，生成独立 ZIP（按 scanSessionId 分目录、原始帧 + ROI 裁切 + manifest.csv），支持 SAF 保存和 FileProvider 分享。导出后保留应用内原始证据。
+结果：修复写 manifest 时关闭底层 ZipOutputStream 的问题；SAF 输出流为空或 ZIP 生成失败时不再误报成功，并清理 SAF 预创建的空文件。新增真实 ZIP 解包回归测试。全量 JVM：746 项完成，14 项失败（此前报告已有 14 项），5 项跳过；本任务相关导出和 DPM 生命周期测试通过。
 
-自动化验证：745 tests completed, 14 failed (全部预存), 5 skipped。新增 16 项测试全部通过。报告：`docs/reports/b3/DPM_EVIDENCE_EXPORT_REPORT.md`。
+范围：本次仅修改 DPM ZIP 导出服务、SAF 写入逻辑、导出/生命周期测试、`tasks/todo.md` 和 B3 导出报告；为兼容工作区已有 DpmScanScreen 保存回调调用，补齐 DpmScanViewModel 对应方法。工作区其他改动仍保留，未运行真机。报告：`docs/reports/b3/DPM_EVIDENCE_EXPORT_REPORT.md`。
 
 已验收任务：**DPM 扫码会话图像证据留存** — **DONE**（2026-09-15，提交 `213a0787`）。**模板叠加默认透明度为 0%** — **USER_ACCEPTED**（2026-09-15）。**单零件多 View 人工确认 + ZIP 导出** — **USER_ACCEPTED**（2026-09-15）。详细记录见 `tasks/todo.md`。
 
