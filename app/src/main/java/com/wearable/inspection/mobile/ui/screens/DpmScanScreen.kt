@@ -115,16 +115,26 @@ fun DpmScanScreen(
         }
     }
 
-    // 退出时清理
+    // 退出时清理（先保存证据，再停止分析器，最后断开相机）
     DisposableEffect(Unit) {
         onDispose {
-            viewModel.stopScan()
             val sid = connectedSessionId
+            // 先提取证据帧（必须在 stopScan 之前，否则 analyzer 已清理）
+            val evidenceFrames = viewModel.getEvidenceFrames()
             if (sid != null) {
                 coroutineScope.launch {
+                    // 1. 保存证据到文件系统和数据库
+                    viewModel.saveEvidence(sid, evidenceFrames)
+                    // 2. 停止分析器
+                    viewModel.stopScan()
+                    // 3. 移除分析器回调并断开相机
                     cameraController.clearFrameAnalyzer()
                     cameraController.disconnect(sid)
                 }
+            } else {
+                // 无 sessionId 时直接清理（不保存证据）
+                viewModel.stopScan()
+                evidenceFrames?.bitmap?.recycle()
             }
         }
     }

@@ -1,9 +1,12 @@
 package com.wearable.inspection.mobile.data.image
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Rect
 import androidx.exifinterface.media.ExifInterface
 import java.io.File
+import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -43,6 +46,7 @@ class MobileImageStore(private val context: Context) {
         private const val CAPTURES_DIR = "captures"
         private const val TEMP_DIR = "capture_tmp"
         private const val TEMPLATE_IMAGES_DIR = "template_images"
+        private const val DPM_EVIDENCE_DIR = "dpm_evidence"
 
         private const val TEMP_PREFIX = "capture_"
         private const val TEMP_SUFFIX = ".tmp.jpg"
@@ -375,4 +379,61 @@ class MobileImageStore(private val context: Context) {
      * 获取模板图片目录路径
      */
     fun getTemplateImagesPath(): String = getTemplateImagesDir().absolutePath
+
+    // ========== DPM 扫码证据存储 ==========
+
+    private fun getDpmEvidenceDir(): File {
+        return File(context.filesDir, DPM_EVIDENCE_DIR).apply { mkdirs() }
+    }
+
+    /**
+     * 保存 Bitmap 到 DPM 证据目录（JPEG 格式，质量 90）
+     *
+     * 调用方负责在 Bitmap 回收前调用此方法。
+     *
+     * @return 保存的文件路径，失败返回 null
+     */
+    fun saveDpmEvidenceFrame(bitmap: Bitmap, fileName: String): String? {
+        return try {
+            val dir = getDpmEvidenceDir()
+            val file = File(dir, fileName)
+            FileOutputStream(file).use { fos ->
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 90, fos)
+                fos.flush()
+            }
+            if (file.exists() && file.length() > 0L) file.absolutePath else null
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    /**
+     * 从原图裁切 ROI 区域并保存为 JPEG
+     *
+     * @param source 原图 Bitmap
+     * @param roiRect 裁切区域（像素坐标，已 clamp 到 source 边界内）
+     * @param fileName 保存文件名
+     * @return 保存的文件路径，失败返回 null
+     */
+    fun saveDpmEvidenceRoi(source: Bitmap, roiRect: Rect, fileName: String): String? {
+        return try {
+            val clamped = clampRect(roiRect, source.width, source.height)
+            val cropped = Bitmap.createBitmap(
+                source, clamped.left, clamped.top, clamped.width(), clamped.height()
+            )
+            val path = saveDpmEvidenceFrame(cropped, fileName)
+            if (cropped !== source) cropped.recycle()
+            path
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private fun clampRect(rect: Rect, w: Int, h: Int): Rect {
+        val l = rect.left.coerceIn(0, w - 1)
+        val t = rect.top.coerceIn(0, h - 1)
+        val r = rect.right.coerceIn(l + 1, w)
+        val b = rect.bottom.coerceIn(t + 1, h)
+        return Rect(l, t, r, b)
+    }
 }

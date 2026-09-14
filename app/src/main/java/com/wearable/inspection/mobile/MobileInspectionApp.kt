@@ -32,7 +32,8 @@ class MobileInspectionApp : Application() {
             roiRecordDao = database.roiRecordDao(),
             captureBatchDao = database.captureBatchDao(),
             capturedPhotoDao = database.capturedPhotoDao(),
-            viewRoiConfirmDao = database.viewRoiConfirmDao()
+            viewRoiConfirmDao = database.viewRoiConfirmDao(),
+            dpmScanEvidenceDao = database.dpmScanEvidenceDao()
         )
     }
     val settings: SettingsStore by lazy { SettingsStore(this) }

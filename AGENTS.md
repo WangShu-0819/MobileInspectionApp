@@ -57,18 +57,13 @@
 
 ## 当前唯一任务
 
-**拍照后人工确认 + 持久化** — **IN_PROGRESS**（2026-09-04）。
+**DPM 扫码会话图像证据留存** — **DONE**（2026-09-15，实现完成，自动化验证通过，待用户验收）。
 
-目标：每拍完一个 View 的现场照片后，展示全部模板 ROI，工人逐个选择 ROI 的 OK/NG，并单独选择整张照片的总体 OK/NG；所有人工结果、时间、照片、View、模板、零件和采集批次必须真实持久化。
+目标：用户退出每次 DPM 扫码会话时，保存一组图像证据：成功读码时保存精确解码帧；退出时仍未读出则保存最后一张有效分析帧。两种情况均保存原图和扫描 ROI 裁剪图，持久化 `scanSessionId`、帧时间与来源、原始读码内容、`SUCCESS`/`NO_READ` 状态及解码来源。
 
-执行边界：
-1. 复用现有 `CaptureBatchEntity`、`CapturedPhotoEntity`、`InspectionSessionEntity`、`RoiInspectionRecordEntity`、DAO 和 `InspectionRepository`；不得创建第二套 ROI 数据模型或第二套 CameraX。
-2. ROI 坐标使用模板 `normalizedRect` 映射到现场照片实际 image contentRect；不实现 Homography、自动对齐、自动轮廓或 Session ROI 编辑。
-3. ROI `targetType` 继续使用稳定枚举值；历史空值显示"未选择"，不得自动猜测。
-4. 软件检测结果保持 null/未执行，不伪造 Detector、PASS 或 FAIL；总体结果不能由 ROI 结果自动计算或覆盖。
-5. 未确认时不得默认 OK/NG；ROI 或总体为 NG 时仍必须保存。
-6. 只进行源码、自动化测试和文档修改；禁止执行 adb、Gradle、APK 安装/卸载、启动/停止真机应用。
-7. 完成后更新 `tasks/todo.md` 和 `docs/reports/b2/` 对应报告，然后暂停等待验收；不提交 Git，除非用户另行明确授权。
+自动化验证：729 tests completed, 14 failed (全部预存), 5 skipped。新增 35 项测试全部通过。报告：`docs/reports/b3/DPM_SCAN_EVIDENCE_REPORT.md`。
+
+已验收任务：**模板叠加默认透明度为 0%** — **USER_ACCEPTED**（2026-09-15）。**单零件多 View 人工确认 + ZIP 导出** — **USER_ACCEPTED**（2026-09-15）。详细记录见 `tasks/todo.md`。
 
 **Bug Fix**（2026-09-03）：修复模板图片降采样导致 Canvas 绘制失败。CameraPreview 的 inSampleSize 计算逻辑已修正，8000x6000 图片现在使用 inSampleSize=4。模板图片解码已移至 Dispatchers.IO，切换 View 时旧 Bitmap 已正确回收。新增 CameraPreviewTest 14 项单元测试。
 

@@ -1,6 +1,40 @@
-# 当前任务：单零件多 View 人工确认 + ZIP 导出
+# 当前任务：DPM 扫码会话图像证据留存
 
-状态：**IN_PROGRESS**（2026-09-04，人工验收多 View、导航和布局整改完成，待自动化和真机验收）。
+状态：**DONE**（2026-09-15，实现完成，自动化验证通过，待用户验收）。
+
+目标：用户退出每次 DPM 扫码会话时，保存一组图像证据：会话内成功读码保存产生该结果的准确帧；退出时仍未读出保存最后一张有效分析帧。两种情况均保存原图和当前扫描 ROI 裁剪图，并持久化稳定 `scanSessionId`、帧时间与来源、原始读码内容、`SUCCESS`/`NO_READ` 状态及解码来源。未读出时读码内容为空。每会话最多保存一组。
+
+执行边界：
+- 复用现有 DpmFrameAnalyzer/DpmScanViewModel/DpmScanScreen/CameraController 生命周期接点和 MobileImageStore。
+- 帧图像必须在 Bitmap 回收前复制或编码；退出流程必须先完成证据快照和持久化，再停止 analyzer 和断开相机。
+- 最小 Room 扩展（新 Entity/DAO/Migration）+ 真实 Migration。
+- 不改扫码算法、不实现 DPM 人工码值复核、不扩展 ZIP、不做 ROI 检测或 MobileSAM。
+- 14 项预存测试失败与本任务无关，不顺手修复。
+- 补充测试；不运行 ADB/真机。
+
+自动化验证结果：729 tests completed, 14 failed (全部预存), 5 skipped。新增 35 项测试全部通过。
+
+实现摘要：
+- 新文件：DpmScanEvidenceEntity.kt, DpmScanEvidenceDao.kt
+- 修改文件：DpmFrameAnalyzer.kt（帧追踪+证据提取）, DpmScanViewModel.kt（证据保存流程）, DpmScanScreen.kt（退出时证据优先）, MobileImageStore.kt（DPM 证据存储方法）, AppDatabase.kt（v7）, Migrations.kt（v6→v7）, InspectionRepository.kt, MobileInspectionApp.kt
+- 新测试：DpmScanEvidenceEntityTest.kt, DpmScanEvidenceContractTest.kt, DpmFrameAnalyzerEvidenceTest.kt
+- 报告：docs/reports/b3/DPM_SCAN_EVIDENCE_REPORT.md
+
+---
+
+# 已完成任务：模板叠加默认透明度为 0%
+
+状态：**USER_ACCEPTED**（2026-09-15，用户确认验收通过）。详见 `docs/reports/b2/TEMPLATE_OVERLAY_ALPHA_ZERO_REPORT.md`。
+
+---
+
+# 已完成任务：单零件多 View 人工确认 + ZIP 导出
+
+---
+
+# 已完成任务：单零件多 View 人工确认 + ZIP 导出
+
+状态：**USER_ACCEPTED**（2026-09-15，用户确认测试通过）。
 
 目标：用户选择零件 → 按模板顺序逐 View 拍照。当前 View 有 enabled ROI 时进入确认 UI，逐个选择 ROI OK/NG 和总体 OK/NG 后保存并进入下一 View；当前 View 无 ROI 时仍先真实拍照并保存到当前 batchId，随后直接进入下一 View。全部完成后生成包含所有原始照片和真实确认结果的 ZIP，统一写入一个 Excel 兼容 CSV（检测 CSV 可无 ROI 确认行）。
 
@@ -72,7 +106,7 @@
 
 ## 本轮修复：无 ROI View 与多 View 推进（2026-09-04）
 
-状态：**IN_PROGRESS**（源码审计通过、补充测试已写入；按范围未运行 Gradle/ADB，待自动化和真机验收）。
+状态：**USER_ACCEPTED**（2026-09-15，用户确认测试通过）。
 
 - [x] 只按当前拍摄 `templateId` 查询 enabled ROI；不使用零件、其他 View 或全局 ROI 数量
 - [x] 无 ROI View 先保存原始照片、插入并回读真实 `photoId`，再按当前 `viewIndex` 直接推进
@@ -88,7 +122,7 @@
 
 ## 人工验收问题二次整改（2026-09-04）
 
-状态：**IN_PROGRESS**（源码和测试已修改，待自动化和真机验收）。
+状态：**USER_ACCEPTED**（2026-09-15，用户确认测试通过）。
 
 ### 问题 1：连续拍摄两张照片后 ZIP 只保留一张
 
@@ -306,7 +340,7 @@ BUILD SUCCESSFUL — 550 项（545 passed / 0 failed / 5 skipped）
 
 ## 采集批次筛选、删除交互与布局稳定性优化
 
-状态：**IN_PROGRESS**（2026-09-04，源码和测试已写入，因执行限制未运行 Gradle/ADB）。
+状态：**USER_ACCEPTED**（2026-09-15，用户确认测试通过）。
 
 ### 一、时间筛选
 
@@ -409,6 +443,29 @@ B1 已完成并关闭（提交 `b7c4c08e`）。
 
 ---
 
+## 后续计划：MobileSAM Box Prompt → Mask 离线实验（仅 DCIM 现场图）
+
+状态：**TASK1_SMOKE_INFERENCE_PASS / DEFERRED_BY_USER**（2026-09-14）。已有 Task 1 仅作历史记录；用户要求暂停 MobileSAM、ROI 算法和 Android 植入，不抢占当前唯一 `IN_PROGRESS` 的 Android 任务。
+
+**暂停门禁**：不执行 Task 2+ 的人工 Box、批量推理、ROI detector 对比或 Android 集成；保留既有产物。只有用户另行明确授权后才恢复。详见 `tasks/plan.md` 中标记为已暂停的 MobileSAM 候选计划。
+
+- [x] 第一阶段 Task 1：环境/资产校验、DCIM manifest（30 张 JPG）、单图 smoke inference 全部通过。
+  - 固定 `sourceVersion=local source directory / setup.py version 1.0 / gitMetadata=unavailable`、`vit_t` 权重 SHA-256 `6DBB90523A35330FEDD7F1D3DFC66F995213D81B29A5CA8108DBCDD4E37D6C2F` 已验证。
+  - NumPy ABI 警告观察到，通过 `set_torch_image` + `predict_torch` 纯 torch 路径绕过，推理成功（set_image 0.19s + predict 0.06s = 0.25s，最佳 score=0.9897，覆盖率 2.24%，连通组件 1）。
+  - Smoke box `[1900,700,2800,1520]`（smoke_only=true）未写入最终人工 Box。
+  - 产物：`tools/mobilesam_experiment/smoke/`（smoke_result.json、smoke_mask_candidates.npz、3 个 mask PNG）、更新后的 manifest 和报告。
+- [ ] 第一阶段：固定全部 30 张 `DCIM` 现场图片（数量符合 20～50 张要求），建立独立 manifest 和人工 Box Prompt；不使用 `Key` 图片。
+- [ ] 第一阶段：生成 raw mask、overlay、结构化结果和 contact sheet，人工复核主体漏分、孔洞错误、边缘粘连、金属反光误分割、暗色零件丢失。
+- [ ] 第一阶段门禁：形成 `GO_TO_PHASE_2` 或 `HOLD_FOR_DATA/PROMPT_REVIEW`；不修改 Android，不运行 Gradle/ADB，不构建 APK。
+- [ ] 第二阶段：建立带现场 ROI、`THREAD/NUT/FEATURE`、present/absent 和难例标签的 holdout 对照集。
+- [ ] 第二阶段：用现有离线 detector 做 baseline 与 MobileSAM mask-assisted 成对比较；未达到预设指标前保持 Android 集成延期。
+
+详细设计、依赖门禁、验收标准和可直接复制的执行 Agent 指令见 `tasks/plan.md` 的”MobileSAM Box Prompt → Mask 离线实验（仅 DCIM 现场图）”章节。
+
+Task 1 已完成，后续 MobileSAM/ROI 算法任务暂停；不得自动推进 Task 2。
+
+---
+
 ## 附加离线回归：NutPresenceDetector Key 与负样本
 
 状态：**NUT_KEY_REFINEMENT_COMPLETE / HEX_ANGLE_REFINEMENT_APPLIED / FULL_SUITE_PASS**（2026-09-04）
@@ -424,7 +481,7 @@ B1 已完成并关闭（提交 `b7c4c08e`）。
 
 ## 28. 拍照后确认页卡顿、现场页残影与未完成批次导出门禁（2026-09-04）
 
-状态：**源码整改完成 / AUTOMATION_AND_PHYSICAL_ACCEPTANCE_PENDING**。
+状态：**USER_ACCEPTED**（2026-09-15，用户确认测试通过）。
 
 ### 根因与修复
 
@@ -464,3 +521,19 @@ B1 已完成并关闭（提交 `b7c4c08e`）。
 - ADB、APK 构建/安装、启动/停止和真机视觉验收：`NOT_RUN_BY_SCOPE`；无新的 APK 路径、时间、大小或 SHA-256。
 - Git：未提交；保留工作区中其他已有改动。
 - 待验收：拍照后直接进入确认页、确认页布局与返回入口、模板图下方空白消除、未完成批次不可导出，以及全部 View 完成后 ZIP 才生成。
+
+---
+
+## 后续需求：螺纹/螺母检测追溯与 DPM 扫码证据
+
+状态：**REQUIREMENT_RECORDED / NOT_IMPLEMENTED**（2026-09-14）。不替代本文件顶部唯一 `IN_PROGRESS` 任务；当前任务验收后再按计划逐项推进。详细依赖、验收标准和下一 Agent 指令见 [`tasks/plan.md`](plan.md#后续计划检测与-dpm-证据进入追溯结果包) 与 [`docs/reports/b2/RESULT_TRACEABILITY_PLAN.md`](../docs/reports/b2/RESULT_TRACEABILITY_PLAN.md)。
+
+计划顺序：
+
+1. **当前独立 UI 小任务：模板叠加默认透明度改为 0%** — **IN_PROGRESS**（见文件顶部）。首次进入时 `alpha=0f`，相机画面正常显示、模板图叠加完全透明，之后可用现有滑杆提高到 0%～80%。只改默认值及有意义的验证，不与 DPM/检测任务合并。
+2. **下一数据任务：DPM 扫码会话图像证据留存** — **NOT_STARTED**（透明度任务验收后设为唯一 IN_PROGRESS）。每次 DPM 扫码会话最多保存一组原图/扫描 ROI 裁剪图；成功时绑定精确读码帧，退出仍未读出时保存退出前最后有效帧。只适配现有 DPM 帧分析和唯一 CameraController，不改变识别算法。详见 `tasks/plan.md` 对应章节。
+3. **当前结果包扩展（DPM 图像证据 + 现有人工作业数据）** — 保留 View 原图、现有 ROI/总体人工确认和 CSV 兼容字段；加入 DPM 成功帧或未读出退出末帧、对应扫描 ROI 裁剪图及原始读码状态/内容，通过稳定 ID/manifest 关联。不包含 DPM 人工复核记录，也不把尚未授权的 ROI 模型输出列为本项范围。
+4. **DPM 人工码值复核：暂不排期** — 当前没有准确、独立的 DPM 码真值可供人工判断读码是否正确；`Part.dpmCode` 不能当作真值。现阶段只留存扫码图像证据和原始解码状态。待有可信真值数据并重新确认需求后再评估人工复核流程。
+5. **ROI 检测与模型植入：暂缓、不排期** — MobileSAM/ROI 算法研究、开发、评估和 Android 植入均不执行，直到用户重新明确授权。后续若恢复，人工只在现有 ROI 确认页核对每个模型 OK/NG，允许双向改判（模型 OK→人工 NG、模型 NG→人工 OK）；若改判，记录该照片、该 ROI、模型原值、人工最终值、时间和检测结果图。不额外要求人工选择误检/漏检类别。整张照片总体 OK/NG 仍独立由人工选择。未来结果包任务须导出模型原值、人工最终值和逐 ROI 改判记录；近期结果包范围不含尚未实现的模型数据。
+
+边界：当前人工确认 OK/NG 不是软件检测结果；没有真实算法输出时不填检测框、置信度、PASS 或 FAIL。DPM 数据只按稳定 `scanSessionId` 与显式可选 `batchId` 关联；采集批次清理不级联删除独立 DPM 证据。实现细节和测试门禁以 `tasks/plan.md` 中对应计划为准。

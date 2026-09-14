@@ -45,6 +45,18 @@ class DpmFrameAnalyzer(
     @Volatile
     private var scanRoi: Rect? = null
 
+    // ─── 证据帧追踪（退出时保存）───
+    @Volatile
+    private var lastFrameBitmap: Bitmap? = null
+    @Volatile
+    private var lastFrameRoi: Rect? = null
+    @Volatile
+    private var successBitmap: Bitmap? = null
+    @Volatile
+    private var successRoi: Rect? = null
+    @Volatile
+    private var successResult: DpmAnalyzeResult? = null
+
     // 专属 SupervisorJob：stop() 时取消所有子协程
     private val analyzerJob = SupervisorJob()
     private val analyzerScope = CoroutineScope(scope.coroutineContext + analyzerJob)
@@ -77,7 +89,13 @@ class DpmFrameAnalyzer(
             return
         }
         Log.d(TAG, "analyze: bitmap converted, size=${bitmap.width}x${bitmap.height}, scanRoi=$scanRoi")
+        val currentRoi = scanRoi
         analyzerScope.launch {
+            // 在分析前复制帧用于证据追踪（原始 bitmap 在 finally 中回收）
+            val frameCopy = bitmap.copy(Bitmap.Config.ARGB_8888, false)
+            lastFrameBitmap?.recycle()
+            lastFrameBitmap = frameCopy
+            lastFrameRoi = currentRoi
             try {
                 val result = dpmAnalyzer.analyze(
                     frame = bitmap,
@@ -87,6 +105,14 @@ class DpmFrameAnalyzer(
                 Log.d(TAG, "analyze: result status=${result.status}, code=${result.code}, source=${result.source}")
                 if (!isStopped && result.status != DpmAnalyzeStatus.PROCEED) {
                     _results.emit(result)
+                }
+                // 解码成功时保存成功帧证据（独立副本，与 lastFrameBitmap 分开管理）
+                if (result.status == DpmAnalyzeStatus.DECODED && result.code != null) {
+                    val successCopy = frameCopy.copy(Bitmap.Config.ARGB_8888, false)
+                    successBitmap?.recycle()
+                    successBitmap = successCopy
+                    successRoi = currentRoi
+                    successResult = result
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "analyze: exception during DpmAnalyzer.analyze", e)
@@ -101,6 +127,62 @@ class DpmFrameAnalyzer(
         scanRoi = null
         analyzerJob.cancelChildren()
     }
+
+    /**
+     * 获取并清空证据帧。
+     *
+     * 必须在 stop() 后调用。在 stop() 和此调用之间，
+     * 已启动的分析协程会完成（包括 bitmap 回收），因此返回的 Bitmap 副本仍然有效。
+     *
+     * 返回的 Bitmap 由调用方接管，调用方负责回收。
+     *
+     * @return Triple(successFrame, lastFrame, roiForFrame) 或 null
+     */
+    fun getAndClearEvidenceFrames(): EvidenceFrames? {
+        // 优先返回成功帧
+        successBitmap?.let { bmp ->
+            val roi = successRoi
+            val result = successResult
+            successBitmap = null
+            successRoi = null
+            successResult = null
+            lastFrameBitmap?.recycle()
+            lastFrameBitmap = null
+            lastFrameRoi = null
+            return EvidenceFrames(
+                bitmap = bmp,
+                roi = roi,
+                isDecodeSuccess = true,
+                decodedCode = result?.code,
+                decodeSource = result?.source,
+            )
+        }
+        // 无成功帧时返回最后分析帧
+        lastFrameBitmap?.let { bmp ->
+            val roi = lastFrameRoi
+            lastFrameBitmap = null
+            lastFrameRoi = null
+            return EvidenceFrames(
+                bitmap = bmp,
+                roi = roi,
+                isDecodeSuccess = false,
+                decodedCode = null,
+                decodeSource = null,
+            )
+        }
+        return null
+    }
+
+    /**
+     * 证据帧数据
+     */
+    data class EvidenceFrames(
+        val bitmap: Bitmap,
+        val roi: Rect?,
+        val isDecodeSuccess: Boolean,
+        val decodedCode: String?,
+        val decodeSource: DecodeSource?,
+    )
 
     companion object {
         private const val TAG = "DpmFrameAnalyzer"

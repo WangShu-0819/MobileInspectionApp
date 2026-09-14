@@ -43,6 +43,10 @@ class PartDpmDaoTest {
             roiDao = db.roiDao(),
             sessionDao = db.inspectionSessionDao(),
             roiRecordDao = db.roiRecordDao(),
+            captureBatchDao = db.captureBatchDao(),
+            capturedPhotoDao = db.capturedPhotoDao(),
+            viewRoiConfirmDao = db.viewRoiConfirmDao(),
+            dpmScanEvidenceDao = db.dpmScanEvidenceDao()
         )
     }
 

@@ -136,6 +136,37 @@ val MIGRATION_5_6 = object : Migration(5, 6) {
 }
 
 /**
+ * 数据库 Migration v6 → v7
+ *
+ * 新增 DPM 扫码会话图像证据表。
+ * 每次 DPM 扫码会话退出时保存一组证据（成功帧或最后有效帧 + ROI 裁切）。
+ */
+val MIGRATION_6_7 = object : Migration(6, 7) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS dpm_scan_evidence (
+                id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                scanSessionId TEXT NOT NULL,
+                frameTimeMs INTEGER NOT NULL,
+                frameSource TEXT NOT NULL,
+                decodedContent TEXT,
+                status TEXT NOT NULL,
+                decodeSource TEXT,
+                originalImagePath TEXT NOT NULL,
+                roiImagePath TEXT,
+                createdAt INTEGER NOT NULL
+            )
+            """.trimIndent()
+        )
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS index_dpm_scan_evidence_scanSessionId " +
+                "ON dpm_scan_evidence (scanSessionId)"
+        )
+    }
+}
+
+/**
  * 所有 Migration 列表
  * 新增 Migration 时必须在此添加
  */
@@ -145,5 +176,6 @@ val ALL_MIGRATIONS = arrayOf<Migration>(
     MIGRATION_2_3,
     MIGRATION_3_4,
     MIGRATION_4_5,
-    MIGRATION_5_6
+    MIGRATION_5_6,
+    MIGRATION_6_7
 )

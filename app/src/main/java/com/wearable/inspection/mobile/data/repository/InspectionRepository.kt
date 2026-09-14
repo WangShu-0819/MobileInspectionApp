@@ -21,7 +21,8 @@ class InspectionRepository(
     private val roiRecordDao: RoiRecordDao,
     private val captureBatchDao: CaptureBatchDao,
     private val capturedPhotoDao: CapturedPhotoDao,
-    private val viewRoiConfirmDao: ViewRoiConfirmDao
+    private val viewRoiConfirmDao: ViewRoiConfirmDao,
+    private val dpmScanEvidenceDao: DpmScanEvidenceDao
 ) {
     private val imageStore: MobileImageStore by lazy { MobileImageStore(context) }
     // ---- 零件 ----
@@ -320,5 +321,13 @@ class InspectionRepository(
     suspend fun deleteViewRoiConfirmsByView(batchId: String, viewIndex: Int) {
         viewRoiConfirmDao.deleteByBatchAndViewIndex(batchId, viewIndex)
     }
+
+    // ---- DPM 扫码会话图像证据 ----
+
+    suspend fun insertDpmScanEvidence(evidence: DpmScanEvidenceEntity): Long =
+        dpmScanEvidenceDao.insert(evidence)
+
+    suspend fun getDpmScanEvidenceBySession(sessionId: String): List<DpmScanEvidenceEntity> =
+        dpmScanEvidenceDao.getBySessionId(sessionId)
 
 }
