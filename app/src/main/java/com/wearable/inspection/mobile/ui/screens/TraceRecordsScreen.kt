@@ -67,6 +67,8 @@ import androidx.compose.ui.unit.sp
 import com.wearable.inspection.mobile.MobileInspectionApp
 import com.wearable.inspection.mobile.data.entity.CaptureBatchEntity
 import com.wearable.inspection.mobile.data.entity.InspectionSessionEntity
+import com.wearable.inspection.mobile.data.export.DpmEvidenceExportResult
+import com.wearable.inspection.mobile.data.export.DpmEvidenceExportService
 import com.wearable.inspection.mobile.data.export.InspectionExportResult
 import com.wearable.inspection.mobile.data.export.InspectionZipExportService
 import com.wearable.inspection.mobile.domain.model.InspectionStatus
@@ -168,8 +170,58 @@ fun TraceRecordsScreen() {
 
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // 追溯记录和采集完成页统一使用同一套“照片 + 检测结果”导出服务。
+    // 追溯记录和采集完成页统一使用同一套"照片 + 检测结果"导出服务。
     val exportService = remember { InspectionZipExportService(context, repository) }
+    val dpmExportService = remember { DpmEvidenceExportService(context, repository) }
+
+    // DPM 证据导出状态
+    var dpmExporting by remember { mutableStateOf(false) }
+    var dpmExportMessage by remember { mutableStateOf<String?>(null) }
+
+    // SAF 文件创建器（DPM 证据导出）
+    val createDpmZipLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/zip")
+    ) { uri ->
+        if (uri == null) {
+            dpmExporting = false
+            return@rememberLauncherForActivityResult
+        }
+        scope.launch {
+            dpmExporting = true
+            val result = withContext(Dispatchers.IO) {
+                val tempFile = File(context.cacheDir, "dpm_evidence_export.zip")
+                val exportResult = dpmExportService.exportEvidenceZip(tempFile)
+                if (exportResult is DpmEvidenceExportResult.Success) {
+                    try {
+                        context.contentResolver.openOutputStream(uri)?.use { os ->
+                            tempFile.inputStream().use { it.copyTo(os) }
+                        }
+                        tempFile.delete()
+                        exportResult
+                    } catch (e: Exception) {
+                        tempFile.delete()
+                        DpmEvidenceExportResult.Failure("写入文件失败：${e.localizedMessage}")
+                    }
+                } else {
+                    tempFile.delete()
+                    exportResult
+                }
+            }
+            dpmExporting = false
+            dpmExportMessage = when (result) {
+                is DpmEvidenceExportResult.Success -> {
+                    val msg = buildString {
+                        append("DPM 证据导出成功：${result.sessionCount} 个会话，${result.exportedCount} 个文件")
+                        if (result.missingCount > 0) append("（${result.missingCount} 个文件缺失）")
+                    }
+                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                    msg
+                }
+                is DpmEvidenceExportResult.Empty -> "暂无 DPM 扫码证据"
+                is DpmEvidenceExportResult.Failure -> result.message
+            }
+        }
+    }
 
     // SAF 文件创建器（按批次导出）
     val createZipLauncher = rememberLauncherForActivityResult(
@@ -357,6 +409,78 @@ fun TraceRecordsScreen() {
                             tint = if (selectedBatchIds.isNotEmpty() && !deletingBatch) FailColor else PlaceholderColor,
                             modifier = Modifier.size(20.dp)
                         )
+                    }
+                }
+            }
+
+            // DPM 扫码证据导出卡片
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.FileDownload,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp),
+                                tint = Primary
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "DPM 扫码证据",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextPrimary,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(
+                            onClick = {
+                                dpmExporting = true
+                                dpmExportMessage = null
+                                createDpmZipLauncher.launch(dpmExportService.generateZipFileName())
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(40.dp),
+                            enabled = !dpmExporting,
+                            colors = ButtonDefaults.buttonColors(containerColor = Primary),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            if (dpmExporting) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(18.dp),
+                                    color = SurfaceWhite,
+                                    strokeWidth = 2.dp
+                                )
+                                Text(
+                                    text = "导出中…",
+                                    modifier = Modifier.padding(start = 8.dp),
+                                    fontSize = 14.sp
+                                )
+                            } else {
+                                Text(text = "导出全部扫码证据 ZIP", fontSize = 14.sp)
+                            }
+                        }
+                        // 导出结果消息
+                        if (dpmExportMessage != null) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = dpmExportMessage!!,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (dpmExportMessage!!.startsWith("DPM 证据导出成功") || dpmExportMessage!!.startsWith("暂无"))
+                                    PassColor else FailColor,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
                     }
                 }
             }

@@ -57,13 +57,13 @@
 
 ## 当前唯一任务
 
-**DPM 扫码会话图像证据留存** — **DONE**（2026-09-15，实现完成，自动化验证通过，待用户验收）。
+**DPM 扫码证据可操作导出** — **DONE**（2026-09-15，实现完成，自动化验证通过，待用户验收）。
 
-目标：用户退出每次 DPM 扫码会话时，保存一组图像证据：成功读码时保存精确解码帧；退出时仍未读出则保存最后一张有效分析帧。两种情况均保存原图和扫描 ROI 裁剪图，持久化 `scanSessionId`、帧时间与来源、原始读码内容、`SUCCESS`/`NO_READ` 状态及解码来源。
+目标：在现有导出入口增加"导出 DPM 扫码证据"操作，生成独立 ZIP（按 scanSessionId 分目录、原始帧 + ROI 裁切 + manifest.csv），支持 SAF 保存和 FileProvider 分享。导出后保留应用内原始证据。
 
-自动化验证：729 tests completed, 14 failed (全部预存), 5 skipped。新增 35 项测试全部通过。报告：`docs/reports/b3/DPM_SCAN_EVIDENCE_REPORT.md`。
+自动化验证：745 tests completed, 14 failed (全部预存), 5 skipped。新增 16 项测试全部通过。报告：`docs/reports/b3/DPM_EVIDENCE_EXPORT_REPORT.md`。
 
-已验收任务：**模板叠加默认透明度为 0%** — **USER_ACCEPTED**（2026-09-15）。**单零件多 View 人工确认 + ZIP 导出** — **USER_ACCEPTED**（2026-09-15）。详细记录见 `tasks/todo.md`。
+已验收任务：**DPM 扫码会话图像证据留存** — **DONE**（2026-09-15，提交 `213a0787`）。**模板叠加默认透明度为 0%** — **USER_ACCEPTED**（2026-09-15）。**单零件多 View 人工确认 + ZIP 导出** — **USER_ACCEPTED**（2026-09-15）。详细记录见 `tasks/todo.md`。
 
 **Bug Fix**（2026-09-03）：修复模板图片降采样导致 Canvas 绘制失败。CameraPreview 的 inSampleSize 计算逻辑已修正，8000x6000 图片现在使用 inSampleSize=4。模板图片解码已移至 Dispatchers.IO，切换 View 时旧 Bitmap 已正确回收。新增 CameraPreviewTest 14 项单元测试。
 

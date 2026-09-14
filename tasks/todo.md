@@ -1,4 +1,21 @@
-# 当前任务：DPM 扫码会话图像证据留存
+# 当前任务：DPM 扫码证据可操作导出
+
+状态：**DONE**（2026-09-15，实现完成，自动化验证通过，待用户验收）。
+
+目标：在现有导出入口增加"导出 DPM 扫码证据"操作，生成独立 ZIP（按 scanSessionId 分目录、原始帧 + ROI 裁切 + manifest.csv），支持 SAF 保存和 FileProvider 分享。导出后保留应用内原始证据。
+
+执行边界：复用现有 dpm_scan_evidence 表/DAO/Repository/MobileImageStore 和 ZIP 导出/分享交互。不改扫码算法、不新增 Room migration、不扩展本项之外的检测结果 ZIP。
+
+自动化验证结果：745 tests completed, 14 failed (全部预存), 5 skipped。新增 16 项测试全部通过。
+
+实现摘要：
+- 新文件：DpmEvidenceExportService.kt, DpmEvidenceExportServiceTest.kt
+- 修改文件：InspectionRepository.kt（添加 getAllDpmScanEvidence）, TraceRecordsScreen.kt（添加 DPM 证据导出按钮 + SAF launcher）
+- 报告：docs/reports/b3/DPM_EVIDENCE_EXPORT_REPORT.md
+
+---
+
+# 已完成任务：DPM 扫码会话图像证据留存
 
 状态：**DONE**（2026-09-15，实现完成，自动化验证通过，待用户验收）。
 

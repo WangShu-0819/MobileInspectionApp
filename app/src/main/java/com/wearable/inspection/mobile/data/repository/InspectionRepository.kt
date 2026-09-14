@@ -330,4 +330,7 @@ class InspectionRepository(
     suspend fun getDpmScanEvidenceBySession(sessionId: String): List<DpmScanEvidenceEntity> =
         dpmScanEvidenceDao.getBySessionId(sessionId)
 
+    suspend fun getAllDpmScanEvidence(): List<DpmScanEvidenceEntity> =
+        dpmScanEvidenceDao.getAll()
+
 }
