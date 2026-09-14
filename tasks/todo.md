@@ -1,6 +1,6 @@
 # 当前任务：DPM 扫码证据 ZIP 空文件修复
 
-状态：**SOFTWARE_COMPLETE / WAITING_USER_ACCEPTANCE**（2026-09-15，修复 SAF 导出空 ZIP）。
+状态：**USER_ACCEPTED**（用户确认 SAF 导出 ZIP 正常）。
 
 目标：定位并修复 DPM 扫码证据 ZIP 实际为空的问题，确保导出后 ZIP 可读取，包含会话图片和 manifest.csv；SAF 写入失败时显示明确失败，不留下误导性的空 ZIP。
 

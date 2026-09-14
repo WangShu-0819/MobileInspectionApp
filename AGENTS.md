@@ -57,7 +57,7 @@
 
 ## 当前唯一任务
 
-**DPM 扫码证据 ZIP 空文件修复** — **SOFTWARE_COMPLETE / WAITING_USER_ACCEPTANCE**（2026-09-15）。
+**DPM 扫码证据 ZIP 空文件修复** — **USER_ACCEPTED**（用户确认导出正常）。
 
 结果：修复写 manifest 时关闭底层 ZipOutputStream 的问题；SAF 输出流为空或 ZIP 生成失败时不再误报成功，并清理 SAF 预创建的空文件。新增真实 ZIP 解包回归测试。全量 JVM：746 项完成，14 项失败（此前报告已有 14 项），5 项跳过；本任务相关导出和 DPM 生命周期测试通过。
 
