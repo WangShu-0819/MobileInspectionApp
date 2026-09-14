@@ -30,6 +30,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import android.widget.Toast
 import com.wearable.inspection.mobile.MobileInspectionApp
+import com.wearable.inspection.mobile.detection.NanoDetRoiInferenceService
 import com.wearable.inspection.mobile.data.settings.PartSelectionBus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -421,6 +422,7 @@ fun AppRoot() {
 
                 val context = LocalContext.current
                 val repository = remember { MobileInspectionApp.repository(context) }
+                val inferenceService = remember(context) { NanoDetRoiInferenceService(context.applicationContext) }
                 val partName = remember { mutableStateOf("") }
 
                 // 加载零件名称
@@ -439,7 +441,8 @@ fun AppRoot() {
                         templateId = templateId,
                         templateName = templateName,
                         partId = partId,
-                        totalViews = totalViews
+                        totalViews = totalViews,
+                        inferenceService = inferenceService
                     )
                 )
 

@@ -1,9 +1,32 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
 }
+
+val localSdkProperties = Properties().also { properties ->
+    rootProject.file("local.properties").inputStream().use { properties.load(it) }
+}
+val androidSdkRoot = file(localSdkProperties.getProperty("sdk.dir"))
+val ncnnSmokeNdkRoot = androidSdkRoot.resolve("android-ndk-r30")
+val ncnnSmokePackageRoot = androidSdkRoot.resolve("ncnn-20260526-android-shared")
+val textileRoot = rootProject.projectDir.parentFile.parentFile
+val ncnnSmokeModelRoot = textileRoot.resolve(
+    "nanodet-main/nanodet-main/workspace/key_nut_thread_experiments/exp01_decoupled_retry/model_best/android_export/ncnn_20260526_opt2"
+)
+val ncnnSmokeFrameRoot = rootProject.projectDir.parentFile.resolve("DCIM/extracted_frames")
+val ncnnSmokeParityFile = textileRoot.resolve("nanodet-main/nanodet-main/reports/ncnn_android/parity_results.json")
+val ncnnSmokeAssetsDir = layout.buildDirectory.dir("generated/ncnnSmoke/androidTest/assets")
+val ncnnSmokeJniLibsDir = layout.buildDirectory.dir("generated/ncnnSmoke/androidTest/jniLibs")
+val ncnnSmokeNativeWorkDir = File(System.getProperty("java.io.tmpdir"), "mobileinspection-ncnn-smoke")
+val ncnnSmokeNativeLibsDir = File(ncnnSmokeNativeWorkDir, "libs")
+val nanoDetMainAssetsDir = layout.buildDirectory.dir("generated/nanodet/main/assets")
+val nanoDetMainJniLibsDir = layout.buildDirectory.dir("generated/nanodet/main/jniLibs")
+val nanoDetNativeWorkDir = File(System.getProperty("java.io.tmpdir"), "mobileinspection-nanodet-main")
+val nanoDetNativeLibsDir = File(nanoDetNativeWorkDir, "libs")
 
 android {
     namespace = "com.wearable.inspection.mobile"
@@ -53,10 +76,109 @@ android {
 
     // MigrationTestHelper 从 androidTest assets 读取历史 Room schema。
     sourceSets["androidTest"].assets.srcDir("$projectDir/schemas")
+    sourceSets["androidTest"].assets.srcDir(ncnnSmokeAssetsDir)
+    sourceSets["androidTest"].jniLibs.srcDir(ncnnSmokeJniLibsDir)
+    sourceSets["main"].assets.srcDir(nanoDetMainAssetsDir)
+    sourceSets["main"].jniLibs.srcDir(nanoDetMainJniLibsDir)
+}
 
-    // Room schema 导出配置
-    ksp {
-        arg("room.schemaLocation", "$projectDir/schemas")
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
+val stageNcnnSmokeAndroidTestAssets = tasks.register<Copy>("stageNcnnSmokeAndroidTestAssets") {
+    from(ncnnSmokeModelRoot.resolve("nanodet.ncnn.param")) { into("ncnn_smoke/model") }
+    from(ncnnSmokeModelRoot.resolve("nanodet.ncnn.bin")) { into("ncnn_smoke/model") }
+    from(ncnnSmokeFrameRoot.resolve("frame_00106_f1060.jpg")) { into("ncnn_smoke/images") }
+    from(ncnnSmokeFrameRoot.resolve("frame_00045_f450.jpg")) { into("ncnn_smoke/images") }
+    from(ncnnSmokeParityFile) { into("ncnn_smoke") }
+    into(ncnnSmokeAssetsDir)
+}
+
+val prepareNcnnSmokeAndroidTestNative = tasks.register<Sync>("prepareNcnnSmokeAndroidTestNative") {
+    from("src/androidTest/cpp")
+    into(ncnnSmokeNativeWorkDir)
+}
+
+val buildNcnnSmokeAndroidTestNative = tasks.register<Exec>("buildNcnnSmokeAndroidTestNative") {
+    dependsOn(prepareNcnnSmokeAndroidTestNative)
+    val arm64Root = ncnnSmokePackageRoot.resolve("arm64-v8a")
+    inputs.files(fileTree("src/androidTest/cpp"))
+    inputs.files(fileTree(arm64Root.resolve("include")))
+    inputs.file(arm64Root.resolve("lib/libncnn.so"))
+    outputs.dir(ncnnSmokeNativeLibsDir)
+    commandLine(
+        ncnnSmokeNdkRoot.resolve("ndk-build.cmd").absolutePath,
+        "NDK_PROJECT_PATH=${ncnnSmokeNativeWorkDir.absolutePath}",
+        "APP_BUILD_SCRIPT=${File(ncnnSmokeNativeWorkDir, "Android.mk").absolutePath}",
+        "NDK_APPLICATION_MK=${File(ncnnSmokeNativeWorkDir, "Application.mk").absolutePath}",
+        "NDK_OUT=${File(ncnnSmokeNativeWorkDir, "obj").absolutePath}",
+        "NDK_LIBS_OUT=${ncnnSmokeNativeLibsDir.absolutePath}",
+        "NCNN_ROOT=${ncnnSmokePackageRoot.absolutePath.replace('\\', '/')}",
+        "HOST_OS=windows"
+    )
+}
+
+val cleanupNcnnSmokeAndroidTestNativeWork = tasks.register<Delete>("cleanupNcnnSmokeAndroidTestNativeWork") {
+    delete(ncnnSmokeNativeWorkDir)
+}
+
+val stageNcnnSmokeAndroidTestNative = tasks.register<Copy>("stageNcnnSmokeAndroidTestNative") {
+    dependsOn(buildNcnnSmokeAndroidTestNative)
+    from(File(ncnnSmokeNativeLibsDir, "arm64-v8a/libncnn_smoke.so")) { into("arm64-v8a") }
+    from(ncnnSmokePackageRoot.resolve("arm64-v8a/lib/libncnn.so")) { into("arm64-v8a") }
+    into(ncnnSmokeJniLibsDir)
+    finalizedBy(cleanupNcnnSmokeAndroidTestNativeWork)
+}
+
+val stageNanoDetMainAssets = tasks.register<Copy>("stageNanoDetMainAssets") {
+    from(ncnnSmokeModelRoot.resolve("nanodet.ncnn.param")) { into("nanodet") }
+    from(ncnnSmokeModelRoot.resolve("nanodet.ncnn.bin")) { into("nanodet") }
+    into(nanoDetMainAssetsDir)
+}
+
+val prepareNanoDetMainNative = tasks.register<Sync>("prepareNanoDetMainNative") {
+    from("src/main/cpp")
+    into(nanoDetNativeWorkDir)
+}
+
+val buildNanoDetMainNative = tasks.register<Exec>("buildNanoDetMainNative") {
+    dependsOn(prepareNanoDetMainNative)
+    val arm64Root = ncnnSmokePackageRoot.resolve("arm64-v8a")
+    inputs.files(fileTree("src/main/cpp"))
+    inputs.files(fileTree(arm64Root.resolve("include")))
+    inputs.file(arm64Root.resolve("lib/libncnn.so"))
+    outputs.dir(nanoDetNativeLibsDir)
+    commandLine(
+        ncnnSmokeNdkRoot.resolve("ndk-build.cmd").absolutePath,
+        "NDK_PROJECT_PATH=${nanoDetNativeWorkDir.absolutePath}",
+        "APP_BUILD_SCRIPT=${File(nanoDetNativeWorkDir, "Android.mk").absolutePath}",
+        "NDK_APPLICATION_MK=${File(nanoDetNativeWorkDir, "Application.mk").absolutePath}",
+        "NDK_OUT=${File(nanoDetNativeWorkDir, "obj").absolutePath}",
+        "NDK_LIBS_OUT=${nanoDetNativeLibsDir.absolutePath}",
+        "NCNN_ROOT=${ncnnSmokePackageRoot.absolutePath.replace('\\', '/')}",
+        "HOST_OS=windows"
+    )
+}
+
+val cleanupNanoDetMainNative = tasks.register<Delete>("cleanupNanoDetMainNative") {
+    delete(nanoDetNativeWorkDir)
+}
+
+val stageNanoDetMainNative = tasks.register<Copy>("stageNanoDetMainNative") {
+    dependsOn(buildNanoDetMainNative)
+    from(File(nanoDetNativeLibsDir, "arm64-v8a/libnanodet_ncnn_runtime.so")) { into("arm64-v8a") }
+    from(ncnnSmokePackageRoot.resolve("arm64-v8a/lib/libncnn.so")) { into("arm64-v8a") }
+    into(nanoDetMainJniLibsDir)
+    finalizedBy(cleanupNanoDetMainNative)
+}
+
+tasks.configureEach {
+    when (name) {
+        "mergeDebugAndroidTestAssets" -> dependsOn(stageNcnnSmokeAndroidTestAssets)
+        "mergeDebugAndroidTestJniLibFolders" -> dependsOn(stageNcnnSmokeAndroidTestNative)
+        "mergeDebugAssets", "mergeReleaseAssets" -> dependsOn(stageNanoDetMainAssets)
+        "mergeDebugJniLibFolders", "mergeReleaseJniLibFolders" -> dependsOn(stageNanoDetMainNative)
     }
 }
 

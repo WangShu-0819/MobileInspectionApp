@@ -9,8 +9,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.wearable.inspection.mobile.data.entity.RoiDefinitionEntity
+import com.wearable.inspection.mobile.data.entity.RoiTargetType
 import com.wearable.inspection.mobile.data.entity.ViewRoiConfirmEntity
 import com.wearable.inspection.mobile.data.repository.InspectionRepository
+import com.wearable.inspection.mobile.detection.NanoDetDecisionPolicy
+import com.wearable.inspection.mobile.detection.NanoDetInferenceStatus
+import com.wearable.inspection.mobile.detection.NanoDetRoiInferenceResult
+import com.wearable.inspection.mobile.detection.NanoDetRoiInferenceService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -35,7 +40,8 @@ class ViewConfirmationViewModel(
     private val templateId: String,
     private val templateName: String,
     private val partId: String,
-    private val totalViews: Int
+    private val totalViews: Int,
+    private val inferenceService: NanoDetRoiInferenceService
 ) : ViewModel() {
 
     /** 当前 View 的 ROI 定义列表 */
@@ -44,6 +50,9 @@ class ViewConfirmationViewModel(
 
     /** 每个 ROI 的裁剪子图 (roiId → Bitmap) */
     val roiBitmaps = mutableStateMapOf<String, Bitmap>()
+
+    /** Per-ROI model output for this saved photo; manual confirmation state remains separate. */
+    val inferenceResults = mutableStateMapOf<String, NanoDetRoiInferenceResult>()
 
     /** 每个 ROI 的人工确认结果 (roiId → "OK"/"NG") */
     val roiResults = mutableStateMapOf<String, String>()
@@ -75,6 +84,9 @@ class ViewConfirmationViewModel(
     var isLoaded by mutableStateOf(false)
         private set
 
+    private var photoGeometry: RoiCoordinateMapper.PhotoGeometry? = null
+    private var templateExifOrientation: Int? = null
+
     init {
         loadData()
     }
@@ -91,6 +103,7 @@ class ViewConfirmationViewModel(
                     photo.templateId == templateId
                 if (!photoMatchesView) {
                     errorMessage = "照片记录与当前视角不一致"
+                    setInferenceFailure(NanoDetInferenceStatus.PHOTO_ASSOCIATION_ERROR, errorMessage!!)
                     isLoaded = true
                     return@launch
                 }
@@ -100,15 +113,22 @@ class ViewConfirmationViewModel(
                 rois = roiList
 
                 // 图片尺寸读取和 ROI 裁剪都可能访问/解码大 JPEG，必须离开主线程。
-                val dimensions = withContext(Dispatchers.IO) {
-                    RoiCoordinateMapper.getImageDimensions(photoPath)
+                val geometry = withContext(Dispatchers.IO) {
+                    RoiCoordinateMapper.getImageGeometry(photoPath)
                 }
-                if (dimensions == null) {
+                if (geometry == null) {
                     errorMessage = "无法读取照片"
+                    setInferenceFailure(NanoDetInferenceStatus.IMAGE_UNREADABLE, errorMessage!!)
                     isLoaded = true
                     return@launch
                 }
-                val (imgW, imgH) = dimensions
+                photoGeometry = geometry
+                val templateGeometry = withContext(Dispatchers.IO) {
+                    repository.getTemplate(templateId)?.mainImagePath?.let(RoiCoordinateMapper::getImageGeometry)
+                }
+                templateExifOrientation = templateGeometry?.exifOrientation
+                val displayTemplateOrientation = templateExifOrientation
+                    ?: android.media.ExifInterface.ORIENTATION_NORMAL
 
                 val loadedBitmaps = withContext(Dispatchers.IO) {
                     buildMap {
@@ -116,7 +136,11 @@ class ViewConfirmationViewModel(
                         for (roi in roiList) {
                             val normalizedRect = RoiCoordinateMapper.parseNormalizedRect(roi.normalizedRect)
                             if (normalizedRect != null) {
-                                val pixelRect = RoiCoordinateMapper.mapToImagePixels(normalizedRect, imgW, imgH)
+                                val pixelRect = RoiCoordinateMapper.mapTemplateRoiToPhotoPixels(
+                                    normalizedRect,
+                                    displayTemplateOrientation,
+                                    geometry
+                                )
                                 val bitmap = RoiCoordinateMapper.cropRoiBitmap(photoPath, pixelRect, inSampleSize = 2)
                                 if (bitmap != null) {
                                     put(roi.id, bitmap)
@@ -128,8 +152,27 @@ class ViewConfirmationViewModel(
                 roiBitmaps.putAll(loadedBitmaps)
 
                 isLoaded = true
+                val detected = withContext(Dispatchers.IO) {
+                    inferenceService.inferSavedPhoto(photoPath, roiList, templateExifOrientation)
+                }
+                inferenceResults.putAll(detected)
             } catch (e: Exception) {
-                errorMessage = "加载失败：${e.message}"
+                if (!isLoaded) {
+                    errorMessage = "加载失败：${e.message}"
+                    setInferenceFailure(NanoDetInferenceStatus.IMAGE_UNREADABLE, errorMessage!!)
+                }
+                else {
+                    rois.forEach { roi ->
+                        inferenceResults[roi.id] = NanoDetRoiInferenceResult(
+                            roiId = roi.id,
+                            status = NanoDetInferenceStatus.INFERENCE_ERROR,
+                            modelSuggestion = null,
+                            matchingScore = null,
+                            targetClassIndex = NanoDetDecisionPolicy.classIndex(RoiTargetType.fromName(roi.targetType)),
+                            detail = e.message ?: "NanoDet 推理失败"
+                        )
+                    }
+                }
                 isLoaded = true
             }
         }
@@ -140,6 +183,19 @@ class ViewConfirmationViewModel(
      */
     fun setRoiResult(roiId: String, result: String) {
         roiResults[roiId] = result
+    }
+
+    private fun setInferenceFailure(status: NanoDetInferenceStatus, detail: String) {
+        rois.forEach { roi ->
+            inferenceResults[roi.id] = NanoDetRoiInferenceResult(
+                roiId = roi.id,
+                status = status,
+                modelSuggestion = null,
+                matchingScore = null,
+                targetClassIndex = NanoDetDecisionPolicy.classIndex(RoiTargetType.fromName(roi.targetType)),
+                detail = detail
+            )
+        }
     }
 
     /**
@@ -171,15 +227,16 @@ class ViewConfirmationViewModel(
             try {
                 val now = System.currentTimeMillis()
                 val overall = overallResult!!
-                val dimensions = withContext(Dispatchers.IO) {
-                    RoiCoordinateMapper.getImageDimensions(photoPath)
-                }
-                val (imgW, imgH) = dimensions ?: (0 to 0)
+                val geometry = photoGeometry
 
                 val confirms = rois.map { roi ->
                     val normalizedRect = RoiCoordinateMapper.parseNormalizedRect(roi.normalizedRect)
-                    val pixelRect = if (normalizedRect != null && imgW > 0 && imgH > 0) {
-                        RoiCoordinateMapper.mapToImagePixels(normalizedRect, imgW, imgH)
+                    val pixelRect = if (normalizedRect != null && geometry != null) {
+                        RoiCoordinateMapper.mapTemplateRoiToPhotoPixels(
+                            normalizedRect,
+                            templateExifOrientation ?: android.media.ExifInterface.ORIENTATION_NORMAL,
+                            geometry
+                        )
                     } else {
                         ContentRectBounds(0, 0, 0, 0)
                     }
@@ -242,6 +299,7 @@ class ViewConfirmationViewModel(
         super.onCleared()
         roiBitmaps.values.forEach { it.recycle() }
         roiBitmaps.clear()
+        inferenceService.close()
     }
 
     companion object {
@@ -254,7 +312,8 @@ class ViewConfirmationViewModel(
             templateId: String,
             templateName: String,
             partId: String,
-            totalViews: Int
+            totalViews: Int,
+            inferenceService: NanoDetRoiInferenceService
         ) = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -267,7 +326,8 @@ class ViewConfirmationViewModel(
                     templateId = templateId,
                     templateName = templateName,
                     partId = partId,
-                    totalViews = totalViews
+                    totalViews = totalViews,
+                    inferenceService = inferenceService
                 ) as T
             }
         }

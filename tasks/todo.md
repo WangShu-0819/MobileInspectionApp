@@ -1,12 +1,39 @@
-# 当前任务：DPM 扫码证据 ZIP 空文件修复
+# 已验收任务：NanoDet 模板 ROI 静态照片推理接入
 
-状态：**USER_ACCEPTED**（用户确认 SAF 导出 ZIP 正常）。
+状态：**USER_ACCEPTED**（2026-09-14）。前一项 Android NCNN runtime 冒烟测试已由用户验收；本项仅为已保存照片的当前模板 ROI 提供真实 NCNN 推理结果，不接入预览流、确认页 UI、人工改判、数据库迁移、结果 ZIP、自动对齐或新相机架构。
 
-目标：定位并修复 DPM 扫码证据 ZIP 实际为空的问题，确保导出后 ZIP 可读取，包含会话图片和 manifest.csv；SAF 写入失败时显示明确失败，不留下误导性的空 ZIP。
+复用已验证的 NCNN optlevel=2 模型、Android FP32 CPU runtime 和 `arm64-v8a` 库，不重做转换或冒烟测试。复用 `RoiDefinitionEntity.targetType` 与 `RoiCoordinateMapper`；校验照片 EXIF 方向、实际图像区域、像素边界及 ROI/整图框坐标。NUT 映射类别 0，THREAD 映射类别 1，FEATURE 明确标记不支持；保持 BGR、416×416 左上补边、既定 mean/std、`in0`/`out0`，候选过滤保留低分框。默认业务阈值 0.37 仅为未校准起始值。
 
-执行边界：仅修改 DPM ZIP 导出服务、对应 SAF 写入逻辑、自动化测试和本任务报告。为兼容工作区已有的 `DpmScanScreen.saveEvidenceInScope()` 调用，可补齐 `DpmScanViewModel` 对应回调；保留 `DpmScanScreen.kt` 上已有未提交改动。复用既有证据 DAO/Repository/SAF 流程；不改扫码算法、Room schema、导出框架或其他零件 ZIP。
+结果需提供全部保留框及类别、分数、ROI/整图坐标、阈值、模型版本、耗时和明确状态；对应类别达到阈值建议 OK，无框建议 NG 且分数为空。推理错误、ROI 属性未配置和 FEATURE 均为非检测成功状态。补充类别/状态、阈值边界、无框、预处理、映射、EXIF/边界和错误测试，并用两张既定回归图与桌面 NCNN 结果对照。
 
-完成记录：`OutputStreamWriter.use` 原先会关闭外层 `ZipOutputStream`，导致 manifest 条目关闭失败并删除临时 ZIP；已改为只 flush writer，由 ZIP 所有者统一关闭。SAF 写入流为空时明确报错，空记录/导出失败时清理 SAF 预创建文件。新增真实 ZIP 解包测试验证帧、manifest 和索引内容。补齐工作区已有 DpmScanScreen 保存回调对应的 ViewModel 方法，并更新其生命周期契约测试。完整测试：746 项完成，14 项失败（与此前报告的预存失败数一致），5 项跳过；导出相关 17 项与 DPM 退出流程契约测试通过。Git 提交信息见本轮完成汇报。
+验证结果：定向 JVM 33/33、YAL-AL10 Android runtime 4/4 通过；两张回归图的检测类别一致，最大置信度差 1.35e-7、最大框坐标差 2.85e-5 px。全量差异、APK、文件及限制见 B3 报告。已由用户验收。
+
+前一项 NCNN 冒烟记录、设备/ABI、模型、库、回归图与 runtime/桌面对照证据保留在 [`docs/reports/b3/NANODET_ANDROID_PREP_REPORT.md`](../docs/reports/b3/NANODET_ANDROID_PREP_REPORT.md)。
+---
+
+# 已验收任务：Android NCNN 运行时冒烟测试
+
+状态：**USER_ACCEPTED**（2026-09-14）。本任务验证 Android NCNN runtime 加载、推理及两张回归图片与桌面对照；未接入 ROI 页面、数据库或结果包。
+
+使用现有 NDK `D:\ProgramData\Android\SDK\android-ndk-r30`（`30.0.16248370`）的 `ndk-build.cmd`，在 `YAL-AL10` 真机（ABI `arm64-v8a`）运行仅限 `androidTest` 的 NCNN FP32 加载/推理通路。两图按 BGR、左上放置 234×416 等比例缩放补边至 416×416、指定 mean/std 归一化；输出 blob `out0` shape `[3598,34]`。两图类别、数量、候选点和四档阈值检测数均与桌面 NCNN 相同；最大置信度差 `2.69e-7`，最大框坐标差 `3.53e-5 px`。`parity_results.json` 不含完整原始张量，未声称完成逐元素张量对照。
+
+通过命令：`.\gradlew.bat :app:assembleDebug`、`.\gradlew.bat :app:assembleDebugAndroidTest`、`.\gradlew.bat :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.wearable.inspection.mobile.ncnn.NcnnRuntimeSmokeInstrumentedTest`（1/1 passed）。设备测试前后按包名门禁停止新旧包、显式安装/启动新包并核验 PID 与前台 Activity。详细输入、模型/库、差异、APK 信息和文件清单见 [`docs/reports/b3/NANODET_ANDROID_PREP_REPORT.md`](../docs/reports/b3/NANODET_ANDROID_PREP_REPORT.md)。该任务已由用户验收；本轮未提交 Git。
+
+---
+# 已验收任务：DPM 扫码证据 ZIP 空文件修复
+
+状态：**USER_ACCEPTED**（用户确认导出正常）。修复写 manifest 时关闭底层 ZipOutputStream 的问题；SAF 输出流为空或 ZIP 生成失败时不再误报成功，并清理 SAF 预创建的空文件。新增真实 ZIP 解包回归测试。全量 JVM：746 项完成，14 项失败（此前报告已有 14 项），5 项跳过；本任务相关导出和 DPM 生命周期测试通过。
+
+范围：本次仅修改 DPM ZIP 导出服务、SAF 写入逻辑、导出/生命周期测试、`tasks/todo.md` 和 B3 导出报告；为兼容工作区已有 DpmScanScreen 保存回调调用，补齐 DpmScanViewModel 对应方法。工作区其他改动保留，未运行真机。报告：`docs/reports/b3/DPM_EVIDENCE_EXPORT_REPORT.md`。
+
+---
+# 已完成任务：NanoDet 转换与三方桌面对照
+
+状态：**SOFTWARE_COMPLETE / DESKTOP_PARITY_VERIFIED / ANDROID_APP_INTEGRATION_NOT_STARTED**（2026-09-14；本次授权范围完成，待用户验收）。
+
+使用已存在的 ONNX，通过 NCNN 官方 PNNX 20260526、FP32、`optlevel=2` 转成可由 NCNN runtime 加载的 `.param/.bin`；另用官方 NCNN Android shared 包准备了多 ABI 运行库。对 `frame_00106_f1060.jpg` 和 `frame_00045_f450.jpg` 使用同一输入张量比较 PyTorch、ONNX、NCNN 原始输出、类别、置信度及解码框，结果通过。最初 `optlevel=0` 产物含 runtime 不支持的 `prim::ListConstruct`，已单独标为 `opt0_rejected`，不得用于接入。
+
+Android App 尚未接入模型，也未构建 APK：工程没有 `abiFilters`/`ndkVersion`/CMake 配置，本机 Android SDK 没有 NDK；需在后续任务核定目标 ABI 和 NDK 后再最小化接入，不改现有相机、导航、页面或基础框架。本轮未运行 Gradle、ADB、APK 或真机。阈值 `0.37` 仅是起始值：当前 demo 预处理下 frame45 误报分数 `0.37719` 仍会通过该阈值，frame106 的低分 thread（约 `0.0525/0.0504`）会被滤掉；需在有人工标注的代表性验证集上校准。详细产物、哈希、差异和下一步见 [`docs/reports/b3/NANODET_ANDROID_PREP_REPORT.md`](../docs/reports/b3/NANODET_ANDROID_PREP_REPORT.md)。
 
 ---
 

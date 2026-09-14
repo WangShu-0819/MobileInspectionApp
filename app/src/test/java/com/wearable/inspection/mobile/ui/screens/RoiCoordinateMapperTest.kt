@@ -6,6 +6,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.test.assertFailsWith
 
 /**
  * RoiCoordinateMapper 单元测试
@@ -147,6 +148,51 @@ class RoiCoordinateMapperTest {
     }
 
     @Test
+    fun `mapToImagePixels floors leading and ceils trailing pixel boundaries`() {
+        val pixelRect = RoiCoordinateMapper.mapToImagePixels(
+            NormalizedRect(0.11f, 0.21f, 0.22f, 0.32f),
+            imageWidth = 10,
+            imageHeight = 10
+        )
+        assertEquals(ContentRectBounds(1, 2, 3, 4), pixelRect)
+    }
+
+    @Test
+    fun `mapToImagePixels rejects invalid dimensions and invalid rectangles`() {
+        assertFailsWith<IllegalArgumentException> {
+            RoiCoordinateMapper.mapToImagePixels(NormalizedRect(0f, 0f, 1f, 1f), 0, 10)
+        }
+        assertFailsWith<IllegalArgumentException> {
+            RoiCoordinateMapper.mapToImagePixels(NormalizedRect(0.7f, 0f, 0.2f, 1f), 10, 10)
+        }
+    }
+
+    @Test
+    fun `EXIF orientation transforms normalized template ROI into upright space`() {
+        val roi = NormalizedRect(0.1f, 0.2f, 0.6f, 0.7f)
+        assertRect(RoiCoordinateMapper.transformNormalizedRect(roi, 5), NormalizedRect(0.2f, 0.1f, 0.7f, 0.6f))
+        assertRect(RoiCoordinateMapper.transformNormalizedRect(roi, 6), NormalizedRect(0.3f, 0.1f, 0.8f, 0.6f))
+        assertRect(RoiCoordinateMapper.transformNormalizedRect(roi, 7), NormalizedRect(0.3f, 0.4f, 0.8f, 0.9f))
+        assertRect(RoiCoordinateMapper.transformNormalizedRect(roi, 8), NormalizedRect(0.2f, 0.4f, 0.7f, 0.9f))
+        assertRect(RoiCoordinateMapper.transformNormalizedRect(roi, 2), NormalizedRect(0.4f, 0.2f, 0.9f, 0.7f))
+        assertRect(RoiCoordinateMapper.transformNormalizedRect(roi, 3), NormalizedRect(0.4f, 0.3f, 0.9f, 0.8f))
+        assertRect(RoiCoordinateMapper.transformNormalizedRect(roi, 4), NormalizedRect(0.1f, 0.3f, 0.6f, 0.8f))
+    }
+
+    @Test
+    fun `EXIF rotated photo swaps upright dimensions and maps template ROI`() {
+        val geometry = RoiCoordinateMapper.PhotoGeometry(rawWidth = 100, rawHeight = 200, exifOrientation = 6)
+        assertEquals(200, geometry.width)
+        assertEquals(100, geometry.height)
+        val mapped = RoiCoordinateMapper.mapTemplateRoiToPhotoPixels(
+            NormalizedRect(0.1f, 0.2f, 0.6f, 0.7f),
+            templateExifOrientation = 6,
+            photoGeometry = geometry
+        )
+        assertEquals(ContentRectBounds(60, 10, 160, 60), mapped)
+    }
+
+    @Test
     fun `mapToImagePixels matches contentRect mapping formula`() {
         // 验证与 LiveInspectionScreen 中的 mapNormalizedRectToContentRect 使用相同映射逻辑
         val rect = RoiCoordinateMapper.parseNormalizedRect(
@@ -189,5 +235,12 @@ class RoiCoordinateMapperTest {
     fun `cropRoiBitmap returns null for negative-size rect`() {
         val rect = ContentRectBounds(100, 100, 50, 50)
         assertNull(RoiCoordinateMapper.cropRoiBitmap("/some/file.jpg", rect))
+    }
+
+    private fun assertRect(actual: NormalizedRect, expected: NormalizedRect) {
+        assertEquals(expected.left, actual.left, 1e-6f)
+        assertEquals(expected.top, actual.top, 1e-6f)
+        assertEquals(expected.right, actual.right, 1e-6f)
+        assertEquals(expected.bottom, actual.bottom, 1e-6f)
     }
 }
