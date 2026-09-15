@@ -310,7 +310,7 @@ class NoRoiViewAdvancementTest {
 
         // 写入按 View 区分的目录，并保留照片清单
         assertTrue("照片应写入按 View 区分的目录", source.contains("views/view_"))
-        assertTrue("照片索引和结果应写入同一个 CSV", source.contains("exportCombinedToStream(photoRows, confirms, partId, zos)"))
+        assertTrue("照片索引和结果应写入同一个 CSV", source.contains("exportUnifiedToStream("))
         assertFalse("不应再生成第二个照片清单 CSV", source.contains("photo_manifest.csv"))
         // 遍历 photos 列表
         assertTrue("应遍历全部照片", source.contains("for (photo in photos)"))

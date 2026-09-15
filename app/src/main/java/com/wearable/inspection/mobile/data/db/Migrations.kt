@@ -191,6 +191,27 @@ val MIGRATION_7_8 = object : Migration(7, 8) {
 }
 
 /**
+ * 数据库 Migration v8 → v9
+ *
+ * 为 DPM 成功证据增加扫描启动时由调用方显式提供的可空稳定关联。
+ * 历史独立证据全部保持 null，不会被猜测归入任何批次。
+ */
+val MIGRATION_8_9 = object : Migration(8, 9) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE dpm_scan_evidence ADD COLUMN batchId TEXT")
+        db.execSQL("ALTER TABLE dpm_scan_evidence ADD COLUMN partId TEXT")
+        db.execSQL("ALTER TABLE dpm_scan_evidence ADD COLUMN templateId TEXT")
+        db.execSQL("ALTER TABLE dpm_scan_evidence ADD COLUMN viewIndex INTEGER")
+        db.execSQL("ALTER TABLE dpm_scan_evidence ADD COLUMN photoId INTEGER")
+        db.execSQL("ALTER TABLE dpm_scan_evidence ADD COLUMN roiId TEXT")
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS index_dpm_scan_evidence_batchId " +
+                "ON dpm_scan_evidence (batchId)"
+        )
+    }
+}
+
+/**
  * 所有 Migration 列表
  * 新增 Migration 时必须在此添加
  */
@@ -202,5 +223,6 @@ val ALL_MIGRATIONS = arrayOf<Migration>(
     MIGRATION_4_5,
     MIGRATION_5_6,
     MIGRATION_6_7,
-    MIGRATION_7_8
+    MIGRATION_7_8,
+    MIGRATION_8_9
 )

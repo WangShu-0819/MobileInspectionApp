@@ -1,8 +1,8 @@
 # NanoDet Android 接入前置处理报告
 
 **日期**：2026-09-14
-**状态**：`ONNX→NCNN_CONVERTED / DESKTOP_PARITY_PASS / ANDROID_NCNN_RUNTIME_SMOKE_USER_ACCEPTED / TEMPLATE_ROI_STATIC_INFERENCE_USER_ACCEPTED`
-**范围**：记录已有 ONNX 的官方 PNNX 转换、产物审计和桌面对照；Android NCNN FP32 runtime 冒烟测试已由用户验收；当前新增已保存照片的模板 ROI 静态推理接入。当前任务不运行 CameraX 预览推理、不增加确认页 UI、人工改判、数据库迁移、结果 ZIP 或自动对齐。
+**状态**：`ONNX→NCNN_CONVERTED / DESKTOP_PARITY_PASS / ANDROID_NCNN_RUNTIME_SMOKE_USER_ACCEPTED / TEMPLATE_ROI_STATIC_INFERENCE_USER_ACCEPTED / VIEW_CONFIRMATION_MODEL_RESULT_SOFTWARE_COMPLETE_AWAITING_USER_ACCEPTANCE`
+**范围**：记录已有 ONNX 的官方 PNNX 转换、产物审计和桌面对照；Android NCNN FP32 runtime smoke 与已保存照片的 NanoDet ROI 静态推理均已由用户验收。本报告末尾新增当前任务“模型结果确认与人工终审”实现记录；未改变 Detector/预处理阈值/CameraX 预览推理、ZIP/DPM 导出或自动对齐。
 
 ## Android NCNN 运行时冒烟测试
 
@@ -205,3 +205,35 @@ Android 输出框坐标（原图像素，`[x1,y1,x2,y2]`）及逐框最大绝对
 ## Android 后续集成边界
 
 生产主 APK 现已包含 arm64-v8a 的 NCNN 模型资产、libncnn.so 与 ROI 静态照片推理 JNI；Android NCNN runtime smoke 和本项 ROI 推理均已由用户验收。仍未完成的后续工作包括代表性标注集上的阈值校准、更多照片/设备覆盖、性能与内存评估、确认页 UI、人工确认、结果持久化及 ZIP 集成。推理只在已保存照片上按当前模板 ROI 执行，不使用 CameraX 预览流；0.37 仍是未校准起始值。其他既有 Git 工作区改动保留并排除在本轮提交之外。
+
+## NanoDet ROI 结果确认与人工终审（2026-09-14）
+
+**状态：`SOFTWARE_COMPLETE / AWAITING_USER_ACCEPTANCE`。** 前序 NCNN Android smoke 与 ROI 静态照片推理均已验收。本项让既有确认页消费 `ViewModel.inferenceResults`，并将模型快照和人工终审写入同一既有 `view_roi_confirms` 记录；没有重做转换、NCNN smoke 或两张图的推理对照。
+
+### 接入与结果持久化
+
+- 每个 ROI 独立显示推理状态、目标类别、模型建议、最高匹配分数、阈值起始值、模型版本和检测框。全部保留框叠加在对应 ROI 照片裁切上。未配置属性、FEATURE 不支持、无框、照片/模板/模型/runtime 不可用、ROI 无效或推理错误均显示各自状态；没有将这些状态伪装成检测成功。0.37 显示为未校准起始阈值；不可执行模型的情况显示阈值未执行。
+- 人工逐 ROI OK/NG 与模型建议分字段保存并保持人工独立选取，支持双向改判并记录 `humanChangedModel`。整张照片总体结果仍由人工单独选择，沿用 `overallResult/overallConfirmTime`。
+- 继续复用 `ViewRoiConfirmEntity`。保存模型类别、全部保留检测框（类别、分数、ROI 框/照片框）、分数、阈值、状态、版本/模型摘要、推理耗时；复用 `confirmTime` 记录人工终审时间。DAO 按 `batchId + photoId` 读取和事务替换当前照片记录，再核对 photoPath、viewIndex、templateId 与 roiId。
+- Room 从 v7 升至 v8，真实 migration 为已有确认行增加可空模型列和 `humanChangedModel DEFAULT 0`；对旧行清除既有 `softwareResult`，保留人工和稳定关联字段，旧模型结果继续为 null/未执行。Room schema v8 已导出。
+
+### 验证、APK 与设备门禁
+
+- 定向 JVM 共 44/44 通过：模型与人工分离、双向改判、总体照片结果独立、未执行/无框/错误态、每个推理状态标签、检测框坐标/模型摘要和确认时间、Compose 显示与人工选择、既有确认/照片关系契约。Compose UI 在 Robolectric 下 3/3 通过。
+- YAL-AL10（Android 10）Room `AppDatabaseTest` instrumented 5/5 通过，含 v7→v8 migration 旧行兼容和按稳定批次/照片重载测试。最终 `connectedDebugAndroidTest` 只运行 `AppDatabaseTest`。
+- 曾尝试 instrumented Compose UI 语义测试，但该宿主环境未建立 Compose hierarchy（另一次主 Activity 已设置 content）；这些尝试不记为通过。使用 Robolectric Compose 测试替代验证 UI 状态、改判和检测框覆盖。没有在真机完成确认页导航或截图视觉验收。
+- 构建：`.\gradlew.bat :app:assembleDebug :app:assembleDebugAndroidTest`，通过。主 APK `app/build/outputs/apk/debug/app-debug.apk`：2026-09-14 18:52:50 +08:00，276,579,040 bytes，SHA-256 `4F721E4244BD6D1FE133BBB2CBCB3453C8177234C12D56E84C32A58E4A243FDA`。Android test APK `app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk`：2026-09-14 18:40:29 +08:00，12,547,784 bytes，SHA-256 `F27578C350A60952DC43C42A0AA82E3B56F6BFAF0ECECC10E1AEE13642429476`。
+- 测试前后均停止 `com.wearable.inspection` 和 `com.wearable.inspection.mobile`，安装主 APK 后用完整组件 `com.wearable.inspection.mobile/com.wearable.inspection.mobile.MainActivity` 显式启动，并核对两个包安装状态、新包 PID、旧包 PID 与前台 Activity。instrumented runner 清除了相机权限，恢复时仅授予新包后重新启动和核验。最终新包 PID `4337`，旧包 PID 为空，前台是新包 `MainActivity`。未启动旧包。
+
+完整文件列表、DB 列名、测试命令和异项工作区失败记录见 [`docs/reports/b2/VIEW_CONFIRMATION_ZIP_EXPORT_REPORT.md`](../b2/VIEW_CONFIRMATION_ZIP_EXPORT_REPORT.md)。
+
+### 限制与 Git
+
+- 没有阈值校准、Detector 算法改动、CameraX 预览推理、ROI 汇总照片结果、ZIP/DPM 导出或新相机架构。
+
+## 2026-09-15 批次 ZIP 显式关联扩展
+
+NanoDet 已沿用现有 `ViewRoiConfirmEntity` 快照进入统一批次 CSV：全部检测框逐行保留，模型建议与人工最终结果/改判/确认时间分列，模型失败、无框、FEATURE、未配置和缺图均不伪造 OK/NG。真实归档测试覆盖多 View、多 ROI、双向改判与总体人工结果独立；最新样例目录为 `C:\Users\ws\AppData\Local\Temp\inspection-export7435539282332082454`。本轮同时修正照片行总体人工结果/时间、照片 ZIP 路径/状态的 manifest 列位，并将 DPM 批次证据限制为严格 batchId 相等且源帧真实非空。
+
+本轮未重复 NCNN smoke、模型转换或 connected tests。结果相关 JVM 104/104 通过，Kotlin 编译和 Debug APK 构建通过；APK 为 2026-09-15 13:12:25 +08:00，SHA-256 `D2D7B57FF523EA82D48E7F1EEDCE4ED1FCAB7D32EC5CC192CAD2DEED06B6B35B`。全量 JVM 792 项完成、779 通过、13 失败、5 跳过；失败属于工作区既有并行改动/基线断言。
+- 未运行 ADB、connectedDebugAndroidTest 或真机；未提交 Git，工作区其他改动保留，等待用户验收。

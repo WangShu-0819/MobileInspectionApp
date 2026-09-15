@@ -43,6 +43,8 @@ class DpmScanViewModel(private val app: Application) : AndroidViewModel(app) {
     // ─── 会话追踪 ───
     private var boundController: CameraController? = null
     private var boundSessionId: String? = null
+    // 由扫描入口在启动时显式快照；不从历史照片、名称或时间反推关联。
+    private var scanAssociation = DpmScanAssociation()
 
     // ─── 证据保存去重 ───
     @Volatile
@@ -71,8 +73,20 @@ class DpmScanViewModel(private val app: Application) : AndroidViewModel(app) {
     fun startScan(
         controller: CameraController,
         sessionId: String,
+        batchId: String? = null,
+        partId: String? = null,
+        templateId: String? = null,
+        viewIndex: Int? = null,
+        photoId: Long? = null,
     ) {
-        Log.d(TAG, "startScan: sessionId=$sessionId, controller=$controller")
+        scanAssociation = DpmScanAssociation(
+            batchId = batchId?.takeIf { it.isNotBlank() },
+            partId = partId?.takeIf { it.isNotBlank() },
+            templateId = templateId?.takeIf { it.isNotBlank() },
+            viewIndex = viewIndex,
+            photoId = photoId,
+        )
+        Log.d(TAG, "startScan: sessionId=$sessionId, controller=$controller, batchId=${scanAssociation.batchId}")
         val scope = viewModelScope
         evidenceSaved = false
         evidenceSavedSessionId = sessionId
@@ -165,6 +179,7 @@ class DpmScanViewModel(private val app: Application) : AndroidViewModel(app) {
 
         boundController = null
         boundSessionId = null
+        scanAssociation = DpmScanAssociation()
         _scanState.value = DpmScanState()
     }
 
@@ -256,6 +271,12 @@ class DpmScanViewModel(private val app: Application) : AndroidViewModel(app) {
                 decodeSource = evidenceFrames.decodeSource?.name,
                 originalImagePath = originalPath,
                 roiImagePath = roiPath,
+                batchId = scanAssociation.batchId,
+                partId = scanAssociation.partId,
+                templateId = scanAssociation.templateId,
+                viewIndex = scanAssociation.viewIndex,
+                photoId = scanAssociation.photoId,
+                roiId = null,
             )
 
             val rowId = runCatching { evidenceDao.insert(entity) }.getOrElse { error ->
@@ -344,6 +365,15 @@ class DpmScanViewModel(private val app: Application) : AndroidViewModel(app) {
         stopScan()
     }
 }
+
+/** 扫描启动时由调用方提供的可空稳定关联，不是持久化模型。 */
+private data class DpmScanAssociation(
+    val batchId: String? = null,
+    val partId: String? = null,
+    val templateId: String? = null,
+    val viewIndex: Int? = null,
+    val photoId: Long? = null,
+)
 
 /**
  * DPM 扫码 UI 状态

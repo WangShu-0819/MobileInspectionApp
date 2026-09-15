@@ -123,7 +123,12 @@ fun LiveInspectionScreen(
         factory = createWorkbenchViewModelFactory(LocalContext.current.applicationContext as android.app.Application)
     ),
     onOpenTemplates: () -> Unit,
-    onDpmScan: () -> Unit = {},
+    onDpmScan: (
+        batchId: String?,
+        partId: String?,
+        templateId: String?,
+        viewIndex: Int?,
+    ) -> Unit = { _, _, _, _ -> },
     onStampOcr: () -> Unit = {},
     onNavigateToConfirm: (
         batchId: String,
@@ -415,7 +420,17 @@ fun LiveInspectionScreen(
                 ),
                 actions = {
                     // 扫一扫：手机相机实时 DPM 扫码入口
-                    androidx.compose.material3.IconButton(onClick = onDpmScan) {
+                    androidx.compose.material3.IconButton(
+                        onClick = {
+                            // 只传入当前可验证的入口快照；拍摄照片尚未形成时不猜测 photoId。
+                            onDpmScan(
+                                viewModel.getActiveCaptureBatchId(),
+                                inspectionState.part?.id,
+                                inspectionState.selectedTemplate?.id,
+                                inspectionState.currentViewIndex,
+                            )
+                        }
+                    ) {
                         androidx.compose.material3.Icon(
                             imageVector = Icons.Default.QrCodeScanner,
                             contentDescription = "扫一扫",

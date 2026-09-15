@@ -19,7 +19,7 @@ import com.wearable.inspection.mobile.data.entity.*
         ViewRoiConfirmEntity::class,
         DpmScanEvidenceEntity::class
     ],
-    version = 8,
+    version = 9,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {

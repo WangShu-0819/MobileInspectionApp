@@ -72,6 +72,11 @@ private const val SCAN_FRAME_RATIO = 0.65f
 fun DpmScanScreen(
     onBack: () -> Unit,
     onResult: (String) -> Unit = {},
+    batchId: String? = null,
+    partId: String? = null,
+    templateId: String? = null,
+    viewIndex: Int? = null,
+    photoId: Long? = null,
     viewModel: DpmScanViewModel = viewModel(),
 ) {
     val context = LocalContext.current
@@ -148,7 +153,15 @@ fun DpmScanScreen(
             cameraMode = CameraMode.DPM_SCAN,
             onConnected = { controller, sessionId ->
                 connectedSessionId = sessionId
-                viewModel.startScan(controller = controller, sessionId = sessionId)
+                viewModel.startScan(
+                    controller = controller,
+                    sessionId = sessionId,
+                    batchId = batchId,
+                    partId = partId,
+                    templateId = templateId,
+                    viewIndex = viewIndex,
+                    photoId = photoId,
+                )
             },
             onFrameInfo = { info -> frameInfo = info },
         )

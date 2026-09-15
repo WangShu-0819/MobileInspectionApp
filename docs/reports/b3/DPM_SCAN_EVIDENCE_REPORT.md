@@ -207,3 +207,17 @@ DisposableEffect.onDispose {
 每次 connected test 结束后均执行旧/新包 force-stop、显式安装主 APK、显式启动 `com.wearable.inspection.mobile/com.wearable.inspection.mobile.MainActivity` 并核对包名/PID。旧包 PID 为空；本工作区已有 `CameraPreview.kt:255` 在启动时调用 `PreviewView.getSurfaceProvider()` 的非主线程崩溃，导致恢复后的新包进程退出、前台回到 launcher，故本轮没有把启动前台状态报告为通过，也未修改该相机架构问题。构建时的 `-lncnn` 非系统库 warning 为既有 native 配置提示，与本项 DPM 逻辑无关。
 
 本项未新增 Room schema/migration；沿用现有 `dpm_scan_evidence` 表。未实现自定义 ECC、纠错像素图、DPM 人工码值复核或现场采集 ZIP 合并。工作区其他改动保留，未提交 Git，等待用户验收。
+
+## 2026-09-15 结果包关联补充
+
+现场采集结果 ZIP 已接入现有 DPM 成功证据，但独立 `DpmEvidenceExportService` ZIP 保持不变。批次导出只消费 `batchId` 严格相等、状态 `SUCCESS`、非空码值、合法 `ZXING/ML_KIT/GRID` 来源且源帧真实非空的证据；NO_READ、无 batchId、跨批次和缺失源帧不进入批次 DPM 图片目录。DPM 原图和 ROI 仍从 `filesDir/dpm_evidence` 原路径按字节复制，未改变扫码算法、ECC 语义或会话保存流程。
+
+本补充未修改 DPM 解码/留存源码；结果包收口修改为 `InspectionZipExportService.kt`、`InspectionExcelExporter.kt`，真实归档回归为 `InspectionZipExportArchiveTest.kt`。定向结果 JVM 104/104 通过；全量 JVM 792 项完成、13 项失败、5 项跳过，失败属于工作区既有并行改动/基线断言。未运行 ADB、connectedDebugAndroidTest 或真机；APK 信息和真实 ZIP 字节哈希见 [`DPM_EVIDENCE_EXPORT_REPORT.md`](DPM_EVIDENCE_EXPORT_REPORT.md) 和 [`RESULT_TRACEABILITY_PLAN.md`](../b2/RESULT_TRACEABILITY_PLAN.md)。
+
+## 2026-09-15 批次 ZIP 显式关联扩展
+
+新增 DPM 关联字段的真实 Room migration：v8→v9 增加可空 `batchId/partId/templateId/viewIndex/photoId/roiId`，旧行全部保持 null；schema 文件为 `app/schemas/com.wearable.inspection.mobile.data.db.AppDatabase/9.json`。DPM 扫描入口只把启动时调用方显式快照传给 ViewModel，DPM 扫描 ROI 不伪造模板 `roiId`。
+
+`InspectionZipExportService` 仅查询明确相等 batchId 的证据，并再次过滤 SUCCESS、非空码值、合法 ZXING/ML_KIT/GRID 来源和真实源帧路径；原图/ROI 由独立证据目录原样复制，不重新压缩。独立 `DpmEvidenceExportService` 仍按 scanSessionId 生成独立 ZIP。真实归档样例：`C:\Users\ws\AppData\Local\Temp\inspection-export9834766818192113490`；隔离样例：`C:\Users\ws\AppData\Local\Temp\inspection-export-isolation11035632669832920657`。`ZipInputStream` 确认两个 ZIP 的 DPM 成功帧和 ROI 字节完全相同，NO_READ/无 batchId 不进入批次 ZIP，manifest/CSV 均真实存在且可解压。
+
+本轮验证：定向 JVM 81 项通过；`:app:compileDebugKotlin`、`:app:assembleDebug` 通过。APK：`D:\study\Textile_defects\Wearable Inspection\MobileInspectionApp\app\build\outputs\apk\debug\app-debug.apk`，2026-09-15 12:07:35 +08:00，276579040 bytes，SHA-256 `6E8653FEDC6AEC5B7757C9FB1A842724DC5D1EEB2F89161393BA226A89EE2345`。未运行 connectedDebugAndroidTest、ADB 或真机，因此无本轮设备门禁证据；全量既有 14 项失败、5 项跳过沿用前序报告。

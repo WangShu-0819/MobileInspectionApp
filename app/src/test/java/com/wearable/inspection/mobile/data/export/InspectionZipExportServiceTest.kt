@@ -104,12 +104,12 @@ class InspectionZipExportServiceTest {
     fun `zip keeps all captured photos including views without roi rows`() {
         val source = File("src/main/java/com/wearable/inspection/mobile/data/export/InspectionZipExportService.kt")
             .readText()
-        val photoLoop = source.indexOf("for (photo in photos)")
-        val csvWrite = source.indexOf("InspectionExcelExporter.exportCombinedToStream(photoRows, confirms, partId, zos)")
-        assertTrue("ZIP 应遍历当前批次全部照片", photoLoop > 0)
+        val csvWrite = source.indexOf("InspectionExcelExporter.exportUnifiedToStream(")
+        assertTrue("ZIP 应遍历当前批次全部照片", source.contains("photos.forEach"))
         assertTrue("照片应按 View 分目录", source.contains("views/view_"))
-        assertTrue("照片写入应在 CSV 写入前完成", csvWrite > photoLoop)
+        assertTrue("照片写入应在 CSV 写入前完成", csvWrite > source.indexOf("photos.forEach"))
         assertTrue("照片索引和确认结果应写入同一个 CSV", source.contains("inspection_result.csv"))
+        assertTrue("统一表必须包含 DPM 结果", source.contains("dpmEvidence"))
         assertFalse("ZIP 不应再写第二个照片清单 CSV", source.contains("photo_manifest.csv"))
     }
 
@@ -146,7 +146,7 @@ class InspectionZipExportServiceTest {
         assertTrue("未完成批次应被导出门禁拦截", completionGate > batchLookup)
         assertTrue("完成状态检查应在读取照片前", completionGate < photoLookup)
         assertTrue("未完成批次应给出明确提示", source.contains("采集尚未完成，请拍完全部视角后再导出"))
-        assertTrue("导出前应校验所有视角均有照片", source.contains("capturedViewIndices.containsAll(expectedViewIndices)"))
+        assertTrue("导出前应校验所有视角均有照片", source.contains("containsAll(expectedViewIndices)"))
     }
 
     @Test

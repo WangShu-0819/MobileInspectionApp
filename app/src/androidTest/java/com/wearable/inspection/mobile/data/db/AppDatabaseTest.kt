@@ -147,6 +147,39 @@ class AppDatabaseTest {
     }
 
     @Test
+    fun migration8To9_keepsHistoricalDpmEvidenceUnassociated() {
+        val databaseName = "dpm_association_migration_test"
+        migrationHelper.createDatabase(databaseName, 8).apply {
+            execSQL(
+                "INSERT INTO dpm_scan_evidence " +
+                    "(id, scanSessionId, frameTimeMs, frameSource, decodedContent, status, decodeSource, " +
+                    "originalImagePath, roiImagePath, createdAt) " +
+                    "VALUES (11, 'old-session', 22, 'CAMERA', 'OLD-CODE', 'SUCCESS', 'ZXING', '/old.jpg', NULL, 33)"
+            )
+            close()
+        }
+
+        val migrated = migrationHelper.runMigrationsAndValidate(
+            databaseName,
+            9,
+            true,
+            MIGRATION_8_9,
+        )
+        migrated.query(
+            "SELECT scanSessionId, status, decodedContent, batchId, partId, templateId, viewIndex, photoId, roiId " +
+                "FROM dpm_scan_evidence WHERE id = 11"
+        ).use { cursor ->
+            assertEquals(true, cursor.moveToFirst())
+            assertEquals("old-session", cursor.getString(0))
+            assertEquals("SUCCESS", cursor.getString(1))
+            assertEquals("OLD-CODE", cursor.getString(2))
+            for (column in 3..8) assertEquals(true, cursor.isNull(column))
+        }
+        migrated.close()
+        InstrumentationRegistry.getInstrumentation().targetContext.deleteDatabase(databaseName)
+    }
+
+    @Test
     fun confirmationRows_reloadByBatchAndPhotoStableAssociation() = runBlocking {
         db.captureBatchDao().insert(CaptureBatchEntity("batch-reload", null, "零件"))
         val first = ViewRoiConfirmEntity(

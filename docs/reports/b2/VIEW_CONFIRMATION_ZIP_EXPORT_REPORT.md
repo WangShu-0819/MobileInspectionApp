@@ -992,3 +992,55 @@ views/view_02/...
 - Gradle/JVM 自动化测试、ADB、APK 构建/安装、真机交互与视觉验收：`NOT_RUN_BY_SCOPE`。
 - 未修改 CameraX 所有权、相机模式、ROI 坐标映射、模板导入持久化或旧工程。
 - Git：未提交；保留工作区中模板导入修复等已有改动，待自动化和现场复测确认。
+
+## 31. NanoDet ROI 模型结果展示与人工终审（2026-09-14）
+
+**状态：SOFTWARE_COMPLETE / AWAITING_USER_ACCEPTANCE。** 本项复用已验收的静态照片推理结果，接入现有 `ViewConfirmationScreen`、`ViewConfirmationViewModel` 和 `ViewRoiConfirmEntity`。没有新建结果模型；没有改 Detector、CameraX 推理、阈值、DPM 或结果 ZIP。
+
+### 行为与持久化
+
+- 每个 ROI 卡片展示实际 inference status、目标类别、模型建议（仅参考）、最高匹配分数、未校准阈值起始值、模型版本及检测框数量。所有保留框叠加在 ROI 裁剪图上，类别匹配框和其他类别框使用不同颜色。FEATURE、ROI 属性未配置、未检出、照片/模板/模型/runtime 不可用和推理错误都以显式状态显示；无框时分数为空。0.37 被标作未校准阈值起始值，未当成校准结论。
+- 每个 ROI 的人工终审仍须单独选择 OK/NG；模型 OK→人工 NG、模型 NG→人工 OK 均保留两个独立字段。`humanChangedModel` 只在模型有建议且人工选择不同值时为 true。整张照片总体 OK/NG 仍由底部人工选择，单独持久化，不由模型或 ROI 汇总。
+- ViewModel 等待推理状态填充后才开放保存；按 `batchId + photoId` 读取/替换本张照片记录，并验证 `photoPath/viewIndex/templateId/roiId` 稳定关联。已保存且关联完全匹配的人工逐 ROI 和总体选择会重载；不匹配的照片关联不能保存。
+- 在原 `view_roi_confirms` 行中保存模型建议、类别、最高匹配分数、阈值、所有保留检测框的类别/分数/ROI 与照片坐标、推理状态、模型版本、哈希/张量摘要、耗时；人工值、人工是否改判及确认时间沿用独立列。整体人工确认继续使用既有 `overallResult/overallConfirmTime`。 仅在 `DETECTED`、`DETECTED_BELOW_THRESHOLD`、`NO_DETECTION` 状态保存业务阈值；未执行、属性不支持/未配置和推理错误状态的阈值保持 null，界面标明“未执行”。
+
+### Room v7 → v8
+
+`MIGRATION_7_8` 为既有确认表增加 nullable 列 `softwareTargetClass`、`softwareScore`、`softwareThreshold`、`softwareDetectionsJson`、`softwareStatus`、`softwareModelVersion`、`softwareModelSummary`、`softwareElapsedMs`，另加 `humanChangedModel INTEGER NOT NULL DEFAULT 0`。迁移先将已有 `softwareResult` 置空；历史人工结果和关联列保持不变，旧行模型结果明确为未执行/null。`AppDatabase` schema 8 已由 KSP 导出到 `app/schemas/com.wearable.inspection.mobile.data.db.AppDatabase/8.json`。
+
+### 实际修改文件
+
+- `app/src/main/java/com/wearable/inspection/mobile/data/entity/ViewRoiConfirmEntity.kt`
+- `app/src/main/java/com/wearable/inspection/mobile/data/db/AppDatabase.kt`
+- `app/src/main/java/com/wearable/inspection/mobile/data/db/Migrations.kt`
+- `app/src/main/java/com/wearable/inspection/mobile/data/dao/ViewRoiConfirmDao.kt`
+- `app/src/main/java/com/wearable/inspection/mobile/data/repository/InspectionRepository.kt`
+- `app/src/main/java/com/wearable/inspection/mobile/ui/screens/ViewConfirmationViewModel.kt`
+- `app/src/main/java/com/wearable/inspection/mobile/ui/screens/ViewConfirmationScreen.kt`
+- `app/src/debug/AndroidManifest.xml`、`app/src/debug/java/com/wearable/inspection/mobile/ui/screens/ViewConfirmationTestActivity.kt`（仅作 Robolectric Compose 测试宿主）
+- `app/src/test/java/com/wearable/inspection/mobile/ui/screens/ViewConfirmationModelResultTest.kt`
+- `app/src/test/java/com/wearable/inspection/mobile/ui/screens/ViewConfirmationModelResultComposeTest.kt`
+- `app/src/androidTest/java/com/wearable/inspection/mobile/data/db/AppDatabaseTest.kt`
+- `app/build.gradle.kts`、`app/schemas/com.wearable.inspection.mobile.data.db.AppDatabase/8.json`
+- `tasks/todo.md`、本报告及 `docs/reports/b3/NANODET_ANDROID_PREP_REPORT.md`
+
+### 命令和结果
+
+- `.\gradlew.bat :app:compileDebugKotlin :app:compileDebugUnitTestKotlin :app:compileDebugAndroidTestKotlin`：通过。
+- 定向命令 `.\gradlew.bat :app:testDebugUnitTest --tests "com.wearable.inspection.mobile.ui.screens.ViewConfirmationModelResultTest" --tests "com.wearable.inspection.mobile.ui.screens.ViewConfirmationModelResultComposeTest" --tests "com.wearable.inspection.mobile.data.entity.ViewRoiConfirmEntityTest" --tests "com.wearable.inspection.mobile.ui.screens.ViewConfirmationFlowTest" --tests "com.wearable.inspection.mobile.data.CapturedPhotoPersistenceContractTest"`：44/44 通过。覆盖模型/人工字段分离、双向改判、总体独立、类别和状态标签、无框/未执行/错误快照、所有检测框与模型摘要、确认时间、UI 检测框层和人工选择。
+- `.\gradlew.bat :app:connectedDebugAndroidTest "-Pandroid.testInstrumentationRunnerArguments.class=com.wearable.inspection.mobile.data.db.AppDatabaseTest"`：YAL-AL10 Android 10，5/5 通过。包括 v7→v8 migration 保留旧人工行并令模型字段为空，以及按批次/照片重载检测快照。
+- `.\gradlew.bat :app:assembleDebug :app:assembleDebugAndroidTest`：通过。最终主 APK `app/build/outputs/apk/debug/app-debug.apk`，2026-09-14 18:52:50 +08:00，276,579,040 bytes，SHA-256 `4F721E4244BD6D1FE133BBB2CBCB3453C8177234C12D56E84C32A58E4A243FDA`。Android test APK `app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk`，2026-09-14 18:40:29 +08:00，12,547,784 bytes，SHA-256 `F27578C350A60952DC43C42A0AA82E3B56F6BFAF0ECECC10E1AEE13642429476`。
+- Instrumented UI Compose 语义树在本设备测试宿主中未建立；尝试未建立 Compose hierarchy 或在 Activity content 初始化阶段失败，均未计作成功。改用 Robolectric Compose 测试并通过 3/3，覆盖常规建议与人工双向改判、无框、FEATURE 不支持。该测试在 `src/debug` 使用空 Activity，release source set 不包含该宿主。
+- 设备测试前后执行 `adb -s ERLDU20429005890 shell am force-stop com.wearable.inspection`、停止新包、`adb -s ERLDU20429005890 install -r app\build\outputs\apk\debug\app-debug.apk`、`adb -s ERLDU20429005890 shell am start -W -n com.wearable.inspection.mobile/com.wearable.inspection.mobile.MainActivity`；随后检查 `pm list packages`、两个包的 `pidof` 和 `dumpsys activity activities`。测试 runner 重置了相机权限；按恢复流程授予新包相机权限并再次停止、显式启动和核验。最后新包 PID `4337`，旧包 PID 为空，前台为新包 `MainActivity`。
+
+### 限制与 Git 状态
+
+- 没有进行确认页现场导航或截图视觉验收；确认卡片行为由 Compose/Robolectric 测试验证，最终 APK 则按包名门禁安装启动。0.37 仍未校准。
+- 曾执行一组跨范围源码契约回归；除后续修正并通过的照片关联检查外，当前工作区中若干 `LiveInspectionScreen`、`AppNavigation`、ZIP 顺序及旧 schema 相对路径断言仍失败。这些测试涉及本轮开始前已修改的其他文件/基线假设；没有为本任务修改或覆盖这些并行改动。全量 JVM suite 未运行；本报告只声明上述定向测试结果。
+- `git diff --check` 通过，无 whitespace error。Git 工作区仍有其他 DPM、LiveInspection、文档和计划文件改动/新增/删除；全部保留，本任务未提交 Git。
+
+## 2026-09-15 结果 ZIP 扩展
+
+批次 ZIP 已沿用 ViewConfirmation 记录纳入 NanoDet 检测快照和人工终审：模型原始结果、全部检测框、状态/阈值/版本/耗时与人工最终结果、双向改判和时间分列导出；总体人工结果仍独立，不由 ROI 推导。统一 UTF-8 BOM CSV 保留旧字段并增加稳定关联字段。FEATURE、未配置、无框、推理失败、未确认和 ROI 图缺失均写明确状态。
+
+真实 `ZipInputStream` 回归已通过，最新样例目录为 `C:\Users\ws\AppData\Local\Temp\inspection-export7435539282332082454`，包含多 View/多 ROI、双向改判、总体结果独立、DPM 成功原图/ROI 字节比较及 NO_READ/无 batchId/缺失源帧隔离。定向结果 JVM 104 项通过；`:app:compileDebugKotlin` 与 `:app:assembleDebug` 通过。APK 为 `D:\study\Textile_defects\Wearable Inspection\MobileInspectionApp\app\build\outputs\apk\debug\app-debug.apk`，2026-09-15 13:12:25 +08:00，276579040 bytes，SHA-256 `D2D7B57FF523EA82D48E7F1EEDCE4ED1FCAB7D32EC5CC192CAD2DEED06B6B35B`。全量 JVM 792 项完成、779 通过、13 失败、5 跳过；失败为工作区既有并行改动/基线断言，不归因于本轮。本轮未运行真机/ADB/connected tests；未提交 Git。

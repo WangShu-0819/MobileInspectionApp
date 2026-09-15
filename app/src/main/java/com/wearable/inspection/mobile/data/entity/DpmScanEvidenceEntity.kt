@@ -16,7 +16,8 @@ import androidx.room.PrimaryKey
 @Entity(
     tableName = "dpm_scan_evidence",
     indices = [
-        Index(value = ["scanSessionId"])
+        Index(value = ["scanSessionId"]),
+        Index(value = ["batchId"])
     ]
 )
 data class DpmScanEvidenceEntity(
@@ -39,5 +40,17 @@ data class DpmScanEvidenceEntity(
     /** ROI 裁切 JPEG 文件路径（可选） */
     val roiImagePath: String? = null,
     /** 记录创建时间 */
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    /** 扫描启动时由调用方显式提供的稳定批次关联；独立扫码保持 null。 */
+    val batchId: String? = null,
+    /** 扫描启动时可验证的零件上下文；没有上下文时保持 null。 */
+    val partId: String? = null,
+    /** 扫描启动时可验证的模板上下文；没有上下文时保持 null。 */
+    val templateId: String? = null,
+    /** 扫描启动时可验证的视角索引；没有上下文时保持 null。 */
+    val viewIndex: Int? = null,
+    /** 只有真实对应到已保存现场照片时才填写；当前入口通常为 null。 */
+    val photoId: Long? = null,
+    /** DPM 扫描 ROI 不是模板 ROI；无真实模板 ROI 关联时保持 null。 */
+    val roiId: String? = null
 )

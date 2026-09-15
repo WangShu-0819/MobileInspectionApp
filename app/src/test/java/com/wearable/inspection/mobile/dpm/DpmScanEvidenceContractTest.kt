@@ -173,13 +173,16 @@ class DpmScanEvidenceContractTest {
     }
 
     @Test
-    fun `app database version is 8`() {
+    fun `app database version is 9 with dpm association migration`() {
         val source = read("src/main/java/com/wearable/inspection/mobile/data/db/AppDatabase.kt")
-        assertTrue("数据库版本必须为 8", source.contains("version = 8"))
+        assertTrue("数据库版本必须为 9", source.contains("version = 9"))
         assertTrue("必须包含 DpmScanEvidenceEntity",
             source.contains("DpmScanEvidenceEntity::class"))
         assertTrue("必须声明 dpmScanEvidenceDao",
             source.contains("fun dpmScanEvidenceDao(): DpmScanEvidenceDao"))
+        val migrations = read("src/main/java/com/wearable/inspection/mobile/data/db/Migrations.kt")
+        assertTrue("必须定义 v8→v9 关联迁移", migrations.contains("MIGRATION_8_9"))
+        assertTrue("关联字段必须可空", migrations.contains("ADD COLUMN batchId TEXT"))
     }
 
     // ─── MobileImageStore 证据存储契约 ───

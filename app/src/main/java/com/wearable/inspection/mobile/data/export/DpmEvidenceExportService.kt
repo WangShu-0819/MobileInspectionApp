@@ -35,7 +35,9 @@ class DpmEvidenceExportService(
      */
     suspend fun exportEvidenceZip(outputFile: File): DpmEvidenceExportResult {
         // 只导出通过解码器内部 ECC 的实际成功照片；历史 NO_READ/孤立路径不进入 ZIP。
-        val allEvidence = repository.getAllDpmScanEvidence().filter(::isExportableSuccess)
+        val allEvidence = repository.getAllDpmScanEvidence()
+            .filter(::isExportableSuccess)
+            .sortedWith(compareBy<DpmScanEvidenceEntity> { it.scanSessionId }.thenBy { it.id }.thenBy { it.frameTimeMs })
         if (allEvidence.isEmpty()) {
             return DpmEvidenceExportResult.Empty
         }
@@ -50,24 +52,26 @@ class DpmEvidenceExportService(
                     val sessionDir = "sessions/${evidence.scanSessionId}"
 
                     // 处理原始帧
-                    val frameZipPath = "$sessionDir/frame_${evidence.id}_${evidence.frameTimeMs}.jpg"
+                    val frameEntryName = "$sessionDir/frame_${evidence.id}_${evidence.frameTimeMs}.jpg"
                     val frameStatus = addFileToZip(
                         zos = zos,
                         filePath = evidence.originalImagePath,
-                        entryName = frameZipPath
+                        entryName = frameEntryName
                     )
+                    val frameZipPath = frameEntryName.takeIf { frameStatus == "已导出" }.orEmpty()
                     if (frameStatus == "已导出") exportedCount++ else missingCount++
 
                     // 处理 ROI 裁切图（可选）
                     var roiZipPath = ""
                     var roiStatus = "无 ROI 裁切"
                     if (!evidence.roiImagePath.isNullOrEmpty()) {
-                        roiZipPath = "$sessionDir/roi_${evidence.id}_${evidence.frameTimeMs}.jpg"
+                        val roiEntryName = "$sessionDir/roi_${evidence.id}_${evidence.frameTimeMs}.jpg"
                         roiStatus = addFileToZip(
                             zos = zos,
                             filePath = evidence.roiImagePath,
-                            entryName = roiZipPath
+                            entryName = roiEntryName
                         )
+                        roiZipPath = roiEntryName.takeIf { roiStatus == "已导出" }.orEmpty()
                         if (roiStatus == "已导出") exportedCount++ else missingCount++
                     }
 
@@ -81,7 +85,13 @@ class DpmEvidenceExportService(
                         frameZipPath = frameZipPath,
                         frameStatus = frameStatus,
                         roiZipPath = roiZipPath,
-                        roiStatus = roiStatus
+                        roiStatus = roiStatus,
+                        batchId = evidence.batchId,
+                        partId = evidence.partId,
+                        templateId = evidence.templateId,
+                        viewIndex = evidence.viewIndex,
+                        photoId = evidence.photoId,
+                        roiId = evidence.roiId,
                     )
                 }
 
@@ -108,32 +118,7 @@ class DpmEvidenceExportService(
      * 将文件添加到 ZIP。文件不存在或为空时返回状态描述，不抛异常。
      */
     private fun addFileToZip(zos: ZipOutputStream, filePath: String, entryName: String): String {
-        val file = File(filePath)
-        if (!file.exists() || file.length() == 0L) {
-            return "缺失：文件不存在或为空"
-        }
-        return try {
-            var entryOpen = false
-            try {
-                val entry = ZipEntry(entryName).apply {
-                    size = file.length()
-                    time = file.lastModified()
-                }
-                zos.putNextEntry(entry)
-                entryOpen = true
-                FileInputStream(file).use { fis ->
-                    fis.copyTo(zos)
-                }
-                zos.closeEntry()
-                entryOpen = false
-                "已导出"
-            } catch (e: Exception) {
-                if (entryOpen) runCatching { zos.closeEntry() }
-                "写入失败：${e.localizedMessage ?: "未知错误"}"
-            }
-        } catch (_: Exception) {
-            "写入失败"
-        }
+        return copyDpmFileToZip(zos, filePath, entryName)
     }
 
     /**
@@ -148,7 +133,7 @@ class DpmEvidenceExportService(
         // Do not close this writer: it wraps the ZipOutputStream owned by the caller.
         // Closing it here also closes the ZIP before the manifest entry can be finalized.
         val writer = OutputStreamWriter(zos, Charsets.UTF_8)
-        writer.appendLine("scanSessionId,frameTimeMs,frameSource,status,decodedContent,decodeSource,frameZipPath,frameStatus,roiZipPath,roiStatus")
+        writer.appendLine("scanSessionId,frameTimeMs,frameSource,status,decodedContent,decodeSource,frameZipPath,frameStatus,roiZipPath,roiStatus,batchId,partId,templateId,viewIndex,photoId,roiId")
         for (row in rows) {
             writer.appendLine(
                 listOf(
@@ -161,7 +146,13 @@ class DpmEvidenceExportService(
                     csvEscape(row.frameZipPath),
                     csvEscape(row.frameStatus),
                     csvEscape(row.roiZipPath),
-                    csvEscape(row.roiStatus)
+                    csvEscape(row.roiStatus),
+                    csvEscape(row.batchId.orEmpty()),
+                    csvEscape(row.partId.orEmpty()),
+                    csvEscape(row.templateId.orEmpty()),
+                    row.viewIndex?.toString().orEmpty(),
+                    row.photoId?.toString().orEmpty(),
+                    csvEscape(row.roiId.orEmpty())
                 ).joinToString(",")
             )
         }
@@ -220,5 +211,35 @@ data class DpmEvidenceManifestRow(
     val frameZipPath: String,
     val frameStatus: String,
     val roiZipPath: String,
-    val roiStatus: String
+    val roiStatus: String,
+    val batchId: String? = null,
+    val partId: String? = null,
+    val templateId: String? = null,
+    val viewIndex: Int? = null,
+    val photoId: Long? = null,
+    val roiId: String? = null,
 )
+
+/** 统一的 DPM 文件复制入口：读取成功证据的原文件，不重新编码。 */
+internal fun copyDpmFileToZip(
+    zos: ZipOutputStream,
+    filePath: String,
+    entryName: String,
+): String {
+    val file = File(filePath)
+    if (!file.isFile || file.length() == 0L) return "缺失：文件不存在或为空"
+    var entryOpen = false
+    return try {
+        zos.putNextEntry(ZipEntry(entryName).apply {
+            size = file.length()
+            time = file.lastModified()
+        })
+        entryOpen = true
+        FileInputStream(file).use { it.copyTo(zos) }
+        zos.closeEntry()
+        "已导出"
+    } catch (e: Exception) {
+        if (entryOpen) runCatching { zos.closeEntry() }
+        "写入失败：${e.localizedMessage ?: "未知错误"}"
+    }
+}

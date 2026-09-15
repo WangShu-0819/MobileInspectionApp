@@ -31,7 +31,27 @@ sealed class Screen(val route: String) {
     }
     object AppSettings : Screen("app_settings")                    // 应用设置
     object PartManagement : Screen("part_management")              // 零件管理
-    object DpmScan : Screen("dpm_scan")                            // DPM 扫码
+    object DpmScan : Screen("dpm_scan?batchId={batchId}&partId={partId}&templateId={templateId}&viewIndex={viewIndex}") {
+        const val ARG_BATCH_ID = "batchId"
+        const val ARG_PART_ID = "partId"
+        const val ARG_TEMPLATE_ID = "templateId"
+        const val ARG_VIEW_INDEX = "viewIndex"
+
+        fun createRoute(
+            batchId: String?,
+            partId: String?,
+            templateId: String?,
+            viewIndex: Int?,
+        ): String {
+            val params = buildList {
+                batchId?.takeIf { it.isNotBlank() }?.let { add("$ARG_BATCH_ID=${android.net.Uri.encode(it)}") }
+                partId?.takeIf { it.isNotBlank() }?.let { add("$ARG_PART_ID=${android.net.Uri.encode(it)}") }
+                templateId?.takeIf { it.isNotBlank() }?.let { add("$ARG_TEMPLATE_ID=${android.net.Uri.encode(it)}") }
+                viewIndex?.let { add("$ARG_VIEW_INDEX=$it") }
+            }
+            return if (params.isEmpty()) "dpm_scan" else "dpm_scan?${params.joinToString("&")}"
+        }
+    }                                                        // DPM 扫码
     object DpmBind : Screen("dpm_bind/{partId}") {
         const val ARG_PART_ID = "partId"
         fun createRoute(partId: String) = "dpm_bind/${android.net.Uri.encode(partId)}"

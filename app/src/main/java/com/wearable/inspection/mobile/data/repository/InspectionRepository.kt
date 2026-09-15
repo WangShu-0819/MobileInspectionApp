@@ -344,4 +344,7 @@ class InspectionRepository(
     suspend fun getAllDpmScanEvidence(): List<DpmScanEvidenceEntity> =
         dpmScanEvidenceDao.getAll()
 
+    suspend fun getDpmScanEvidenceByBatch(batchId: String): List<DpmScanEvidenceEntity> =
+        dpmScanEvidenceDao.getByBatchId(batchId)
+
 }

@@ -16,4 +16,7 @@ interface DpmScanEvidenceDao {
 
     @Query("SELECT * FROM dpm_scan_evidence ORDER BY createdAt DESC")
     suspend fun getAll(): List<DpmScanEvidenceEntity>
+
+    @Query("SELECT * FROM dpm_scan_evidence WHERE batchId = :batchId ORDER BY scanSessionId ASC, id ASC")
+    suspend fun getByBatchId(batchId: String): List<DpmScanEvidenceEntity>
 }

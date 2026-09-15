@@ -109,8 +109,10 @@ fun AppRoot() {
                     onOpenTemplates = {
                         navController.navigate(Screen.TemplateConfig.route)
                     },
-                    onDpmScan = {
-                        navController.navigate(Screen.DpmScan.route)
+                    onDpmScan = { batchId, partId, templateId, viewIndex ->
+                        navController.navigate(
+                            Screen.DpmScan.createRoute(batchId, partId, templateId, viewIndex)
+                        )
                     },
                     onStampOcr = {
                         navController.navigate(Screen.StampOcr.route)
@@ -296,12 +298,44 @@ fun AppRoot() {
                 )
             }
 
-            composable(Screen.DpmScan.route) {
+            composable(
+                route = Screen.DpmScan.route,
+                arguments = listOf(
+                    navArgument(Screen.DpmScan.ARG_BATCH_ID) {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                    navArgument(Screen.DpmScan.ARG_PART_ID) {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                    navArgument(Screen.DpmScan.ARG_TEMPLATE_ID) {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                    navArgument(Screen.DpmScan.ARG_VIEW_INDEX) {
+                        type = NavType.IntType
+                        defaultValue = -1
+                    },
+                )
+            ) { backStackEntry ->
                 val context = LocalContext.current
                 val repository = remember { MobileInspectionApp.repository(context) }
                 val scope = rememberCoroutineScope()
+                val scanBatchId = backStackEntry.arguments?.getString(Screen.DpmScan.ARG_BATCH_ID)
+                val scanPartId = backStackEntry.arguments?.getString(Screen.DpmScan.ARG_PART_ID)
+                val scanTemplateId = backStackEntry.arguments?.getString(Screen.DpmScan.ARG_TEMPLATE_ID)
+                val scanViewIndex = backStackEntry.arguments?.getInt(Screen.DpmScan.ARG_VIEW_INDEX)
+                    ?.takeIf { it >= 0 }
                 DpmScanScreen(
                     onBack = { navController.popBackStack() },
+                    batchId = scanBatchId,
+                    partId = scanPartId,
+                    templateId = scanTemplateId,
+                    viewIndex = scanViewIndex,
                     onResult = { code ->
                         scope.launch {
                             val part = withContext(Dispatchers.IO) {
