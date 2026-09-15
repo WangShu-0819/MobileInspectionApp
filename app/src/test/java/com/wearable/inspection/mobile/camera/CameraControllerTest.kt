@@ -196,6 +196,36 @@ class CameraControllerTest {
     }
 
     @Test
+    fun `disconnect 清理 analyzer observer executor 且重连不重复绑定`() = runTest {
+        val firstSession = controller.connect(
+            fakeLifecycleOwner,
+            FakeSurfaceProvider(),
+            CameraMode.INSPECTION,
+        ).getOrThrow()
+        controller.setFrameAnalyzer(TestCountingAnalyzer())
+        val executor = fakeBinder.lastBoundExecutor
+        val clearCountBefore = fakeBinder.clearAnalyzerCount
+
+        assertNotNull("分析器应已绑定 executor", executor)
+        assertTrue("断开前 executor 不应已关闭", executor?.isShutdown == false)
+        assertTrue(controller.disconnect(firstSession.sessionId))
+        assertTrue("disconnect 应 shutdown analyzer executor", executor?.isShutdown == true)
+        assertEquals(clearCountBefore + 1, fakeBinder.clearAnalyzerCount)
+        assertEquals(0, fakeBinder.observerCount)
+        assertNull(fakeBinder.lastBoundUseCases)
+
+        val secondSession = controller.connect(
+            fakeLifecycleOwner,
+            FakeSurfaceProvider(),
+            CameraMode.INSPECTION,
+        ).getOrThrow()
+        assertNotEquals(firstSession.sessionId, secondSession.sessionId)
+        assertTrue(controller.isConnected())
+        assertEquals(3, fakeBinder.lastBoundUseCases?.size)
+        assertEquals(1, fakeBinder.observerCount)
+    }
+
+    @Test
     fun `release 清理所有资源并标记释放`() = runTest {
         controller.connect(fakeLifecycleOwner, FakeSurfaceProvider())
         controller.release()
@@ -405,6 +435,28 @@ class CameraControllerTest {
     }
 
     @Test
+    fun `旧 session observer 回调不覆盖新 session 状态`() = runTest {
+        controller.connect(fakeLifecycleOwner, FakeSurfaceProvider())
+        val oldObserver = fakeBinder.observerSnapshot().single()
+
+        val result2 = controller.connect(fakeLifecycleOwner, FakeSurfaceProvider())
+        val session2 = result2.getOrNull()!!
+        val newObserver = fakeBinder.observerSnapshot().single()
+
+        val openState = mock(CameraState::class.java)
+        `when`(openState.type).thenReturn(CameraState.Type.OPEN)
+        val closedState = mock(CameraState::class.java)
+        `when`(closedState.type).thenReturn(CameraState.Type.CLOSED)
+
+        newObserver.onChanged(openState)
+        oldObserver.onChanged(closedState)
+
+        assertEquals(CameraStateType.OPEN, controller.cameraStateFlow.value)
+        assertTrue(controller.isConnected())
+        assertEquals(session2.sessionId, controller.getActiveSession()?.sessionId)
+    }
+
+    @Test
     fun `connect 与 disconnect 并发 - 最终状态确定`() = runTest {
         fakeBinder.bindDelayMs = 50
 
@@ -491,6 +543,7 @@ class FakeCameraBinder : CameraBinder {
     var observerCount = 0; private set
     var lastBoundUseCases: List<Any>? = null; private set
     var lastBoundExecutor: java.util.concurrent.ExecutorService? = null; private set
+    var clearAnalyzerCount = 0; private set
 
     // 追踪最大绑定 UseCase 数量
     var maxBoundUseCases: Int = 0; private set
@@ -545,6 +598,7 @@ class FakeCameraBinder : CameraBinder {
     }
 
     override fun clearAnalyzer(useCase: Any) {
+        clearAnalyzerCount++
         lastAnalyzerCallback = null
     }
 
@@ -553,6 +607,8 @@ class FakeCameraBinder : CameraBinder {
     fun simulateFrameArrival(imageProxy: Any) {
         lastAnalyzerCallback?.invoke(imageProxy)
     }
+
+    fun observerSnapshot(): List<Observer<CameraState>> = observers.values.flatten().toList()
 }
 
 /**

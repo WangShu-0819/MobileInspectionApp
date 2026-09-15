@@ -31,6 +31,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,9 +52,11 @@ import com.wearable.inspection.mobile.camera.CameraError
 import com.wearable.inspection.mobile.camera.CameraMode
 import com.wearable.inspection.mobile.camera.CameraStateType
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
+import java.util.concurrent.atomic.AtomicLong
 
 /**
  * 相机帧信息 — 用于 ROI 映射
@@ -76,11 +79,13 @@ data class FrameInfo(
  * - 实际 streamResolution/streamRotation + ContentRectCalculator
  * - 诊断日志（DEBUG）+ 四角校准覆盖层（DEBUG）
  * - 使用 sessionId 防止异步 disconnect 竞态
+ * - active=false 时立即断开当前会话，不等待导航动画或页面销毁
  */
 @Composable
 fun CameraPreview(
     modifier: Modifier = Modifier,
     cameraMode: CameraMode = CameraMode.INSPECTION,
+    active: Boolean = true,
     templateImagePath: String? = null,
     overlayAlpha: Float = 0f,
     previewScaleType: PreviewView.ScaleType = PreviewView.ScaleType.FIT_CENTER,
@@ -96,6 +101,7 @@ fun CameraPreview(
     val lifecycleOwner = LocalLifecycleOwner.current
     val cameraController = remember { CameraController.getInstance(context) }
     val coroutineScope = rememberCoroutineScope()
+    val connectionGeneration = remember { AtomicLong(0L) }
 
     // 状态
     var permissionRequested by remember { mutableStateOf(false) }
@@ -199,7 +205,9 @@ fun CameraPreview(
     }
 
     // 初始权限检查
-    LaunchedEffect(Unit) {
+    LaunchedEffect(active) {
+        if (!active) return@LaunchedEffect
+
         val currentPermission = androidx.core.content.ContextCompat
             .checkSelfPermission(context, Manifest.permission.CAMERA)
         if (currentPermission == android.content.pm.PackageManager.PERMISSION_GRANTED) {
@@ -209,40 +217,89 @@ fun CameraPreview(
         }
     }
 
-    // 连接相机（权限就绪后）
-    LaunchedEffect(hasCameraPermission) {
-        if (!hasCameraPermission) return@LaunchedEffect
-
-        val result = cameraController.connect(
-            lifecycleOwner,
-            previewView.surfaceProvider,
-            cameraMode,
-        )
-        result.fold(
-            onSuccess = { session ->
-                currentSessionId = session.sessionId
-                onSessionReady(session.sessionId)
-                onConnected?.invoke(cameraController, session.sessionId)
+    // 断开当前会话。sessionId 先从 UI 状态移除，使主动断开与 DisposableEffect 兜底不会重复提交同一会话。
+    val disconnectCurrentSession: () -> Unit = {
+        val sessionId = currentSessionId
+        currentSessionId = null
+        if (sessionId != null) {
+            coroutineScope.launch(NonCancellable + Dispatchers.Default) {
+                val disconnected = cameraController.disconnect(sessionId)
                 if (BuildConfig.DEBUG) {
-                    android.util.Log.d("CameraPreview", "连接成功，mode=$cameraMode, sessionId: ${session.sessionId}")
-                }
-            },
-            onFailure = { error ->
-                onSessionReady(null)
-                cameraError = when (error) {
-                    is SecurityException -> CameraError.PermissionDenied
-                    else -> CameraError.Unknown("相机启动失败")
-                }
-                onCameraError(cameraError!!)
-                if (BuildConfig.DEBUG) {
-                    android.util.Log.e("CameraPreview", "连接失败", error)
+                    if (disconnected) {
+                        android.util.Log.d("CameraPreview", "已断开会话: $sessionId")
+                    } else {
+                        android.util.Log.d("CameraPreview", "会话已过期，忽略 disconnect: $sessionId")
+                    }
                 }
             }
-        )
+        }
+    }
+    val latestDisconnectCurrentSession by rememberUpdatedState(disconnectCurrentSession)
+
+    // active 由导航层驱动，变为不可见时立即暂停相机，不等待淡出动画或 DisposableEffect 销毁。
+    // connect 使用不可取消的后台段收口迟到结果：页面离开期间若连接完成，必须清理该 session。
+    LaunchedEffect(active, hasCameraPermission) {
+        val generation = connectionGeneration.incrementAndGet()
+        if (!active) {
+            cameraError = null
+            contentRect = null
+            disconnectCurrentSession()
+            return@LaunchedEffect
+        }
+        if (!hasCameraPermission) return@LaunchedEffect
+
+        cameraError = null
+        val surfaceProvider = withContext(Dispatchers.Main.immediate) {
+            previewView.surfaceProvider
+        }
+        val connection = withContext(NonCancellable + Dispatchers.Default) {
+            val result = cameraController.connect(
+                lifecycleOwner,
+                surfaceProvider,
+                cameraMode,
+            )
+            val session = result.getOrNull()
+            val isCurrentConnection = generation == connectionGeneration.get()
+            if (session != null && !isCurrentConnection) {
+                // 连接完成时页面已离开或已有更新的连接请求，不能把迟到会话留在 Controller 中。
+                val disconnected = cameraController.disconnect(session.sessionId)
+                if (BuildConfig.DEBUG) {
+                    android.util.Log.d(
+                        "CameraPreview",
+                        "清理迟到会话: ${session.sessionId}, disconnected=$disconnected",
+                    )
+                }
+            }
+            Pair(result, isCurrentConnection)
+        }
+        val result = connection.first
+        val session = result.getOrNull()
+        val isCurrentConnection = connection.second
+        if (session != null && isCurrentConnection) {
+            currentSessionId = session.sessionId
+            onSessionReady(session.sessionId)
+            onConnected?.invoke(cameraController, session.sessionId)
+            if (BuildConfig.DEBUG) {
+                android.util.Log.d("CameraPreview", "连接成功，mode=$cameraMode, sessionId: ${session.sessionId}")
+            }
+        } else if (isCurrentConnection) {
+            val error = result.exceptionOrNull() ?: IllegalStateException("相机启动失败")
+            onSessionReady(null)
+            cameraError = when (error) {
+                is SecurityException -> CameraError.PermissionDenied
+                else -> CameraError.Unknown("相机启动失败")
+            }
+            onCameraError(cameraError!!)
+            if (BuildConfig.DEBUG) {
+                android.util.Log.e("CameraPreview", "连接失败", error)
+            }
+        }
     }
 
     // CameraState / 显示模式驱动加载状态（模式变化不重新绑定 CameraX）
-    LaunchedEffect(cameraState, previewScaleType) {
+    LaunchedEffect(cameraState, previewScaleType, active) {
+        if (!active) return@LaunchedEffect
+
         when (cameraState) {
             CameraStateType.OPEN -> {
                 cameraError = null
@@ -309,29 +366,19 @@ fun CameraPreview(
     // 断开连接（使用 sessionId 防止竞态）
     DisposableEffect(Unit) {
         onDispose {
-            val sessionId = currentSessionId
-            if (sessionId != null) {
-                coroutineScope.launch {
-                    val disconnected = cameraController.disconnect(sessionId)
-                    if (BuildConfig.DEBUG) {
-                        if (disconnected) {
-                            android.util.Log.d("CameraPreview", "已断开会话: $sessionId")
-                        } else {
-                            android.util.Log.d("CameraPreview", "会话已过期，忽略 disconnect: $sessionId")
-                        }
-                    }
-                }
-            }
+            // 使仍在途的 connect 结果失效；其迟到 session 会走上面的清理分支。
+            connectionGeneration.incrementAndGet()
+            latestDisconnectCurrentSession()
             contentRect = null
-            currentSessionId = null
         }
     }
 
     // 重试函数
     val onRetry: () -> Unit = {
+        connectionGeneration.incrementAndGet()
+        disconnectCurrentSession()
         cameraError = null
         contentRect = null
-        currentSessionId = null
         // 触发重新连接
         hasCameraPermission = false
         permissionLauncher.launch(Manifest.permission.CAMERA)

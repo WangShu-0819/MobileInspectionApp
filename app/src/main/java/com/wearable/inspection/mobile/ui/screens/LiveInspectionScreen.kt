@@ -155,8 +155,8 @@ fun LiveInspectionScreen(
     var sessionId by remember { mutableStateOf<String?>(null) }
     var contentRect by remember { mutableStateOf<Rect?>(null) }
 
-    // 模板叠加控制
-    var overlayAlpha by remember { mutableStateOf(0.45f) }
+    // 模板叠加控制（默认 0%：模板叠加完全透明，相机画面正常显示；用户可滑杆调高）
+    var overlayAlpha by remember { mutableStateOf(0f) }
     var templateVisible by remember { mutableStateOf(true) }
 
     // 拍照状态
@@ -178,6 +178,10 @@ fun LiveInspectionScreen(
             captureState = CaptureUiState.IDLE
             captureError = null
             savedPath = null
+        } else {
+            // 导航状态先于页面动画变化；现场页不可见时立即丢弃旧会话标识和叠加坐标。
+            sessionId = null
+            contentRect = null
         }
     }
 
@@ -452,21 +456,26 @@ fun LiveInspectionScreen(
                 modifier = Modifier.weight(0.40f),
                 template = inspectionState.selectedTemplate,
                 rois = inspectionState.rois,
+                active = isScreenVisible,
                 previewScaleType = previewScaleType,
                 overlayAlpha = if (templateVisible) overlayAlpha else 0f,
                 contentRect = contentRect,
-                onFrameInfo = { info -> contentRect = info.contentRect },
+                onFrameInfo = { info ->
+                    if (isScreenVisible) contentRect = info.contentRect
+                },
                 onSessionReady = { id ->
-                    contentRect = null
-                    sessionId = id
-                    if (id == null) {
-                        if (!captureNavigationPending) {
-                            captureState = CaptureUiState.ERROR
-                            captureError = "相机连接失败"
+                    if (isScreenVisible) {
+                        contentRect = null
+                        sessionId = id
+                        if (id == null) {
+                            if (!captureNavigationPending) {
+                                captureState = CaptureUiState.ERROR
+                                captureError = "相机连接失败"
+                            }
+                        } else if (!captureNavigationPending && captureState != CaptureUiState.CAPTURING) {
+                            // 新会话就绪只在没有拍照/导航过渡时重置，避免覆盖 SAVED 状态。
+                            onResetCapture()
                         }
-                    } else if (!captureNavigationPending && captureState != CaptureUiState.CAPTURING) {
-                        // 新会话就绪只在没有拍照/导航过渡时重置，避免覆盖 SAVED 状态。
-                        onResetCapture()
                     }
                 }
             )
@@ -527,6 +536,7 @@ private fun CameraPreviewSection(
     modifier: Modifier = Modifier,
     template: InspectionTemplateEntity?,
     rois: List<RoiDefinitionEntity>,
+    active: Boolean = true,
     previewScaleType: PreviewView.ScaleType = PreviewView.ScaleType.FIT_CENTER,
     overlayAlpha: Float = 0f,
     contentRect: Rect? = null,
@@ -542,6 +552,7 @@ private fun CameraPreviewSection(
         // 真实 CameraX 实时预览 + 模板叠加
         CameraPreview(
             modifier = Modifier.fillMaxSize(),
+            active = active,
             templateImagePath = template?.mainImagePath,
             previewScaleType = previewScaleType,
             overlayAlpha = overlayAlpha,
@@ -1286,7 +1297,7 @@ private fun InfoItem(
 /**
  * 模板叠加控制栏：透明度 Slider + 显示/隐藏切换
  *
- * 范围 0.0f ~ 0.8f，默认 0.45f。
+ * 范围 0.0f ~ 0.8f，默认 0%（完全透明）。
  * 调节不触发 CameraX rebind。
  */
 @Composable

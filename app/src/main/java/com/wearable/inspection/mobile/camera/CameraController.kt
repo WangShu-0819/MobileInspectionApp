@@ -3,6 +3,8 @@ package com.wearable.inspection.mobile.camera
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.util.Size
 import androidx.camera.camera2.interop.Camera2CameraControl
@@ -29,6 +31,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.io.File
 import java.lang.ref.WeakReference
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import kotlin.coroutines.resume
@@ -140,6 +143,39 @@ interface CameraBinder {
  */
 class RealCameraBinder(private val context: Context) : CameraBinder {
 
+    /**
+     * CameraX 的绑定、解绑、LiveData observer 和 analyzer API 要求主线程。
+     * 调用方可以在后台线程等待这里的短同步桥接，避免把 provider.get() 或解绑等待
+     * 放在 Compose 主线程；已经在主线程时直接执行，避免自等待。
+     */
+    private fun runOnMainBlocking(block: () -> Unit) {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            block()
+            return
+        }
+
+        val latch = CountDownLatch(1)
+        var failure: Throwable? = null
+        val posted = Handler(Looper.getMainLooper()).post {
+            try {
+                block()
+            } catch (throwable: Throwable) {
+                failure = throwable
+            } finally {
+                latch.countDown()
+            }
+        }
+        check(posted) { "无法提交 CameraX 主线程操作" }
+
+        try {
+            latch.await()
+        } catch (interrupted: InterruptedException) {
+            Thread.currentThread().interrupt()
+            throw interrupted
+        }
+        failure?.let { throw it }
+    }
+
     override fun hasCameraPermission(): Boolean {
         return ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) ==
             PackageManager.PERMISSION_GRANTED
@@ -154,9 +190,13 @@ class RealCameraBinder(private val context: Context) : CameraBinder {
     }
 
     override fun hasBackCamera(provider: Any): Boolean {
-        return (provider as? ProcessCameraProvider)?.hasCamera(
-            CameraSelector.DEFAULT_BACK_CAMERA
-        ) == true
+        var result = false
+        runOnMainBlocking {
+            result = (provider as? ProcessCameraProvider)?.hasCamera(
+                CameraSelector.DEFAULT_BACK_CAMERA
+            ) == true
+        }
+        return result
     }
 
     override fun bindToLifecycle(
@@ -170,15 +210,20 @@ class RealCameraBinder(private val context: Context) : CameraBinder {
             val s = selector as CameraSelector
             @Suppress("UNCHECKED_CAST")
             val uc = useCases as List<androidx.camera.core.UseCase>
-            val camera = p.bindToLifecycle(lifecycleOwner, s, *uc.toTypedArray())
-            BindResult.Success(camera)
+            var camera: Camera? = null
+            runOnMainBlocking {
+                camera = p.bindToLifecycle(lifecycleOwner, s, *uc.toTypedArray())
+            }
+            BindResult.Success(checkNotNull(camera))
         } catch (e: Exception) {
             BindResult.Failure(e)
         }
     }
 
     override fun unbindAll(provider: Any) {
-        (provider as? ProcessCameraProvider)?.unbindAll()
+        runOnMainBlocking {
+            (provider as? ProcessCameraProvider)?.unbindAll()
+        }
     }
 
     override fun getCameraInfo(camera: Any): Any? {
@@ -190,18 +235,22 @@ class RealCameraBinder(private val context: Context) : CameraBinder {
         lifecycleOwner: LifecycleOwner,
         observer: Observer<androidx.camera.core.CameraState>
     ) {
-        (cameraInfo as? androidx.camera.core.CameraInfo)?.cameraState?.observe(
-            lifecycleOwner, observer
-        )
+        runOnMainBlocking {
+            (cameraInfo as? androidx.camera.core.CameraInfo)?.cameraState?.observe(
+                lifecycleOwner, observer
+            )
+        }
     }
 
     override fun removeCameraStateObserver(
         cameraInfo: Any,
         observer: Observer<androidx.camera.core.CameraState>
     ) {
-        (cameraInfo as? androidx.camera.core.CameraInfo)?.cameraState?.removeObserver(
-            observer
-        )
+        runOnMainBlocking {
+            (cameraInfo as? androidx.camera.core.CameraInfo)?.cameraState?.removeObserver(
+                observer
+            )
+        }
     }
 
     private val resolutionSelector = ResolutionSelector.Builder()
@@ -209,9 +258,13 @@ class RealCameraBinder(private val context: Context) : CameraBinder {
         .build()
 
     override fun createPreview(surfaceProvider: Any): Any {
-        return Preview.Builder()
+        val preview = Preview.Builder()
             .setResolutionSelector(resolutionSelector)
-            .build().also { it.setSurfaceProvider(surfaceProvider as Preview.SurfaceProvider) }
+            .build()
+        runOnMainBlocking {
+            preview.setSurfaceProvider(surfaceProvider as Preview.SurfaceProvider)
+        }
+        return preview
     }
 
     override fun createAnalysis(mode: CameraMode): Any {
@@ -246,13 +299,17 @@ class RealCameraBinder(private val context: Context) : CameraBinder {
         executor: java.util.concurrent.ExecutorService,
         callback: (Any) -> Unit
     ) {
-        (useCase as? ImageAnalysis)?.setAnalyzer(executor) { imageProxy ->
-            callback(imageProxy)
+        runOnMainBlocking {
+            (useCase as? ImageAnalysis)?.setAnalyzer(executor) { imageProxy ->
+                callback(imageProxy)
+            }
         }
     }
 
     override fun clearAnalyzer(useCase: Any) {
-        (useCase as? ImageAnalysis)?.clearAnalyzer()
+        runOnMainBlocking {
+            (useCase as? ImageAnalysis)?.clearAnalyzer()
+        }
     }
 
     override fun getResolutionInfo(useCase: Any): Pair<android.util.Size, Int>? {
@@ -513,7 +570,11 @@ class CameraController private constructor(
                     }
 
                     // 观察 Camera 状态
-                    setupCameraStateObserver(bindResult.camera, lifecycleOwner)
+                    setupCameraStateObserver(
+                        bindResult.camera,
+                        lifecycleOwner,
+                        newSession.sessionId,
+                    )
 
                     Result.success(newSession)
                 }
@@ -592,6 +653,8 @@ class CameraController private constructor(
                 ?: return@withLock Result.failure(IllegalStateException("CameraProvider 丢失"))
             val owner = lifecycleOwnerRef?.get()
                 ?: return@withLock Result.failure(IllegalStateException("LifecycleOwner 已失效"))
+            val sessionId = activeSession?.sessionId
+                ?: return@withLock Result.failure(IllegalStateException("相机会话丢失"))
 
             // 0. 使在途拍照请求失效
             invalidateCaptureRequest()
@@ -673,7 +736,7 @@ class CameraController private constructor(
                     }
 
                     // 新 observer
-                    setupCameraStateObserver(bindResult.camera, owner)
+                    setupCameraStateObserver(bindResult.camera, owner, sessionId)
 
                     Result.success(Unit)
                 }
@@ -1050,12 +1113,19 @@ class CameraController private constructor(
      *
      * 先移除旧 observer，再添加新的。保存引用以便后续移除。
      */
-    private fun setupCameraStateObserver(camera: Any, lifecycleOwner: LifecycleOwner) {
+    private fun setupCameraStateObserver(
+        camera: Any,
+        lifecycleOwner: LifecycleOwner,
+        sessionId: String,
+    ) {
         // 移除旧 observer
         removeCameraStateObserver()
 
         val cameraInfo = binder.getCameraInfo(camera) ?: return
         val observer = Observer<androidx.camera.core.CameraState> { state ->
+            // CameraX 可能在 removeObserver 后投递旧值；旧 observer 不能覆盖新 session 状态。
+            if (!isConnected || activeSession?.sessionId != sessionId) return@Observer
+
             val stateType = when (state.type) {
                 androidx.camera.core.CameraState.Type.PENDING_OPEN -> CameraStateType.PENDING_OPEN
                 androidx.camera.core.CameraState.Type.OPEN -> CameraStateType.OPEN
