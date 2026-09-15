@@ -18,6 +18,7 @@ import kotlinx.coroutines.launch
 import android.util.Log
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
+import java.util.concurrent.atomic.AtomicLong
 
 /**
  * CameraX 帧分析器 — 桥接 [FrameAnalyzer] 接口与 [DpmAnalyzer]。
@@ -45,17 +46,9 @@ class DpmFrameAnalyzer(
     @Volatile
     private var scanRoi: Rect? = null
 
-    // ─── 证据帧追踪（退出时保存）───
-    @Volatile
-    private var lastFrameBitmap: Bitmap? = null
-    @Volatile
-    private var lastFrameRoi: Rect? = null
-    @Volatile
-    private var successBitmap: Bitmap? = null
-    @Volatile
-    private var successRoi: Rect? = null
-    @Volatile
-    private var successResult: DpmAnalyzeResult? = null
+    // ─── 证据帧追踪（只接受 ECC 成功的源帧）───
+    private val frameSequence = AtomicLong(0L)
+    private val evidenceTracker = DpmEvidenceFrameTracker()
 
     // 专属 SupervisorJob：stop() 时取消所有子协程
     private val analyzerJob = SupervisorJob()
@@ -64,8 +57,12 @@ class DpmFrameAnalyzer(
     init {
         // 将 DpmAnalyzer 的网格解码结果也发射到结果流
         dpmAnalyzer.setResultEmitter { result ->
-            if (!isStopped) {
-                _results.emit(result)
+            publishResult(result)
+        }
+        dpmAnalyzer.setGridFrameLifecycle { token, event ->
+            when (event) {
+                GridFrameEvent.SUBMITTED -> evidenceTracker.markGridSubmitted(token)
+                GridFrameEvent.FINISHED -> evidenceTracker.markGridFinished(token)
             }
         }
     }
@@ -89,35 +86,27 @@ class DpmFrameAnalyzer(
             return
         }
         Log.d(TAG, "analyze: bitmap converted, size=${bitmap.width}x${bitmap.height}, scanRoi=$scanRoi")
-        val currentRoi = scanRoi
+        val currentRoi = scanRoi?.let(::Rect)
+        val sourceFrameToken = frameSequence.incrementAndGet()
+        val sourceFrameTimeMs = System.currentTimeMillis()
         analyzerScope.launch {
-            // 在分析前复制帧用于证据追踪（原始 bitmap 在 finally 中回收）
-            val frameCopy = bitmap.copy(Bitmap.Config.ARGB_8888, false)
-            lastFrameBitmap?.recycle()
-            lastFrameBitmap = frameCopy
-            lastFrameRoi = currentRoi
             try {
+                // 在分析前复制帧用于源帧追踪；原始 bitmap 始终在 finally 回收。
+                val frameCopy = bitmap.copy(Bitmap.Config.ARGB_8888, false)
+                if (!evidenceTracker.addFrame(sourceFrameToken, sourceFrameTimeMs, frameCopy, currentRoi)) return@launch
                 val result = dpmAnalyzer.analyze(
                     frame = bitmap,
                     frameRotation = 0, // 已输出 upright Bitmap
-                    scanRoi = scanRoi,
+                    scanRoi = currentRoi,
+                    sourceFrameToken = sourceFrameToken,
+                    sourceFrameTimeMs = sourceFrameTimeMs,
                 )
                 Log.d(TAG, "analyze: result status=${result.status}, code=${result.code}, source=${result.source}")
-                if (!isStopped && result.status != DpmAnalyzeStatus.PROCEED) {
-                    _results.emit(result)
-                }
-                // 解码成功时保存成功帧证据（独立副本，与 lastFrameBitmap 分开管理）
-                if (result.status == DpmAnalyzeStatus.DECODED && result.code != null) {
-                    val successCopy = frameCopy.copy(Bitmap.Config.ARGB_8888, false)
-                    successBitmap?.recycle()
-                    successBitmap = successCopy
-                    successRoi = currentRoi
-                    successResult = result
-                }
+                publishResult(result, sourceFrameToken)
             } catch (e: Exception) {
                 Log.e(TAG, "analyze: exception during DpmAnalyzer.analyze", e)
             } finally {
-                bitmap.recycle()
+                if (!bitmap.isRecycled) bitmap.recycle()
             }
         }
     }
@@ -125,52 +114,45 @@ class DpmFrameAnalyzer(
     override fun stop() {
         isStopped = true
         scanRoi = null
+        dpmAnalyzer.cancelGridTasks()
+        dpmAnalyzer.setGridFrameLifecycle(null)
         analyzerJob.cancelChildren()
+        // stop() 也必须回收未转移给保存层的所有帧；成功快照已从 tracker 转移后不会受影响。
+        evidenceTracker.clear()
     }
 
     /**
      * 获取并清空证据帧。
      *
-     * 必须在 stop() 后调用。在 stop() 和此调用之间，
-     * 已启动的分析协程会完成（包括 bitmap 回收），因此返回的 Bitmap 副本仍然有效。
+     * 退出流程中在 stop() 前调用以冻结会话。冻结后迟到的分析/G​​RID 结果全部丢弃。
      *
      * 返回的 Bitmap 由调用方接管，调用方负责回收。
      *
-     * @return Triple(successFrame, lastFrame, roiForFrame) 或 null
+     * 无 ECC 成功时返回 null；不保存最后有效帧或 NO_READ 图片。
      */
     fun getAndClearEvidenceFrames(): EvidenceFrames? {
-        // 优先返回成功帧
-        successBitmap?.let { bmp ->
-            val roi = successRoi
-            val result = successResult
-            successBitmap = null
-            successRoi = null
-            successResult = null
-            lastFrameBitmap?.recycle()
-            lastFrameBitmap = null
-            lastFrameRoi = null
-            return EvidenceFrames(
-                bitmap = bmp,
-                roi = roi,
-                isDecodeSuccess = true,
-                decodedCode = result?.code,
-                decodeSource = result?.source,
+        dpmAnalyzer.cancelGridTasks()
+        return evidenceTracker.freeze()?.let { snapshot ->
+            EvidenceFrames(
+                bitmap = snapshot.bitmap,
+                roi = snapshot.roi,
+                isDecodeSuccess = snapshot.isDecodeSuccess,
+                decodedCode = snapshot.decodedCode,
+                decodeSource = snapshot.decodeSource,
+                frameToken = snapshot.frameToken,
+                frameTimeMs = snapshot.frameTimeMs,
             )
         }
-        // 无成功帧时返回最后分析帧
-        lastFrameBitmap?.let { bmp ->
-            val roi = lastFrameRoi
-            lastFrameBitmap = null
-            lastFrameRoi = null
-            return EvidenceFrames(
-                bitmap = bmp,
-                roi = roi,
-                isDecodeSuccess = false,
-                decodedCode = null,
-                decodeSource = null,
-            )
+    }
+
+    private suspend fun publishResult(result: DpmAnalyzeResult, fallbackToken: Long? = null) {
+        if (isStopped || evidenceTracker.isFrozen) return
+        if (result.status == DpmAnalyzeStatus.DECODED && !result.code.isNullOrBlank()) {
+            evidenceTracker.recordDecodeSuccess(result, fallbackToken)
         }
-        return null
+        if (!isStopped && !evidenceTracker.isFrozen && result.status != DpmAnalyzeStatus.PROCEED) {
+            _results.emit(result)
+        }
     }
 
     /**
@@ -182,6 +164,8 @@ class DpmFrameAnalyzer(
         val isDecodeSuccess: Boolean,
         val decodedCode: String?,
         val decodeSource: DecodeSource?,
+        val frameToken: Long = 0L,
+        val frameTimeMs: Long = 0L,
     )
 
     companion object {

@@ -1,7 +1,7 @@
 # DPM 扫码会话图像证据留存 — 实现报告
 
 **任务**：DPM 扫码会话图像证据留存
-**状态**：实现完成，自动化验证通过
+**状态**：纠正版实现完成，定向自动化验证通过，等待用户验收
 **日期**：2026-09-15
 
 ---
@@ -125,7 +125,6 @@ DisposableEffect.onDispose {
 - DPM 人工码值复核未实现
 - ZIP 导出未扩展 DPM 证据
 - ROI 检测算法不变
-- MobileSAM 实验冻结
 - 14 项预存测试失败未修复（不属于本任务边界）
 
 ---
@@ -149,3 +148,62 @@ DisposableEffect.onDispose {
 - `app/src/main/java/com/wearable/inspection/mobile/data/image/MobileImageStore.kt`
 - `app/src/main/java/com/wearable/inspection/mobile/MobileInspectionApp.kt`
 - `app/src/androidTest/java/com/wearable/inspection/mobile/data/dao/PartDpmDaoTest.kt`（修复预存缺失 DAO 参数）
+
+---
+
+## 7. 纠正版：仅保存 ECC 成功源帧（2026-09-15）
+
+本节覆盖上文“未解码保存最后有效帧/NO_READ”语义。当前实现以本轮纠正版为准：没有 ECC 成功时不保存任何照片，也不创建带图片路径的证据记录。
+
+### 7.1 ECC 所在解码层
+
+- ZXing 主链调用 `ZxingDataMatrixDecoder.decodeWithBinarizer()` → `DataMatrixReader.decode(...)`；Data Matrix ECC 校验/纠错在 ZXing 内部完成。
+- GRID 兜底调用 `ImportedDpmScanner.decodePureBits()` → ZXing `Decoder().decode(matrix)`；同样由 ZXing Data Matrix 解码器完成 ECC。
+- ML Kit 兜底把非空码值视为 ML Kit 已接受的成功结果；其 ECC/纠错由 ML Kit 内部完成，应用不读取或虚构纠错次数。
+- ECC 不会生成像素被修正后的照片；保存的是产生成功码值的原始 upright Bitmap。
+
+### 7.2 成功源帧关联与会话隔离
+
+`DpmEvidenceFrameTracker` 为每个 upright 源帧复制一份 Bitmap，使用递增 `frameToken`、源帧时间和当时的 scan ROI 建立关联。同步 ZXing/ML Kit 结果直接携带当前 token；`DpmAnalyzer.triggerGridDecode()` 在提交任务时发出 `SUBMITTED(token)`，异步成功结果携带同一 token，`FINISHED`/取消/超时回收对应临时帧。tracker 只接受当前会话的 `DECODED`、非空码值；成功 token 一经选定，后续普通帧不能覆盖。
+
+退出时先调用 `getAndClearEvidenceFrames()` 取消并使 GRID 任务代次失效，再冻结成功快照；随后保存原图和 scan ROI，保存完成后才 stop analyzer 并断开 CameraController。stop、会话结束及冻结后的迟到 GRID 结果均被丢弃；未转移给保存层的 Bitmap 在成功、失败、取消、超时、异常和退出路径回收。
+
+### 7.3 无 ECC 成功与保存失败语义
+
+- 若会话没有 ECC 成功，`getAndClearEvidenceFrames()` 返回 `null`，仅保留内存扫描状态；不写原始帧、ROI、二值化/预处理/标注图，不创建 `NO_READ` 行，不引用 `lastFrameBitmap`。
+- 成功证据必须同时包含 `DECODED`、非空 `decodedContent`、`decodeSource`（`ZXING`/`ML_KIT`/`GRID`）和当前会话源帧 token。数据库状态当前仅写 `SUCCESS`，`frameTimeMs` 使用源帧时间。
+- 原图压缩失败、ROI 写入失败或数据库插入失败时删除已写文件并回收 Bitmap，不留下孤立文件或伪造记录。
+- `DpmEvidenceExportService` 只导出状态为 `SUCCESS`、码值/来源有效且原图为非空实际文件的记录；DPM ZIP 仍独立保存，不修改现场采集照片 ZIP 或 `InspectionZipExportService`。
+
+### 7.4 本轮修改文件与测试
+
+源码/测试修改：
+
+- `app/src/main/java/com/wearable/inspection/mobile/dpm/DpmAnalyzer.kt`
+- `app/src/main/java/com/wearable/inspection/mobile/dpm/DpmFrameAnalyzer.kt`
+- `app/src/main/java/com/wearable/inspection/mobile/dpm/DpmGridGate.kt`
+- `app/src/main/java/com/wearable/inspection/mobile/dpm/DpmEvidenceFrameTracker.kt`（新增）
+- `app/src/main/java/com/wearable/inspection/mobile/dpm/DpmScanViewModel.kt`
+- `app/src/main/java/com/wearable/inspection/mobile/data/image/MobileImageStore.kt`
+- `app/src/main/java/com/wearable/inspection/mobile/data/entity/DpmScanEvidenceEntity.kt`
+- `app/src/main/java/com/wearable/inspection/mobile/data/export/DpmEvidenceExportService.kt`
+- `app/src/test/java/com/wearable/inspection/mobile/dpm/DpmEvidenceFrameTrackerTest.kt`（新增）
+- `app/src/test/java/com/wearable/inspection/mobile/dpm/DpmAnalyzerTest.kt`
+- `app/src/test/java/com/wearable/inspection/mobile/dpm/DpmScanEvidenceContractTest.kt`
+- `app/src/test/java/com/wearable/inspection/mobile/dpm/DpmFrameAnalyzerEvidenceTest.kt`
+- `app/src/test/java/com/wearable/inspection/mobile/data/export/DpmEvidenceExportServiceTest.kt`
+- `app/src/test/java/com/wearable/inspection/mobile/data/export/DpmEvidenceExportArchiveTest.kt`
+- `app/src/androidTest/java/com/wearable/inspection/mobile/dpm/DpmScanEvidencePersistenceInstrumentedTest.kt`（新增）
+
+真实命令与结果：
+
+1. `.\gradlew.bat :app:compileDebugKotlin :app:compileDebugUnitTestKotlin :app:compileDebugAndroidTestKotlin --no-daemon`：通过。
+2. `.\gradlew.bat :app:testDebugUnitTest --tests "com.wearable.inspection.mobile.dpm.*" --tests "com.wearable.inspection.mobile.data.export.DpmEvidenceExport*" --no-daemon`：182 项执行、0 失败、5 跳过。
+3. `.\gradlew.bat :app:connectedDebugAndroidTest "-Pandroid.testInstrumentationRunnerArguments.class=com.wearable.inspection.mobile.dpm.DpmScanEvidencePersistenceInstrumentedTest" --no-daemon`：YAL-AL10（Android 10），3/3 通过；真实检查无 ECC 时无文件/无数据库行、成功源帧与 ROI 文件内容/尺寸、写入失败无孤立文件。
+4. `.\gradlew.bat :app:assembleDebug :app:assembleDebugAndroidTest --no-daemon`：通过。
+
+最终 APK：`app/build/outputs/apk/debug/app-debug.apk`，2026-09-15 10:19:02 +08:00，276,579,040 bytes，SHA-256 `3B68B891368304A87CCA5B9C22BF2458632D286D593B96A32E84A39EDBD9C961`。测试 APK：`app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk`，2026-09-15 10:30:04 +08:00，12,547,784 bytes，SHA-256 `FEB712045D68FB52361D0C89BB22471DE8AAE0A047251117ABA44A9788B3BCAB`。
+
+每次 connected test 结束后均执行旧/新包 force-stop、显式安装主 APK、显式启动 `com.wearable.inspection.mobile/com.wearable.inspection.mobile.MainActivity` 并核对包名/PID。旧包 PID 为空；本工作区已有 `CameraPreview.kt:255` 在启动时调用 `PreviewView.getSurfaceProvider()` 的非主线程崩溃，导致恢复后的新包进程退出、前台回到 launcher，故本轮没有把启动前台状态报告为通过，也未修改该相机架构问题。构建时的 `-lncnn` 非系统库 warning 为既有 native 配置提示，与本项 DPM 逻辑无关。
+
+本项未新增 Room schema/migration；沿用现有 `dpm_scan_evidence` 表。未实现自定义 ECC、纠错像素图、DPM 人工码值复核或现场采集 ZIP 合并。工作区其他改动保留，未提交 Git，等待用户验收。

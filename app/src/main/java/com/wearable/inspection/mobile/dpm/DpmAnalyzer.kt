@@ -38,6 +38,9 @@ class DpmAnalyzer(
     private val onLensRefocusNeeded: () -> Unit = {},
     /** DPM 网格重建尺寸模式提供器（每次提交网格任务时读取快照；默认 AUTO） */
     private val dimensionMode: () -> DpmDimensionMode = { DpmDimensionMode.AUTO },
+    /** 生产默认使用 ImportedDpmScanner；注入点只用于确定性测试，不改变算法顺序。 */
+    private val gridDecoder: (IntArray, Int, Int, DpmDimensionMode, DpmScanControl) -> String? =
+        { gray, w, h, mode, control -> DpmGridReconstructor.reconstruct(gray, w, h, mode, control) },
 ) {
     companion object {
         private const val TAG = "DpmAnalyzer"
@@ -61,6 +64,7 @@ class DpmAnalyzer(
     private val analysisRunning = AtomicBoolean(false)
     private val gridTriggered = AtomicBoolean(false)
     private var gridExecutionJob: Job? = null
+    private var gridFrameToken: Long? = null
     private var frameCount = 0L
 
     private var missCount = 0
@@ -85,6 +89,18 @@ class DpmAnalyzer(
             }
         }
         gridGate.setScanModeActive(active)
+        if (!active) cancelGridTasks()
+    }
+
+    /** 取消并使正在运行的网格任务结果失效。 */
+    fun cancelGridTasks() {
+        val token = gridFrameToken
+        gridFrameToken = null
+        gridGate.invalidatePendingTasks()
+        gridExecutionJob?.cancel()
+        gridExecutionJob = null
+        gridTriggered.set(false)
+        token?.let { gridFrameLifecycle?.invoke(it, GridFrameEvent.FINISHED) }
     }
 
     fun onFrameFocusChanged(hasFocus: Boolean) {
@@ -122,6 +138,8 @@ class DpmAnalyzer(
         frameRotation: Int,
         scanRoi: Rect? = null,
         scanControl: DpmScanControl? = null,
+        sourceFrameToken: Long? = null,
+        sourceFrameTimeMs: Long? = null,
     ): DpmAnalyzeResult {
         Log.d(TAG, "analyze: frame=${frame.width}x${frame.height}, roi=$scanRoi, focus=$focusStatus, mode=$currentMode")
         if (focusStatus == FocusStatus.OUT_OF_FOCUS) {
@@ -139,9 +157,16 @@ class DpmAnalyzer(
                 return DpmAnalyzeResult(status = throttleResult)
             }
             Log.d(TAG, "analyze: starting performMultiStrategyDecode")
-            val decodedCode = performMultiStrategyDecode(frame, frameRotation, scanRoi, scanControl)
+            val decodedCode = performMultiStrategyDecode(
+                frame,
+                frameRotation,
+                scanRoi,
+                scanControl,
+                sourceFrameToken,
+                sourceFrameTimeMs,
+            )
             Log.d(TAG, "analyze: decodedCode=$decodedCode")
-            return processDecodeResult(decodedCode)
+            return processDecodeResult(decodedCode, sourceFrameToken, sourceFrameTimeMs)
         } finally {
             analysisRunning.set(false)
         }
@@ -179,6 +204,8 @@ class DpmAnalyzer(
         frameRotation: Int,
         scanRoi: Rect?,
         scanControl: DpmScanControl?,
+        sourceFrameToken: Long?,
+        sourceFrameTimeMs: Long?,
     ): DecodeResult? {
         val strategies = DpmPreprocessor.strategiesForFrame(frameCount++)
         Log.d(TAG, "performMultiStrategyDecode: frame=${frame.width}x${frame.height}, roi=$scanRoi, strategies=${strategies.size}")
@@ -238,7 +265,7 @@ class DpmAnalyzer(
 
         // ─── 阶段4：网格兜底（异步）───
         Log.d(TAG, "Stage4: triggering grid decode")
-        triggerGridDecode(scanGray, scanW, scanH, scanControl)
+        triggerGridDecode(scanGray, scanW, scanH, scanControl, sourceFrameToken, sourceFrameTimeMs)
         return null
     }
 
@@ -364,18 +391,35 @@ class DpmAnalyzer(
 
     // ─── Grid decode ───
 
-    private fun triggerGridDecode(gray: IntArray, w: Int, h: Int, scanControl: DpmScanControl?) {
+    private fun triggerGridDecode(
+        gray: IntArray,
+        w: Int,
+        h: Int,
+        scanControl: DpmScanControl?,
+        sourceFrameToken: Long?,
+        sourceFrameTimeMs: Long?,
+    ) {
         val nowMs = clock.currentTimeMs()
         if (!gridGate.canSubmit(nowMs, gridTriggered.get())) return
         if (!gridTriggered.compareAndSet(false, true)) return
         gridGate.markSubmitted(nowMs)
         val generationSnap = gridGate.generation
+        gridFrameToken = sourceFrameToken
+        sourceFrameToken?.let { token -> gridFrameLifecycle?.invoke(token, GridFrameEvent.SUBMITTED) }
         gridExecutionJob?.cancel()
         gridExecutionJob = scope.launch {
             try {
-                val result = DpmGridReconstructor.reconstruct(gray, w, h, dimensionMode(), scanControl)
+                val taskControl = DpmScanControl(
+                    deadlineNanos = System.nanoTime() + GRID_BUDGET_MS * 1_000_000L,
+                    isCancelled = {
+                        !gridGate.belongsToCurrentSession(generationSnap) || scanControl?.aborted() == true
+                    },
+                )
+                val result = gridDecoder(gray, w, h, dimensionMode(), taskControl)
                 result?.let { code ->
-                    if (gridGate.belongsToCurrentSession(generationSnap)) {
+                    if (code.isNotBlank() && taskControl.abortReason == DpmAbortReason.NONE &&
+                        gridGate.belongsToCurrentSession(generationSnap)
+                    ) {
                         // 网格解码结果：绕过响应门直接响应，source=GRID
                         val now = clock.currentTimeMs()
                         respondGate.onResponded(code)
@@ -387,10 +431,16 @@ class DpmAnalyzer(
                             code = code,
                             isDuplicated = false,
                             source = DecodeSource.GRID,
+                            sourceFrameToken = sourceFrameToken,
+                            sourceFrameTimeMs = sourceFrameTimeMs,
                         ))
                     }
                 }
             } finally {
+                if (gridFrameToken == sourceFrameToken) {
+                    gridFrameToken = null
+                    sourceFrameToken?.let { token -> gridFrameLifecycle?.invoke(token, GridFrameEvent.FINISHED) }
+                }
                 gridTriggered.set(false)
             }
         }
@@ -400,6 +450,12 @@ class DpmAnalyzer(
      * 发射结果到结果流（由子协程调用）
      */
     private var resultEmitter: (suspend (DpmAnalyzeResult) -> Unit)? = null
+
+    private var gridFrameLifecycle: ((Long, GridFrameEvent) -> Unit)? = null
+
+    fun setGridFrameLifecycle(listener: ((Long, GridFrameEvent) -> Unit)?) {
+        gridFrameLifecycle = listener
+    }
 
     fun setResultEmitter(emitter: suspend (DpmAnalyzeResult) -> Unit) {
         resultEmitter = emitter
@@ -411,30 +467,44 @@ class DpmAnalyzer(
 
     // ─── Result processing ───
 
-    private fun processDecodeResult(result: DecodeResult?): DpmAnalyzeResult {
+    private fun processDecodeResult(
+        result: DecodeResult?,
+        sourceFrameToken: Long?,
+        sourceFrameTimeMs: Long?,
+    ): DpmAnalyzeResult {
         val now = clock.currentTimeMs()
         return if (result != null) {
-            handleSuccess(result.code, result.source, now)
+            handleSuccess(result.code, result.source, now, sourceFrameToken, sourceFrameTimeMs)
         } else {
             handleMiss(now)
         }
     }
 
-    private fun handleSuccess(code: String, source: DecodeSource, now: Long): DpmAnalyzeResult {
+    private fun handleSuccess(
+        code: String,
+        source: DecodeSource,
+        now: Long,
+        sourceFrameToken: Long?,
+        sourceFrameTimeMs: Long?,
+    ): DpmAnalyzeResult {
+        val normalizedCode = code.trim()
+        if (normalizedCode.isEmpty()) return handleMiss(now)
         val rearmOnHold = currentMode == AnalysisMode.SCAN
-        if (!respondGate.shouldRespond(code, rearmOnHold)) {
+        if (!respondGate.shouldRespond(normalizedCode, rearmOnHold)) {
             throttleLastSuccessMs.set(now)
             return DpmAnalyzeResult(status = DpmAnalyzeStatus.DEDUPLICATED)
         }
-        respondGate.onResponded(code)
+        respondGate.onResponded(normalizedCode)
         throttleLastSuccessMs.set(now)
         missCount = 0
         gridGate.onHit()  // 旧版：命中复位网格 miss 计数
         return DpmAnalyzeResult(
             status = DpmAnalyzeStatus.DECODED,
-            code = code,
+            code = normalizedCode,
             isDuplicated = false,
             source = source,
+            sourceFrameToken = sourceFrameToken,
+            sourceFrameTimeMs = sourceFrameTimeMs,
         )
     }
 
@@ -480,7 +550,13 @@ data class DpmAnalyzeResult(
     val code: String? = null,
     val isDuplicated: Boolean = false,
     val source: DecodeSource? = null,
+    /** 产生该结果的源帧标识；异步 GRID 结果必须回链到提交帧。 */
+    val sourceFrameToken: Long? = null,
+    /** 源帧进入分析器时的时间戳（毫秒）。 */
+    val sourceFrameTimeMs: Long? = null,
 )
+
+enum class GridFrameEvent { SUBMITTED, FINISHED }
 
 enum class DpmAnalyzeStatus {
     PROCEED, DECODED, DEDUPLICATED, NO_CODE, THROTTLED
@@ -494,3 +570,5 @@ private const val FAIL_SHORT_DELAY_MS = 100L
 private const val FAIL_LONG_DELAY_MS = 200L
 /** 旧版全图阶段长边上限（超限降采样，控制 ZXing tryHarder 成本） */
 private const val SCAN_MAX_EDGE = 1280
+/** 网格重建的协作式最大预算；超时不产生 SUCCESS。 */
+private const val GRID_BUDGET_MS = 1500L

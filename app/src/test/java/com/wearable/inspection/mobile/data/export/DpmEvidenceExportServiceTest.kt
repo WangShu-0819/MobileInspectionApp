@@ -75,7 +75,7 @@ class DpmEvidenceExportServiceTest {
     }
 
     @Test
-    fun `manifest row for NO_READ has empty decodedContent and decodeSource`() {
+    fun `legacy NO_READ manifest row remains representable for compatibility`() {
         val row = DpmEvidenceManifestRow(
             scanSessionId = "sess-def-456",
             frameTimeMs = 1726000001000L,
@@ -184,6 +184,17 @@ class DpmEvidenceExportServiceTest {
         ).readText()
         assertTrue("无证据时必须返回 Empty",
             source.contains("DpmEvidenceExportResult.Empty"))
+    }
+
+    @Test
+    fun `export only includes ECC validated SUCCESS records with existing files`() {
+        val source = java.io.File(
+            "src/main/java/com/wearable/inspection/mobile/data/export/DpmEvidenceExportService.kt"
+        ).readText()
+        assertTrue("导出必须先筛选成功证据", source.contains("filter(::isExportableSuccess)"))
+        assertTrue("导出必须校验 SUCCESS", source.contains("evidence.status != \"SUCCESS\""))
+        assertTrue("导出必须拒绝空码值", source.contains("decodedContent.isNullOrBlank()"))
+        assertTrue("导出必须校验实际源帧文件", source.contains("frame.isFile && frame.length() > 0L"))
     }
 
     @Test

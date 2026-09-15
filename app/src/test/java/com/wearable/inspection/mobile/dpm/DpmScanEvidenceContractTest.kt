@@ -11,7 +11,7 @@ import java.io.File
  * 锁定关键流程约束：
  * - 证据保存在 stopScan 之前执行
  * - Bitmap 在回收前已复制
- * - 成功帧和最后有效帧正确区分
+ * - 仅保留 ECC 成功帧；无成功时不创建证据
  * - 退出流程顺序：证据快照 → 停止分析器 → 清理 → 断开
  * - Room migration 创建正确的表结构
  * - 重复退出不会重复写入
@@ -35,24 +35,20 @@ class DpmScanEvidenceContractTest {
     }
 
     @Test
-    fun `frame analyzer tracks lastFrameBitmap and successBitmap separately`() {
+    fun `frame analyzer tracks source frames with token-aware evidence tracker`() {
         val source = read("src/main/java/com/wearable/inspection/mobile/dpm/DpmFrameAnalyzer.kt")
-        assertTrue("必须追踪 lastFrameBitmap", source.contains("lastFrameBitmap"))
-        assertTrue("必须追踪 successBitmap", source.contains("successBitmap"))
-        assertTrue("成功帧必须有独立副本", source.contains("val successCopy = frameCopy.copy("))
+        assertTrue("必须使用源帧追踪器", source.contains("DpmEvidenceFrameTracker"))
+        assertTrue("必须携带 sourceFrameToken", source.contains("sourceFrameToken"))
+        assertTrue("必须携带 sourceFrameTimeMs", source.contains("sourceFrameTimeMs"))
     }
 
     @Test
-    fun `frame analyzer getAndClearEvidenceFrames returns success frame preferentially`() {
+    fun `frame analyzer getAndClearEvidenceFrames returns only ECC success frame`() {
         val source = read("src/main/java/com/wearable/inspection/mobile/dpm/DpmFrameAnalyzer.kt")
-        // getAndClearEvidenceFrames 应优先返回成功帧
         assertTrue("必须定义 getAndClearEvidenceFrames 方法",
             source.contains("fun getAndClearEvidenceFrames()"))
-        assertTrue("优先返回成功帧",
-            source.contains("successBitmap?.let"))
-        // 清空成功帧后应回收 lastFrameBitmap
-        assertTrue("清空后回收 lastFrameBitmap",
-            source.contains("lastFrameBitmap?.recycle()"))
+        assertTrue("必须冻结证据快照", source.contains("evidenceTracker.freeze()"))
+        assertTrue("无 ECC 成功时必须返回 null", source.contains("无 ECC 成功时返回 null"))
     }
 
     @Test
@@ -66,6 +62,8 @@ class DpmScanEvidenceContractTest {
             source.contains("val decodedCode: String?"))
         assertTrue("必须包含 decodeSource",
             source.contains("val decodeSource: DecodeSource?"))
+        assertTrue("必须包含 frameToken", source.contains("val frameToken: Long"))
+        assertTrue("必须包含 frameTimeMs", source.contains("val frameTimeMs: Long"))
     }
 
     // ─── DpmScanViewModel 证据保存契约 ───
@@ -73,9 +71,9 @@ class DpmScanEvidenceContractTest {
     @Test
     fun `viewModel saveEvidence persists entity with correct status mapping`() {
         val source = read("src/main/java/com/wearable/inspection/mobile/dpm/DpmScanViewModel.kt")
-        // SUCCESS 状态映射
-        assertTrue("成功时 status 应为 SUCCESS",
-            source.contains("status = if (evidenceFrames.isDecodeSuccess) \"SUCCESS\" else \"NO_READ\""))
+        // 只有 ECC 成功帧才写 SUCCESS
+        assertTrue("成功时 status 应为 SUCCESS", source.contains("status = \"SUCCESS\""))
+        assertTrue("无 ECC 成功时必须不落盘", source.contains("no ECC-validated success frame"))
         // 使用 DAO 持久化
         assertTrue("必须通过 evidenceDao.insert 持久化",
             source.contains("evidenceDao.insert(entity)"))
@@ -96,7 +94,7 @@ class DpmScanEvidenceContractTest {
         assertTrue("必须有 evidenceSaved 去重标记",
             source.contains("evidenceSaved"))
         assertTrue("重复调用应被拦截",
-            source.contains("if (evidenceSaved)"))
+            source.contains("evidenceSaved && evidenceSavedSessionId == sessionId"))
     }
 
     @Test
@@ -175,9 +173,9 @@ class DpmScanEvidenceContractTest {
     }
 
     @Test
-    fun `app database version is 7`() {
+    fun `app database version is 8`() {
         val source = read("src/main/java/com/wearable/inspection/mobile/data/db/AppDatabase.kt")
-        assertTrue("数据库版本必须为 7", source.contains("version = 7"))
+        assertTrue("数据库版本必须为 8", source.contains("version = 8"))
         assertTrue("必须包含 DpmScanEvidenceEntity",
             source.contains("DpmScanEvidenceEntity::class"))
         assertTrue("必须声明 dpmScanEvidenceDao",

@@ -75,6 +75,14 @@ class DpmGridGate(
     }
 
     /**
+     * 使当前进行中的任务结果失效，但不改变扫码开关状态。
+     * 用于退出/冻结证据快照时隔离迟到的网格结果。
+     */
+    fun invalidatePendingTasks() {
+        generation++
+    }
+
+    /**
      * 提交时快照的 generation 是否仍属于当前会话且扫码模式仍开启。
      * 网格任务完成时调用：false → 结果过期（退出过扫码模式/重开过），必须丢弃。
      */

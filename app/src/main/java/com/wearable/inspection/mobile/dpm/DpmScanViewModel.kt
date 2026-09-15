@@ -47,6 +47,9 @@ class DpmScanViewModel(private val app: Application) : AndroidViewModel(app) {
     // ─── 证据保存去重 ───
     @Volatile
     private var evidenceSaved = false
+    private var evidenceSavedSessionId: String? = null
+    private val evidenceSaveLock = Any()
+    private val savedEvidenceSessions = mutableSetOf<String>()
 
     // ─── UI 状态 ───
     private val _scanState = MutableStateFlow(DpmScanState())
@@ -71,6 +74,8 @@ class DpmScanViewModel(private val app: Application) : AndroidViewModel(app) {
     ) {
         Log.d(TAG, "startScan: sessionId=$sessionId, controller=$controller")
         val scope = viewModelScope
+        evidenceSaved = false
+        evidenceSavedSessionId = sessionId
 
         val rg = DpmRespondGate()
         val gg = DpmGridGate(missThreshold = 8, cooldownMs = 1500L)  // 旧版基线：MISS_STREAK_TO_GRID=8, GRID_COOLDOWN_MS=1500
@@ -174,7 +179,7 @@ class DpmScanViewModel(private val app: Application) : AndroidViewModel(app) {
     }
 
     /**
-     * 保存扫码证据到文件系统和数据库。
+     * 保存通过解码器内部 ECC 的成功扫码证据到文件系统和数据库。
      *
      * 由 DpmScanScreen 在退出流程中调用（stopScan 之前）。
      * 重复调用会被 evidenceSaved 标记拦截。
@@ -186,23 +191,34 @@ class DpmScanViewModel(private val app: Application) : AndroidViewModel(app) {
         sessionId: String,
         evidenceFrames: DpmFrameAnalyzer.EvidenceFrames?,
     ) {
-        if (evidenceSaved) {
-            Log.d(TAG, "saveEvidence: already saved, skipping")
-            return
+        synchronized(evidenceSaveLock) {
+            if (evidenceSaved && evidenceSavedSessionId == sessionId) {
+                Log.d(TAG, "saveEvidence: already saved, skipping")
+                return
+            }
+            if (!savedEvidenceSessions.add(sessionId)) {
+                Log.d(TAG, "saveEvidence: session already finalized, skipping")
+                return
+            }
+            if (evidenceSavedSessionId == sessionId) evidenceSaved = true
         }
-        evidenceSaved = true
 
-        if (evidenceFrames == null) {
-            Log.w(TAG, "saveEvidence: no evidence frames available")
+        if (evidenceFrames == null ||
+            !evidenceFrames.isDecodeSuccess ||
+            evidenceFrames.decodedCode.isNullOrBlank() ||
+            evidenceFrames.decodeSource == null
+        ) {
+            // 无 ECC 成功时不落盘、不建 NO_READ 证据行；仅保留内存状态。
+            Log.i(TAG, "saveEvidence: no ECC-validated success frame; no photo evidence created")
+            evidenceFrames?.bitmap?.let { if (!it.isRecycled) it.recycle() }
             return
         }
 
         try {
             val ts = System.currentTimeMillis()
             val shortId = sessionId.take(8)
-            val suffix = if (evidenceFrames.isDecodeSuccess) "ok" else "nr"
-            val frameFileName = "dpm_${shortId}_${suffix}_${ts}_frame.jpg"
-            val roiFileName = "dpm_${shortId}_${suffix}_${ts}_roi.jpg"
+            val frameFileName = "dpm_${shortId}_ok_${ts}_frame.jpg"
+            val roiFileName = "dpm_${shortId}_ok_${ts}_roi.jpg"
 
             val originalPath = imageStore.saveDpmEvidenceFrame(
                 evidenceFrames.bitmap, frameFileName
@@ -220,6 +236,12 @@ class DpmScanViewModel(private val app: Application) : AndroidViewModel(app) {
                 roiPath = imageStore.saveDpmEvidenceRoi(
                     evidenceFrames.bitmap, roi, roiFileName
                 )
+                if (roiPath == null) {
+                    Log.e(TAG, "saveEvidence: failed to save source-frame ROI; deleting original")
+                    imageStore.deleteDpmEvidenceFile(originalPath)
+                    evidenceFrames.bitmap.recycle()
+                    return
+                }
             }
 
             // 保存后回收 Bitmap
@@ -227,16 +249,20 @@ class DpmScanViewModel(private val app: Application) : AndroidViewModel(app) {
 
             val entity = DpmScanEvidenceEntity(
                 scanSessionId = sessionId,
-                frameTimeMs = ts,
+                frameTimeMs = evidenceFrames.frameTimeMs.takeIf { it > 0L } ?: ts,
                 frameSource = "CAMERA",
                 decodedContent = evidenceFrames.decodedCode,
-                status = if (evidenceFrames.isDecodeSuccess) "SUCCESS" else "NO_READ",
+                status = "SUCCESS",
                 decodeSource = evidenceFrames.decodeSource?.name,
                 originalImagePath = originalPath,
                 roiImagePath = roiPath,
             )
 
-            val rowId = evidenceDao.insert(entity)
+            val rowId = runCatching { evidenceDao.insert(entity) }.getOrElse { error ->
+                imageStore.deleteDpmEvidenceFile(originalPath)
+                imageStore.deleteDpmEvidenceFile(roiPath)
+                throw error
+            }
             Log.i(TAG, "saveEvidence: persisted rowId=$rowId status=${entity.status}")
         } catch (e: Exception) {
             Log.e(TAG, "saveEvidence: failed to persist evidence", e)
@@ -255,7 +281,7 @@ class DpmScanViewModel(private val app: Application) : AndroidViewModel(app) {
     ) {
         viewModelScope.launch {
             saveEvidence(sessionId, evidenceFrames)
-            afterSave()
+            if (boundSessionId == sessionId) afterSave()
         }
     }
 

@@ -101,7 +101,7 @@ ZIP 生成只读取原始文件，不删除、不移动。临时 ZIP 文件在�
 - CameraController/CameraX 不变
 - Room migration 不新增（复用现有 dpm_scan_evidence 表）
 - 检测结果 ZIP 内容不扩展
-- 不新增人工 DPM 码值复核、ROI 检测或 MobileSAM
+- 不新增人工 DPM 码值复核或 ROI 检测
 
 ---
 
@@ -123,3 +123,11 @@ ZIP 生成只读取原始文件，不删除、不移动。临时 ZIP 文件在�
 - `git diff --check`：通过；仅有既有 CRLF 转换提示。
 - 未运行 ADB、安装 APK 或真机复测；等待用户重新导出 ZIP 验收。
 - 本轮提交仅包含本任务文件；工作区其余既存改动保留。
+
+---
+
+## 7. 纠正版 DPM 证据输入语义（2026-09-15）
+
+DPM 扫码证据现在只由通过 ZXing `DataMatrixReader`/`Decoder` 或 ML Kit 内部 Data Matrix ECC 解码并产生非空码值的当前会话源帧创建。没有 ECC 成功时不落盘原图或 ROI，不创建 `NO_READ` 证据行；因此导出服务增加 SUCCESS、非空码值、有效来源和原图非空文件过滤，历史 NO_READ 或孤立路径不会进入独立 ZIP。DPM ZIP 仍位于独立证据目录，未合并到现场采集照片 ZIP，`InspectionZipExportService` 未修改。
+
+本轮归档回归：`.\gradlew.bat :app:testDebugUnitTest --tests "com.wearable.inspection.mobile.data.export.DpmEvidenceExport*" --no-daemon` 通过；其中真实 ZIP 测试写入成功证据和 NO_READ 文件/记录，解包后确认仅 SUCCESS 原图、ROI 和 manifest 行被导出。DPM 源帧 token/时间关联、异步 GRID 生命周期和无成功不保存语义详见 [`DPM_SCAN_EVIDENCE_REPORT.md`](DPM_SCAN_EVIDENCE_REPORT.md)。

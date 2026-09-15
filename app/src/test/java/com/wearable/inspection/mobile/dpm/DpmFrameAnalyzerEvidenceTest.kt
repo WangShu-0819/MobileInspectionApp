@@ -23,8 +23,8 @@ import org.robolectric.annotation.Config
  *
  * 覆盖：
  * - 未分析时 getAndClearEvidenceFrames 返回 null
- * - stop 后返回 lastFrameBitmap（如有）
- * - 成功解码后返回 successBitmap 而非 lastFrameBitmap
+ * - 无 ECC 成功时 stop/退出不返回 lastFrameBitmap
+ * - 成功解码后返回成功源帧而非后续帧
  * - getAndClearEvidenceFrames 调用后清空内部引用
  * - EvidenceFrames 字段正确性
  * - stop 前先设置 isStopped 标记（验证调用顺序安全）
@@ -94,7 +94,7 @@ class DpmFrameAnalyzerEvidenceTest {
     }
 
     @Test
-    fun `EvidenceFrames for no-decode has null code and source`() {
+    fun `EvidenceFrames for no-decode is not a savable photo evidence`() {
         val evidence = DpmFrameAnalyzer.EvidenceFrames(
             bitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888),
             roi = null,

@@ -122,6 +122,63 @@ class DpmAnalyzerTest {
     }
 
     @Test
+    fun `async grid success carries the submitted source frame token`() = testScope.runTest {
+        gridGate = DpmGridGate(missThreshold = 1, cooldownMs = 0L)
+        analyzer = DpmAnalyzer(
+            zxingDecoder = fakeZxing,
+            mlKitDecoder = fakeMlKit,
+            respondGate = respondGate,
+            gridGate = gridGate,
+            scope = testScope,
+            clock = fakeClock,
+            gridDecoder = { _, _, _, _, _ -> "GRID-CODE" },
+        )
+        analyzer.setScanModeActive(true)
+        var emitted: DpmAnalyzeResult? = null
+        analyzer.setResultEmitter { emitted = it }
+        val frame = Bitmap.createBitmap(16, 16, Bitmap.Config.ARGB_8888)
+        repeat(2) {
+            fakeClock.advance(500L)
+            analyzer.analyze(
+                frame,
+                frameRotation = 0,
+                sourceFrameToken = 700L,
+                sourceFrameTimeMs = 1700L,
+            )
+        }
+        testScope.testScheduler.advanceUntilIdle()
+        assertEquals(DpmAnalyzeStatus.DECODED, emitted?.status)
+        assertEquals(DecodeSource.GRID, emitted?.source)
+        assertEquals(700L, emitted?.sourceFrameToken)
+        assertEquals(1700L, emitted?.sourceFrameTimeMs)
+    }
+
+    @Test
+    fun `cancelled grid task cannot emit a late success`() = testScope.runTest {
+        gridGate = DpmGridGate(missThreshold = 1, cooldownMs = 0L)
+        analyzer = DpmAnalyzer(
+            zxingDecoder = fakeZxing,
+            mlKitDecoder = fakeMlKit,
+            respondGate = respondGate,
+            gridGate = gridGate,
+            scope = testScope,
+            clock = fakeClock,
+            gridDecoder = { _, _, _, _, _ -> "GRID-CODE" },
+        )
+        analyzer.setScanModeActive(true)
+        var emitted: DpmAnalyzeResult? = null
+        analyzer.setResultEmitter { emitted = it }
+        val frame = Bitmap.createBitmap(16, 16, Bitmap.Config.ARGB_8888)
+        repeat(2) {
+            fakeClock.advance(500L)
+            analyzer.analyze(frame, frameRotation = 0, sourceFrameToken = 701L)
+        }
+        analyzer.cancelGridTasks()
+        testScope.testScheduler.advanceUntilIdle()
+        assertNull(emitted)
+    }
+
+    @Test
     fun `reset clears state`() = testScope.runTest {
         fakeZxing.result = DpmScanResult("X", com.wearable.inspection.mobile.dpm.BarcodeFormat.DATA_MATRIX, timestampMs = 0L, source = com.wearable.inspection.mobile.dpm.DecodeSource.ZXING)
         analyzer.setMode(DpmAnalyzer.AnalysisMode.INSPECTION)

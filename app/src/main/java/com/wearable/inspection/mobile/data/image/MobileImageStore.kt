@@ -394,15 +394,21 @@ class MobileImageStore(private val context: Context) {
      * @return 保存的文件路径，失败返回 null
      */
     fun saveDpmEvidenceFrame(bitmap: Bitmap, fileName: String): String? {
+        val file = File(getDpmEvidenceDir(), fileName)
         return try {
-            val dir = getDpmEvidenceDir()
-            val file = File(dir, fileName)
-            FileOutputStream(file).use { fos ->
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 90, fos)
+            val compressed = FileOutputStream(file).use { fos ->
+                val success = bitmap.compress(Bitmap.CompressFormat.JPEG, 90, fos)
                 fos.flush()
+                success
             }
-            if (file.exists() && file.length() > 0L) file.absolutePath else null
+            if (compressed && file.exists() && file.length() > 0L) {
+                file.absolutePath
+            } else {
+                file.delete()
+                null
+            }
         } catch (_: Exception) {
+            file.delete()
             null
         }
     }
@@ -425,7 +431,19 @@ class MobileImageStore(private val context: Context) {
             if (cropped !== source) cropped.recycle()
             path
         } catch (_: Exception) {
+            File(getDpmEvidenceDir(), fileName).delete()
             null
+        }
+    }
+
+    /** 删除 DPM 证据文件，仅允许删除受管理 dpm_evidence 目录内的文件。 */
+    fun deleteDpmEvidenceFile(path: String?) {
+        if (path == null) return
+        runCatching {
+            val file = File(path)
+            val base = getDpmEvidenceDir().canonicalFile
+            val target = file.canonicalFile
+            if (target.parentFile == base) target.delete()
         }
     }
 

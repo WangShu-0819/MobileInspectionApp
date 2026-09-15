@@ -34,7 +34,8 @@ class DpmEvidenceExportService(
      * @return 导出结果
      */
     suspend fun exportEvidenceZip(outputFile: File): DpmEvidenceExportResult {
-        val allEvidence = repository.getAllDpmScanEvidence()
+        // 只导出通过解码器内部 ECC 的实际成功照片；历史 NO_READ/孤立路径不进入 ZIP。
+        val allEvidence = repository.getAllDpmScanEvidence().filter(::isExportableSuccess)
         if (allEvidence.isEmpty()) {
             return DpmEvidenceExportResult.Empty
         }
@@ -173,6 +174,13 @@ class DpmEvidenceExportService(
         } else {
             value
         }
+    }
+
+    private fun isExportableSuccess(evidence: DpmScanEvidenceEntity): Boolean {
+        if (evidence.status != "SUCCESS" || evidence.decodedContent.isNullOrBlank()) return false
+        if (evidence.decodeSource !in setOf("ZXING", "ML_KIT", "GRID")) return false
+        val frame = File(evidence.originalImagePath)
+        return frame.isFile && frame.length() > 0L
     }
 
     /**

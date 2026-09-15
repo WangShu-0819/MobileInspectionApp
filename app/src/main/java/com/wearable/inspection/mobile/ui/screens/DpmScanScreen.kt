@@ -122,12 +122,14 @@ fun DpmScanScreen(
             // 先提取证据帧（必须在 stopScan 之前，否则 analyzer 已清理）
             val evidenceFrames = viewModel.getEvidenceFrames()
             if (sid != null) {
-                coroutineScope.launch {
-                    // 1. 保存证据到文件系统和数据库
-                    viewModel.saveEvidence(sid, evidenceFrames)
-                    // 2. 停止分析器
+                // 使用 viewModelScope（而非 rememberCoroutineScope）：
+                // rememberCoroutineScope 在 composable 离开 composition 时即被取消，
+                // onDispose 中 launch 的协程可能永远不执行。
+                // viewModelScope 在 ViewModel.onCleared 之前保持活跃，
+                // 足以完成证据保存。
+                viewModel.saveEvidenceInScope(sid, evidenceFrames) {
+                    // 保存完成后执行清理
                     viewModel.stopScan()
-                    // 3. 移除分析器回调并断开相机
                     cameraController.clearFrameAnalyzer()
                     cameraController.disconnect(sid)
                 }

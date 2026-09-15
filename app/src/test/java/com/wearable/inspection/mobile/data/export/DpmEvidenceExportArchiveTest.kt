@@ -22,6 +22,7 @@ class DpmEvidenceExportArchiveTest {
         val directory = Files.createTempDirectory("dpm-evidence-export").toFile()
         val frameBytes = byteArrayOf(1, 2, 3, 4)
         val frameFile = File(directory, "frame.jpg").apply { writeBytes(frameBytes) }
+        val noReadFile = File(directory, "no-read.jpg").apply { writeBytes(byteArrayOf(9, 9)) }
         val evidence = DpmScanEvidenceEntity(
             id = 9,
             scanSessionId = "session-test",
@@ -32,8 +33,16 @@ class DpmEvidenceExportArchiveTest {
             decodeSource = "ZXING",
             originalImagePath = frameFile.absolutePath,
         )
+        val noReadEvidence = evidence.copy(
+            id = 10,
+            scanSessionId = "session-no-read",
+            decodedContent = null,
+            status = "NO_READ",
+            decodeSource = null,
+            originalImagePath = noReadFile.absolutePath,
+        )
         val repository = Mockito.mock(InspectionRepository::class.java)
-        `when`(repository.getAllDpmScanEvidence()).thenReturn(listOf(evidence))
+        `when`(repository.getAllDpmScanEvidence()).thenReturn(listOf(evidence, noReadEvidence))
         val outputFile = File(directory, "evidence.zip")
 
         val result = DpmEvidenceExportService(
@@ -58,10 +67,12 @@ class DpmEvidenceExportArchiveTest {
         assertTrue("ZIP must contain manifest.csv", manifest != null)
         assertTrue(manifest!!.contains("scanSessionId,frameTimeMs"))
         assertTrue(manifest.contains("session-test,1234,CAMERA,SUCCESS,CODE-1,ZXING"))
+        assertTrue("NO_READ 记录不得进入独立成功证据 ZIP", !manifest.contains("session-no-read"))
         assertEquals(2, entries.size)
 
         outputFile.delete()
         frameFile.delete()
+        noReadFile.delete()
         directory.delete()
     }
 }
