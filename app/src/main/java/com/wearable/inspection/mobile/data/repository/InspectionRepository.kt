@@ -311,11 +311,22 @@ class InspectionRepository(
     suspend fun getViewRoiConfirmsByView(batchId: String, viewIndex: Int): List<ViewRoiConfirmEntity> =
         viewRoiConfirmDao.getByBatchAndViewIndex(batchId, viewIndex)
 
+    suspend fun getViewRoiConfirmsByPhoto(batchId: String, photoId: Long): List<ViewRoiConfirmEntity> =
+        viewRoiConfirmDao.getByBatchAndPhoto(batchId, photoId)
+
     suspend fun getConfirmedViewIndices(batchId: String): List<Int> =
         viewRoiConfirmDao.getConfirmedViewIndices(batchId)
 
     suspend fun insertViewRoiConfirms(confirms: List<ViewRoiConfirmEntity>) {
         viewRoiConfirmDao.insertAll(confirms)
+    }
+
+    suspend fun replaceViewRoiConfirmsForPhoto(
+        batchId: String,
+        photoId: Long,
+        confirms: List<ViewRoiConfirmEntity>
+    ) {
+        viewRoiConfirmDao.replaceByBatchAndPhoto(batchId, photoId, confirms)
     }
 
     suspend fun deleteViewRoiConfirmsByView(batchId: String, viewIndex: Int) {

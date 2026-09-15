@@ -1,7 +1,10 @@
 package com.wearable.inspection.mobile.ui.screens
 
 import android.graphics.Bitmap
+import android.graphics.Paint
+import android.graphics.RectF
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -46,7 +49,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -54,6 +62,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.wearable.inspection.mobile.data.entity.RoiDefinitionEntity
 import com.wearable.inspection.mobile.data.entity.RoiTargetType
+import com.wearable.inspection.mobile.detection.NanoDetInferenceStatus
+import com.wearable.inspection.mobile.detection.NanoDetRoiInferenceResult
 import com.wearable.inspection.mobile.ui.theme.BackgroundVariant1
 import com.wearable.inspection.mobile.ui.theme.DividerColor
 import com.wearable.inspection.mobile.ui.theme.FailColor
@@ -85,6 +95,7 @@ fun ViewConfirmationScreen(
     val rois = viewModel.rois
     val roiBitmaps = viewModel.roiBitmaps
     val roiResults = viewModel.roiResults
+    val inferenceResults = viewModel.inferenceResults
     val overallResult = viewModel.overallResult
     val isSaving = viewModel.isSaving
     val errorMessage = viewModel.errorMessage
@@ -213,6 +224,7 @@ fun ViewConfirmationScreen(
                         RoiConfirmCard(
                             roi = roi,
                             bitmap = roiBitmaps[roi.id],
+                            inference = inferenceResults[roi.id],
                             selectedResult = roiResults[roi.id],
                             onSelect = { result ->
                                 viewModel.setRoiResult(roi.id, result)
@@ -232,13 +244,24 @@ fun ViewConfirmationScreen(
  * 右侧：ROI 名称、属性、OK/NG 选择
  */
 @Composable
-private fun RoiConfirmCard(
+internal fun RoiConfirmCard(
     roi: RoiDefinitionEntity,
     bitmap: Bitmap?,
+    inference: NanoDetRoiInferenceResult?,
     selectedResult: String?,
     onSelect: (String) -> Unit
 ) {
     val targetType = RoiTargetType.fromName(roi.targetType)
+    val thresholdWasApplied = inference?.status in setOf(
+        NanoDetInferenceStatus.DETECTED,
+        NanoDetInferenceStatus.DETECTED_BELOW_THRESHOLD,
+        NanoDetInferenceStatus.NO_DETECTION
+    )
+    val thresholdText = if (thresholdWasApplied) {
+        "%.1f%%".format((inference?.threshold ?: 0f) * 100f)
+    } else {
+        "未执行"
+    }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -246,86 +269,216 @@ private fun RoiConfirmCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         shape = RoundedCornerShape(8.dp)
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                .padding(10.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // 左侧：ROI 裁剪子图
-            Box(
-                modifier = Modifier
-                    .size(72.dp)
-                    .clip(RoundedCornerShape(6.dp))
-                    .background(Color.Black),
-                contentAlignment = Alignment.Center
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                if (bitmap != null) {
-                    Image(
-                        bitmap = bitmap.asImageBitmap(),
-                        contentDescription = roi.name,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Fit
-                    )
-                } else {
+                Box(
+                    modifier = Modifier
+                        .size(88.dp)
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(Color.Black),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (bitmap != null) {
+                        Image(
+                            bitmap = bitmap.asImageBitmap(),
+                            contentDescription = "${roi.name} ROI 裁剪图",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Fit
+                        )
+                        if (inference?.detections?.isNotEmpty() == true) {
+                            DetectionBoxOverlay(bitmap, inference)
+                        }
+                    } else {
+                        Text("照片不可用", color = Color.White, fontSize = 10.sp)
+                    }
+                }
+
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .widthIn(min = 0.dp),
+                    verticalArrangement = Arrangement.spacedBy(3.dp)
+                ) {
                     Text(
-                        text = "无图",
-                        color = Color.White,
-                        fontSize = 10.sp
+                        text = roi.name,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = TextPrimary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
+                    Text("ID: ${roi.id}", style = MaterialTheme.typography.labelSmall, color = TextSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(
+                        text = "ROI 属性：${targetType?.displayName ?: "未配置"}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Primary,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Text(
+                        text = "检测状态：${inference?.let { inferenceStatusLabel(it.status) } ?: "未执行"}",
+                        modifier = Modifier.testTag("inference-status-${roi.id}"),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = inferenceStatusColor(inference?.status),
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = "目标类别：${inference?.targetClassIndex?.let(::modelClassLabel) ?: "无"}　模型建议（仅参考）：${inference?.modelSuggestion?.name ?: "无"}",
+                        modifier = Modifier.testTag("model-suggestion-${roi.id}"),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextPrimary
+                    )
+                    Text(
+                        text = "最高匹配分数：${inference?.matchingScore?.let { "%.1f%%".format(it * 100f) } ?: "—"}　阈值起始值（未校准）：$thresholdText",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary
+                    )
+                    if (inference?.modelVersion != null) {
+                        Text("模型：${inference.modelVersion}", style = MaterialTheme.typography.labelSmall, color = TextSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
+                    if (!inference?.detail.isNullOrBlank()) {
+                        Text(
+                            text = inference?.detail.orEmpty(),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = FailColor,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
             }
 
-            // 中间：ROI 信息
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .widthIn(min = 0.dp),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
-            ) {
+            if (inference?.detections?.isNotEmpty() == true) {
                 Text(
-                    text = roi.name,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium,
-                    color = TextPrimary,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = "ID: ${roi.id.take(8)}…",
+                    text = "检测框 ${inference.detections.size} 个，已叠加显示全部保留框（绿色为匹配类别，橙色为其他类别）",
                     style = MaterialTheme.typography.labelSmall,
-                    color = TextSecondary,
-                    fontSize = 10.sp
+                    color = TextSecondary
                 )
-                Text(
-                    text = targetType?.displayName ?: "未选择",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Primary,
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Medium
-                )
+            } else if (inference?.status == NanoDetInferenceStatus.NO_DETECTION) {
+                Text("没有检测框；模型建议 NG，匹配分数为空。", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
             }
 
-            // 右侧：OK/NG 选择
             Row(
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
+                Column {
+                    Text("人工终审", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = TextPrimary)
+                    Text(selectedResult?.let { "已选择 $it" } ?: "请独立选择 OK / NG", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 ResultChip(
                     label = "OK",
                     selected = selectedResult == "OK",
                     color = PassColor,
+                    testTag = "human-result-${roi.id}-OK",
                     onClick = { onSelect("OK") }
                 )
                 ResultChip(
                     label = "NG",
                     selected = selectedResult == "NG",
                     color = FailColor,
+                    testTag = "human-result-${roi.id}-NG",
                     onClick = { onSelect("NG") }
                 )
+                }
             }
         }
     }
+}
+
+@Composable
+private fun DetectionBoxOverlay(bitmap: Bitmap, inference: NanoDetRoiInferenceResult) {
+    Canvas(Modifier.fillMaxSize().testTag("detection-box-overlay-${inference.roiId}")) {
+        val bounds = inference.roiBounds
+        val sourceWidth = bounds?.let { it.getOrNull(2)?.minus(it.getOrNull(0) ?: 0) }?.takeIf { it > 0 }?.toFloat()
+            ?: bitmap.width.toFloat()
+        val sourceHeight = bounds?.let { it.getOrNull(3)?.minus(it.getOrNull(1) ?: 0) }?.takeIf { it > 0 }?.toFloat()
+            ?: bitmap.height.toFloat()
+        val fitScale = minOf(size.width / bitmap.width, size.height / bitmap.height)
+        val imageWidth = bitmap.width * fitScale
+        val imageHeight = bitmap.height * fitScale
+        val offsetX = (size.width - imageWidth) / 2f
+        val offsetY = (size.height - imageHeight) / 2f
+        val sx = imageWidth / sourceWidth
+        val sy = imageHeight / sourceHeight
+        val nativePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            textSize = 9.dp.toPx()
+            style = Paint.Style.FILL
+            typeface = android.graphics.Typeface.DEFAULT_BOLD
+        }
+        inference.detections.forEach { detection ->
+            val matching = detection.classIndex == inference.targetClassIndex
+            val color = if (matching) android.graphics.Color.GREEN else android.graphics.Color.rgb(255, 145, 0)
+            nativePaint.color = color
+            nativePaint.style = Paint.Style.STROKE
+            nativePaint.strokeWidth = 1.5.dp.toPx()
+            val box = detection.roiBox
+            val rect = RectF(
+                offsetX + box.left.toFloat() * sx,
+                offsetY + box.top.toFloat() * sy,
+                offsetX + box.right.toFloat() * sx,
+                offsetY + box.bottom.toFloat() * sy
+            )
+            drawContext.canvas.nativeCanvas.drawRect(rect, nativePaint)
+            nativePaint.style = Paint.Style.FILL
+            nativePaint.textSize = 8.dp.toPx()
+            drawContext.canvas.nativeCanvas.drawText(
+                "${detection.className} ${(detection.score * 100f).toInt()}%",
+                rect.left,
+                (rect.top - 1.dp.toPx()).coerceAtLeast(nativePaint.textSize),
+                nativePaint
+            )
+        }
+    }
+}
+
+internal fun inferenceStatusLabel(status: NanoDetInferenceStatus): String = when (status) {
+    NanoDetInferenceStatus.DETECTED -> "已检出，达到模型阈值"
+    NanoDetInferenceStatus.DETECTED_BELOW_THRESHOLD -> "已检出，低于模型阈值"
+    NanoDetInferenceStatus.NO_DETECTION -> "未检出"
+    NanoDetInferenceStatus.ROI_NOT_CONFIGURED -> "ROI 属性未配置"
+    NanoDetInferenceStatus.FEATURE_UNSUPPORTED -> "部件类别暂不支持"
+    NanoDetInferenceStatus.INVALID_ROI -> "ROI 区域无效"
+    NanoDetInferenceStatus.PHOTO_ASSOCIATION_ERROR -> "照片关联错误"
+    NanoDetInferenceStatus.IMAGE_UNREADABLE -> "照片不可读取"
+    NanoDetInferenceStatus.TEMPLATE_IMAGE_UNREADABLE -> "模板图不可读取"
+    NanoDetInferenceStatus.ABI_UNSUPPORTED -> "当前设备 ABI 不支持"
+    NanoDetInferenceStatus.RUNTIME_UNAVAILABLE -> "推理运行时不可用"
+    NanoDetInferenceStatus.MODEL_UNAVAILABLE -> "模型不可用"
+    NanoDetInferenceStatus.INFERENCE_ERROR -> "推理错误"
+}
+
+internal fun modelClassLabel(classIndex: Int): String = when (classIndex) {
+    0 -> "螺母（类别 0）"
+    1 -> "螺纹（类别 1）"
+    else -> "类别 $classIndex"
+}
+
+private fun inferenceStatusColor(status: NanoDetInferenceStatus?): Color = when (status) {
+    NanoDetInferenceStatus.DETECTED -> PassColor
+    NanoDetInferenceStatus.NO_DETECTION,
+    NanoDetInferenceStatus.DETECTED_BELOW_THRESHOLD -> FailColor
+    null,
+    NanoDetInferenceStatus.ROI_NOT_CONFIGURED,
+    NanoDetInferenceStatus.FEATURE_UNSUPPORTED,
+    NanoDetInferenceStatus.INVALID_ROI,
+    NanoDetInferenceStatus.PHOTO_ASSOCIATION_ERROR,
+    NanoDetInferenceStatus.IMAGE_UNREADABLE,
+    NanoDetInferenceStatus.TEMPLATE_IMAGE_UNREADABLE,
+    NanoDetInferenceStatus.ABI_UNSUPPORTED,
+    NanoDetInferenceStatus.RUNTIME_UNAVAILABLE,
+    NanoDetInferenceStatus.MODEL_UNAVAILABLE,
+    NanoDetInferenceStatus.INFERENCE_ERROR -> FailColor
 }
 
 /**
@@ -336,8 +489,10 @@ private fun ResultChip(
     label: String,
     selected: Boolean,
     color: Color,
+    testTag: String? = null,
     onClick: () -> Unit
 ) {
+    val isResultSelected = selected
     val bgColor = if (selected) color else Color.Transparent
     val textColor = if (selected) Color.White else color
     val borderColor = color
@@ -346,9 +501,11 @@ private fun ResultChip(
         modifier = Modifier
             .height(32.dp)
             .width(48.dp)
+            .then(if (testTag == null) Modifier else Modifier.testTag(testTag))
             .clip(RoundedCornerShape(6.dp))
             .background(bgColor)
             .border(1.dp, borderColor, RoundedCornerShape(6.dp))
+            .semantics { this.selected = isResultSelected }
             .clickable { onClick() },
         contentAlignment = Alignment.Center
     ) {

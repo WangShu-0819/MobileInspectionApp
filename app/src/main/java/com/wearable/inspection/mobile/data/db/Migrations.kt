@@ -167,6 +167,30 @@ val MIGRATION_6_7 = object : Migration(6, 7) {
 }
 
 /**
+ * 数据库 Migration v7 → v8
+ *
+ * 在现有逐 ROI 确认行中保存 NanoDet 结果快照和人工是否改判。
+ * 旧行新增的模型字段保持 null，表示当时未执行模型推理。
+ */
+val MIGRATION_7_8 = object : Migration(7, 8) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("UPDATE view_roi_confirms SET softwareResult = NULL")
+        db.execSQL("ALTER TABLE view_roi_confirms ADD COLUMN softwareTargetClass TEXT")
+        db.execSQL("ALTER TABLE view_roi_confirms ADD COLUMN softwareScore REAL")
+        db.execSQL("ALTER TABLE view_roi_confirms ADD COLUMN softwareThreshold REAL")
+        db.execSQL("ALTER TABLE view_roi_confirms ADD COLUMN softwareDetectionsJson TEXT")
+        db.execSQL("ALTER TABLE view_roi_confirms ADD COLUMN softwareStatus TEXT")
+        db.execSQL("ALTER TABLE view_roi_confirms ADD COLUMN softwareModelVersion TEXT")
+        db.execSQL("ALTER TABLE view_roi_confirms ADD COLUMN softwareModelSummary TEXT")
+        db.execSQL("ALTER TABLE view_roi_confirms ADD COLUMN softwareElapsedMs INTEGER")
+        db.execSQL(
+            "ALTER TABLE view_roi_confirms " +
+                "ADD COLUMN humanChangedModel INTEGER NOT NULL DEFAULT 0"
+        )
+    }
+}
+
+/**
  * 所有 Migration 列表
  * 新增 Migration 时必须在此添加
  */
@@ -177,5 +201,6 @@ val ALL_MIGRATIONS = arrayOf<Migration>(
     MIGRATION_3_4,
     MIGRATION_4_5,
     MIGRATION_5_6,
-    MIGRATION_6_7
+    MIGRATION_6_7,
+    MIGRATION_7_8
 )

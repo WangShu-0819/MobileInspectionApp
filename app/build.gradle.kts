@@ -231,6 +231,7 @@ dependencies {
     // implementation(libs.apache.poi.ooxml)
 
     testImplementation(libs.junit)
+    testImplementation(platform(libs.androidx.compose.bom))
     testImplementation(libs.androidx.test.ext.junit)
     testImplementation(libs.kotlin.test)
     testImplementation(libs.kotlinx.coroutines.test)

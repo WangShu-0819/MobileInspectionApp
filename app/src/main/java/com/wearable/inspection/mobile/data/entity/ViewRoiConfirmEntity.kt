@@ -3,6 +3,7 @@ package com.wearable.inspection.mobile.data.entity
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
+import androidx.room.ColumnInfo
 
 /**
  * View ROI 人工确认记录实体
@@ -44,5 +45,15 @@ data class ViewRoiConfirmEntity(
     val humanResult: String,
     val confirmTime: Long,
     val overallResult: String,
-    val overallConfirmTime: Long
+    val overallConfirmTime: Long,
+    val softwareTargetClass: String? = null,
+    val softwareScore: Float? = null,
+    val softwareThreshold: Float? = null,
+    val softwareDetectionsJson: String? = null,
+    val softwareStatus: String? = null,
+    val softwareModelVersion: String? = null,
+    val softwareModelSummary: String? = null,
+    val softwareElapsedMs: Long? = null,
+    @ColumnInfo(defaultValue = "0")
+    val humanChangedModel: Boolean = false
 )

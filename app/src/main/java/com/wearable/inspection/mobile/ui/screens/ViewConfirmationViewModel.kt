@@ -16,6 +16,8 @@ import com.wearable.inspection.mobile.detection.NanoDetDecisionPolicy
 import com.wearable.inspection.mobile.detection.NanoDetInferenceStatus
 import com.wearable.inspection.mobile.detection.NanoDetRoiInferenceResult
 import com.wearable.inspection.mobile.detection.NanoDetRoiInferenceService
+import com.wearable.inspection.mobile.detection.NanoDetSuggestion
+import org.json.JSONArray
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -86,6 +88,7 @@ class ViewConfirmationViewModel(
 
     private var photoGeometry: RoiCoordinateMapper.PhotoGeometry? = null
     private var templateExifOrientation: Int? = null
+    private var photoAssociationValid = false
 
     init {
         loadData()
@@ -102,15 +105,16 @@ class ViewConfirmationViewModel(
                     photo.viewIndex == viewIndex &&
                     photo.templateId == templateId
                 if (!photoMatchesView) {
+                    rois = repository.getRois(templateId).filter { it.enabled }
                     errorMessage = "照片记录与当前视角不一致"
                     setInferenceFailure(NanoDetInferenceStatus.PHOTO_ASSOCIATION_ERROR, errorMessage!!)
                     isLoaded = true
                     return@launch
                 }
-
-                // 加载模板的 ROI 列表
+                photoAssociationValid = true
                 val roiList = repository.getRois(templateId).filter { it.enabled }
                 rois = roiList
+                restoreManualSelections(repository.getViewRoiConfirmsByPhoto(batchId, photoId), roiList)
 
                 // 图片尺寸读取和 ROI 裁剪都可能访问/解码大 JPEG，必须离开主线程。
                 val geometry = withContext(Dispatchers.IO) {
@@ -151,30 +155,53 @@ class ViewConfirmationViewModel(
                 }
                 roiBitmaps.putAll(loadedBitmaps)
 
-                isLoaded = true
-                val detected = withContext(Dispatchers.IO) {
-                    inferenceService.inferSavedPhoto(photoPath, roiList, templateExifOrientation)
-                }
-                inferenceResults.putAll(detected)
-            } catch (e: Exception) {
-                if (!isLoaded) {
-                    errorMessage = "加载失败：${e.message}"
-                    setInferenceFailure(NanoDetInferenceStatus.IMAGE_UNREADABLE, errorMessage!!)
-                }
-                else {
-                    rois.forEach { roi ->
-                        inferenceResults[roi.id] = NanoDetRoiInferenceResult(
+                try {
+                    val detected = withContext(Dispatchers.IO) {
+                        inferenceService.inferSavedPhoto(photoPath, roiList, templateExifOrientation)
+                    }
+                    roiList.forEach { roi ->
+                        inferenceResults[roi.id] = detected[roi.id] ?: NanoDetRoiInferenceResult(
                             roiId = roi.id,
                             status = NanoDetInferenceStatus.INFERENCE_ERROR,
                             modelSuggestion = null,
                             matchingScore = null,
                             targetClassIndex = NanoDetDecisionPolicy.classIndex(RoiTargetType.fromName(roi.targetType)),
-                            detail = e.message ?: "NanoDet 推理失败"
+                            detail = "推理服务未返回该 ROI 结果"
                         )
                     }
+                } catch (e: Exception) {
+                    errorMessage = "NanoDet 推理失败：${e.message ?: "未知错误"}"
+                    setInferenceFailure(NanoDetInferenceStatus.INFERENCE_ERROR, errorMessage!!)
                 }
                 isLoaded = true
+            } catch (e: Exception) {
+                errorMessage = "加载失败：${e.message ?: "未知错误"}"
+                setInferenceFailure(NanoDetInferenceStatus.INFERENCE_ERROR, errorMessage!!)
+                isLoaded = true
             }
+        }
+    }
+
+    private fun restoreManualSelections(
+        saved: List<ViewRoiConfirmEntity>,
+        currentRois: List<RoiDefinitionEntity>
+    ) {
+        val matchingRows = saved.filter { row ->
+            row.batchId == batchId &&
+                row.photoId == photoId &&
+                row.photoPath == photoPath &&
+                row.viewIndex == viewIndex &&
+                row.templateId == templateId &&
+                currentRois.any { it.id == row.roiId }
+        }
+        matchingRows.forEach { row ->
+            if (row.humanResult == "OK" || row.humanResult == "NG") {
+                roiResults[row.roiId] = row.humanResult
+            }
+        }
+        val overallValues = matchingRows.map { it.overallResult }.distinct()
+        if (overallValues.size == 1 && overallValues.single() in setOf("OK", "NG")) {
+            overallResult = overallValues.single()
         }
     }
 
@@ -202,6 +229,7 @@ class ViewConfirmationViewModel(
      * 所有 ROI 和总体结果是否已选择
      */
     fun isAllConfirmed(): Boolean {
+        if (!isLoaded || !photoAssociationValid) return false
         if (overallResult == null) return false
         return rois.all { roiResults.containsKey(it.id) }
     }
@@ -211,6 +239,10 @@ class ViewConfirmationViewModel(
      */
     fun saveConfirmation() {
         if (isSaving || saveCompleted) return
+        if (!isLoaded || !photoAssociationValid) {
+            errorMessage = "照片关联无效，不能保存人工终审"
+            return
+        }
         if (rois.isEmpty()) {
             errorMessage = "当前视角无 ROI，无需人工确认"
             return
@@ -247,35 +279,38 @@ class ViewConfirmationViewModel(
                         put("bottom", pixelRect.bottom)
                     }.toString()
 
-                    ViewRoiConfirmEntity(
+                    buildViewRoiConfirmEntity(
                         batchId = batchId,
                         photoId = photoId,
                         photoPath = photoPath,
                         viewIndex = viewIndex,
                         templateId = templateId,
                         templateName = templateName,
-                        roiId = roi.id,
-                        roiName = roi.name,
-                        roiTargetType = roi.targetType,
-                        roiNormalizedRect = roi.normalizedRect,
+                        roi = roi,
                         roiPixelRect = pixelRectJson,
-                        softwareResult = null,
+                        inference = inferenceResults[roi.id],
                         humanResult = roiResults.getValue(roi.id),
-                        confirmTime = now,
                         overallResult = overall,
-                        overallConfirmTime = now
+                        confirmedAt = now
                     )
                 }
 
-                repository.insertViewRoiConfirms(confirms)
-                val persisted = repository.getViewRoiConfirmsByView(batchId, viewIndex)
-                check(confirms.all { expected ->
+                repository.replaceViewRoiConfirmsForPhoto(batchId, photoId, confirms)
+                val persisted = repository.getViewRoiConfirmsByPhoto(batchId, photoId)
+                check(persisted.size == confirms.size && confirms.all { expected ->
                     persisted.any { actual ->
-                        actual.photoId == photoId &&
-                            actual.templateId == templateId &&
+                        actual.batchId == expected.batchId &&
+                            actual.photoId == expected.photoId &&
+                            actual.photoPath == expected.photoPath &&
+                            actual.viewIndex == expected.viewIndex &&
+                            actual.templateId == expected.templateId &&
                             actual.roiId == expected.roiId &&
                             actual.humanResult == expected.humanResult &&
-                            actual.overallResult == expected.overallResult
+                            actual.overallResult == expected.overallResult &&
+                            actual.softwareResult == expected.softwareResult &&
+                            actual.softwareStatus == expected.softwareStatus &&
+                            actual.softwareDetectionsJson == expected.softwareDetectionsJson &&
+                            actual.humanChangedModel == expected.humanChangedModel
                     }
                 }) { "确认记录保存校验失败" }
                 saveCompleted = true
@@ -332,4 +367,100 @@ class ViewConfirmationViewModel(
             }
         }
     }
+}
+
+internal fun buildViewRoiConfirmEntity(
+    batchId: String,
+    photoId: Long,
+    photoPath: String,
+    viewIndex: Int,
+    templateId: String,
+    templateName: String,
+    roi: RoiDefinitionEntity,
+    roiPixelRect: String,
+    inference: NanoDetRoiInferenceResult?,
+    humanResult: String,
+    overallResult: String,
+    confirmedAt: Long
+): ViewRoiConfirmEntity {
+    require(humanResult == "OK" || humanResult == "NG")
+    require(overallResult == "OK" || overallResult == "NG")
+    val detectionsJson = inference?.detections?.let { detections ->
+        JSONArray().apply {
+            detections.forEach { detection ->
+                put(JSONObject().apply {
+                    put("classIndex", detection.classIndex)
+                    put("className", detection.className)
+                    put("score", detection.score.toDouble())
+                    put("point", detection.point)
+                    put("roiBox", boxJson(detection.roiBox))
+                    put("imageBox", boxJson(detection.imageBox))
+                })
+            }
+        }.toString()
+    }
+    val modelSummary = inference?.let { result ->
+        JSONObject().apply {
+            put("modelVersion", result.modelVersion)
+            put("modelParamSha256", result.modelParamSha256)
+            put("modelSha256", result.modelSha256)
+            put("inputShape", result.inputShape)
+            put("outputBlob", result.outputBlob)
+            put("outputShape", result.outputShape)
+            put("candidateThreshold", result.candidateThreshold.toDouble())
+            put("imageWidth", result.imageWidth ?: JSONObject.NULL)
+            put("imageHeight", result.imageHeight ?: JSONObject.NULL)
+            put("exifOrientation", result.exifOrientation ?: JSONObject.NULL)
+            put("roiBounds", result.roiBounds?.let { bounds -> JSONArray(bounds) } ?: JSONObject.NULL)
+            put("detail", result.detail ?: JSONObject.NULL)
+        }.toString()
+    }
+    val targetClass = inference?.targetClassIndex?.let { index ->
+        when (index) {
+            0 -> "NUT"
+            1 -> "THREAD"
+            else -> "CLASS_$index"
+        }
+    }
+    val decisionWasApplied = inference?.status in setOf(
+        NanoDetInferenceStatus.DETECTED,
+        NanoDetInferenceStatus.DETECTED_BELOW_THRESHOLD,
+        NanoDetInferenceStatus.NO_DETECTION
+    )
+
+    return ViewRoiConfirmEntity(
+        batchId = batchId,
+        photoId = photoId,
+        photoPath = photoPath,
+        viewIndex = viewIndex,
+        templateId = templateId,
+        templateName = templateName,
+        roiId = roi.id,
+        roiName = roi.name,
+        roiTargetType = roi.targetType,
+        roiNormalizedRect = roi.normalizedRect,
+        roiPixelRect = roiPixelRect,
+        softwareResult = inference?.modelSuggestion?.name,
+        humanResult = humanResult,
+        confirmTime = confirmedAt,
+        overallResult = overallResult,
+        overallConfirmTime = confirmedAt,
+        softwareTargetClass = targetClass,
+        softwareScore = inference?.matchingScore,
+        softwareThreshold = if (decisionWasApplied) inference?.threshold else null,
+        softwareDetectionsJson = detectionsJson,
+        softwareStatus = inference?.status?.name,
+        softwareModelVersion = inference?.modelVersion,
+        softwareModelSummary = modelSummary,
+        softwareElapsedMs = inference?.elapsedMs,
+        humanChangedModel = inference?.modelSuggestion != null &&
+            inference.modelSuggestion != NanoDetSuggestion.valueOf(humanResult)
+    )
+}
+
+private fun boxJson(box: com.wearable.inspection.mobile.detection.NanoDetBox) = JSONObject().apply {
+    put("left", box.left)
+    put("top", box.top)
+    put("right", box.right)
+    put("bottom", box.bottom)
 }

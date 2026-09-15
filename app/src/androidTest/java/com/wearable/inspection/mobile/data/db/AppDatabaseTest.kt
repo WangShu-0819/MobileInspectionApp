@@ -5,6 +5,9 @@ import androidx.room.testing.MigrationTestHelper
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.wearable.inspection.mobile.data.dao.*
+import com.wearable.inspection.mobile.data.entity.CaptureBatchEntity
+import com.wearable.inspection.mobile.data.entity.ViewRoiConfirmEntity
+import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertEquals
@@ -94,5 +97,106 @@ class AppDatabaseTest {
             assertEquals(1, cursor.getInt(1))
         }
         migrated.close()
+    }
+
+    @Test
+    fun migration7To8_keepsManualRowsAndLeavesOldModelUnexecuted() {
+        val databaseName = "view_roi_model_result_migration_test"
+        migrationHelper.createDatabase(databaseName, 7).apply {
+            execSQL(
+                "INSERT INTO capture_batches (batchId, partId, partName, startTime, viewCount) " +
+                    "VALUES ('batch-v7', NULL, '旧批次', 10, 1)"
+            )
+            execSQL(
+                "INSERT INTO view_roi_confirms " +
+                    "(id, batchId, photoId, photoPath, viewIndex, templateId, templateName, roiId, roiName, " +
+                    "roiTargetType, roiNormalizedRect, roiPixelRect, softwareResult, humanResult, confirmTime, " +
+                    "overallResult, overallConfirmTime) " +
+                    "VALUES (4, 'batch-v7', 77, '/old/photo.jpg', 1, 'tpl-old', '旧视角', 'roi-old', '旧 ROI', " +
+                    "'THREAD', '{}', '{}', 'OK', 'NG', 123, 'OK', 124)"
+            )
+            close()
+        }
+
+        val migrated = migrationHelper.runMigrationsAndValidate(
+            databaseName,
+            8,
+            true,
+            MIGRATION_7_8,
+        )
+        migrated.query(
+            "SELECT batchId, photoId, viewIndex, templateId, roiId, softwareResult, humanResult, " +
+                "overallResult, softwareTargetClass, softwareScore, softwareThreshold, softwareDetectionsJson, " +
+                "softwareStatus, softwareModelVersion, softwareModelSummary, softwareElapsedMs, humanChangedModel " +
+                "FROM view_roi_confirms WHERE id = 4"
+        ).use { cursor ->
+            assertEquals(true, cursor.moveToFirst())
+            assertEquals("batch-v7", cursor.getString(0))
+            assertEquals(77L, cursor.getLong(1))
+            assertEquals(1, cursor.getInt(2))
+            assertEquals("tpl-old", cursor.getString(3))
+            assertEquals("roi-old", cursor.getString(4))
+            assertEquals(null, cursor.getString(5))
+            assertEquals("NG", cursor.getString(6))
+            assertEquals("OK", cursor.getString(7))
+            for (column in 8..15) assertEquals(true, cursor.isNull(column))
+            assertEquals(0, cursor.getInt(16))
+        }
+        migrated.close()
+        InstrumentationRegistry.getInstrumentation().targetContext.deleteDatabase(databaseName)
+    }
+
+    @Test
+    fun confirmationRows_reloadByBatchAndPhotoStableAssociation() = runBlocking {
+        db.captureBatchDao().insert(CaptureBatchEntity("batch-reload", null, "零件"))
+        val first = ViewRoiConfirmEntity(
+            batchId = "batch-reload",
+            photoId = 101,
+            photoPath = "/capture/101.jpg",
+            viewIndex = 2,
+            templateId = "template-2",
+            templateName = "侧面",
+            roiId = "roi-1",
+            roiName = "螺纹",
+            roiTargetType = "THREAD",
+            roiNormalizedRect = "{}",
+            roiPixelRect = "{}",
+            softwareResult = "OK",
+            humanResult = "NG",
+            confirmTime = 1000,
+            overallResult = "OK",
+            overallConfirmTime = 1001,
+            softwareTargetClass = "THREAD",
+            softwareScore = 0.91f,
+            softwareThreshold = 0.37f,
+            softwareDetectionsJson = "[{\"className\":\"thread\"}]",
+            softwareStatus = "DETECTED",
+            softwareModelVersion = "nanodet-opt2",
+            softwareModelSummary = "{\"outputBlob\":\"out0\"}",
+            softwareElapsedMs = 33,
+            humanChangedModel = true
+        )
+        val sameViewOtherPhoto = first.copy(
+            id = 0,
+            photoId = 102,
+            photoPath = "/capture/102.jpg",
+            humanResult = "OK",
+            humanChangedModel = false
+        )
+        db.viewRoiConfirmDao().insertAll(listOf(first, sameViewOtherPhoto))
+
+        val reloaded = db.viewRoiConfirmDao().getByBatchAndPhoto("batch-reload", 101)
+
+        assertEquals(1, reloaded.size)
+        assertEquals("batch-reload", reloaded.single().batchId)
+        assertEquals(101L, reloaded.single().photoId)
+        assertEquals("template-2", reloaded.single().templateId)
+        assertEquals(2, reloaded.single().viewIndex)
+        assertEquals("roi-1", reloaded.single().roiId)
+        assertEquals("OK", reloaded.single().softwareResult)
+        assertEquals("NG", reloaded.single().humanResult)
+        assertEquals("OK", reloaded.single().overallResult)
+        assertEquals("[{\"className\":\"thread\"}]", reloaded.single().softwareDetectionsJson)
+        assertEquals(true, reloaded.single().humanChangedModel)
     }
 }

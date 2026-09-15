@@ -16,6 +16,9 @@ interface ViewRoiConfirmDao {
     @Query("SELECT * FROM view_roi_confirms WHERE batchId = :batchId AND viewIndex = :viewIndex ORDER BY roiId ASC")
     suspend fun getByBatchAndViewIndex(batchId: String, viewIndex: Int): List<ViewRoiConfirmEntity>
 
+    @Query("SELECT * FROM view_roi_confirms WHERE batchId = :batchId AND photoId = :photoId ORDER BY roiId ASC")
+    suspend fun getByBatchAndPhoto(batchId: String, photoId: Long): List<ViewRoiConfirmEntity>
+
     @Query("SELECT DISTINCT viewIndex FROM view_roi_confirms WHERE batchId = :batchId ORDER BY viewIndex ASC")
     suspend fun getConfirmedViewIndices(batchId: String): List<Int>
 
@@ -24,6 +27,19 @@ interface ViewRoiConfirmDao {
 
     @Query("DELETE FROM view_roi_confirms WHERE batchId = :batchId AND viewIndex = :viewIndex")
     suspend fun deleteByBatchAndViewIndex(batchId: String, viewIndex: Int)
+
+    @Query("DELETE FROM view_roi_confirms WHERE batchId = :batchId AND photoId = :photoId")
+    suspend fun deleteByBatchAndPhoto(batchId: String, photoId: Long)
+
+    @Transaction
+    suspend fun replaceByBatchAndPhoto(
+        batchId: String,
+        photoId: Long,
+        confirms: List<ViewRoiConfirmEntity>
+    ) {
+        deleteByBatchAndPhoto(batchId, photoId)
+        insertAll(confirms)
+    }
 
     @Query("DELETE FROM view_roi_confirms WHERE batchId = :batchId")
     suspend fun deleteByBatchId(batchId: String)
