@@ -10,7 +10,7 @@
 
 真实归档样例：`C:\Users\ws\AppData\Local\Temp\inspection-export7435539282332082454`，批次 `batch.zip` 与独立 DPM `independent.zip` 均以真实 `ZipInputStream` 解包。成功 DPM frame 为 4 bytes、SHA-256 `952B50FD4FE30AEE9420F479FF3F4C6268F2865EE65A82E1F8E157ABC1455272`；成功 DPM ROI 为 4 bytes、SHA-256 `EE10DA4AEFE61A37DF1DEE937CA3221AFA3B2351F9EA34EDBBB769573C6785F7`；批次与独立 ZIP 字节完全相等。测试确认 NO_READ、无 batchId、缺失源帧未进入批次 DPM 目录。
 
-本轮结果包实际修改文件：`InspectionZipExportService.kt`、`InspectionExcelExporter.kt`、`InspectionZipExportArchiveTest.kt`。定向结果 JVM 104/104 通过；全量 JVM 792 项完成、779 通过、13 失败、5 跳过，失败属于工作区既有并行改动/基线断言。APK 为 `app/build/outputs/apk/debug/app-debug.apk`，2026-09-15 13:12:25 +08:00，276579040 bytes，SHA-256 `D2D7B57FF523EA82D48E7F1EEDCE4ED1FCAB7D32EC5CC192CAD2DEED06B6B35B`。未运行 ADB、connectedDebugAndroidTest 或真机；未提交 Git。
+本轮结果包实际修改文件：`InspectionZipExportService.kt`、`InspectionExcelExporter.kt`、`InspectionZipExportArchiveTest.kt`；为支持扫描启动时显式 `batchId` 关联，配套修改 `DpmScanEvidenceEntity`、DAO、Repository、`DpmScanViewModel`、DPM 导航入口和 v8→v9 migration，并加入 schema/migration 契约测试。定向结果 JVM 104/104 通过；全量 JVM 792 项完成、779 通过、13 失败、5 跳过，失败属于工作区既有并行改动/基线断言。APK 为 `app/build/outputs/apk/debug/app-debug.apk`，2026-09-15 13:12:25 +08:00，276579040 bytes，SHA-256 `D2D7B57FF523EA82D48E7F1EEDCE4ED1FCAB7D32EC5CC192CAD2DEED06B6B35B`。未运行 ADB、connectedDebugAndroidTest 或真机；已提交 Git：`f723da0e`。
 
 ---
 

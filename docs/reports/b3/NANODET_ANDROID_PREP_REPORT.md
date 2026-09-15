@@ -236,4 +236,4 @@ Android 输出框坐标（原图像素，`[x1,y1,x2,y2]`）及逐框最大绝对
 NanoDet 已沿用现有 `ViewRoiConfirmEntity` 快照进入统一批次 CSV：全部检测框逐行保留，模型建议与人工最终结果/改判/确认时间分列，模型失败、无框、FEATURE、未配置和缺图均不伪造 OK/NG。真实归档测试覆盖多 View、多 ROI、双向改判与总体人工结果独立；最新样例目录为 `C:\Users\ws\AppData\Local\Temp\inspection-export7435539282332082454`。本轮同时修正照片行总体人工结果/时间、照片 ZIP 路径/状态的 manifest 列位，并将 DPM 批次证据限制为严格 batchId 相等且源帧真实非空。
 
 本轮未重复 NCNN smoke、模型转换或 connected tests。结果相关 JVM 104/104 通过，Kotlin 编译和 Debug APK 构建通过；APK 为 2026-09-15 13:12:25 +08:00，SHA-256 `D2D7B57FF523EA82D48E7F1EEDCE4ED1FCAB7D32EC5CC192CAD2DEED06B6B35B`。全量 JVM 792 项完成、779 通过、13 失败、5 跳过；失败属于工作区既有并行改动/基线断言。
-- 未运行 ADB、connectedDebugAndroidTest 或真机；未提交 Git，工作区其他改动保留，等待用户验收。
+- 未运行 ADB、connectedDebugAndroidTest 或真机；结果包扩展实现已提交 Git：`f723da0e`，工作区其他改动保留，等待用户验收。

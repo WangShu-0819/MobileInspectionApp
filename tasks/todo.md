@@ -4,7 +4,7 @@
 
 已完成：审计并收口候选改动；批次 ZIP 现在按稳定 `batchId/photoId/viewIndex/roiId` 导出全部现场照片、多 View/多 ROI、NanoDet 全检测框与模型/人工分离结果、照片总体人工结果，以及仅由扫描启动时显式传入且严格相等 `batchId`、SUCCESS、非空码值、合法来源、真实非空源帧的 DPM 证据。DPM 原图和扫描 ROI 从 `filesDir/dpm_evidence` 原路径按字节复制；独立 `DpmEvidenceExportService` ZIP 保持独立。新增/沿用 v8→v9 可空关联字段和旧数据 migration 回归、真实 ZipInputStream 解包/字节比较回归；同时修正统一 CSV 照片行列位。
 
-验证：定向结果 JVM 104 项通过；真实 ZIP 归档测试通过；`:app:compileDebugKotlin`、`:app:assembleDebug` 通过。全量 JVM 792 项完成，779 通过、13 项失败、5 项跳过；13 项属于工作区既有并行改动/基线断言，不归因于本任务。未运行 connectedDebugAndroidTest、ADB、安装/启动/停止真机应用。APK：`app/build/outputs/apk/debug/app-debug.apk`，2026-09-15 13:12:25 +08:00，276579040 bytes，SHA-256 `D2D7B57FF523EA82D48E7F1EEDCE4ED1FCAB7D32EC5CC192CAD2DEED06B6B35B`。真实 ZIP 样例：`C:\Users\ws\AppData\Local\Temp\inspection-export7435539282332082454`。报告见 B2 View、B2 追溯计划和 B3 DPM/NanoDet 报告追加章节。未提交 Git；其它已有改动保留。
+验证：定向结果 JVM 104 项通过；真实 ZIP 归档测试通过；`:app:compileDebugKotlin`、`:app:assembleDebug` 通过。全量 JVM 792 项完成，779 通过、13 项失败、5 项跳过；13 项属于工作区既有并行改动/基线断言，不归因于本任务。未运行 connectedDebugAndroidTest、ADB、安装/启动/停止真机应用。APK：`app/build/outputs/apk/debug/app-debug.apk`，2026-09-15 13:12:25 +08:00，276579040 bytes，SHA-256 `D2D7B57FF523EA82D48E7F1EEDCE4ED1FCAB7D32EC5CC192CAD2DEED06B6B35B`。真实 ZIP 样例：`C:\Users\ws\AppData\Local\Temp\inspection-export7435539282332082454`。报告见 B2 View、B2 追溯计划和 B3 DPM/NanoDet 报告追加章节。已提交 Git：`f723da0e`；其它已有改动保留。
 
 ---
 
