@@ -1,6 +1,7 @@
 package com.wearable.inspection.mobile.data.export
 
 import android.content.Context
+import android.util.Log
 import com.wearable.inspection.mobile.data.entity.DpmScanEvidenceEntity
 import com.wearable.inspection.mobile.data.repository.InspectionRepository
 import java.io.File
@@ -35,10 +36,14 @@ class DpmEvidenceExportService(
      */
     suspend fun exportEvidenceZip(outputFile: File): DpmEvidenceExportResult {
         // 只导出通过解码器内部 ECC 的实际成功照片；历史 NO_READ/孤立路径不进入 ZIP。
-        val allEvidence = repository.getAllDpmScanEvidence()
+        val queriedEvidence = repository.getAllDpmScanEvidence()
+        val allEvidence = queriedEvidence
             .filter(::isExportableSuccess)
             .sortedWith(compareBy<DpmScanEvidenceEntity> { it.scanSessionId }.thenBy { it.id }.thenBy { it.frameTimeMs })
+        Log.i(TAG, "exportEvidenceZip: queryRows=${queriedEvidence.size}, validRows=${allEvidence.size}")
         if (allEvidence.isEmpty()) {
+            outputFile.delete()
+            Log.i(TAG, "exportEvidenceZip: result=Empty reason=no valid SUCCESS evidence with usable files")
             return DpmEvidenceExportResult.Empty
         }
 
@@ -60,6 +65,9 @@ class DpmEvidenceExportService(
                     )
                     val frameZipPath = frameEntryName.takeIf { frameStatus == "已导出" }.orEmpty()
                     if (frameStatus == "已导出") exportedCount++ else missingCount++
+                    if (frameStatus != "已导出") {
+                        throw IllegalStateException("证据原图在导出时不可用：sessionId=${evidence.scanSessionId}")
+                    }
 
                     // 处理 ROI 裁切图（可选）
                     var roiZipPath = ""
@@ -73,6 +81,9 @@ class DpmEvidenceExportService(
                         )
                         roiZipPath = roiEntryName.takeIf { roiStatus == "已导出" }.orEmpty()
                         if (roiStatus == "已导出") exportedCount++ else missingCount++
+                        if (roiStatus != "已导出") {
+                            throw IllegalStateException("证据 ROI 在导出时不可用：sessionId=${evidence.scanSessionId}")
+                        }
                     }
 
                     manifestRows += DpmEvidenceManifestRow(
@@ -110,6 +121,7 @@ class DpmEvidenceExportService(
             )
         } catch (e: Exception) {
             outputFile.delete()
+            Log.e(TAG, "exportEvidenceZip: result=Failure", e)
             DpmEvidenceExportResult.Failure("导出失败：${e.localizedMessage ?: "未知错误"}")
         }
     }
@@ -171,7 +183,13 @@ class DpmEvidenceExportService(
         if (evidence.status != "SUCCESS" || evidence.decodedContent.isNullOrBlank()) return false
         if (evidence.decodeSource !in setOf("ZXING", "ML_KIT", "GRID")) return false
         val frame = File(evidence.originalImagePath)
-        return frame.isFile && frame.length() > 0L
+        if (!frame.isFile || frame.length() == 0L) return false
+        val roiPath = evidence.roiImagePath
+        return roiPath.isNullOrBlank() || File(roiPath).let { it.isFile && it.length() > 0L }
+    }
+
+    companion object {
+        private const val TAG = "DpmEvidenceExport"
     }
 
     /**

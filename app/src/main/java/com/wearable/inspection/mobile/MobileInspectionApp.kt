@@ -18,7 +18,8 @@ import com.wearable.inspection.mobile.data.settings.SettingsStore
  */
 class MobileInspectionApp : Application() {
 
-    private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    /** 进程级受控任务作用域；用于页面销毁后仍必须完成的持久化。 */
+    val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     val database: AppDatabase by lazy { AppDatabase.get(this) }
     val repository: InspectionRepository by lazy {
@@ -56,7 +57,7 @@ class MobileInspectionApp : Application() {
         }
 
         // 预填充数据 - 使用 SupervisorJob 防止种子数据异常导致应用崩溃
-        appScope.launch {
+        applicationScope.launch {
             try {
                 repository.seedIfEmpty()
             } catch (e: Exception) {

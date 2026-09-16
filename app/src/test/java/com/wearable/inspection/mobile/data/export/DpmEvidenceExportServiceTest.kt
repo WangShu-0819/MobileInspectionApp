@@ -194,7 +194,7 @@ class DpmEvidenceExportServiceTest {
         assertTrue("导出必须先筛选成功证据", source.contains("filter(::isExportableSuccess)"))
         assertTrue("导出必须校验 SUCCESS", source.contains("evidence.status != \"SUCCESS\""))
         assertTrue("导出必须拒绝空码值", source.contains("decodedContent.isNullOrBlank()"))
-        assertTrue("导出必须校验实际源帧文件", source.contains("frame.isFile") && source.contains("frame.length() > 0L"))
+        assertTrue("导出必须校验实际源帧文件", source.contains("frame.isFile") && source.contains("frame.length() == 0L"))
     }
 
     @Test
