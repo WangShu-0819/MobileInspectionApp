@@ -1,5 +1,7 @@
 package com.wearable.inspection.mobile.ui.screens
 
+import android.content.Context
+import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -90,6 +92,23 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+
+/** 将已完成的本地 ZIP 写入 SAF；目标流为空或写入字节数不完整时抛错。 */
+internal fun copyZipToSafUri(context: Context, uri: Uri, source: File): Long {
+    check(source.isFile && source.length() > 0L) { "ZIP 文件不存在或为空" }
+    val expectedBytes = source.length()
+    val copiedBytes = context.contentResolver.openOutputStream(uri)
+        ?.use { output -> source.inputStream().use { input -> input.copyTo(output) } }
+        ?: throw IllegalStateException("无法打开所选保存位置")
+    check(copiedBytes == expectedBytes && copiedBytes > 0L) { "ZIP 写入为空或不完整" }
+    return copiedBytes
+}
+
+/** CreateDocument 已预创建目标；Empty/Failure/写入异常都必须删除该文档和临时 ZIP。 */
+internal fun cleanupSafExportFailure(context: Context, uri: Uri, tempFile: File) {
+    tempFile.delete()
+    runCatching { context.contentResolver.delete(uri, null, null) }
+}
 
 /**
  * 批次时间筛选选项
@@ -193,23 +212,15 @@ fun TraceRecordsScreen() {
                 val exportResult = dpmExportService.exportEvidenceZip(tempFile)
                 if (exportResult is DpmEvidenceExportResult.Success) {
                     try {
-                        val outputStream = context.contentResolver.openOutputStream(uri)
-                            ?: throw IllegalStateException("无法打开所选保存位置")
-                        outputStream.use { os ->
-                            tempFile.inputStream().use { it.copyTo(os) }
-                        }
+                        copyZipToSafUri(context, uri, tempFile)
                         tempFile.delete()
                         exportResult
                     } catch (e: Exception) {
-                        tempFile.delete()
-                        runCatching { context.contentResolver.delete(uri, null, null) }
+                        cleanupSafExportFailure(context, uri, tempFile)
                         DpmEvidenceExportResult.Failure("写入文件失败：${e.localizedMessage ?: "未知错误"}")
                     }
                 } else {
-                    tempFile.delete()
-                    // CreateDocument creates an empty document before export starts.
-                    // Remove it when there is no data or ZIP generation fails.
-                    runCatching { context.contentResolver.delete(uri, null, null) }
+                    cleanupSafExportFailure(context, uri, tempFile)
                     exportResult
                 }
             }
@@ -254,17 +265,15 @@ fun TraceRecordsScreen() {
                 }
                 if (exportResult is InspectionExportResult.Success) {
                     try {
-                        context.contentResolver.openOutputStream(uri)?.use { os ->
-                            tempFile.inputStream().use { it.copyTo(os) }
-                        }
+                        copyZipToSafUri(context, uri, tempFile)
                         tempFile.delete()
                         exportResult
                     } catch (e: Exception) {
-                        tempFile.delete()
+                        cleanupSafExportFailure(context, uri, tempFile)
                         InspectionExportResult.Failure("写入文件失败：${e.localizedMessage}")
                     }
                 } else {
-                    tempFile.delete()
+                    cleanupSafExportFailure(context, uri, tempFile)
                     exportResult
                 }
             }

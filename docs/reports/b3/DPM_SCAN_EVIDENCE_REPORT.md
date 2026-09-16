@@ -1,7 +1,7 @@
 # DPM 扫码会话图像证据留存 — 实现报告
 
 **任务**：DPM 扫码会话图像证据留存
-**状态**：纠正版实现完成，定向自动化验证通过，等待用户验收
+**状态**：**USER_ACCEPTED**（2026-09-16；DPM 成功帧留存及其批次 ZIP 关联闭环已由用户验收。2026-09-15 的阶段记录作为历史保留。）
 **日期**：2026-09-15
 
 ---
@@ -208,6 +208,14 @@ DisposableEffect.onDispose {
 
 本项未新增 Room schema/migration；沿用现有 `dpm_scan_evidence` 表。未实现自定义 ECC、纠错像素图、DPM 人工码值复核或现场采集 ZIP 合并。工作区其他改动保留，未提交 Git，等待用户验收。
 
+## 2026-09-15 真实设备取证补充
+
+使用新包 `com.wearable.inspection.mobile` 和 APK `app/build/outputs/apk/debug/app-debug.apk`（2026-09-15 17:56:29 +08:00，232,676,681 bytes，SHA-256 `3AE7821D627AC21AF8C82D962D4D568CAEE23BDEB7083822539A6631D9ADEC3D`）完成现场扫码。前台为 `com.wearable.inspection.mobile/.MainActivity`，新包 PID `16456`，旧包 PID 为空。
+
+设备数据库快照 `evidence_dpm_current/06_mobile_inspection_db` 有 11 条 DPM 成功行；每条均为非空码值、`SUCCESS`、`GRID`，并对应非空原图/ROI 文件。独立导出 `/storage/emulated/0/Download/inspection-flow-test/dpm_evidence_20260915_182204.zip` 解包得到 23 entries（22 张图 + `manifest.csv`），本地副本 `14_independent_dpm.zip` 与设备文件 SHA-256 均为 `0E9120A97C373FB0EE432F833030890A37F7E74B060E612E1CE68DB7C04B3948`。
+
+本次扫描入口没有显式 `batchId`，11 条记录的 `batchId` 均为 `NULL`；因此实际批次包 `24_batch_batch_17_(2)_actual.zip` 不含 `dpm/` entries。这符合当前稳定关联边界：批次导出只接受启动时显式传入且严格相等的 `batchId`，不按零件、时间或列表位置推断。批次合并仍需在有活跃 batchId 的现场采集上下文实测，当前不标记为设备实测通过。
+
 ## 2026-09-15 结果包关联补充
 
 现场采集结果 ZIP 已接入现有 DPM 成功证据，但独立 `DpmEvidenceExportService` ZIP 保持不变。批次导出只消费 `batchId` 严格相等、状态 `SUCCESS`、非空码值、合法 `ZXING/ML_KIT/GRID` 来源且源帧真实非空的证据；NO_READ、无 batchId、跨批次和缺失源帧不进入批次 DPM 图片目录。DPM 原图和 ROI 仍从 `filesDir/dpm_evidence` 原路径按字节复制，未改变扫码算法、ECC 语义或会话保存流程。
@@ -221,3 +229,53 @@ DisposableEffect.onDispose {
 `InspectionZipExportService` 仅查询明确相等 batchId 的证据，并再次过滤 SUCCESS、非空码值、合法 ZXING/ML_KIT/GRID 来源和真实源帧路径；原图/ROI 由独立证据目录原样复制，不重新压缩。独立 `DpmEvidenceExportService` 仍按 scanSessionId 生成独立 ZIP。真实归档样例：`C:\Users\ws\AppData\Local\Temp\inspection-export9834766818192113490`；隔离样例：`C:\Users\ws\AppData\Local\Temp\inspection-export-isolation11035632669832920657`。`ZipInputStream` 确认两个 ZIP 的 DPM 成功帧和 ROI 字节完全相同，NO_READ/无 batchId 不进入批次 ZIP，manifest/CSV 均真实存在且可解压。
 
 本轮验证：定向 JVM 81 项通过；`:app:compileDebugKotlin`、`:app:assembleDebug` 通过。APK：`D:\study\Textile_defects\Wearable Inspection\MobileInspectionApp\app\build\outputs\apk\debug\app-debug.apk`，2026-09-15 12:07:35 +08:00，276579040 bytes，SHA-256 `6E8653FEDC6AEC5B7757C9FB1A842724DC5D1EEB2F89161393BA226A89EE2345`。未运行 connectedDebugAndroidTest、ADB 或真机，因此无本轮设备门禁证据；全量既有 14 项失败、5 项跳过沿用前序报告。结果包关联实现已提交 Git：`f723da0e`。
+
+## 2026-09-15 软件回归整改收口
+
+**状态**：**SOFTWARE_COMPLETE / PHYSICAL_ACCEPTANCE_PENDING**。本节覆盖本轮对上一次验收失败的测试整改；不表示真实设备或用户已验收。
+
+### 实际修改文件
+
+- `app/src/test/java/com/wearable/inspection/mobile/dpm/DpmScanEvidenceContractTest.kt`
+- `app/src/test/java/com/wearable/inspection/mobile/ui/screens/SafZipExportTest.kt`
+- `tasks/todo.md`
+- `tasks/plan.md`
+- `docs/reports/b3/DPM_SCAN_EVIDENCE_REPORT.md`
+- `docs/reports/b3/DPM_EVIDENCE_EXPORT_REPORT.md`
+
+未修改 DPM 生产代码；`DpmScanScreen.kt`、`DpmScanViewModel.kt`、`DpmEvidenceExportService.kt`、`InspectionZipExportService.kt` 和 `CameraPreview.kt` 仅作必要复核。
+
+### 失败原因与修复
+
+- `DpmScanEvidenceContractTest.exit flow cleans up even without sessionId` 不再检查 `viewModel.stopScan()` 源码字面量，改为调用 `runDpmScanExit`，用真实 Robolectric Bitmap 验证无 sessionId 时执行一次 stop、回收 Bitmap，并且不触发 save、clear analyzer 或 disconnect。
+- `SafZipExportTest` 的 3 项 NPE 来自 Mockito 对 Android `ContentResolver` final 方法的测试桩未覆盖实际平台调用，不是生产逻辑问题。测试改用 Robolectric Fake ContentResolver shadow，明确提供 null 输出流、正常 ByteArrayOutputStream 和 delete 记录，保留 null 异常、完整字节复制、临时 ZIP/SAF 文档清理语义。
+
+### 生产代码回归检查
+
+- `DpmScanScreen` 保持 `DisposableEffect(Unit)`，退出读取最新 sessionId。
+- 顺序保持 `getEvidenceFrames → saveEvidence → stopScan → clearFrameAnalyzer → disconnect`；`CameraPreview` 的 `disconnectOnDispose = false` 保证 DPM 证据快照前不抢先断开。
+- 保存继续使用受控 Application scope；Bitmap 在文件和数据库处理结束后回收。
+- 保存失败删除半成品文件，不插入可导出的 SUCCESS；不保存 NO_READ、空码值、ECC 失败、`lastFrameBitmap` 或旧 session。
+- 批次 ZIP 仍只接受明确相等的 batchId；独立 DPM ZIP 仍允许合法但 batchId 为空的 SUCCESS 证据。未修改 DPM 解码算法和 CameraX 所有权。
+
+### 最终验证
+
+1. `.\gradlew.bat :app:compileDebugKotlin --no-daemon`：退出码 0，BUILD SUCCESSFUL。
+2. `.\gradlew.bat :app:testDebugUnitTest --no-daemon --rerun-tasks --tests "com.wearable.inspection.mobile.dpm.*" --tests "com.wearable.inspection.mobile.data.export.DpmEvidenceExport*" --tests "com.wearable.inspection.mobile.data.export.InspectionZipExportArchiveTest" --tests "com.wearable.inspection.mobile.data.export.InspectionZipExportServiceTest" --tests "com.wearable.inspection.mobile.ui.screens.DpmScanExit*" --tests "com.wearable.inspection.mobile.ui.screens.SafZipExportTest" --tests "com.wearable.inspection.mobile.ui.screens.CameraPreviewTest"`：退出码 0，222 项，217 passed / 0 failed / 5 skipped。
+3. `.\gradlew.bat :app:assembleDebug --no-daemon`：退出码 0，BUILD SUCCESSFUL。
+
+执行 Agent 报告的 APK 信息（主协调审阅时未能独立核验）：路径 `D:\study\Textile_defects\Wearable Inspection\MobileInspectionApp\app\build\outputs\apk\debug\app-debug.apk`；生成时间：`2026-09-15 16:18:20 +08:00`；大小：`232,041,746 bytes`；SHA-256：`0B82E8E51048EA7B87EB10493F921DB8CCA33567287D6CDC96CEBC228A1A57D5`。当前工作区未找到该 APK 文件。
+
+本轮未执行 ADB、安装/卸载 APK、启动/停止应用、connectedDebugAndroidTest 或其他真机操作；未提交 Git，工作区其他改动保留。剩余风险：缺少本轮真机/物理证据，需主协调 Agent 审阅并由用户验收；非本轮相关的全量测试历史失败不在本轮整改范围内。
+
+### 主协调审阅补充（2026-09-15）
+
+以上为 2026-09-15 的历史审阅结论；2026-09-16 已由用户验收的现场闭环取代，设备、数据库、源文件与 ZIP 证据见本报告的 DPM 证据导出报告及 `tasks/todo.md`。
+
+## 2026-09-16 DPM 退出与 ZIP 写入回归收口
+
+本节记录 DPM 批次闭环验收前后完成的可靠性收口，不改变 DPM 解码算法或批次绑定规则：`CameraPreview` 可由 DPM 页面接管 disconnect 时机，确保先快照并保存成功帧再释放相机；退出流程覆盖有/无 sessionId 及读取最新 sessionId；ZIP 导出预检过滤缺失/空文件，若文件在检查后、复制时失效则明确失败，避免 CSV 指向实际未写入的 ZIP 条目；SAF 保存校验实际写入字节数，空流、短写或失败时清理预创建文档和临时 ZIP；DPM 日志仅记解码值长度，不输出码值。
+
+对应源码与 JVM 测试：`CameraPreview.kt`、`DpmAnalyzer.kt`、`InspectionZipExportService.kt`、`TraceRecordsScreen.kt`、`CameraPreviewTest.kt`、`DpmScanExitFlowTest.kt`、`DpmScanExitLifecycleComposeTest.kt`。验证记录沿用上文定向命令：`compileDebugKotlin`、DPM/归档/SAF/CameraPreview 定向 JVM（222 项，217 passed、0 failed、5 skipped）及 `assembleDebug` 均通过。该轮未执行 connected instrumented test；独立设备闭环证据及 APK/数据库/ZIP 哈希见 [`DPM_EVIDENCE_EXPORT_REPORT.md`](DPM_EVIDENCE_EXPORT_REPORT.md)。
+
+主协调提交不包含尚未执行的 Instrumented 测试文件改动，也不纳入截图、原始媒体或其他未明确归属的工作区产物。

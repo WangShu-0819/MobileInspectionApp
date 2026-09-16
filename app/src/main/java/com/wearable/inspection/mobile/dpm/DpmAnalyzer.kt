@@ -165,7 +165,7 @@ class DpmAnalyzer(
                 sourceFrameToken,
                 sourceFrameTimeMs,
             )
-            Log.d(TAG, "analyze: decodedCode=$decodedCode")
+            Log.d(TAG, "analyze: decodedCodeLength=${decodedCode?.code?.length ?: 0}")
             return processDecodeResult(decodedCode, sourceFrameToken, sourceFrameTimeMs)
         } finally {
             analysisRunning.set(false)
@@ -220,7 +220,7 @@ class DpmAnalyzer(
             for (strategy in strategies) {
                 if (scanControl?.aborted() == true) break
                 decodeWithStrategy(roiGray, roiW, roiH, strategy, scanControl)?.let {
-                    Log.d(TAG, "Stage1: HIT strategy=$strategy, code=${it.code}")
+                    Log.d(TAG, "Stage1: HIT strategy=$strategy, codeLength=${it.code.length}")
                     return it
                 }
             }
@@ -246,7 +246,7 @@ class DpmAnalyzer(
             for (strategy in strategies) {
                 if (scanControl?.aborted() == true) break
                 decodeWithStrategy(scanGray, scanW, scanH, strategy, scanControl)?.let {
-                    Log.d(TAG, "Stage2: HIT strategy=$strategy, code=${it.code}")
+                    Log.d(TAG, "Stage2: HIT strategy=$strategy, codeLength=${it.code.length}")
                     return it
                 }
             }
@@ -258,7 +258,7 @@ class DpmAnalyzer(
         // ─── 阶段3：ML Kit 全图兜底 ───
         Log.d(TAG, "Stage3: ML Kit full-image decode")
         mlKitDecoder.decode(frame)?.let {
-            Log.d(TAG, "Stage3: ML Kit HIT, code=${it.rawValue}")
+            Log.d(TAG, "Stage3: ML Kit HIT, codeLength=${it.rawValue.length}")
             return DecodeResult(it.rawValue, DecodeSource.ML_KIT)
         }
         Log.d(TAG, "Stage3: ML Kit MISS")

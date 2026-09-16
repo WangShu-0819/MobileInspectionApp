@@ -133,6 +133,17 @@ class CameraPreviewTest {
     }
 
     @Test
+    fun `DPM 页面把证据保存后的相机清理作为唯一退出所有者`() {
+        val cameraSource = readSource()
+        val dpmSource = File(
+            "src/main/java/com/wearable/inspection/mobile/ui/screens/DpmScanScreen.kt"
+        ).readText()
+        assertTrue("CameraPreview 应允许页面接管 disconnect 时机", cameraSource.contains("disconnectOnDispose: Boolean = true"))
+        assertTrue("DPM 页面必须保存完成后再清理相机", dpmSource.contains("disconnectOnDispose = false"))
+        assertTrue("DPM 页面必须使用固定 Unit effect", dpmSource.contains("DisposableEffect(Unit)"))
+    }
+
+    @Test
     fun `现场采集页将可见状态传给 CameraPreview`() {
         val source = File(
             "src/main/java/com/wearable/inspection/mobile/ui/screens/LiveInspectionScreen.kt"

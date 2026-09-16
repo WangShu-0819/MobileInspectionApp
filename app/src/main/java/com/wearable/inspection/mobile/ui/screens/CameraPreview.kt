@@ -96,6 +96,8 @@ fun CameraPreview(
     onSessionReady: (sessionId: String?) -> Unit = {},
     onConnected: ((CameraController, String) -> Unit)? = null,
     onFrameInfo: ((FrameInfo) -> Unit)? = null,
+    /** 页面拥有完整退出顺序时关闭 CameraPreview 自己的兜底 disconnect。 */
+    disconnectOnDispose: Boolean = true,
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -368,7 +370,9 @@ fun CameraPreview(
         onDispose {
             // 使仍在途的 connect 结果失效；其迟到 session 会走上面的清理分支。
             connectionGeneration.incrementAndGet()
-            latestDisconnectCurrentSession()
+            if (disconnectOnDispose) {
+                latestDisconnectCurrentSession()
+            }
             contentRect = null
         }
     }

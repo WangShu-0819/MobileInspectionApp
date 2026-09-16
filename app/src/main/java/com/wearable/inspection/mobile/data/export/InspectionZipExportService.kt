@@ -1,6 +1,7 @@
 package com.wearable.inspection.mobile.data.export
 
 import android.content.Context
+import android.util.Log
 import com.wearable.inspection.mobile.data.entity.CapturedPhotoEntity
 import com.wearable.inspection.mobile.data.entity.DpmScanEvidenceEntity
 import com.wearable.inspection.mobile.data.entity.RoiDefinitionEntity
@@ -38,9 +39,16 @@ class InspectionZipExportService(
         val roiDefinitions = photos.mapNotNull { it.templateId }.distinct().associateWith { templateId ->
             repository.getRois(templateId).filter { it.enabled }.sortedBy { it.id }
         }
-        val dpmEvidence = repository.getDpmScanEvidenceByBatch(batchId)
+        val queriedDpmEvidence = repository.getDpmScanEvidenceByBatch(batchId)
+        Log.w("DpmBinding", "[DIAG-7] exportInspectionZip: batchId=$batchId, queriedRows=${queriedDpmEvidence.size}")
+        queriedDpmEvidence.forEach { e ->
+            Log.w("DpmBinding", "[DIAG-7]   row id=${e.id}, sid=${e.scanSessionId}, status=${e.status}, batchId=${e.batchId}, file=${e.originalImagePath}")
+        }
+        val dpmEvidence = queriedDpmEvidence
             .filter { evidence -> evidence.batchId == batchId && isExportableDpmSuccess(evidence) }
             .sortedWith(compareBy<DpmScanEvidenceEntity> { it.scanSessionId }.thenBy { it.id }.thenBy { it.frameTimeMs })
+        Log.w("DpmBinding", "[DIAG-7] exportInspectionZip: filteredValidRows=${dpmEvidence.size}")
+        Log.i(TAG, "exportInspectionZip: batchId=$batchId dpmQueryRows=${queriedDpmEvidence.size} validRows=${dpmEvidence.size}")
 
         return try {
             var photoCount = 0
@@ -103,12 +111,18 @@ class InspectionZipExportService(
                     val frameEntryName = "$sessionDir/frame_${evidence.id}_${evidence.frameTimeMs}.jpg"
                     val frameStatus = copyDpmFileToZip(zos, evidence.originalImagePath, frameEntryName)
                     val framePath = frameEntryName.takeIf { frameStatus == "已导出" }.orEmpty()
+                    if (frameStatus != "已导出") {
+                        throw IllegalStateException("DPM 原图在导出时不可用：sessionId=${evidence.scanSessionId}")
+                    }
                     var roiPath = ""
                     var roiStatus = "无 ROI 裁切"
                     if (!evidence.roiImagePath.isNullOrBlank()) {
                         val roiEntryName = "$sessionDir/roi_${evidence.id}_${evidence.frameTimeMs}.jpg"
                         roiStatus = copyDpmFileToZip(zos, evidence.roiImagePath, roiEntryName)
                         roiPath = roiEntryName.takeIf { roiStatus == "已导出" }.orEmpty()
+                        if (roiStatus != "已导出") {
+                            throw IllegalStateException("DPM ROI 在导出时不可用：sessionId=${evidence.scanSessionId}")
+                        }
                     }
                     dpmRows += InspectionDpmExportRow(evidence, framePath, frameStatus, roiPath, roiStatus)
                 }
@@ -167,7 +181,12 @@ class InspectionZipExportService(
         evidence.status == "SUCCESS" &&
             !evidence.decodedContent.isNullOrBlank() && evidence.decodeSource in setOf("ZXING", "ML_KIT", "GRID") &&
             evidence.originalImagePath.isNotBlank() &&
-            File(evidence.originalImagePath).isFile && File(evidence.originalImagePath).length() > 0L
+            File(evidence.originalImagePath).let { it.isFile && it.length() > 0L } &&
+            (evidence.roiImagePath.isNullOrBlank() || File(evidence.roiImagePath).let { it.isFile && it.length() > 0L })
+
+    companion object {
+        private const val TAG = "InspectionZipExport"
+    }
 }
 
 sealed class InspectionExportResult {
