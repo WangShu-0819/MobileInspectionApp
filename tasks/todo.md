@@ -1,6 +1,6 @@
 # 已验收任务：DPM 扫码证据绑定采集批次并进入批次 ZIP
 
-状态：**USER_ACCEPTED**（2026-09-16；用户确认人机验收通过）。扫码会话到后续新建批次的绑定、批次 ZIP 内 DPM 帧/ROI 文件和 CSV 记录均已完成真机验证；此前 `PHYSICAL_ACCEPTANCE_PENDING` 状态由本次用户验收取代。提交：批次绑定闭环 `2e2c5943`；DPM 空 ZIP/SAF 收口 `b7ac09c8`。证据见本节及 [`docs/reports/b3/DPM_EVIDENCE_EXPORT_REPORT.md`](../docs/reports/b3/DPM_EVIDENCE_EXPORT_REPORT.md)。
+状态：**USER_ACCEPTED**（2026-09-16；用户确认人机验收通过）。扫码会话到后续新建批次的绑定、批次 ZIP 内 DPM 帧/ROI 文件和 CSV 记录均已完成真机验证；此前 `PHYSICAL_ACCEPTANCE_PENDING` 状态由本次用户验收取代。提交：批次绑定闭环 `2e2c5943`；DPM 空 ZIP/SAF 收口 `b7ac09c8`；DPM 退出与 ZIP 写入可靠性补充 `62976e60`。证据见本节及 [`docs/reports/b3/DPM_EVIDENCE_EXPORT_REPORT.md`](../docs/reports/b3/DPM_EVIDENCE_EXPORT_REPORT.md)。
 
 ## 本轮修复：DPM 扫码证据绑定采集批次闭环（2026-09-16）
 

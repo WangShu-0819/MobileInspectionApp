@@ -278,4 +278,4 @@ DisposableEffect.onDispose {
 
 对应源码与 JVM 测试：`CameraPreview.kt`、`DpmAnalyzer.kt`、`InspectionZipExportService.kt`、`TraceRecordsScreen.kt`、`CameraPreviewTest.kt`、`DpmScanExitFlowTest.kt`、`DpmScanExitLifecycleComposeTest.kt`。验证记录沿用上文定向命令：`compileDebugKotlin`、DPM/归档/SAF/CameraPreview 定向 JVM（222 项，217 passed、0 failed、5 skipped）及 `assembleDebug` 均通过。该轮未执行 connected instrumented test；独立设备闭环证据及 APK/数据库/ZIP 哈希见 [`DPM_EVIDENCE_EXPORT_REPORT.md`](DPM_EVIDENCE_EXPORT_REPORT.md)。
 
-主协调提交不包含尚未执行的 Instrumented 测试文件改动，也不纳入截图、原始媒体或其他未明确归属的工作区产物。
+代码与 JVM 回归补充已提交：`62976e60`。本次提交不包含尚未执行的 Instrumented 测试文件改动，也不纳入截图、原始媒体或其他未明确归属的工作区产物。
