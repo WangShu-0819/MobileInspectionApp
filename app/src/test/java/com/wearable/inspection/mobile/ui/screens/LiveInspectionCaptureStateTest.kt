@@ -419,4 +419,30 @@ class LiveInspectionCaptureStateTest {
         assertTrue("模板图应填满参考区域，不应因 maxHeight 留大块空白", cardBlock.contains(".weight(1f)"))
         assertTrue("模板图解码应在 IO 调度器执行", cardBlock.contains("withContext(Dispatchers.IO)"))
     }
+
+    @Test
+    fun `overlay alpha defaults to zero percent on first entry`() {
+        val source = readSource()
+        assertTrue(
+            "首次进入现场采集时模板叠加应默认完全透明 (alpha=0f)",
+            source.contains("var overlayAlpha by remember { mutableStateOf(0f) }")
+        )
+    }
+
+    @Test
+    fun `slider range and visibility toggle are preserved after default change`() {
+        val source = readSource()
+        assertTrue(
+            "模板叠加控制栏应保留 0f..0.8f 滑杆范围",
+            source.contains("valueRange = 0f..0.8f")
+        )
+        assertTrue(
+            "模板叠加控制栏应保留显示/隐藏切换",
+            source.contains("onToggleVisibility")
+        )
+        assertTrue(
+            "模板图在 contentRect 内显示应受 templateVisible 和 overlayAlpha 控制",
+            source.contains("overlayAlpha = if (templateVisible) overlayAlpha else 0f")
+        )
+    }
 }
