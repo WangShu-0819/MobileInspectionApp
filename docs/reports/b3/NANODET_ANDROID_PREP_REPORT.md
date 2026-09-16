@@ -237,3 +237,7 @@ NanoDet 已沿用现有 `ViewRoiConfirmEntity` 快照进入统一批次 CSV：�
 
 本轮未重复 NCNN smoke、模型转换或 connected tests。结果相关 JVM 104/104 通过，Kotlin 编译和 Debug APK 构建通过；APK 为 2026-09-15 13:12:25 +08:00，SHA-256 `D2D7B57FF523EA82D48E7F1EEDCE4ED1FCAB7D32EC5CC192CAD2DEED06B6B35B`。全量 JVM 792 项完成、779 通过、13 失败、5 跳过；失败属于工作区既有并行改动/基线断言。
 - 未运行 ADB、connectedDebugAndroidTest 或真机；结果包扩展实现已提交 Git：`f723da0e`，工作区其他改动保留，等待用户验收。
+
+## 2026-09-16 最新 ROI 执行状态
+
+本报告前文记录的是模型结果展示、双字段人工终审和 ZIP 元数据接入的历史实现，不代表已满足最新产品口径。当前唯一进行中的 ROI 任务是“最终结果语义、人工改判与 ROI 证据图导出”，状态和执行边界以 `tasks/todo.md` 为准：单一最终 `result`；模型值仅作为人工 OK/NG 按钮的默认选择；总体结果由人工独立确认；只有改判时额外保存原模型值、人工值、标记、时间和 ROI 照片，并保证 CSV 路径回链真实 ZIP 文件。确认页不显示模型建议文字、UUID、分数、阈值或模型版本；FEATURE/未执行不自动判 NG。此前状态、APK 和测试记录保持为历史证据，不覆盖当前任务状态。

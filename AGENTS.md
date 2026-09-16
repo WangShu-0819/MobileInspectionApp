@@ -24,7 +24,7 @@
 - B2 Task 2：旧模板导入 + 模板透明叠加 MVP — **SOFTWARE_COMPLETE**（2026-09-02）。V1-1 模板导入 MVP（`bdf1bd89`）；V1-2 模板透明叠加 + Alpha Slider（`bdf1bd89`）；V1-6 MVP Profile 信息架构简化（`94e3f5f3`）：ProfileScreen 收缩为 5 个 MVP 入口、移除硬编码 TemplateStats、接真实 DB 统计、TemplatePackageScreen 接通 ZIP 导入、AppSettingsScreen 移除未生效假开关。JVM 242 项（237 passed / 0 failed / 5 skipped）。遗留边界：legacy ROI 未迁移、imageFiles[] 仅取首图、模板包导出未实现。V1-3 拍后比对为下一软件阶段。实时轮廓投影/姿态匹配/单应性对齐继续标记为 DEFERRED / POST-MVP。
 - B3 Phase 1：钢印 OCR 核心算法迁移 — **完成**（2026-09-02，提交 `0df8e9c5`）。10 source files +9 test files（66 OCR tests）。包名 `com.wearable.inspection.mobile.ocr`。ML Kit text-recognition 依赖已启用。
 - B3 Phase 2：钢印 OCR CameraX/UI 集成 — **SOFTWARE_COMPLETE**（2026-09-02）。StampOcrFrameAnalyzer + StampOcrViewModel + StampOcrScreen + Navigation 路由。JVM 308 项（303 passed / 0 failed / 5 skipped）。APK SHA-256 `b27427fa5dbbea37111e0ab5425286a293af9c98cad6718e85bbf0005ceffb82`。
-- 当前 DPM 业务扩展：顶部入口保持不变；已接入按绑定 `dpmCode` 查询 Part、扫码命中后切换当前 Part 并重新加载其有序 Views；模板配置按 Part 提供扫码绑定/更换 DPM 码，冲突绑定拒绝。当前源码已通过 `:app:compileDebugKotlin`，完整构建和真机验收待本轮收口。
+- 历史 DPM 业务扩展：顶部入口保持不变；已接入按绑定 `dpmCode` 查询 Part、扫码命中后切换当前 Part 并重新加载其有序 Views；模板配置按 Part 提供扫码绑定/更换 DPM 码，冲突绑定拒绝。此条记录不代表当前唯一任务；DPM 扫码证据绑定批次闭环状态见下方验收记录和 `tasks/todo.md`。
 - DPM 只支持手机相机实时扫一扫，不提供相册码图导入。
 - DPM 入口：顶部扫码图标 contentDescription 为"扫一扫"，只进入实时 DPM 扫描；命中已绑定码时只切换零件及模板，未知码只提示先在模板配置绑定；OCR 图标 contentDescription 为"OCR 钢印"；模板样本相册导入属于"我的 > 模板配置"。
 
@@ -55,26 +55,27 @@
 - 结构化证据只能证明包名、页面层级、控件位置与运行状态，不能替代颜色、裁切、拉伸、遮挡和整体美观度的视觉结论。
 - 图片证据必须同时记录实际文件路径、对应新包 `com.wearable.inspection.mobile`、APK SHA-256 和采集步骤；未通过包名门禁的截图作废。
 
-## 当前唯一任务
+## 已验收任务：DPM 扫码证据及批次 ZIP 闭环
 
-**DPM 扫码证据 ZIP 空文件修复** — **USER_ACCEPTED**（用户确认导出正常）。
+**DPM 扫码证据 ZIP 空文件修复**及**扫码会话绑定采集批次并导出 DPM 照片**均已由用户验收（`USER_ACCEPTED`，2026-09-16）。闭环证据、APK、数据库行、ZIP 项和 SHA-256 见 `tasks/todo.md` 与 `docs/reports/b3/DPM_EVIDENCE_EXPORT_REPORT.md`。历史报告中早期的 `PHYSICAL_ACCEPTANCE_PENDING` 是验收前记录，现已被本状态取代。
 
-结果：修复写 manifest 时关闭底层 ZipOutputStream 的问题；SAF 输出流为空或 ZIP 生成失败时不再误报成功，并清理 SAF 预创建的空文件。新增真实 ZIP 解包回归测试。全量 JVM：746 项完成，14 项失败（此前报告已有 14 项），5 项跳过；本任务相关导出和 DPM 生命周期测试通过。
+## 当前唯一任务：ROI 最终结果语义、人工改判与 ROI 证据图
 
-范围：本次仅修改 DPM ZIP 导出服务、SAF 写入逻辑、导出/生命周期测试、`tasks/todo.md` 和 B3 导出报告；为兼容工作区已有 DpmScanScreen 保存回调调用，补齐 DpmScanViewModel 对应方法。工作区其他改动仍保留，未运行真机。报告：`docs/reports/b3/DPM_EVIDENCE_EXPORT_REPORT.md`。
+状态：`IN_PROGRESS`。执行 Agent `mimo` 负责先审计再按需修改源码、测试、构建和真机验证；主协调负责审阅证据及更新文档。只推进本任务，不并行处理其他待办。
 
-已验收任务：**DPM 扫码会话图像证据留存** — **DONE**（2026-09-15，提交 `213a0787`）。**模板叠加默认透明度为 0%** — **USER_ACCEPTED**（2026-09-15）。**单零件多 View 人工确认 + ZIP 导出** — **USER_ACCEPTED**（2026-09-15）。详细记录见 `tasks/todo.md`。
+- 先审计现有 `ViewRoiConfirmEntity`、DAO、Repository、ViewModel、确认页、CSV/ZIP 导出和 ROI 图片存储/路径关联；不得先创建第二套结果实体或假定现状。
+- 每个 ROI 只导出一个最终 `result`：有模型 OK/NG 时，人工按钮默认选中模型结果；未改判时最终结果等于模型结果，改判时等于人工选择。改判额外保留原模型结果、人工结果、改判标记和改判时间，并保存该 ROI 照片、在 CSV 中写入正确 ZIP 路径。未改判不要求额外生成改判照片。
+- 总体照片 OK/NG 必须由人工独立确认，不得由 ROI 汇总。
+- 保持确认页上下结构、排版和固定确认栏；只显示零件名称、视角进度、ROI 编号、ROI 类型、ROI 图片、人工确认 OK/NG、总体结果 OK/NG、操作状态和“确认并继续”。不显示模型建议文字、ROI UUID、分数、阈值或模型版本。
+- FEATURE/不支持/未执行时显示“部件类别暂不支持”或“模型未执行”，不得默认选择或自动判 NG。
+- 为单一最终结果、未改判/双向改判、总体结果独立、状态提示、稳定关联、ZIP 内 ROI 文件和 CSV 回链补充自动化及真实归档测试；保留现有结果包字段的兼容性并按风险提供 migration。
+- 不改 DPM 解码/绑定、NanoDet 算法或阈值、CameraX、批次清理和多选导出需求；未获后续授权前不扩展为其他任务。完成后更新清单和报告，等待用户验收，再由主协调按路径审计并选择性提交。
+
+已验收任务：**DPM 扫码会话图像证据留存**（`DONE`，2026-09-15）、**模板叠加默认透明度为 0%**（`USER_ACCEPTED`，2026-09-15）、**单零件多 View 人工确认 + ZIP 导出**（`USER_ACCEPTED`，2026-09-15）。详细记录见 `tasks/todo.md`。
 
 **Bug Fix**（2026-09-03）：修复模板图片降采样导致 Canvas 绘制失败。CameraPreview 的 inSampleSize 计算逻辑已修正，8000x6000 图片现在使用 inSampleSize=4。模板图片解码已移至 Dispatchers.IO，切换 View 时旧 Bitmap 已正确回收。新增 CameraPreviewTest 14 项单元测试。
 
 历史记录：模板拍摄、缩略图、重拍、排序 — **SOFTWARE_COMPLETE**（2026-09-03）。APK SHA-256 `56e390a067ccd1a040ea05b86b9743bc185bf2c1215630e7fc0f4f35a9e7f495`。
-
-当前任务边界：
-- 复用已有 `RoiEditorScreen`、`RoiEditorViewModel`、`RoiDefinitionEntity`、ROI DAO 和 `InspectionRepository`。
-- 本轮实现模板 ROI 的目标属性选择和持久化。
-- 保留 ROI 新增、取消、选中、移动、缩放、边界约束、删除和 `normalizedRect` 保存行为。
-- 只进行源码、自动化测试和文档修改，禁止执行 adb、安装/卸载 APK、启动或停止真机应用。
-- 不实现 Detector/PASS-FAIL、自动轮廓提取、自动对齐、Session ROI 或结果包导出。
 
 ## 已完成任务：模板 ROI 属性选择
 
@@ -103,16 +104,6 @@
 可直接交给执行 Agent 的任务描述：
 
 > 在现有模板 ROI 编辑器中增加 ROI 目标属性选择，支持“螺纹（THREAD）/螺母（NUT）/部件（FEATURE）”。请先审计 `RoiDefinitionEntity`、DAO、Repository、`RoiEditorScreen` 和所有模板导入/加载路径，再以最小改动增加规范枚举字段并完成真实持久化。新增 ROI 必须选择属性；旧 ROI 没有属性时显示“未选择”，不得自动猜测或伪造检测就绪。已有 ROI 支持查看和修改属性，属性按 `templateId`、View、图片独立保存。保留 ROI 新增、取消、选中、移动、缩放、边界约束、删除和 `normalizedRect` 行为。补充 JVM/Repository/UI 状态测试，覆盖新增、修改、重载、隔离、删除和 migration。当前任务只做属性选择与数据层，不实现 Detector/PASS-FAIL、自动轮廓、自动对齐、Session ROI、结果导出或新的 CameraX；不运行 adb、安装 APK 或真机测试；完成后更新任务清单和 B2 报告，不提交 Git，等待验收。
-
-## 当前任务详细要求：拍照后人工确认
-
-状态：**IN_PROGRESS**。附件图片仅作为 OK/NG 弹窗的交互草图，不是验收证据；本轮先完成确认界面和持久化，不接入自动检测。
-
-- 单张照片拍摄完成后，预留“检测结果人工确认”流程和按钮/弹窗。
-- ROI 自动检测可以暂时不接入，但 UI 和数据结构应为后续 `PASS/FAIL` 结果预留，不得伪造检测结果。
-- 人工确认选项为 `OK` 和 `NG`；用户未确认时不能自动标记合格或不合格。
-- 后续实现需明确确认对象是整张照片还是每个 ROI，并保存照片、ROI、检测状态、人工确认结果和时间的关联。
-- 本需求不改变当前 ROI 属性、ROI 编辑、检测算法和官方 DCIM 评估口径。
 
 ## 新增后续需求：采集批次/零件 ZIP 清理
 
@@ -198,6 +189,7 @@ com.wearable.inspection.mobile/
 - 不用大范围 try/catch 吞掉错误。
 - 不添加新的根目录临时脚本、总结或备份；报告进入 `docs/reports/<phase>/`，工具进入 `tools/`。
 - 每次只推进一个可验收任务，修改前列出文件，修改后给出真实测试命令与结果。
+- 每个阶段任务经用户验收后必须收口提交，避免工作区改动累积。`mimo` 不提交 Git；主协调按路径审计差异并选择性提交当前任务文件，保留其他工作区改动，禁止 `git add .`、reset、clean、stash 或回滚。
 
 ## 完成汇报
 

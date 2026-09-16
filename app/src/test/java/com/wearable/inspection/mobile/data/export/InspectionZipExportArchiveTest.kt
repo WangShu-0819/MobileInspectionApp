@@ -144,12 +144,14 @@ class InspectionZipExportArchiveTest {
         )
         val dpmB = dpmA.copy(id = 2, scanSessionId = "session-b", decodedContent = "B",
             originalImagePath = dpmBFile.absolutePath, batchId = "batch-b")
+        val invalidSource = dpmA.copy(id = 3, scanSessionId = "session-invalid-source", decodeSource = "OTHER")
+        val emptyCode = dpmA.copy(id = 4, scanSessionId = "session-empty-code", decodedContent = "")
         val repository = Mockito.mock(InspectionRepository::class.java)
         `when`(repository.getCaptureBatch("batch-a")).thenReturn(CaptureBatchEntity("batch-a", "part-a", "A", 1, 2, 1))
         `when`(repository.getCapturedPhotos("batch-a")).thenReturn(listOf(photoA))
         `when`(repository.getViewRoiConfirms("batch-a")).thenReturn(emptyList())
-        `when`(repository.getDpmScanEvidenceByBatch("batch-a")).thenReturn(listOf(dpmA, dpmB))
-        `when`(repository.getAllDpmScanEvidence()).thenReturn(listOf(dpmA, dpmB))
+        `when`(repository.getDpmScanEvidenceByBatch("batch-a")).thenReturn(listOf(dpmA, dpmB, invalidSource, emptyCode))
+        `when`(repository.getAllDpmScanEvidence()).thenReturn(listOf(dpmA, dpmB, invalidSource, emptyCode))
 
         val zip = File(dir, "batch-a.zip")
         val result = InspectionZipExportService(Mockito.mock(Context::class.java), repository)
@@ -161,6 +163,8 @@ class InspectionZipExportArchiveTest {
         val csv = entries.getValue("inspection_result.csv").toString(Charsets.UTF_8)
         assertTrue(csv.contains("session-a"))
         assertFalse(csv.contains("session-b"))
+        assertFalse(csv.contains("session-invalid-source"))
+        assertFalse(csv.contains("session-empty-code"))
     }
 
     private fun photo(dir: File, id: Long, view: Int, template: String, bytes: ByteArray): CapturedPhotoEntity {
@@ -226,5 +230,93 @@ class InspectionZipExportArchiveTest {
                 entry = zip.nextEntry
             }
         }
+    }
+
+    /**
+     * 真实绑定流程：DPM 证据初始 batchId=null，通过 bindSessionToBatch 模拟 DAO 更新后，
+     * getDpmScanEvidenceByBatch 返回绑定后的记录，导出服务正确包含 DPM 帧。
+     * 不使用 copy(batchId=...) 伪造绑定结果。
+     */
+    @Test
+    fun `batch zip includes dpm evidence bound after scan-before-batch flow`() = runTest {
+        val dir = Files.createTempDirectory("inspection-export-bound").toFile()
+        val dpmFrame = File(dir, "dpm-scan-frame.jpg").apply { writeBytes(byteArrayOf(0x50, 0x4D, 0x01)) }
+        val dpmRoi = File(dir, "dpm-scan-roi.jpg").apply { writeBytes(byteArrayOf(0x50, 0x4D, 0x02)) }
+
+        // 真实可变状态：模拟 DAO 行为
+        val evidenceStore = mutableListOf(
+            DpmScanEvidenceEntity(
+                id = 50, scanSessionId = "session-scan-first", frameTimeMs = 5000,
+                frameSource = "CAMERA", decodedContent = "DPM-BOUND-01", status = "SUCCESS",
+                decodeSource = "ZXING", originalImagePath = dpmFrame.absolutePath,
+                roiImagePath = dpmRoi.absolutePath, batchId = null, partId = "part-bound",
+            )
+        )
+
+        val photo = photo(dir, 501, 0, "tpl-bound", byteArrayOf(0x10, 0x20))
+        val threadRoi = roi("roi-bound", "tpl-bound", "THREAD")
+        val confirmed = confirm(photo, threadRoi, human = "OK", overall = "OK")
+
+        val repository = Mockito.mock(InspectionRepository::class.java)
+        `when`(repository.getCaptureBatch("batch-bound")).thenReturn(
+            CaptureBatchEntity("batch-bound", "part-bound", "绑定零件", 1, 1, 1)
+        )
+        `when`(repository.getCapturedPhotos("batch-bound")).thenReturn(listOf(photo))
+        `when`(repository.getViewRoiConfirms("batch-bound")).thenReturn(listOf(confirmed))
+        `when`(repository.getRois("tpl-bound")).thenReturn(listOf(threadRoi))
+
+        // 模拟真实 DAO 绑定行为：更新 evidenceStore 中 batchId 为 null 的记录
+        `when`(repository.bindDpmScanSessionToBatch("session-scan-first", "batch-bound")).thenAnswer {
+            var updated = 0
+            evidenceStore.forEachIndexed { idx, e ->
+                if (e.scanSessionId == "session-scan-first" && e.batchId == null && e.status == "SUCCESS") {
+                    evidenceStore[idx] = e.copy(batchId = "batch-bound")
+                    updated++
+                }
+            }
+            updated
+        }
+
+        // 绑定前：getByBatchId 返回空（无 batchId 匹配）
+        `when`(repository.getDpmScanEvidenceByBatch("batch-bound")).thenAnswer {
+            evidenceStore.filter { it.batchId == "batch-bound" }
+        }
+        `when`(repository.getAllDpmScanEvidence()).thenAnswer { evidenceStore.toList() }
+
+        // 验证绑定前导出不包含 DPM
+        val preBindZip = File(dir, "pre-bind.zip")
+        val preResult = InspectionZipExportService(Mockito.mock(Context::class.java), repository)
+            .exportInspectionZip("batch-bound", "part-bound", preBindZip)
+        assertTrue("绑定前导出必须成功", preResult is InspectionExportResult.Success)
+        val preEntries = unzip(preBindZip)
+        assertFalse("绑定前 ZIP 不应包含 DPM 帧",
+            preEntries.keys.any { it.startsWith("dpm/sessions/") })
+
+        // 执行真实绑定
+        val updated = repository.bindDpmScanSessionToBatch("session-scan-first", "batch-bound")
+        assertEquals("绑定必须更新 1 行", 1, updated)
+
+        // 验证绑定后导出包含 DPM
+        val postBindZip = File(dir, "post-bind.zip")
+        val postResult = InspectionZipExportService(Mockito.mock(Context::class.java), repository)
+            .exportInspectionZip("batch-bound", "part-bound", postBindZip)
+        assertTrue("绑定后导出必须成功", postResult is InspectionExportResult.Success)
+
+        val entries = unzip(postBindZip)
+        assertTrue("ZIP 必须包含 DPM 原始帧",
+            entries.keys.any { it.startsWith("dpm/sessions/") && it.contains("frame_") })
+        assertTrue("ZIP 必须包含 DPM ROI",
+            entries.keys.any { it.startsWith("dpm/sessions/") && it.contains("roi_") })
+
+        // 验证 DPM 文件字节正确
+        val frameEntry = entries.entries.first { it.key.contains("frame_50_5000") }
+        assertArrayEquals("DPM 帧字节必须一致", dpmFrame.readBytes(), frameEntry.value)
+        val roiEntry = entries.entries.first { it.key.contains("roi_50_5000") }
+        assertArrayEquals("DPM ROI 字节必须一致", dpmRoi.readBytes(), roiEntry.value)
+
+        val csv = entries.getValue("inspection_result.csv").toString(Charsets.UTF_8)
+        assertTrue("CSV 必须包含绑定的扫码会话", csv.contains("session-scan-first"))
+        assertTrue("CSV 必须包含解码内容", csv.contains("DPM-BOUND-01"))
+        assertTrue("CSV 必须包含 batchId", csv.contains("batch-bound"))
     }
 }

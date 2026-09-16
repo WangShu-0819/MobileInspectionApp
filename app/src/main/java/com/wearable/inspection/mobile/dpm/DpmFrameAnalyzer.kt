@@ -94,15 +94,25 @@ class DpmFrameAnalyzer(
                 // 在分析前复制帧用于源帧追踪；原始 bitmap 始终在 finally 回收。
                 val frameCopy = bitmap.copy(Bitmap.Config.ARGB_8888, false)
                 if (!evidenceTracker.addFrame(sourceFrameToken, sourceFrameTimeMs, frameCopy, currentRoi)) return@launch
-                val result = dpmAnalyzer.analyze(
-                    frame = bitmap,
-                    frameRotation = 0, // 已输出 upright Bitmap
-                    scanRoi = currentRoi,
-                    sourceFrameToken = sourceFrameToken,
-                    sourceFrameTimeMs = sourceFrameTimeMs,
-                )
-                Log.d(TAG, "analyze: result status=${result.status}, code=${result.code}, source=${result.source}")
-                publishResult(result, sourceFrameToken)
+                // 标记 in-flight：防止后续帧到达时 cleanupUnusedLocked 移除正在分析的源帧
+                evidenceTracker.markInFlight(sourceFrameToken)
+                try {
+                    val result = dpmAnalyzer.analyze(
+                        frame = bitmap,
+                        frameRotation = 0, // 已输出 upright Bitmap
+                        scanRoi = currentRoi,
+                        sourceFrameToken = sourceFrameToken,
+                        sourceFrameTimeMs = sourceFrameTimeMs,
+                    )
+                    Log.d(
+                        TAG,
+                        "analyze: result status=${result.status}, codeLength=${result.code?.length ?: 0}, " +
+                            "source=${result.source}, frameToken=$sourceFrameToken",
+                    )
+                    publishResult(result, sourceFrameToken)
+                } finally {
+                    evidenceTracker.unmarkInFlight(sourceFrameToken)
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "analyze: exception during DpmAnalyzer.analyze", e)
             } finally {

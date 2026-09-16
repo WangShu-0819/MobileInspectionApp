@@ -10,6 +10,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import com.wearable.inspection.mobile.data.settings.PartSelectionBus
+import android.util.Log
 
 data class TodayStats(
     val templateCount: Int = 0,
@@ -122,6 +123,79 @@ class WorkbenchViewModel(
 
     fun clearActiveCaptureBatch() {
         activeCaptureBatchId = null
+    }
+
+    // ---- DPM 扫码批次绑定：暂存 → 消费 ----
+
+    private data class PendingDpmBatchBinding(
+        val scanSessionId: String,
+        val partId: String,
+    )
+
+    private val _pendingDpmBatchBinding = MutableStateFlow<PendingDpmBatchBinding?>(null)
+
+    /**
+     * 暂存扫码会话绑定信息。在 DPM 扫码页 onResult 中调用，位于 PartSelectionBus.emit 之前。
+     */
+    fun setPendingDpmBatchBinding(scanSessionId: String, partId: String) {
+        _pendingDpmBatchBinding.value = PendingDpmBatchBinding(scanSessionId, partId)
+        Log.i("DpmBinding", "setPendingDpmBatchBinding: sid=$scanSessionId, part=$partId")
+    }
+
+    /**
+     * 消费待绑定的扫码会话，将已有的成功证据关联到新创建的批次。
+     * 零件不匹配时跳过并清除待绑定状态，防止跨零件误关联。
+     * DAO 返回 0 行时保留 pending binding，允许后续重试（证据可能尚未落库）。
+     *
+     * @return true 如果成功绑定至少一行证据
+     */
+    suspend fun applyPendingDpmBinding(batchId: String, repository: InspectionRepository): Boolean {
+        val binding = _pendingDpmBatchBinding.value
+        if (binding == null) {
+            Log.w("DpmBinding", "[DIAG-4] applyPendingDpmBinding: no pending binding, batchId=$batchId")
+            return false
+        }
+        Log.w(
+            "DpmBinding",
+            "[DIAG-4] applyPendingDpmBinding: pendingSid=${binding.scanSessionId}, pendingPart=${binding.partId}, batchId=$batchId"
+        )
+        val batch = repository.getCaptureBatch(batchId)
+        Log.w(
+            "DpmBinding",
+            "[DIAG-4] batch lookup: batch=${batch?.batchId}, batchPartId=${batch?.partId}, batchEndTime=${batch?.endTime}"
+        )
+        if (batch == null || batch.partId != binding.partId) {
+            Log.e(
+                "DpmBinding",
+                "[DIAG-4] ABORT: part mismatch or batch missing. pendingPart=${binding.partId}, batchPartId=${batch?.partId}"
+            )
+            _pendingDpmBatchBinding.value = null
+            return false
+        }
+        // 先检查 evidence 是否已落库
+        val existingEvidence = repository.getDpmScanEvidenceBySession(binding.scanSessionId)
+        Log.w(
+            "DpmBinding",
+            "[DIAG-4] evidence check: sessionId=${binding.scanSessionId}, existingRows=${existingEvidence.size}, " +
+                "batchIds=${existingEvidence.map { it.batchId }}, statuses=${existingEvidence.map { it.status }}"
+        )
+        val updated = repository.bindDpmScanSessionToBatch(binding.scanSessionId, batchId)
+        Log.w(
+            "DpmBinding",
+            "[DIAG-4] DAO bindSessionToBatch: updated=$updated rows, batchId=$batchId"
+        )
+        if (updated > 0) {
+            _pendingDpmBatchBinding.value = null
+            Log.i("DpmBinding", "[DIAG-4] SUCCESS: binding consumed, $updated rows updated")
+        } else {
+            // 保留 pending binding，允许后续重试
+            Log.e(
+                "DpmBinding",
+                "[DIAG-4] ZERO_ROWS: DAO updated 0 rows. Pending binding RETAINED for retry. " +
+                    "sessionId=${binding.scanSessionId}, batchId=$batchId"
+            )
+        }
+        return updated > 0
     }
 
     // 选中的模板（由 viewIndex 或手动选择驱动）

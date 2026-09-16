@@ -1,10 +1,13 @@
 package com.wearable.inspection.mobile.ui.screens.workbench
 
+import com.wearable.inspection.mobile.data.entity.CaptureBatchEntity
+import com.wearable.inspection.mobile.data.entity.DpmScanEvidenceEntity
 import com.wearable.inspection.mobile.data.entity.InspectionTemplateEntity
 import com.wearable.inspection.mobile.data.entity.PartEntity
 import com.wearable.inspection.mobile.data.entity.RoiDefinitionEntity
 import com.wearable.inspection.mobile.data.repository.InspectionRepository
 import com.wearable.inspection.mobile.data.settings.SettingsStore
+import org.mockito.Mockito.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
@@ -302,5 +305,119 @@ class WorkbenchViewModelAdvanceTest {
         assertEquals(listOf("roi2"), vm.rois.value.map { it.id })
 
         jobs.forEach { it.cancel() }
+    }
+
+    // ---- applyPendingDpmBinding 测试 ----
+
+    @Test
+    fun `applyPendingDpmBinding returns false when no pending binding`() = runTest {
+        setupMocks("p1", emptyList())
+        val vm = WorkbenchViewModel(mockRepository, mockSettings)
+        advanceUntilIdle()
+
+        val result = vm.applyPendingDpmBinding("batch-1", mockRepository)
+        assertFalse("无 pending 绑定时必须返回 false", result)
+    }
+
+    @Test
+    fun `applyPendingDpmBinding returns false and clears pending when batch not found`() = runTest {
+        setupMocks("p1", emptyList())
+        val vm = WorkbenchViewModel(mockRepository, mockSettings)
+        advanceUntilIdle()
+
+        vm.setPendingDpmBatchBinding("session-1", "p1")
+        runBlocking {
+            `when`(mockRepository.getCaptureBatch("batch-missing")).thenReturn(null)
+        }
+
+        val result = vm.applyPendingDpmBinding("batch-missing", mockRepository)
+        assertFalse("批次不存在时必须返回 false", result)
+    }
+
+    @Test
+    fun `applyPendingDpmBinding returns false when partId mismatch`() = runTest {
+        setupMocks("p1", emptyList())
+        val vm = WorkbenchViewModel(mockRepository, mockSettings)
+        advanceUntilIdle()
+
+        // pending partId = "p1"，但 batch partId = "p2"
+        vm.setPendingDpmBatchBinding("session-1", "p1")
+        runBlocking {
+            `when`(mockRepository.getCaptureBatch("batch-1")).thenReturn(
+                CaptureBatchEntity("batch-1", "p2", "另一零件", 0L, null, 0)
+            )
+        }
+
+        val result = vm.applyPendingDpmBinding("batch-1", mockRepository)
+        assertFalse("partId 不匹配时必须返回 false", result)
+    }
+
+    @Test
+    fun `applyPendingDpmBinding returns true and clears pending on successful binding`() = runTest {
+        setupMocks("p1", emptyList())
+        val vm = WorkbenchViewModel(mockRepository, mockSettings)
+        advanceUntilIdle()
+
+        vm.setPendingDpmBatchBinding("session-1", "p1")
+        runBlocking {
+            `when`(mockRepository.getCaptureBatch("batch-1")).thenReturn(
+                CaptureBatchEntity("batch-1", "p1", "零件A", 0L, null, 0)
+            )
+            `when`(mockRepository.getDpmScanEvidenceBySession("session-1")).thenReturn(
+                listOf(
+                    DpmScanEvidenceEntity(
+                        id = 1, scanSessionId = "session-1", frameTimeMs = 100,
+                        frameSource = "CAMERA", decodedContent = "code", status = "SUCCESS",
+                        decodeSource = "ZXING", originalImagePath = "/img.jpg",
+                        roiImagePath = null, batchId = null, partId = "p1",
+                    )
+                )
+            )
+            `when`(mockRepository.bindDpmScanSessionToBatch("session-1", "batch-1")).thenReturn(1)
+        }
+
+        val result = vm.applyPendingDpmBinding("batch-1", mockRepository)
+        assertTrue("成功绑定必须返回 true", result)
+        runBlocking {
+            verify(mockRepository).bindDpmScanSessionToBatch("session-1", "batch-1")
+        }
+    }
+
+    @Test
+    fun `applyPendingDpmBinding retains pending when DAO returns 0 rows`() = runTest {
+        setupMocks("p1", emptyList())
+        val vm = WorkbenchViewModel(mockRepository, mockSettings)
+        advanceUntilIdle()
+
+        vm.setPendingDpmBatchBinding("session-no-evidence", "p1")
+        runBlocking {
+            `when`(mockRepository.getCaptureBatch("batch-1")).thenReturn(
+                CaptureBatchEntity("batch-1", "p1", "零件A", 0L, null, 0)
+            )
+            `when`(mockRepository.getDpmScanEvidenceBySession("session-no-evidence")).thenReturn(
+                emptyList()
+            )
+            `when`(mockRepository.bindDpmScanSessionToBatch("session-no-evidence", "batch-1")).thenReturn(0)
+        }
+
+        val firstResult = vm.applyPendingDpmBinding("batch-1", mockRepository)
+        assertFalse("DAO 返回 0 行时必须返回 false", firstResult)
+
+        // 重试：pending 未被清除，第二次绑定成功
+        runBlocking {
+            `when`(mockRepository.getDpmScanEvidenceBySession("session-no-evidence")).thenReturn(
+                listOf(
+                    DpmScanEvidenceEntity(
+                        id = 2, scanSessionId = "session-no-evidence", frameTimeMs = 200,
+                        frameSource = "CAMERA", decodedContent = "code2", status = "SUCCESS",
+                        decodeSource = "ZXING", originalImagePath = "/img2.jpg",
+                        roiImagePath = null, batchId = null, partId = "p1",
+                    )
+                )
+            )
+            `when`(mockRepository.bindDpmScanSessionToBatch("session-no-evidence", "batch-1")).thenReturn(1)
+        }
+        val secondResult = vm.applyPendingDpmBinding("batch-1", mockRepository)
+        assertTrue("重试成功时必须返回 true", secondResult)
     }
 }

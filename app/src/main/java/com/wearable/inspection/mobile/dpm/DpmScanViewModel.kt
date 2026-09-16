@@ -10,9 +10,13 @@ import com.wearable.inspection.mobile.camera.CameraController
 import com.wearable.inspection.mobile.data.db.AppDatabase
 import com.wearable.inspection.mobile.data.entity.DpmScanEvidenceEntity
 import com.wearable.inspection.mobile.data.image.MobileImageStore
+import java.io.File
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.launch
 
 /**
@@ -33,6 +37,9 @@ class DpmScanViewModel(private val app: Application) : AndroidViewModel(app) {
     private val imageStore = MobileImageStore(app)
     private val database = AppDatabase.get(app)
     private val evidenceDao = database.dpmScanEvidenceDao()
+    private val applicationScope: CoroutineScope =
+        (app.applicationContext as? MobileInspectionApp)?.applicationScope
+            ?: error("DpmScanViewModel requires MobileInspectionApp")
 
     // ─── DPM 组件 ───
     private var dpmAnalyzer: DpmAnalyzer? = null
@@ -52,6 +59,8 @@ class DpmScanViewModel(private val app: Application) : AndroidViewModel(app) {
     private var evidenceSavedSessionId: String? = null
     private val evidenceSaveLock = Any()
     private val savedEvidenceSessions = mutableSetOf<String>()
+    private val scheduledEvidenceSessions = mutableSetOf<String>()
+    private val evidenceSaveCompletions = mutableMapOf<String, CompletableDeferred<Boolean>>()
 
     // ─── UI 状态 ───
     private val _scanState = MutableStateFlow(DpmScanState())
@@ -90,6 +99,8 @@ class DpmScanViewModel(private val app: Application) : AndroidViewModel(app) {
         val scope = viewModelScope
         evidenceSaved = false
         evidenceSavedSessionId = sessionId
+        // 清除旧会话的解码结果，防止旧 lastResult 触发新会话的保存
+        _lastResult.value = null
 
         val rg = DpmRespondGate()
         val gg = DpmGridGate(missThreshold = 8, cooldownMs = 1500L)  // 旧版基线：MISS_STREAK_TO_GRID=8, GRID_COOLDOWN_MS=1500
@@ -155,7 +166,7 @@ class DpmScanViewModel(private val app: Application) : AndroidViewModel(app) {
 
         // 关闭闪光灯（异步尽力而为）
         if (controller != null) {
-            viewModelScope.launch {
+            applicationScope.launch {
                 controller.setTorch(false)
             }
         }
@@ -169,13 +180,6 @@ class DpmScanViewModel(private val app: Application) : AndroidViewModel(app) {
         dpmAnalyzer = null
         respondGate = null
         gridGate = null
-
-        // 从控制器移除分析器
-        if (controller != null && sessionId != null) {
-            viewModelScope.launch {
-                controller.clearFrameAnalyzer()
-            }
-        }
 
         boundController = null
         boundSessionId = null
@@ -205,62 +209,79 @@ class DpmScanViewModel(private val app: Application) : AndroidViewModel(app) {
     suspend fun saveEvidence(
         sessionId: String,
         evidenceFrames: DpmFrameAnalyzer.EvidenceFrames?,
-    ) {
-        synchronized(evidenceSaveLock) {
-            if (evidenceSaved && evidenceSavedSessionId == sessionId) {
-                Log.d(TAG, "saveEvidence: already saved, skipping")
-                return
+    ): Boolean {
+        val association = synchronized(evidenceSaveLock) { scanAssociation }
+        return saveEvidenceInternal(sessionId, evidenceFrames, association)
+    }
+
+    private suspend fun saveEvidenceInternal(
+        sessionId: String,
+        evidenceFrames: DpmFrameAnalyzer.EvidenceFrames?,
+        association: DpmScanAssociation,
+        alreadyScheduled: Boolean = false,
+    ): Boolean {
+        if (!alreadyScheduled) {
+            synchronized(evidenceSaveLock) {
+                if (sessionId in savedEvidenceSessions ||
+                    evidenceSaved && evidenceSavedSessionId == sessionId ||
+                    !scheduledEvidenceSessions.add(sessionId)
+                ) {
+                    Log.d(TAG, "saveEvidence: sessionId=$sessionId already saved or scheduled, skipping")
+                    recycleEvidenceBitmap(evidenceFrames)
+                    return false
+                }
             }
-            if (!savedEvidenceSessions.add(sessionId)) {
-                Log.d(TAG, "saveEvidence: session already finalized, skipping")
-                return
-            }
-            if (evidenceSavedSessionId == sessionId) evidenceSaved = true
         }
 
-        if (evidenceFrames == null ||
-            !evidenceFrames.isDecodeSuccess ||
-            evidenceFrames.decodedCode.isNullOrBlank() ||
-            evidenceFrames.decodeSource == null
-        ) {
-            // 无 ECC 成功时不落盘、不建 NO_READ 证据行；仅保留内存状态。
-            Log.i(TAG, "saveEvidence: no ECC-validated success frame; no photo evidence created")
-            evidenceFrames?.bitmap?.let { if (!it.isRecycled) it.recycle() }
-            return
-        }
-
+        var originalPath: String? = null
+        var roiPath: String? = null
         try {
+            if (evidenceFrames == null ||
+                !evidenceFrames.isDecodeSuccess ||
+                evidenceFrames.decodedCode.isNullOrBlank() ||
+                evidenceFrames.decodeSource == null
+            ) {
+                // 无 ECC 成功时不落盘、不建 NO_READ 证据行；仅保留内存状态。
+                Log.i(
+                    TAG,
+                    "saveEvidence: sessionId=$sessionId result=FAILURE reason=no ECC-validated success frame",
+                )
+                return false
+            }
+
             val ts = System.currentTimeMillis()
             val shortId = sessionId.take(8)
             val frameFileName = "dpm_${shortId}_ok_${ts}_frame.jpg"
             val roiFileName = "dpm_${shortId}_ok_${ts}_roi.jpg"
+            Log.i(
+                TAG,
+                "saveEvidence: sessionId=$sessionId evidenceFrames=SUCCESS " +
+                    "decodedLength=${evidenceFrames.decodedCode?.length ?: 0} " +
+                    "decodeSource=${evidenceFrames.decodeSource}",
+            )
 
-            val originalPath = imageStore.saveDpmEvidenceFrame(
+            originalPath = imageStore.saveDpmEvidenceFrame(
                 evidenceFrames.bitmap, frameFileName
             )
             if (originalPath == null) {
-                Log.e(TAG, "saveEvidence: failed to save original frame")
-                evidenceFrames.bitmap.recycle()
-                return
+                Log.e(TAG, "saveEvidence: sessionId=$sessionId result=FAILURE reason=original frame write")
+                return false
             }
+            Log.i(TAG, "saveEvidence: original path=$originalPath bytes=${File(originalPath!!).length()}")
 
             // 保存 ROI 裁切（如有 ROI 且帧尺寸有效）
-            var roiPath: String? = null
             val roi = evidenceFrames.roi
             if (roi != null && !roi.isEmpty) {
                 roiPath = imageStore.saveDpmEvidenceRoi(
                     evidenceFrames.bitmap, roi, roiFileName
                 )
                 if (roiPath == null) {
-                    Log.e(TAG, "saveEvidence: failed to save source-frame ROI; deleting original")
+                    Log.e(TAG, "saveEvidence: sessionId=$sessionId result=FAILURE reason=ROI write; deleting original")
                     imageStore.deleteDpmEvidenceFile(originalPath)
-                    evidenceFrames.bitmap.recycle()
-                    return
+                    return false
                 }
+                Log.i(TAG, "saveEvidence: roi path=$roiPath bytes=${File(roiPath!!).length()}")
             }
-
-            // 保存后回收 Bitmap
-            evidenceFrames.bitmap.recycle()
 
             val entity = DpmScanEvidenceEntity(
                 scanSessionId = sessionId,
@@ -269,13 +290,13 @@ class DpmScanViewModel(private val app: Application) : AndroidViewModel(app) {
                 decodedContent = evidenceFrames.decodedCode,
                 status = "SUCCESS",
                 decodeSource = evidenceFrames.decodeSource?.name,
-                originalImagePath = originalPath,
+                originalImagePath = originalPath!!,
                 roiImagePath = roiPath,
-                batchId = scanAssociation.batchId,
-                partId = scanAssociation.partId,
-                templateId = scanAssociation.templateId,
-                viewIndex = scanAssociation.viewIndex,
-                photoId = scanAssociation.photoId,
+                batchId = association.batchId,
+                partId = association.partId,
+                templateId = association.templateId,
+                viewIndex = association.viewIndex,
+                photoId = association.photoId,
                 roiId = null,
             )
 
@@ -284,10 +305,33 @@ class DpmScanViewModel(private val app: Application) : AndroidViewModel(app) {
                 imageStore.deleteDpmEvidenceFile(roiPath)
                 throw error
             }
-            Log.i(TAG, "saveEvidence: persisted rowId=$rowId status=${entity.status}")
+            synchronized(evidenceSaveLock) {
+                savedEvidenceSessions += sessionId
+                if (evidenceSavedSessionId == sessionId) evidenceSaved = true
+            }
+            Log.i(
+                TAG,
+                "saveEvidence: sessionId=$sessionId persisted rowId=$rowId status=${entity.status} " +
+                    "decodedLength=${entity.decodedContent?.length ?: 0} decodeSource=${entity.decodeSource}",
+            )
+            return true
         } catch (e: Exception) {
-            Log.e(TAG, "saveEvidence: failed to persist evidence", e)
-            runCatching { evidenceFrames.bitmap.recycle() }
+            imageStore.deleteDpmEvidenceFile(originalPath)
+            imageStore.deleteDpmEvidenceFile(roiPath)
+            Log.e(TAG, "saveEvidence: sessionId=$sessionId result=FAILURE reason=persistence", e)
+            return false
+        } finally {
+            // 图片文件和数据库行均完成后才释放保存层唯一持有的 Bitmap。
+            recycleEvidenceBitmap(evidenceFrames)
+            if (!alreadyScheduled) {
+                synchronized(evidenceSaveLock) { scheduledEvidenceSessions.remove(sessionId) }
+            }
+        }
+    }
+
+    private fun recycleEvidenceBitmap(evidenceFrames: DpmFrameAnalyzer.EvidenceFrames?) {
+        evidenceFrames?.bitmap?.let { bitmap ->
+            runCatching { if (!bitmap.isRecycled) bitmap.recycle() }
         }
     }
 
@@ -299,11 +343,79 @@ class DpmScanViewModel(private val app: Application) : AndroidViewModel(app) {
         sessionId: String,
         evidenceFrames: DpmFrameAnalyzer.EvidenceFrames?,
         afterSave: suspend () -> Unit,
-    ) {
-        viewModelScope.launch {
-            saveEvidence(sessionId, evidenceFrames)
-            if (boundSessionId == sessionId) afterSave()
+    ): Deferred<Boolean> {
+        var shouldStart = false
+        var association = DpmScanAssociation()
+        val completion = synchronized(evidenceSaveLock) {
+            when {
+                sessionId in savedEvidenceSessions -> {
+                    Log.d(TAG, "saveEvidenceInScope: sessionId=$sessionId already finalized")
+                    recycleEvidenceBitmap(evidenceFrames)
+                    CompletableDeferred<Boolean>().also { it.complete(true) }
+                }
+                evidenceSaveCompletions[sessionId] != null -> {
+                    Log.d(TAG, "saveEvidenceInScope: sessionId=$sessionId already scheduled")
+                    recycleEvidenceBitmap(evidenceFrames)
+                    evidenceSaveCompletions.getValue(sessionId)
+                }
+                else -> {
+                    shouldStart = true
+                    association = scanAssociation
+                    scheduledEvidenceSessions += sessionId
+                    CompletableDeferred<Boolean>().also { evidenceSaveCompletions[sessionId] = it }
+                }
+            }
         }
+
+        if (!shouldStart) return completion
+
+        Log.i(TAG, "saveEvidenceInScope: scheduled sessionId=$sessionId")
+        applicationScope.launch {
+            var saved = false
+            try {
+                saved = saveEvidenceInternal(
+                    sessionId = sessionId,
+                    evidenceFrames = evidenceFrames,
+                    association = association,
+                    alreadyScheduled = true,
+                )
+                Log.i(TAG, "saveEvidenceInScope: sessionId=$sessionId completed saved=$saved")
+                if (boundSessionId == sessionId) afterSave()
+                completion.complete(saved)
+            } catch (e: Exception) {
+                Log.e(TAG, "saveEvidenceInScope: sessionId=$sessionId cleanup failed", e)
+                completion.complete(false)
+            } finally {
+                synchronized(evidenceSaveLock) {
+                    scheduledEvidenceSessions.remove(sessionId)
+                    evidenceSaveCompletions.remove(sessionId)
+                }
+            }
+        }
+        return completion
+    }
+
+    /**
+     * 成功解码回调进入导航前，等待当前会话的证据行和文件完成。
+     * 这样导航后的导出页不会在后台保存协程完成前读取数据库。
+     */
+    suspend fun saveCurrentEvidenceAndAwait(): Boolean {
+        val sessionId = boundSessionId ?: return false
+        val controller = boundController
+        val frames = getEvidenceFrames()
+        if (frames == null) {
+            val pending = synchronized(evidenceSaveLock) {
+                evidenceSaveCompletions[sessionId]
+            }
+            return pending?.await() ?: synchronized(evidenceSaveLock) {
+                sessionId in savedEvidenceSessions
+            }
+        }
+        return saveEvidenceInScope(sessionId, frames) {
+            stopScan()
+            controller?.clearFrameAnalyzer()
+            controller?.disconnect(sessionId)
+        }.await()
     }
 
     /**
@@ -349,20 +461,28 @@ class DpmScanViewModel(private val app: Application) : AndroidViewModel(app) {
     }
 
     override fun onCleared() {
-        super.onCleared()
         // onCleared 是 ViewModel 销毁的兜底路径（进程杀死等）。
         // 正常退出由 DpmScanScreen 主动调用 saveEvidence + stopScan。
-        // 此处尽力保存证据（异步，不阻塞销毁）。
-        if (!evidenceSaved) {
-            val sid = boundSessionId
-            val frames = dpmFrameAnalyzer?.getAndClearEvidenceFrames()
-            if (sid != null && frames != null) {
-                viewModelScope.launch {
-                    saveEvidence(sid, frames)
+        // 此处使用 Application 级作用域兜底，避免 ViewModel scope 随导航返回取消保存。
+        val sid = boundSessionId
+        val controller = boundController
+        val frames = dpmFrameAnalyzer?.getAndClearEvidenceFrames()
+        if (sid != null && frames != null) {
+            saveEvidenceInScope(sid, frames) {
+                stopScan()
+                controller?.clearFrameAnalyzer()
+                controller?.disconnect(sid)
+            }
+        } else if (sid == null || synchronized(evidenceSaveLock) { sid !in scheduledEvidenceSessions }) {
+            stopScan()
+            if (sid != null && controller != null) {
+                applicationScope.launch {
+                    controller.clearFrameAnalyzer()
+                    controller.disconnect(sid)
                 }
             }
         }
-        stopScan()
+        super.onCleared()
     }
 }
 

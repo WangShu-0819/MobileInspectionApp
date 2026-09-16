@@ -1,8 +1,15 @@
 package com.wearable.inspection.mobile.dpm
 
+import android.app.Application
+import android.graphics.Bitmap
+import com.wearable.inspection.mobile.ui.screens.runDpmScanExit
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 import java.io.File
 
 /**
@@ -16,6 +23,8 @@ import java.io.File
  * - Room migration 创建正确的表结构
  * - 重复退出不会重复写入
  */
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34], application = Application::class)
 class DpmScanEvidenceContractTest {
 
     private fun read(path: String): String = File(path).readText()
@@ -102,10 +111,10 @@ class DpmScanEvidenceContractTest {
         val source = read("src/main/java/com/wearable/inspection/mobile/dpm/DpmScanViewModel.kt")
         // 保存后必须回收 bitmap
         assertTrue("保存后必须回收 bitmap",
-            source.contains("evidenceFrames.bitmap.recycle()"))
+            source.contains("recycleEvidenceBitmap(evidenceFrames)"))
         // 异常路径也必须回收
         assertTrue("异常路径必须回收 bitmap",
-            source.contains("runCatching { evidenceFrames.bitmap.recycle() }"))
+            source.contains("runCatching") && source.contains("recycleEvidenceBitmap(evidenceFrames)"))
     }
 
     // ─── DpmScanScreen 退出流程契约 ───
@@ -130,18 +139,53 @@ class DpmScanEvidenceContractTest {
         assertTrue("证据保存必须在 disconnect 之前", saveIdx < disconnectIdx)
 
         val viewModelSource = read("src/main/java/com/wearable/inspection/mobile/dpm/DpmScanViewModel.kt")
-        val persistIdx = viewModelSource.indexOf("saveEvidence(sessionId, evidenceFrames)")
+        val persistIdx = viewModelSource.indexOf("alreadyScheduled = true")
         val cleanupIdx = viewModelSource.indexOf("afterSave()")
         assertTrue("回调必须先持久化证据", persistIdx > 0 && persistIdx < cleanupIdx)
     }
 
     @Test
+    fun `decoded result waits for current evidence persistence before navigation`() {
+        val screenSource = read("src/main/java/com/wearable/inspection/mobile/ui/screens/DpmScanScreen.kt")
+        assertTrue(screenSource.contains("saveCurrentEvidenceAndAwait()"))
+        assertTrue(
+            screenSource.indexOf("saveCurrentEvidenceAndAwait()") <
+                screenSource.indexOf("onResult(result.rawValue, connectedSessionId)")
+        )
+
+        val viewModelSource = read("src/main/java/com/wearable/inspection/mobile/dpm/DpmScanViewModel.kt")
+        assertTrue(viewModelSource.contains("suspend fun saveCurrentEvidenceAndAwait(): Boolean"))
+        assertTrue(viewModelSource.contains("evidenceSaveCompletions"))
+        assertTrue(viewModelSource.contains(".await()"))
+    }
+
+    @Test
     fun `exit flow cleans up even without sessionId`() {
-        val source = read("src/main/java/com/wearable/inspection/mobile/ui/screens/DpmScanScreen.kt")
-        assertTrue("无 sessionId 时必须清理",
-            source.contains("viewModel.stopScan()"))
-        assertTrue("无 sessionId 时必须回收 bitmap",
-            source.contains("evidenceFrames?.bitmap?.recycle()"))
+        val bitmap = Bitmap.createBitmap(2, 2, Bitmap.Config.ARGB_8888)
+        val evidenceFrames = DpmFrameAnalyzer.EvidenceFrames(
+            bitmap = bitmap,
+            roi = null,
+            isDecodeSuccess = false,
+            decodedCode = null,
+            decodeSource = null,
+        )
+        var stopScanCalls = 0
+        var saveCalls = 0
+        var disconnectCalls = 0
+
+        runDpmScanExit(
+            sessionId = null,
+            getEvidenceFrames = { evidenceFrames },
+            saveEvidenceInScope = { _, _, _ -> saveCalls++ },
+            stopScan = { stopScanCalls++ },
+            clearFrameAnalyzer = { error("无 sessionId 时不应清理 CameraController analyzer") },
+            disconnect = { disconnectCalls++; true },
+        )
+
+        assertEquals("无 sessionId 时必须执行 stopScan", 1, stopScanCalls)
+        assertTrue("无 sessionId 时必须回收 Bitmap", bitmap.isRecycled)
+        assertEquals("无 sessionId 时不得保存证据", 0, saveCalls)
+        assertEquals("无 sessionId 时不得 disconnect", 0, disconnectCalls)
     }
 
     // ─── Room Migration 契约 ───
@@ -218,5 +262,61 @@ class DpmScanEvidenceContractTest {
             dao.contains("suspend fun insert(evidence: DpmScanEvidenceEntity): Long"))
         assertTrue("必须支持按 sessionId 查询",
             dao.contains("getBySessionId"))
+    }
+
+    // ─── DPM 扫码批次绑定合约 ───
+
+    @Test
+    fun `dao bindSessionToBatch guards batchId IS NULL and status SUCCESS`() {
+        val daoSrc = read("src/main/java/com/wearable/inspection/mobile/data/dao/DpmScanEvidenceDao.kt")
+        assertTrue("bindSessionToBatch 必须在 DAO 中声明",
+            daoSrc.contains("suspend fun bindSessionToBatch("))
+        assertTrue("只更新未绑定的行 (batchId IS NULL)",
+            daoSrc.contains("batchId IS NULL"))
+        assertTrue("只更新成功帧 (status = 'SUCCESS')",
+            daoSrc.contains("status = 'SUCCESS'"))
+        assertTrue("返回受影响行数 (Int)",
+            daoSrc.contains("suspend fun bindSessionToBatch(scanSessionId: String, batchId: String): Int"))
+    }
+
+    @Test
+    fun `repository exposes bindDpmScanSessionToBatch`() {
+        val repoSrc = read("src/main/java/com/wearable/inspection/mobile/data/repository/InspectionRepository.kt")
+        assertTrue("bindDpmScanSessionToBatch 必须在 Repository 中声明",
+            repoSrc.contains("suspend fun bindDpmScanSessionToBatch("))
+        assertTrue("Repository 必须委托给 DAO bindSessionToBatch",
+            repoSrc.contains("dpmScanEvidenceDao.bindSessionToBatch("))
+    }
+
+    @Test
+    fun `workbenchViewModel declares setPendingDpmBatchBinding`() {
+        val vmSrc = read("src/main/java/com/wearable/inspection/mobile/ui/screens/workbench/WorkbenchViewModel.kt")
+        assertTrue("setPendingDpmBatchBinding 必须在 WorkbenchViewModel 中声明",
+            vmSrc.contains("fun setPendingDpmBatchBinding("))
+    }
+
+    @Test
+    fun `workbenchViewModel declares applyPendingDpmBinding with partId validation`() {
+        val vmSrc = read("src/main/java/com/wearable/inspection/mobile/ui/screens/workbench/WorkbenchViewModel.kt")
+        assertTrue("applyPendingDpmBinding 必须在 WorkbenchViewModel 中声明",
+            vmSrc.contains("suspend fun applyPendingDpmBinding("))
+        assertTrue("applyPendingDpmBinding 必须校验 partId 一致性",
+            vmSrc.contains("binding.partId"))
+    }
+
+    @Test
+    fun `dpmScanScreen onResult callback passes scanSessionId`() {
+        val screenSrc = read("src/main/java/com/wearable/inspection/mobile/ui/screens/DpmScanScreen.kt")
+        assertTrue("onResult 签名必须包含 scanSessionId 参数",
+            screenSrc.contains("onResult: (String, String?) -> Unit"))
+        assertTrue("LaunchedEffect 必须传递 connectedSessionId 给 onResult",
+            screenSrc.contains("onResult(result.rawValue, connectedSessionId)"))
+    }
+
+    @Test
+    fun `liveInspectionScreen calls applyPendingDpmBinding after batch creation`() {
+        val screenSrc = read("src/main/java/com/wearable/inspection/mobile/ui/screens/LiveInspectionScreen.kt")
+        assertTrue("采集流程中必须调用 applyPendingDpmBinding",
+            screenSrc.contains("viewModel.applyPendingDpmBinding(batchId, repository)"))
     }
 }

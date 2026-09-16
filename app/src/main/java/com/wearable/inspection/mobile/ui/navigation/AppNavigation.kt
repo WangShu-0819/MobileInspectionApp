@@ -336,7 +336,7 @@ fun AppRoot() {
                     partId = scanPartId,
                     templateId = scanTemplateId,
                     viewIndex = scanViewIndex,
-                    onResult = { code ->
+                    onResult = { code, sessionId ->
                         scope.launch {
                             val part = withContext(Dispatchers.IO) {
                                 repository.getPartByDpmCode(code)
@@ -348,6 +348,16 @@ fun AppRoot() {
                                     Toast.LENGTH_SHORT,
                                 ).show()
                             } else {
+                                // 暂存扫码会话绑定信息，首批拍照创建批次后消费
+                                android.util.Log.w(
+                                    "DpmBinding",
+                                    "[DIAG-2] AppNavigation.onResult: sessionId=$sessionId, partId=${part.id}, partName=${part.name}"
+                                )
+                                if (sessionId != null) {
+                                    workbenchViewModel.setPendingDpmBatchBinding(sessionId, part.id)
+                                } else {
+                                    android.util.Log.e("DpmBinding", "[DIAG-2] SKIP setPendingDpmBatchBinding: sessionId is NULL")
+                                }
                                 // 只切换已有零件；WorkBench 通过事件立即重载该零件的有序模板视角。
                                 MobileInspectionApp.settings(context).selectedPartId = part.id
                                 PartSelectionBus.emit(part.id)
@@ -369,7 +379,7 @@ fun AppRoot() {
                     ?: return@composable
                 DpmScanScreen(
                     onBack = { navController.popBackStack() },
-                    onResult = { code ->
+                    onResult = { code, _ ->
                         scope.launch {
                             val cleanCode = code.trim()
                             val existing = withContext(Dispatchers.IO) {

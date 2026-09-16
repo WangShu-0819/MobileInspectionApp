@@ -244,6 +244,16 @@ fun LiveInspectionScreen(
                     )
                     newBatchId
                 }
+                // 绑定 DPM 扫码证据到新创建/复用的批次（幂等，仅首次有效）
+                android.util.Log.w(
+                    "DpmBinding",
+                    "[DIAG-3] LiveInspection before applyPendingDpmBinding: batchId=$batchId, partId=${part.id}"
+                )
+                val dpmBindResult = viewModel.applyPendingDpmBinding(batchId, repository)
+                android.util.Log.w(
+                    "DpmBinding",
+                    "[DIAG-3] LiveInspection after applyPendingDpmBinding: bindResult=$dpmBindResult, batchId=$batchId"
+                )
                 viewModel.setActiveCaptureBatchId(batchId)
 
                 // 直接让 CameraX 写入最终受管理目录，避免拍照后再复制一份大 JPEG。

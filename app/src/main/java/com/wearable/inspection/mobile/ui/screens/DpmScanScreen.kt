@@ -1,6 +1,7 @@
 package com.wearable.inspection.mobile.ui.screens
 
 import android.graphics.Rect
+import android.util.Log
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -32,6 +33,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,6 +52,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.wearable.inspection.mobile.camera.CameraController
 import com.wearable.inspection.mobile.camera.CameraMode
+import com.wearable.inspection.mobile.dpm.DpmFrameAnalyzer
 import com.wearable.inspection.mobile.dpm.DpmScanRoiMapper
 import com.wearable.inspection.mobile.dpm.DpmScanViewModel
 import com.wearable.inspection.mobile.ui.theme.Primary
@@ -58,6 +61,7 @@ import kotlin.math.min
 
 /** 扫描框边长占预览短边的比例。 */
 private const val SCAN_FRAME_RATIO = 0.65f
+private const val DPM_SCAN_SCREEN_TAG = "DpmScanScreen"
 
 /**
  * DPM 扫码页面 — 全屏相机 + 浮层控制
@@ -71,7 +75,7 @@ private const val SCAN_FRAME_RATIO = 0.65f
 @Composable
 fun DpmScanScreen(
     onBack: () -> Unit,
-    onResult: (String) -> Unit = {},
+    onResult: (String, String?) -> Unit = { _, _ -> },
     batchId: String? = null,
     partId: String? = null,
     templateId: String? = null,
@@ -116,34 +120,50 @@ fun DpmScanScreen(
     // 解码结果回调
     LaunchedEffect(lastResult) {
         lastResult?.let { result ->
-            onResult(result.rawValue)
+            val evidenceSaved = viewModel.saveCurrentEvidenceAndAwait()
+            Log.i(
+                DPM_SCAN_SCREEN_TAG,
+                "onDecoded: codeLength=${result.rawValue.length}, evidenceSaved=$evidenceSaved",
+            )
+            Log.w(
+                "DpmBinding",
+                "[DIAG-1] DpmScanScreen.onResult: connectedSessionId=$connectedSessionId, rawValue=${result.rawValue.take(20)}..., evidenceSaved=$evidenceSaved"
+            )
+            if (evidenceSaved) {
+                onResult(result.rawValue, connectedSessionId)
+            } else {
+                Log.e(
+                    "DpmBinding",
+                    "[DIAG-1] BLOCKED onResult: evidence not saved. Keeping scan active for retry."
+                )
+                // 证据未落库时不清除 lastResult，允许退出流程的 saveEvidenceInScope 兜底保存。
+                // 不调用 onResult，不切换零件，不设置 pending binding。
+            }
         }
     }
 
-    // 退出时清理（先保存证据，再停止分析器，最后断开相机）
-    DisposableEffect(Unit) {
-        onDispose {
-            val sid = connectedSessionId
-            // 先提取证据帧（必须在 stopScan 之前，否则 analyzer 已清理）
-            val evidenceFrames = viewModel.getEvidenceFrames()
-            if (sid != null) {
-                // 使用 viewModelScope（而非 rememberCoroutineScope）：
-                // rememberCoroutineScope 在 composable 离开 composition 时即被取消，
-                // onDispose 中 launch 的协程可能永远不执行。
-                // viewModelScope 在 ViewModel.onCleared 之前保持活跃，
-                // 足以完成证据保存。
-                viewModel.saveEvidenceInScope(sid, evidenceFrames) {
-                    // 保存完成后执行清理
-                    viewModel.stopScan()
-                    cameraController.clearFrameAnalyzer()
-                    cameraController.disconnect(sid)
-                }
-            } else {
-                // 无 sessionId 时直接清理（不保存证据）
-                viewModel.stopScan()
-                evidenceFrames?.bitmap?.recycle()
-            }
-        }
+    // 退出时清理（先保存证据，再停止分析器，最后断开相机）。
+    // 该 effect 的 key 固定为 Unit，避免连接成功时提前清理会话；内部读取最新 session。
+    DpmScanExitEffect(connectedSessionId) { sid ->
+        runDpmScanExit(
+            sessionId = sid,
+            getEvidenceFrames = {
+                val frames = viewModel.getEvidenceFrames()
+                Log.d(
+                    DPM_SCAN_SCREEN_TAG,
+                    "onDispose: sessionId=${sid ?: "<none>"}, evidenceFrames=${frames != null}, " +
+                        "decodedLength=${frames?.decodedCode?.length ?: 0}, " +
+                        "decodeSource=${frames?.decodeSource}",
+                )
+                frames
+            },
+            saveEvidenceInScope = { sessionId, frames, afterSave ->
+                viewModel.saveEvidenceInScope(sessionId, frames, afterSave)
+            },
+            stopScan = viewModel::stopScan,
+            clearFrameAnalyzer = cameraController::clearFrameAnalyzer,
+            disconnect = cameraController::disconnect,
+        )
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -153,6 +173,7 @@ fun DpmScanScreen(
             cameraMode = CameraMode.DPM_SCAN,
             onConnected = { controller, sessionId ->
                 connectedSessionId = sessionId
+                Log.d(DPM_SCAN_SCREEN_TAG, "onConnected: sessionId=$sessionId")
                 viewModel.startScan(
                     controller = controller,
                     sessionId = sessionId,
@@ -164,6 +185,8 @@ fun DpmScanScreen(
                 )
             },
             onFrameInfo = { info -> frameInfo = info },
+            // DPM 必须在证据保存完成后才能让 CameraController 清理 analyzer/断开会话。
+            disconnectOnDispose = false,
         )
 
         // 扫描框覆盖层
@@ -187,6 +210,51 @@ fun DpmScanScreen(
             lastResult = lastResult?.rawValue,
             scanning = scanState.scanning,
         )
+    }
+}
+
+/**
+ * DPM 页面退出 effect。sessionId 不是 effect key，避免 null → 非 null 时清理刚建立的会话。
+ * onExit 与 sessionId 都通过 rememberUpdatedState 读取最新值，便于页面销毁时拿到连接成功后的会话。
+ */
+@Composable
+internal fun DpmScanExitEffect(
+    connectedSessionId: String?,
+    onExit: (String?) -> Unit,
+) {
+    val latestSessionId by rememberUpdatedState(connectedSessionId)
+    val latestOnExit by rememberUpdatedState(onExit)
+    DisposableEffect(Unit) {
+        onDispose { latestOnExit(latestSessionId) }
+    }
+}
+
+/**
+ * 页面销毁时的唯一退出顺序。该函数保持同步快照，保存本身由受控 Application scope 执行。
+ */
+internal fun runDpmScanExit(
+    sessionId: String?,
+    getEvidenceFrames: () -> DpmFrameAnalyzer.EvidenceFrames?,
+    saveEvidenceInScope: (String, DpmFrameAnalyzer.EvidenceFrames?, suspend () -> Unit) -> Unit,
+    stopScan: () -> Unit,
+    clearFrameAnalyzer: suspend () -> Unit,
+    disconnect: suspend (String) -> Boolean,
+) {
+    val evidenceFrames = getEvidenceFrames()
+    if (sessionId == null) {
+        // 无 sessionId 时仍清理，但不伪造保存成功。
+        stopScan()
+        evidenceFrames?.bitmap?.let { bitmap ->
+            if (!bitmap.isRecycled) bitmap.recycle()
+        }
+        return
+    }
+
+    saveEvidenceInScope(sessionId, evidenceFrames) {
+        // 保存完成后执行清理，避免 CameraPreview 抢先清掉唯一成功源帧。
+        stopScan()
+        clearFrameAnalyzer()
+        disconnect(sessionId)
     }
 }
 

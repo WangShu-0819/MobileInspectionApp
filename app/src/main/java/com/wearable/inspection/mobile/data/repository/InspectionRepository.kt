@@ -347,4 +347,20 @@ class InspectionRepository(
     suspend fun getDpmScanEvidenceByBatch(batchId: String): List<DpmScanEvidenceEntity> =
         dpmScanEvidenceDao.getByBatchId(batchId)
 
+    /**
+     * 将指定扫码会话下所有成功、未绑定批次的证据批量关联到新创建的采集批次。
+     * 幂等：重复调用不覆盖已绑定行。
+     *
+     * @return 实际更新的行数
+     */
+    suspend fun bindDpmScanSessionToBatch(scanSessionId: String, batchId: String): Int {
+        android.util.Log.w("DpmBinding", "[DIAG-5] Repository.bindDpmScanSessionToBatch: sessionId=$scanSessionId, batchId=$batchId")
+        // 先检查当前 evidence 状态
+        val rows = dpmScanEvidenceDao.getBySessionId(scanSessionId)
+        android.util.Log.w("DpmBinding", "[DIAG-5] pre-bind check: sessionId=$scanSessionId, totalRows=${rows.size}, batchIds=${rows.map { it.batchId }}, statuses=${rows.map { it.status }}")
+        val updated = dpmScanEvidenceDao.bindSessionToBatch(scanSessionId, batchId)
+        android.util.Log.w("DpmBinding", "[DIAG-5] post-bind: updated=$updated rows")
+        return updated
+    }
+
 }

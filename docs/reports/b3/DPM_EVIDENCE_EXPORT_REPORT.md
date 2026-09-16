@@ -1,7 +1,7 @@
 # DPM 扫码证据可操作导出 — 实现报告
 
 **任务**：DPM 扫码证据可操作导出
-**状态**：**USER_ACCEPTED**（用户确认空 ZIP 修复后导出正常）
+**当前状态**：DPM 扫码会话绑定采集批次并进入批次 ZIP 的闭环 **USER_ACCEPTED**（2026-09-16）。以下 2026-09-15 小节保留其当时的历史状态；本报告末尾补充为当前验收结论。
 **日期**：2026-09-15
 
 ## 2026-09-15 现场采集结果 ZIP 关联补充
@@ -139,3 +139,61 @@ ZIP 生成只读取原始文件，不删除、不移动。临时 ZIP 文件在�
 DPM 扫码证据现在只由通过 ZXing `DataMatrixReader`/`Decoder` 或 ML Kit 内部 Data Matrix ECC 解码并产生非空码值的当前会话源帧创建。没有 ECC 成功时不落盘原图或 ROI，不创建 `NO_READ` 证据行；因此导出服务增加 SUCCESS、非空码值、有效来源和原图非空文件过滤，历史 NO_READ 或孤立路径不会进入独立 ZIP。DPM ZIP 仍位于独立证据目录，未合并到现场采集照片 ZIP，`InspectionZipExportService` 未修改。
 
 本轮归档回归：`.\gradlew.bat :app:testDebugUnitTest --tests "com.wearable.inspection.mobile.data.export.DpmEvidenceExport*" --no-daemon` 通过；其中真实 ZIP 测试写入成功证据和 NO_READ 文件/记录，解包后确认仅 SUCCESS 原图、ROI 和 manifest 行被导出。DPM 源帧 token/时间关联、异步 GRID 生命周期和无成功不保存语义详见 [`DPM_SCAN_EVIDENCE_REPORT.md`](DPM_SCAN_EVIDENCE_REPORT.md)。
+
+## 2026-09-15 软件回归整改收口
+
+**状态**：**SOFTWARE_COMPLETE / PHYSICAL_ACCEPTANCE_PENDING**。本节记录本轮验收失败修复和最终软件门禁，不标记 `USER_ACCEPTED`；真实 DPM 扫码证据仍待确认。
+
+### 实际修改文件与失败原因
+
+- `app/src/test/java/com/wearable/inspection/mobile/dpm/DpmScanEvidenceContractTest.kt`：将原先依赖源码字面量 `viewModel.stopScan()` 的断言改为实际调用 `runDpmScanExit(sessionId = null)`，验证无 sessionId 时执行 `stopScan`、回收 Bitmap，且不保存、不清理分析器、不 disconnect。
+- `app/src/test/java/com/wearable/inspection/mobile/ui/screens/SafZipExportTest.kt`：原 Mockito 桩调用 Android `ContentResolver` final 方法，导致测试桩未拦截并触发 NPE；改用 Robolectric + 测试用 `ContentResolver` shadow，保留 SAF 空输出流异常、完整字节复制和失败清理语义。
+- `tasks/todo.md`、`tasks/plan.md`、本报告及 `docs/reports/b3/DPM_SCAN_EVIDENCE_REPORT.md`：补充本轮回归结果、APK 信息、未执行真机声明和剩余风险。
+- 生产导出与 DPM 生命周期逻辑本轮未因错误测试而放宽或改写；manifest 写入流关闭、SAF 空流/失败清理、批次 batchId 精确匹配及独立 DPM 空 batchId 合法导出语义保持不变。
+
+### 最终验证与 APK
+
+1. `.\gradlew.bat :app:compileDebugKotlin --no-daemon`：退出码 0，`BUILD SUCCESSFUL`。
+2. `.\gradlew.bat :app:testDebugUnitTest --no-daemon --rerun-tasks --tests "com.wearable.inspection.mobile.dpm.*" --tests "com.wearable.inspection.mobile.data.export.DpmEvidenceExport*" --tests "com.wearable.inspection.mobile.data.export.InspectionZipExportArchiveTest" --tests "com.wearable.inspection.mobile.data.export.InspectionZipExportServiceTest" --tests "com.wearable.inspection.mobile.ui.screens.DpmScanExit*" --tests "com.wearable.inspection.mobile.ui.screens.SafZipExportTest" --tests "com.wearable.inspection.mobile.ui.screens.CameraPreviewTest"`：退出码 0，222 tests，217 passed，0 failures，5 skipped。
+3. `.\gradlew.bat :app:assembleDebug --no-daemon`：退出码 0，`BUILD SUCCESSFUL`。
+
+APK：
+
+- 执行 Agent 报告的绝对路径（主协调审阅时未能独立核验）：`D:\study\Textile_defects\Wearable Inspection\MobileInspectionApp\app\build\outputs\apk\debug\app-debug.apk`
+- 生成时间：2026-09-15 16:18:20 +08:00
+- 文件大小：232,041,746 bytes
+- SHA-256：`0B82E8E51048EA7B87EB10493F921DB8CCA33567287D6CDC96CEBC228A1A57D5`
+
+本轮未执行 ADB、安装/卸载、启动/停止、connected instrumented test 或其他真机操作；未提交 Git，工作区其他改动均保留。
+
+### 剩余风险
+
+本轮仅完成软件回归整改，尚未进行真机视觉与实际 SAF 提供方验收；APK 安装、DPM 现场采集、系统文件选择器行为和导出 ZIP 的用户验收仍待执行。检测算法、CameraX 所有权及后续自动检测能力不在本轮范围内。
+
+### 主协调审阅补充（2026-09-15）
+
+当前工作区未找到上述 `app-debug.apk` 文件，报告中的 APK 时间、大小和 SHA-256 尚未独立核验。现阶段没有真实数据库行、DPM 证据文件或 ZIP 内容证据；下一步必须使用 `com.wearable.inspection.mobile/com.wearable.inspection.mobile.MainActivity` 完成新 APK 的现场扫码和导出取证。现场导出前还必须确认异步保存已经输出 `persisted rowId`，避免把“保存尚未完成”误判为 ZIP 导出失败。以上是 2026-09-15 的历史审阅结论，已由下方 2026-09-16 闭环验证和用户验收取代。
+
+## 2026-09-15 真实设备扫码与 ZIP 复核
+
+本节更新为本轮实际设备证据；状态仍为 **PHYSICAL_ACCEPTANCE_PENDING**，不替代用户验收。
+
+- 包名门禁通过：前台 `com.wearable.inspection.mobile/.MainActivity`，新包 PID `16456`，旧包 `com.wearable.inspection` PID 为空。使用 APK `app/build/outputs/apk/debug/app-debug.apk`，时间 `2026-09-15 17:56:29 +08:00`，大小 `232,676,681` bytes，SHA-256 `3AE7821D627AC21AF8C82D962D4D568CAEE23BDEB7083822539A6631D9ADEC3D`；设备安装 APK SHA-256 一致。
+- 真实扫码落库：设备数据库快照 `evidence_dpm_current/06_mobile_inspection_db` 查询到 11 条 `dpm_scan_evidence` 行；11 条均为 `SUCCESS`、非空码值 `M968942280224B169AH005023044710`、`GRID`，并有非空原图和 ROI 路径。`files/dpm_evidence` 中对应 22 个文件均为非空 JPEG。
+- 独立 ZIP：设备路径 `/storage/emulated/0/Download/inspection-flow-test/dpm_evidence_20260915_182204.zip`，3,433,021 bytes；本地证据 `evidence_dpm_current/14_independent_dpm.zip`，23 entries（22 张图 + `manifest.csv`），设备/本地 SHA-256 均为 `0E9120A97C373FB0EE432F833030890A37F7E74B060E612E1CE68DB7C04B3948`。按 DB `id`/`scanSessionId`/`frameTimeMs` 对应检查，22/22 个归档文件与 `files/dpm_evidence` 源文件字节一致。
+- 批次 ZIP：本次同名避让文件为 `/storage/emulated/0/Download/inspection-flow-test/batch_batch_17 (2).zip`，本地证据 `evidence_dpm_current/24_batch_batch_17_(2)_actual.zip`，53,441,393 bytes，7 entries（6 张现场照片 + `inspection_result.csv`）。本次扫描的 11 条 DPM 记录 `batchId` 全部为 `NULL`，因此批次包 `dpm/` entries 为 0；生产代码的严格 `batchId == 当前 batchId` 过滤正确阻止跨上下文猜测关联。上一轮读取的 `batch_batch_17.zip` 是 2026-09-04 旧文件；`(2)` 才是 2026-09-15 本次导出的实际文件。
+- 结论：本轮已经排除“成功扫码没有证据落库”和“独立 DPM ZIP 为空”；独立证据闭环为“成功码值 → 源帧/ROI 文件 → Room 行 → 可读 ZIP”。批次 ZIP 的 DPM 合并路径已由 JVM 真实归档测试覆盖，但本轮现场扫码未在有活跃 `batchId` 的采集上下文中进行，故不把批次 DPM 合并报告为设备实测通过。
+
+证据文件：`docs/reports/b3/evidence_dpm_current/06_mobile_inspection_db`、`14_independent_dpm.zip`、`24_batch_batch_17_(2)_actual.zip`、`12_export_browser.xml`、`13_export_browser.png`、`20_batch_saved.png`。
+
+## 2026-09-16 扫码会话绑定新建批次并导出验收
+
+**状态：`USER_ACCEPTED`**。用户确认本闭环人机验收通过；本节结论取代前述“尚未进行有活跃 `batchId` 的批次验证”状态。扫码会话通过稳定 `scanSessionId` 暂存，匹配同一 `partId` 后在首张现场照片创建批次时绑定真实 `batchId`；不猜测、不补写旧 batchId。
+
+- APK：`app/build/outputs/apk/debug/app-debug.apk`，包名 `com.wearable.inspection.mobile`；SHA-256 `fe4c910a9c151244d58433bea79a5c73c9e3e97d7fdbc7434225956cfe0eb1c5`。
+- 设备：`ERLDU20429005890`。真实记录：`scanSessionId=ca802df7-5c40-4909-bfc7-8347700c12ff`、rowId `25`、`batchId=batch_1789537096005_7c122ec5`；DAO 绑定更新 1 行。
+- 数据库为 SUCCESS、非空 DPM 码值及对应源帧/ROI 路径；批次 ZIP 含 `dpm/sessions/<scanSessionId>/` 下的帧图和 ROI 图，`inspection_result.csv` 含对应会话记录。
+- 源帧与 ROI 文件在独立 DPM 证据目录和 ZIP 内的 SHA-256 分别一致（源帧 `cacf32ac971c5826d00385272094ebf6566d40c4b5ea6e93ed9c6c1dd33a7ba0`；ROI `98e5fea211097879572a57839b789bcd0d5f9b0720c4051b1893c8572be5373d`）。这里只核验数据库、文件和 ZIP 结构/字节，不对 JPG 画面内容作视觉结论。
+- 测试结果：DPM tracker 13/13、DPM contract 24/24、ZIP archive 4/4、Workbench DPM binding 5/5；`:app:compileDebugKotlin` 与 `:app:assembleDebug` 通过。APK 大小 `232,677,354` bytes，构建时间 `2026-09-16 13:32:01 +08:00`。完整验证记录见 `tasks/todo.md`。
+
+本次验收只关闭 DPM 扫码证据批次关联交付，不代表 ROI 最终结果/改判证据图交付已完成；后者是当前唯一进行中的任务。
