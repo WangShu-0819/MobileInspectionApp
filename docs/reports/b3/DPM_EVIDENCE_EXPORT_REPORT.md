@@ -197,3 +197,9 @@ APK：
 - 测试结果：DPM tracker 13/13、DPM contract 24/24、ZIP archive 4/4、Workbench DPM binding 5/5；`:app:compileDebugKotlin` 与 `:app:assembleDebug` 通过。APK 大小 `232,677,354` bytes，构建时间 `2026-09-16 13:32:01 +08:00`。完整验证记录见 `tasks/todo.md`。
 
 本次验收只关闭 DPM 扫码证据批次关联交付，不代表 ROI 最终结果/改判证据图交付已完成；后者是当前唯一进行中的任务。
+
+### Git 收口
+
+- DPM 扫码证据批次绑定闭环（含任务指针和验收文档）：`2e2c5943`。
+- DPM 空 ZIP / SAF 写入失败清理及应用级保存作用域：`b7ac09c8`。
+- 其他未能明确归入上述验收交付的工作区修改均未纳入提交，原样保留。
