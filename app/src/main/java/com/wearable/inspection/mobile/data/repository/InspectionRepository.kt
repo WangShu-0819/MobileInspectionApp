@@ -1,6 +1,7 @@
 package com.wearable.inspection.mobile.data.repository
 
 import android.content.Context
+import android.util.Log
 import androidx.core.content.FileProvider
 import com.wearable.inspection.mobile.data.db.AppDatabase
 import com.wearable.inspection.mobile.data.dao.*
@@ -25,6 +26,7 @@ class InspectionRepository(
     private val dpmScanEvidenceDao: DpmScanEvidenceDao
 ) {
     private val imageStore: MobileImageStore by lazy { MobileImageStore(context) }
+    private val filesDir: java.io.File get() = context.filesDir
     // ---- 零件 ----
 
     fun observeParts(): Flow<List<PartEntity>> = partDao.observeAll()
@@ -177,37 +179,110 @@ class InspectionRepository(
     /**
      * 完全删除采集批次及其关联数据和文件
      *
-     * 1. 查询该批次所有照片记录（用于获取文件路径）
-     * 2. 删除批次记录（CASCADE 自动删除 captured_photos 和 view_roi_confirms）
-     * 3. 删除照片实际文件
+     * 1. 按精确 batchId 校验批次存在
+     * 2. 快照所有受管理文件路径（现场照片 + ROI 证据图）
+     * 3. 验证路径在受管理目录内（canonical path 精确父目录比较）
+     * 4. 删除所有受管理文件（文件不存在视为幂等成功）
+     * 5. 删除 DB 行（CASCADE 自动清理 captured_photos 和 view_roi_confirms）
+     * 6. 回读确认 batch、照片和确认记录均已删除
      *
-     * @return 实际删除的照片文件数量
+     * 文件清理未完成时不得删除批次数据库行。
+     * DPM 证据行和文件完全不动（无 FK，独立管理）。
+     * 不扫描或删除 cacheDir、externalFilesDir 或 SAF 中的 ZIP。
+     *
+     * @return 删除结果（成功/失败及详细计数）
      * @throws IllegalArgumentException 如果批次不存在
      */
-    suspend fun deleteCaptureBatchCompletely(batchId: String): Int {
+    suspend fun deleteCaptureBatchCompletely(batchId: String): BatchDeletionResult {
+        // 1. 校验批次存在
         val batch = captureBatchDao.getById(batchId)
             ?: throw IllegalArgumentException("批次不存在: $batchId")
 
-        // 获取照片路径（在删除 DB 记录之前）
+        // 2. 快照所有受管理文件路径
         val photos = capturedPhotoDao.getByBatchId(batchId)
-        val filePaths = photos.map { it.filePath }
+        val confirms = viewRoiConfirmDao.getByBatchId(batchId)
+        val dpmEvidence = dpmScanEvidenceDao.getByBatchId(batchId)
 
-        // 删除批次记录（CASCADE 自动清理 captured_photos 和 view_roi_confirms）
-        captureBatchDao.deleteById(batchId)
+        val allPaths = buildList {
+            addAll(photos.map { it.filePath })
+            addAll(confirms.mapNotNull { it.roiEvidencePath.takeUnless { p -> p.isNullOrBlank() } })
+            // DPM 证据路径仅记录用于日志，不删除
+            dpmEvidence.forEach { e ->
+                Log.d(TAG, "DPM 证据保留不动: id=${e.id} batchId=${e.batchId} file=${e.originalImagePath}")
+            }
+        }.distinct()
 
-        // 删除照片实际文件
-        var deletedFileCount = 0
-        for (path in filePaths) {
+        // 3. 验证路径在受管理目录内，记录越界路径
+        val capturesDirCanonical = java.io.File(filesDir, "captures").canonicalPath
+        val roiEvidenceDirCanonical = java.io.File(filesDir, "roi_evidence").canonicalPath
+        val outOfBounds = mutableListOf<String>()
+        for (path in allPaths) {
             try {
-                val file = File(path)
-                if (file.exists() && file.delete()) {
-                    deletedFileCount++
+                val canonical = java.io.File(path).canonicalPath
+                val inCaptures = canonical.startsWith(capturesDirCanonical + java.io.File.separator) ||
+                    canonical == capturesDirCanonical
+                val inRoiEvidence = canonical.startsWith(roiEvidenceDirCanonical + java.io.File.separator) ||
+                    canonical == roiEvidenceDirCanonical
+                if (!inCaptures && !inRoiEvidence) {
+                    outOfBounds += path
                 }
-            } catch (_: SecurityException) {
-                // 文件删除失败不阻塞整体操作
+            } catch (e: Exception) {
+                outOfBounds += "$path (canonical 解析失败: ${e.message})"
             }
         }
-        return deletedFileCount
+        if (outOfBounds.isNotEmpty()) {
+            val msg = "路径越界，拒绝删除: ${outOfBounds.joinToString("; ")}"
+            Log.e(TAG, msg)
+            return BatchDeletionResult(false, 0, 0, 0, 0, msg)
+        }
+
+        // 4. 删除受管理文件（文件不存在视为幂等成功）
+        var deletedPhotos = 0
+        var deletedRoiEvidence = 0
+        var missingFiles = 0
+        val failedDeletions = mutableListOf<String>()
+        for (path in allPaths) {
+            try {
+                val file = java.io.File(path)
+                if (!file.exists()) {
+                    missingFiles++
+                    continue
+                }
+                if (file.delete()) {
+                    if (path in photos.map { it.filePath }) deletedPhotos++
+                    else deletedRoiEvidence++
+                } else {
+                    failedDeletions += path
+                }
+            } catch (e: SecurityException) {
+                failedDeletions += "$path (权限不足: ${e.message})"
+            } catch (e: Exception) {
+                failedDeletions += "$path (异常: ${e.message})"
+            }
+        }
+        if (failedDeletions.isNotEmpty()) {
+            val msg = "文件删除失败，保留批次记录: ${failedDeletions.joinToString("; ")}"
+            Log.e(TAG, msg)
+            return BatchDeletionResult(false, deletedPhotos, deletedRoiEvidence, missingFiles, 0, msg)
+        }
+
+        // 5. 所有文件已清理，删除 DB 行（CASCADE 自动清理 captured_photos 和 view_roi_confirms）
+        captureBatchDao.deleteById(batchId)
+
+        // 6. 回读确认 batch 已不存在（CASCADE 应确保照片和确认记录同时清理）
+        val batchStillExists = captureBatchDao.getById(batchId)
+        if (batchStillExists != null) {
+            throw IllegalStateException("批次删除后仍存在于数据库: $batchId")
+        }
+
+        Log.i(TAG, "批次删除完成: batchId=$batchId, 照片文件=$deletedPhotos, " +
+            "ROI 证据文件=$deletedRoiEvidence, 缺失文件=$missingFiles, " +
+            "ZIP=无受管理 ZIP 文件")
+        return BatchDeletionResult(true, deletedPhotos, deletedRoiEvidence, missingFiles, 0, null)
+    }
+
+    companion object {
+        private const val TAG = "InspectionRepository"
     }
 
     // ---- 已采集照片 ----
