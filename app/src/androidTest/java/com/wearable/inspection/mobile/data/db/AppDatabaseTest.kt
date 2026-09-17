@@ -180,6 +180,90 @@ class AppDatabaseTest {
     }
 
     @Test
+    fun migration9To10_preservesExistingDataAndAddsOverrideFields() {
+        val databaseName = "roi_override_migration_test"
+        migrationHelper.createDatabase(databaseName, 9).apply {
+            execSQL(
+                "INSERT INTO capture_batches (batchId, partId, partName, startTime, viewCount) " +
+                    "VALUES ('batch-v9', NULL, '旧批次', 10, 1)"
+            )
+            // v9 确认数据：无 overrideTime、roiEvidencePath 列
+            execSQL(
+                "INSERT INTO view_roi_confirms " +
+                    "(id, batchId, photoId, photoPath, viewIndex, templateId, templateName, roiId, roiName, " +
+                    "roiTargetType, roiNormalizedRect, roiPixelRect, softwareResult, humanResult, confirmTime, " +
+                    "overallResult, overallConfirmTime, softwareTargetClass, softwareScore, softwareThreshold, " +
+                    "softwareDetectionsJson, softwareStatus, softwareModelVersion, softwareModelSummary, " +
+                    "softwareElapsedMs, humanChangedModel) " +
+                    "VALUES (100, 'batch-v9', 55, '/old/photo.jpg', 0, 'tpl-0', '正面', 'roi-0', '螺纹 ROI', " +
+                    "'THREAD', '{}', '{}', 'OK', 'NG', 5000, 'NG', 5001, 'THREAD', 0.85, 0.37, " +
+                    "'[]', 'DETECTED', 'nanodet-v1', '{}', 30, 1)"
+            )
+            close()
+        }
+
+        val migrated = migrationHelper.runMigrationsAndValidate(
+            databaseName,
+            10,
+            true,
+            MIGRATION_9_10,
+        )
+
+        // 验证旧行数据保留，新字段为 null
+        migrated.query(
+            "SELECT batchId, photoId, viewIndex, templateId, roiId, softwareResult, humanResult, " +
+                "humanChangedModel, overrideTime, roiEvidencePath " +
+                "FROM view_roi_confirms WHERE id = 100"
+        ).use { cursor ->
+            assertEquals(true, cursor.moveToFirst())
+            assertEquals("batch-v9", cursor.getString(0))
+            assertEquals(55L, cursor.getLong(1))
+            assertEquals(0, cursor.getInt(2))
+            assertEquals("tpl-0", cursor.getString(3))
+            assertEquals("roi-0", cursor.getString(4))
+            assertEquals("OK", cursor.getString(5))
+            assertEquals("NG", cursor.getString(6))
+            assertEquals(1, cursor.getInt(7)) // humanChangedModel = true
+            assertEquals(true, cursor.isNull(8)) // overrideTime = null (旧行)
+            assertEquals(true, cursor.isNull(9)) // roiEvidencePath = null (旧行)
+        }
+
+        // 验证新值可写入
+        migrated.execSQL(
+            "INSERT INTO view_roi_confirms " +
+                "(id, batchId, photoId, photoPath, viewIndex, templateId, templateName, roiId, roiName, " +
+                "roiTargetType, roiNormalizedRect, roiPixelRect, softwareResult, humanResult, confirmTime, " +
+                "overallResult, overallConfirmTime, humanChangedModel, overrideTime, roiEvidencePath) " +
+                "VALUES (101, 'batch-v9', 56, '/new/photo.jpg', 0, 'tpl-0', '正面', 'roi-0', '螺纹 ROI', " +
+                "'THREAD', '{}', '{}', 'OK', 'NG', 6000, 'NG', 6001, 1, 6002, '/managed/roi_evidence.jpg')"
+        )
+        migrated.query(
+            "SELECT humanChangedModel, overrideTime, roiEvidencePath " +
+                "FROM view_roi_confirms WHERE id = 101"
+        ).use { cursor ->
+            assertEquals(true, cursor.moveToFirst())
+            assertEquals(1, cursor.getInt(0))
+            assertEquals(6002L, cursor.getLong(1))
+            assertEquals("/managed/roi_evidence.jpg", cursor.getString(2))
+        }
+
+        // 验证稳定关联字段保留
+        migrated.query(
+            "SELECT batchId, photoId, viewIndex, templateId, roiId FROM view_roi_confirms WHERE id = 100"
+        ).use { cursor ->
+            assertEquals(true, cursor.moveToFirst())
+            assertEquals("batch-v9", cursor.getString(0))
+            assertEquals(55L, cursor.getLong(1))
+            assertEquals(0, cursor.getInt(2))
+            assertEquals("tpl-0", cursor.getString(3))
+            assertEquals("roi-0", cursor.getString(4))
+        }
+
+        migrated.close()
+        InstrumentationRegistry.getInstrumentation().targetContext.deleteDatabase(databaseName)
+    }
+
+    @Test
     fun confirmationRows_reloadByBatchAndPhotoStableAssociation() = runBlocking {
         db.captureBatchDao().insert(CaptureBatchEntity("batch-reload", null, "零件"))
         val first = ViewRoiConfirmEntity(

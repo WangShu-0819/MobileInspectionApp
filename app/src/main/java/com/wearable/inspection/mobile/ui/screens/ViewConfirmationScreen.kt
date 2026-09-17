@@ -1,10 +1,7 @@
 package com.wearable.inspection.mobile.ui.screens
 
 import android.graphics.Bitmap
-import android.graphics.Paint
-import android.graphics.RectF
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -49,8 +46,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.selected
@@ -252,15 +247,21 @@ internal fun RoiConfirmCard(
     onSelect: (String) -> Unit
 ) {
     val targetType = RoiTargetType.fromName(roi.targetType)
-    val thresholdWasApplied = inference?.status in setOf(
+    val statusHint = when (inference?.status) {
+        NanoDetInferenceStatus.ROI_NOT_CONFIGURED,
+        NanoDetInferenceStatus.FEATURE_UNSUPPORTED -> "部件类别暂不支持"
+        NanoDetInferenceStatus.ABI_UNSUPPORTED,
+        NanoDetInferenceStatus.RUNTIME_UNAVAILABLE,
+        NanoDetInferenceStatus.MODEL_UNAVAILABLE,
+        NanoDetInferenceStatus.INFERENCE_ERROR -> "模型未执行"
+        NanoDetInferenceStatus.PHOTO_ASSOCIATION_ERROR,
+        NanoDetInferenceStatus.IMAGE_UNREADABLE,
+        NanoDetInferenceStatus.TEMPLATE_IMAGE_UNREADABLE,
+        NanoDetInferenceStatus.INVALID_ROI -> "模型未执行"
+        NanoDetInferenceStatus.NO_DETECTION -> "未检出"
         NanoDetInferenceStatus.DETECTED,
-        NanoDetInferenceStatus.DETECTED_BELOW_THRESHOLD,
-        NanoDetInferenceStatus.NO_DETECTION
-    )
-    val thresholdText = if (thresholdWasApplied) {
-        "%.1f%%".format((inference?.threshold ?: 0f) * 100f)
-    } else {
-        "未执行"
+        NanoDetInferenceStatus.DETECTED_BELOW_THRESHOLD -> null
+        null -> "模型未执行"
     }
 
     Card(
@@ -294,9 +295,6 @@ internal fun RoiConfirmCard(
                             modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Fit
                         )
-                        if (inference?.detections?.isNotEmpty() == true) {
-                            DetectionBoxOverlay(bitmap, inference)
-                        }
                     } else {
                         Text("照片不可用", color = Color.White, fontSize = 10.sp)
                     }
@@ -309,61 +307,29 @@ internal fun RoiConfirmCard(
                     verticalArrangement = Arrangement.spacedBy(3.dp)
                 ) {
                     Text(
-                        text = roi.name,
+                        text = "ROI ${roi.order + 1}",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Medium,
                         color = TextPrimary,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
-                    Text("ID: ${roi.id}", style = MaterialTheme.typography.labelSmall, color = TextSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Text(
-                        text = "ROI 属性：${targetType?.displayName ?: "未配置"}",
+                        text = "ROI 类型：${targetType?.displayName ?: "未配置"}",
                         style = MaterialTheme.typography.labelSmall,
                         color = Primary,
                         fontWeight = FontWeight.Medium
                     )
-                    Text(
-                        text = "检测状态：${inference?.let { inferenceStatusLabel(it.status) } ?: "未执行"}",
-                        modifier = Modifier.testTag("inference-status-${roi.id}"),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = inferenceStatusColor(inference?.status),
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Text(
-                        text = "目标类别：${inference?.targetClassIndex?.let(::modelClassLabel) ?: "无"}　模型建议（仅参考）：${inference?.modelSuggestion?.name ?: "无"}",
-                        modifier = Modifier.testTag("model-suggestion-${roi.id}"),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextPrimary
-                    )
-                    Text(
-                        text = "最高匹配分数：${inference?.matchingScore?.let { "%.1f%%".format(it * 100f) } ?: "—"}　阈值起始值（未校准）：$thresholdText",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextSecondary
-                    )
-                    if (inference?.modelVersion != null) {
-                        Text("模型：${inference.modelVersion}", style = MaterialTheme.typography.labelSmall, color = TextSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    }
-                    if (!inference?.detail.isNullOrBlank()) {
+                    if (statusHint != null) {
                         Text(
-                            text = inference?.detail.orEmpty(),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = FailColor,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis
+                            text = statusHint,
+                            modifier = Modifier.testTag("inference-status-${roi.id}"),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = TextSecondary,
+                            fontWeight = FontWeight.SemiBold
                         )
                     }
                 }
-            }
-
-            if (inference?.detections?.isNotEmpty() == true) {
-                Text(
-                    text = "检测框 ${inference.detections.size} 个，已叠加显示全部保留框（绿色为匹配类别，橙色为其他类别）",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = TextSecondary
-                )
-            } else if (inference?.status == NanoDetInferenceStatus.NO_DETECTION) {
-                Text("没有检测框；模型建议 NG，匹配分数为空。", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
             }
 
             Row(
@@ -392,52 +358,6 @@ internal fun RoiConfirmCard(
                 )
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun DetectionBoxOverlay(bitmap: Bitmap, inference: NanoDetRoiInferenceResult) {
-    Canvas(Modifier.fillMaxSize().testTag("detection-box-overlay-${inference.roiId}")) {
-        val bounds = inference.roiBounds
-        val sourceWidth = bounds?.let { it.getOrNull(2)?.minus(it.getOrNull(0) ?: 0) }?.takeIf { it > 0 }?.toFloat()
-            ?: bitmap.width.toFloat()
-        val sourceHeight = bounds?.let { it.getOrNull(3)?.minus(it.getOrNull(1) ?: 0) }?.takeIf { it > 0 }?.toFloat()
-            ?: bitmap.height.toFloat()
-        val fitScale = minOf(size.width / bitmap.width, size.height / bitmap.height)
-        val imageWidth = bitmap.width * fitScale
-        val imageHeight = bitmap.height * fitScale
-        val offsetX = (size.width - imageWidth) / 2f
-        val offsetY = (size.height - imageHeight) / 2f
-        val sx = imageWidth / sourceWidth
-        val sy = imageHeight / sourceHeight
-        val nativePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            textSize = 9.dp.toPx()
-            style = Paint.Style.FILL
-            typeface = android.graphics.Typeface.DEFAULT_BOLD
-        }
-        inference.detections.forEach { detection ->
-            val matching = detection.classIndex == inference.targetClassIndex
-            val color = if (matching) android.graphics.Color.GREEN else android.graphics.Color.rgb(255, 145, 0)
-            nativePaint.color = color
-            nativePaint.style = Paint.Style.STROKE
-            nativePaint.strokeWidth = 1.5.dp.toPx()
-            val box = detection.roiBox
-            val rect = RectF(
-                offsetX + box.left.toFloat() * sx,
-                offsetY + box.top.toFloat() * sy,
-                offsetX + box.right.toFloat() * sx,
-                offsetY + box.bottom.toFloat() * sy
-            )
-            drawContext.canvas.nativeCanvas.drawRect(rect, nativePaint)
-            nativePaint.style = Paint.Style.FILL
-            nativePaint.textSize = 8.dp.toPx()
-            drawContext.canvas.nativeCanvas.drawText(
-                "${detection.className} ${(detection.score * 100f).toInt()}%",
-                rect.left,
-                (rect.top - 1.dp.toPx()).coerceAtLeast(nativePaint.textSize),
-                nativePaint
-            )
         }
     }
 }

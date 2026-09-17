@@ -37,7 +37,8 @@ object InspectionExcelExporter {
         "总体人工结果", "总体确认时间", "拍摄时间", "照片ZIP路径", "照片状态",
         "ROI图ZIP路径", "ROI图状态", "detectionIndex", "detectionClass", "detectionScore",
         "detectionRoiBox", "detectionImageBox", "scanSessionId", "dpmCode", "dpmDecodeSource",
-        "dpmStatus", "dpmFrameZipPath", "dpmRoiZipPath", "dpmFrameStatus", "dpmRoiStatus"
+        "dpmStatus", "dpmFrameZipPath", "dpmRoiZipPath", "dpmFrameStatus", "dpmRoiStatus",
+        "result", "overrideTime"
     )
 
     fun exportToFile(confirms: List<ViewRoiConfirmEntity>, partId: String, outputFile: File): Int {
@@ -127,7 +128,7 @@ object InspectionExcelExporter {
                 row.overallResult.orEmpty(),
                 row.overallConfirmTime?.let { DATE_FORMAT.format(Date(it)) }.orEmpty(),
                 DATE_FORMAT.format(Date(photo.capturedAt)), row.zipPath, row.status
-            ) + List(15) { "" }
+            ) + List(15) { "" } + listOf("", "")
     }
 
     private fun roiRow(
@@ -150,10 +151,13 @@ object InspectionExcelExporter {
             confirm?.softwareResult.orEmpty(), confirm?.humanResult ?: "人工未确认",
             confirm?.humanChangedModel?.toString().orEmpty(), humanTime,
             confirm?.overallResult.orEmpty(), overallTime, DATE_FORMAT.format(Date(photo.capturedAt)),
-            "", "已由照片行记录", "", "缺失：未持久化",
+            "", "已由照片行记录", row.roiEvidenceZipPath, roiEvidenceZipStatus(confirm, row.roiEvidenceZipPath),
             detectionIndex?.toString().orEmpty(), detection?.className.orEmpty(), detection?.score.orEmpty(),
             detection?.roiBox.orEmpty(), detection?.imageBox.orEmpty()
-        ) + List(8) { "" }
+        ) + List(8) { "" } + listOf(
+            confirm?.humanResult.orEmpty(),
+            confirm?.overrideTime?.let { DATE_FORMAT.format(Date(it)) }.orEmpty()
+        )
     }
 
     private fun dpmRow(batchId: String, partId: String, row: InspectionDpmExportRow): List<String> {
@@ -164,7 +168,8 @@ object InspectionExcelExporter {
             "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "",
             "",
             e.scanSessionId, e.decodedContent.orEmpty(), e.decodeSource.orEmpty(), e.status,
-            row.frameZipPath, row.roiZipPath, row.frameStatus, row.roiStatus
+            row.frameZipPath, row.roiZipPath, row.frameStatus, row.roiStatus,
+            "", ""
         )
     }
 
@@ -200,6 +205,13 @@ object InspectionExcelExporter {
         }
     }.getOrDefault(emptyList())
 
+    private fun roiEvidenceZipStatus(confirm: ViewRoiConfirmEntity?, actualZipPath: String = ""): String {
+        if (confirm == null) return "未确认"
+        if (!confirm.humanChangedModel) return "未改判"
+        if (actualZipPath.isNotBlank()) return "已导出"
+        return "缺失：改判证据未保存"
+    }
+
     private fun inferCandidateThreshold(summary: String?): String = runCatching {
         summary?.let { org.json.JSONObject(it).optDouble("candidateThreshold").toString() }.orEmpty()
     }.getOrDefault("")
@@ -230,7 +242,12 @@ object InspectionExcelExporter {
 private data class DetectionCsvRow(val className: String, val score: String, val roiBox: String, val imageBox: String)
 
 /** ZIP 导出期间构造的 ROI 关联行，不是新的持久化模型。 */
-data class InspectionRoiExportRow(val photo: CapturedPhotoEntity, val roi: RoiDefinitionEntity, val confirm: ViewRoiConfirmEntity?)
+data class InspectionRoiExportRow(
+    val photo: CapturedPhotoEntity,
+    val roi: RoiDefinitionEntity,
+    val confirm: ViewRoiConfirmEntity?,
+    var roiEvidenceZipPath: String = ""
+)
 
 /** ZIP 导出期间构造的 DPM 文件索引，不是新的持久化模型。 */
 data class InspectionDpmExportRow(

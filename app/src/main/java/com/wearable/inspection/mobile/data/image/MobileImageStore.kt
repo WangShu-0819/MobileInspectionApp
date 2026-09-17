@@ -47,6 +47,7 @@ class MobileImageStore(private val context: Context) {
         private const val TEMP_DIR = "capture_tmp"
         private const val TEMPLATE_IMAGES_DIR = "template_images"
         private const val DPM_EVIDENCE_DIR = "dpm_evidence"
+        private const val ROI_EVIDENCE_DIR = "roi_evidence"
 
         private const val TEMP_PREFIX = "capture_"
         private const val TEMP_SUFFIX = ".tmp.jpg"
@@ -454,4 +455,78 @@ class MobileImageStore(private val context: Context) {
         val b = rect.bottom.coerceIn(t + 1, h)
         return Rect(l, t, r, b)
     }
+
+    // ========== ROI 证据图存储 ==========
+
+    private fun getRoiEvidenceDir(): File {
+        return File(context.filesDir, ROI_EVIDENCE_DIR).apply { mkdirs() }
+    }
+
+    /**
+     * 保存 ROI 证据裁剪图到 roi_evidence/ 目录。
+     *
+     * 使用与稳定关联匹配的文件名，不依赖列表序号。
+     * 写入临时 .part 文件后校验非空再原子重命名。
+     *
+     * @param bitmap 源 ROI 裁剪 Bitmap（调用方负责 Bitmap 生命周期）
+     * @param fileName 稳定文件名（由 batchId/photoId/templateId/viewIndex/roiId 派生）
+     * @return 保存的绝对路径，失败返回 null
+     */
+    fun saveRoiEvidence(bitmap: Bitmap, fileName: String): String? {
+        val dir = getRoiEvidenceDir()
+        val finalFile = File(dir, fileName)
+        val partFile = File(finalFile.absolutePath + PART_SUFFIX)
+        try {
+            if (finalFile.exists()) finalFile.delete()
+            val compressed = FileOutputStream(partFile).use { fos ->
+                val ok = bitmap.compress(Bitmap.CompressFormat.JPEG, 92, fos)
+                fos.flush()
+                ok
+            }
+            if (!compressed || !partFile.exists() || partFile.length() == 0L) {
+                partFile.delete()
+                return null
+            }
+            if (!partFile.renameTo(finalFile)) {
+                partFile.delete()
+                return null
+            }
+            return finalFile.absolutePath
+        } catch (_: Exception) {
+            partFile.delete()
+            finalFile.delete()
+            return null
+        }
+    }
+
+    /**
+     * 删除 ROI 证据图。仅允许删除 roi_evidence/ 目录内的文件。
+     */
+    fun deleteRoiEvidence(path: String?) {
+        if (path.isNullOrBlank()) return
+        runCatching {
+            val file = File(path)
+            val base = getRoiEvidenceDir().canonicalFile
+            val target = file.canonicalFile
+            if (target.parentFile == base && target.exists()) target.delete()
+        }
+    }
+
+    /**
+     * 校验 ROI 证据图存在且非空。
+     */
+    fun roiEvidenceFileValid(path: String?): Boolean {
+        if (path.isNullOrBlank()) return false
+        val file = File(path)
+        return try {
+            val base = getRoiEvidenceDir().canonicalFile
+            val target = file.canonicalFile
+            target.parentFile == base && file.exists() && file.length() > 0L
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    /** 获取 ROI 证据目录路径。 */
+    fun getRoiEvidencePath(): String = getRoiEvidenceDir().absolutePath
 }

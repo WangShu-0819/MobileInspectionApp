@@ -55,5 +55,9 @@ data class ViewRoiConfirmEntity(
     val softwareModelSummary: String? = null,
     val softwareElapsedMs: Long? = null,
     @ColumnInfo(defaultValue = "0")
-    val humanChangedModel: Boolean = false
+    val humanChangedModel: Boolean = false,
+    /** 仅改判记录有值；未改判和旧行为 null */
+    val overrideTime: Long? = null,
+    /** 仅改判记录关联到受管理 ROI 证据图时有值；未改判和旧行为 null */
+    val roiEvidencePath: String? = null
 )

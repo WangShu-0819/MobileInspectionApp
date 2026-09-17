@@ -17,6 +17,7 @@ import com.wearable.inspection.mobile.detection.NanoDetInferenceStatus
 import com.wearable.inspection.mobile.detection.NanoDetRoiInferenceResult
 import com.wearable.inspection.mobile.detection.NanoDetRoiInferenceService
 import com.wearable.inspection.mobile.detection.NanoDetSuggestion
+import com.wearable.inspection.mobile.data.image.MobileImageStore
 import org.json.JSONArray
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -43,7 +44,8 @@ class ViewConfirmationViewModel(
     private val templateName: String,
     private val partId: String,
     private val totalViews: Int,
-    private val inferenceService: NanoDetRoiInferenceService
+    private val inferenceService: NanoDetRoiInferenceService,
+    private val imageStore: MobileImageStore
 ) : ViewModel() {
 
     /** 当前 View 的 ROI 定义列表 */
@@ -81,6 +83,10 @@ class ViewConfirmationViewModel(
     /** 保存完成 */
     var saveCompleted by mutableStateOf(false)
         private set
+
+    /** 已保存的改判证据（roiId → path + overrideTime），从数据库恢复。 */
+    private data class EvidenceRef(val path: String, val overrideTime: Long)
+    private val savedOverrideEvidence = mutableMapOf<String, EvidenceRef>()
 
     /** 加载完成 */
     var isLoaded by mutableStateOf(false)
@@ -173,6 +179,7 @@ class ViewConfirmationViewModel(
                     errorMessage = "NanoDet 推理失败：${e.message ?: "未知错误"}"
                     setInferenceFailure(NanoDetInferenceStatus.INFERENCE_ERROR, errorMessage!!)
                 }
+                applyDefaultSelections(roiList)
                 isLoaded = true
             } catch (e: Exception) {
                 errorMessage = "加载失败：${e.message ?: "未知错误"}"
@@ -198,10 +205,26 @@ class ViewConfirmationViewModel(
             if (row.humanResult == "OK" || row.humanResult == "NG") {
                 roiResults[row.roiId] = row.humanResult
             }
+            if (!row.roiEvidencePath.isNullOrBlank() && row.overrideTime != null) {
+                savedOverrideEvidence[row.roiId] = EvidenceRef(row.roiEvidencePath, row.overrideTime)
+            }
         }
         val overallValues = matchingRows.map { it.overallResult }.distinct()
         if (overallValues.size == 1 && overallValues.single() in setOf("OK", "NG")) {
             overallResult = overallValues.single()
+        }
+    }
+
+    /**
+     * 对没有已保存人工选择且模型有建议的 ROI，将模型值设为默认选中。
+     * 已有人工选择时保留不覆盖。
+     */
+    private fun applyDefaultSelections(currentRois: List<RoiDefinitionEntity>) {
+        currentRois.forEach { roi ->
+            if (roiResults.containsKey(roi.id)) return@forEach
+            val inf = inferenceResults[roi.id] ?: return@forEach
+            val suggestion = inf.modelSuggestion ?: return@forEach
+            roiResults[roi.id] = suggestion.name
         }
     }
 
@@ -256,10 +279,69 @@ class ViewConfirmationViewModel(
         errorMessage = null
 
         viewModelScope.launch {
+            // 本轮新建的证据文件路径，DB 失败时需清理
+            val newEvidenceFiles = mutableListOf<String>()
             try {
                 val now = System.currentTimeMillis()
                 val overall = overallResult!!
                 val geometry = photoGeometry
+
+                // 预计算每个 ROI 的改判证据状态
+                data class OverrideState(
+                    val roiId: String,
+                    val humanChangedModel: Boolean,
+                    val overrideTime: Long?,
+                    val roiEvidencePath: String?,
+                    val isNewEvidence: Boolean
+                )
+                val overrideStates = mutableListOf<OverrideState>()
+                var evidenceSaveError: String? = null
+
+                for (roi in rois) {
+                    val human = roiResults.getValue(roi.id)
+                    val suggestion = inferenceResults[roi.id]?.modelSuggestion
+                    val changed = suggestion != null && suggestion.name != human
+                    val existingRef = savedOverrideEvidence[roi.id]
+                    val existingValid = existingRef != null && imageStore.roiEvidenceFileValid(existingRef.path)
+
+                    if (!changed) {
+                        // 未改判：旧证据保留到 DB 成功后再删除，此处只记录状态
+                        overrideStates += OverrideState(roi.id, false, null, null, false)
+                    } else {
+                        if (existingValid) {
+                            // 改判未变：保留已有证据和原始改判时间
+                            overrideStates += OverrideState(roi.id, true, existingRef!!.overrideTime, existingRef.path, false)
+                        } else {
+                            // 新改判：生成并保存 ROI 证据图
+                            val roiBitmap = roiBitmaps[roi.id]
+                            if (roiBitmap == null) {
+                                evidenceSaveError = "ROI 裁剪图不可用，无法保存改判证据"
+                                overrideStates += OverrideState(roi.id, true, null, null, true)
+                                continue
+                            }
+                            val evidenceFileName = "roi_${batchId.take(8)}_${photoId}_${templateId.take(8)}_${viewIndex}_${roi.id.take(8)}_$now.jpg"
+                            val savedPath = withContext(Dispatchers.IO) {
+                                imageStore.saveRoiEvidence(roiBitmap, evidenceFileName)
+                            }
+                            if (savedPath == null) {
+                                evidenceSaveError = "改判证据图写入失败"
+                                overrideStates += OverrideState(roi.id, true, null, null, true)
+                                continue
+                            }
+                            newEvidenceFiles += savedPath
+                            overrideStates += OverrideState(roi.id, true, now, savedPath, true)
+                        }
+                    }
+                }
+
+                // 新改判证据写入失败时中止：清理本轮新建文件
+                val hasNewEvidenceFailure = overrideStates.any { it.isNewEvidence && it.roiEvidencePath == null }
+                if (hasNewEvidenceFailure) {
+                    newEvidenceFiles.forEach { imageStore.deleteRoiEvidence(it) }
+                    errorMessage = evidenceSaveError ?: "改判证据保存失败"
+                    isSaving = false
+                    return@launch
+                }
 
                 val confirms = rois.map { roi ->
                     val normalizedRect = RoiCoordinateMapper.parseNormalizedRect(roi.normalizedRect)
@@ -279,6 +361,7 @@ class ViewConfirmationViewModel(
                         put("bottom", pixelRect.bottom)
                     }.toString()
 
+                    val os = overrideStates.first { it.roiId == roi.id }
                     buildViewRoiConfirmEntity(
                         batchId = batchId,
                         photoId = photoId,
@@ -291,10 +374,13 @@ class ViewConfirmationViewModel(
                         inference = inferenceResults[roi.id],
                         humanResult = roiResults.getValue(roi.id),
                         overallResult = overall,
-                        confirmedAt = now
+                        confirmedAt = now,
+                        overrideTime = os.overrideTime,
+                        roiEvidencePath = os.roiEvidencePath
                     )
                 }
 
+                // 先保存数据库
                 repository.replaceViewRoiConfirmsForPhoto(batchId, photoId, confirms)
                 val persisted = repository.getViewRoiConfirmsByPhoto(batchId, photoId)
                 check(persisted.size == confirms.size && confirms.all { expected ->
@@ -310,11 +396,31 @@ class ViewConfirmationViewModel(
                             actual.softwareResult == expected.softwareResult &&
                             actual.softwareStatus == expected.softwareStatus &&
                             actual.softwareDetectionsJson == expected.softwareDetectionsJson &&
-                            actual.humanChangedModel == expected.humanChangedModel
+                            actual.humanChangedModel == expected.humanChangedModel &&
+                            actual.overrideTime == expected.overrideTime &&
+                            actual.roiEvidencePath == expected.roiEvidencePath
                     }
                 }) { "确认记录保存校验失败" }
+
+                // DB 成功后：删除不再需要的旧证据文件
+                for (roi in rois) {
+                    val os = overrideStates.first { it.roiId == roi.id }
+                    if (!os.humanChangedModel) {
+                        val oldRef = savedOverrideEvidence[roi.id]
+                        if (oldRef != null) imageStore.deleteRoiEvidence(oldRef.path)
+                    }
+                }
+
+                // DB 成功后：更新证据缓存
+                savedOverrideEvidence.clear()
+                overrideStates.filter { it.humanChangedModel && it.roiEvidencePath != null }.forEach {
+                    savedOverrideEvidence[it.roiId] = EvidenceRef(it.roiEvidencePath!!, it.overrideTime!!)
+                }
+
                 saveCompleted = true
             } catch (e: Exception) {
+                // DB 保存失败：清理本轮新建证据，保留旧证据和缓存不变
+                newEvidenceFiles.forEach { imageStore.deleteRoiEvidence(it) }
                 errorMessage = "保存失败：${e.message}"
             } finally {
                 isSaving = false
@@ -348,7 +454,8 @@ class ViewConfirmationViewModel(
             templateName: String,
             partId: String,
             totalViews: Int,
-            inferenceService: NanoDetRoiInferenceService
+            inferenceService: NanoDetRoiInferenceService,
+            imageStore: MobileImageStore
         ) = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -362,7 +469,8 @@ class ViewConfirmationViewModel(
                     templateName = templateName,
                     partId = partId,
                     totalViews = totalViews,
-                    inferenceService = inferenceService
+                    inferenceService = inferenceService,
+                    imageStore = imageStore
                 ) as T
             }
         }
@@ -381,7 +489,9 @@ internal fun buildViewRoiConfirmEntity(
     inference: NanoDetRoiInferenceResult?,
     humanResult: String,
     overallResult: String,
-    confirmedAt: Long
+    confirmedAt: Long,
+    overrideTime: Long? = null,
+    roiEvidencePath: String? = null
 ): ViewRoiConfirmEntity {
     require(humanResult == "OK" || humanResult == "NG")
     require(overallResult == "OK" || overallResult == "NG")
@@ -454,7 +564,9 @@ internal fun buildViewRoiConfirmEntity(
         softwareModelSummary = modelSummary,
         softwareElapsedMs = inference?.elapsedMs,
         humanChangedModel = inference?.modelSuggestion != null &&
-            inference.modelSuggestion != NanoDetSuggestion.valueOf(humanResult)
+            inference.modelSuggestion != NanoDetSuggestion.valueOf(humanResult),
+        overrideTime = overrideTime,
+        roiEvidencePath = roiEvidencePath
     )
 }
 

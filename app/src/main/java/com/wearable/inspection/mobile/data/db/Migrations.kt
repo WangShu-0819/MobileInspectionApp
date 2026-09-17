@@ -212,6 +212,19 @@ val MIGRATION_8_9 = object : Migration(8, 9) {
 }
 
 /**
+ * 数据库 Migration v9 → v10
+ *
+ * 为 view_roi_confirms 增加改判时间和 ROI 证据图路径。
+ * 旧行新字段均为 null；已保存的模型/人工结果、改判标记和稳定关联保持不变。
+ */
+val MIGRATION_9_10 = object : Migration(9, 10) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE view_roi_confirms ADD COLUMN overrideTime INTEGER")
+        db.execSQL("ALTER TABLE view_roi_confirms ADD COLUMN roiEvidencePath TEXT")
+    }
+}
+
+/**
  * 所有 Migration 列表
  * 新增 Migration 时必须在此添加
  */
@@ -224,5 +237,6 @@ val ALL_MIGRATIONS = arrayOf<Migration>(
     MIGRATION_5_6,
     MIGRATION_6_7,
     MIGRATION_7_8,
-    MIGRATION_8_9
+    MIGRATION_8_9,
+    MIGRATION_9_10
 )

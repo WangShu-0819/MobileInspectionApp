@@ -58,6 +58,7 @@ class InspectionZipExportService(
             val dpmRows = mutableListOf<InspectionDpmExportRow>()
 
             ZipOutputStream(FileOutputStream(outputFile)).use { zos ->
+                val roiEvidenceZipPaths = mutableMapOf<Long, String>()
                 photos.forEach { photo ->
                     val file = File(photo.filePath)
                     val entryName = "views/view_${(photo.viewIndex + 1).toString().padStart(2, '0')}/photo_${photo.photoId}_${file.name}"
@@ -97,14 +98,39 @@ class InspectionZipExportService(
                     definitions.forEach { roi ->
                         val confirm = photoConfirms.firstOrNull { it.roiId == roi.id }
                         if (confirm != null) matchedConfirmKeys += roi.id
-                        roiRows += InspectionRoiExportRow(photo, roi, confirm)
+                        val zipPath = confirm?.let { roiEvidenceZipPaths[it.id] }.orEmpty()
+                        roiRows += InspectionRoiExportRow(photo, roi, confirm, zipPath)
                     }
                     // 只有稳定 photoId + roiId + template/view/path 全部匹配的确认行才导出。
                     photoConfirms.filter { it.roiId !in matchedConfirmKeys }.forEach { confirm ->
                         val matchingDefinition = definitions.firstOrNull { it.id == confirm.roiId }
-                        if (matchingDefinition != null) roiRows += InspectionRoiExportRow(photo, matchingDefinition, confirm)
+                        if (matchingDefinition != null) {
+                            val zipPath = roiEvidenceZipPaths[confirm.id].orEmpty()
+                            roiRows += InspectionRoiExportRow(photo, matchingDefinition, confirm, zipPath)
+                        }
                     }
                 }
+
+                // 写入改判 ROI 证据图（必须在 CSV 之前，确保 CSV 中的 ZIP 路径准确）
+                confirms.filter { it.humanChangedModel && !it.roiEvidencePath.isNullOrBlank() }
+                    .forEach { confirm ->
+                        val evidenceFile = File(confirm.roiEvidencePath!!)
+                        if (evidenceFile.isFile && evidenceFile.length() > 0L) {
+                            val entryName = "roi_evidence/${confirm.batchId.take(8)}_${confirm.photoId}_${confirm.viewIndex}_${confirm.roiId.take(8)}_${confirm.id}.jpg"
+                            try {
+                                zos.putNextEntry(ZipEntry(entryName).apply { size = evidenceFile.length(); time = evidenceFile.lastModified() })
+                                FileInputStream(evidenceFile).use { it.copyTo(zos) }
+                                zos.closeEntry()
+                                roiEvidenceZipPaths[confirm.id] = entryName
+                            } catch (_: Exception) {
+                                runCatching { zos.closeEntry() }
+                            }
+                        }
+                    }
+
+                // 回填 roiRows 中已成功写入 ZIP 的证据路径
+                roiRows.filter { row -> row.confirm?.id?.let { roiEvidenceZipPaths.containsKey(it) } == true }
+                    .forEach { row -> row.roiEvidenceZipPath = roiEvidenceZipPaths[row.confirm!!.id].orEmpty() }
 
                 dpmEvidence.forEach { evidence ->
                     val sessionDir = "dpm/sessions/${evidence.scanSessionId}"
