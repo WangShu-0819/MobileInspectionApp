@@ -906,11 +906,8 @@ private fun DeleteBatchDialog(
     onDismiss: () -> Unit,
     onConfirm: () -> Unit
 ) {
-    // 检查是否有批次的照片数量仍在加载中
-    val anyLoading = batches.any { photoCounts[it.batchId] == null && photoCounts.containsKey(it.batchId).not() }
-        || batches.any { it.batchId !in photoCounts }
-    val anyFailed = batches.any { photoCounts.containsKey(it.batchId) && photoCounts[it.batchId] == null }
-    val allReady = batches.all { photoCounts[it.batchId] != null }
+    // 检查照片数量加载状态：key 不存在=加载中，value=null=加载失败，非 null=就绪
+    val allReady = batches.all { it.batchId in photoCounts && photoCounts[it.batchId] != null }
 
     AlertDialog(
         onDismissRequest = onDismiss,
