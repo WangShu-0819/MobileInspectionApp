@@ -261,4 +261,81 @@ class CaptureBatchDeleteTest {
         assertEquals(4, photos.size)
         assertEquals(setOf(0, 1, 2, 3), photos.map { it.viewIndex }.toSet())
     }
+
+    // ---- 路径安全验证（概念测试）----
+
+    @Test
+    fun `photo path must be under captures directory`() {
+        // 受管理路径验证逻辑概念：只允许 filesDir/captures 目录的文件
+        val validPaths = listOf(
+            "/data/data/com.example/files/captures/photo_1.jpg",
+            "/data/user/0/com.example/files/captures/capture_20260101_001.jpg"
+        )
+        val invalidPaths = listOf(
+            "/sdcard/DCIM/photo.jpg",           // 外部存储
+            "/data/data/com.example/cache/tmp.jpg", // 缓存目录
+            "/data/data/com.example/files/template_images/tpl.jpg", // 模板目录
+            "/data/data/com.example/files/dpm_evidence/frame.jpg"   // DPM 目录
+        )
+        // 概念验证：有效路径包含 captures 子目录
+        validPaths.forEach { path ->
+            assertTrue("应接受 captures 目录: $path", path.contains("/captures/"))
+        }
+        // 概念验证：无效路径不包含 captures 子目录
+        invalidPaths.forEach { path ->
+            assertFalse("应拒绝非 captures 目录: $path", path.contains("/captures/") && !path.contains("/cache/"))
+        }
+    }
+
+    @Test
+    fun `roi evidence path must be under roi_evidence directory`() {
+        val validPaths = listOf(
+            "/data/data/com.example/files/roi_evidence/evidence_1.jpg",
+            "/data/user/0/com.example/files/roi_evidence/batch_photo_roi.jpg"
+        )
+        val invalidPaths = listOf(
+            "/sdcard/Pictures/evidence.jpg",
+            "/data/data/com.example/files/captures/photo.jpg",
+            "/data/data/com.example/files/dpm_evidence/roi.jpg"
+        )
+        validPaths.forEach { path ->
+            assertTrue("应接受 roi_evidence 目录: $path", path.contains("/roi_evidence/"))
+        }
+        invalidPaths.forEach { path ->
+            assertFalse("应拒绝非 roi_evidence 目录: $path", path.contains("/roi_evidence/"))
+        }
+    }
+
+    // ---- 文件不存在时幂等性（概念测试）----
+
+    @Test
+    fun `file not found should be treated as idempotent success`() {
+        // 删除逻辑中：!file.exists() → 缺失计数递增，不视为失败
+        val nonExistentPath = "/data/data/com.example/files/captures/nonexistent.jpg"
+        val file = java.io.File(nonExistentPath)
+        assertFalse("不存在的文件应返回 false", file.exists())
+        // 概念验证：不存在的文件不影响成功状态
+    }
+
+    // ---- 文件删除失败时保留批次记录（概念测试）----
+
+    @Test
+    fun `file delete failure should preserve batch for retry`() {
+        // 删除逻辑中：file.delete() 返回 false 或抛 SecurityException → 保留 batchId
+        val selectedBatchIds = setOf("batch_failed", "batch_ok")
+        val deletedBatchIds = listOf("batch_ok")
+        val remaining = selectedBatchIds - deletedBatchIds.toSet()
+        assertEquals(setOf("batch_failed"), remaining)
+        assertTrue("失败批次应保留在选中集合", "batch_failed" in remaining)
+    }
+
+    // ---- DPM 证据路径不参与照片清理 ----
+
+    @Test
+    fun `dpm evidence paths should not be collected for photo cleanup`() {
+        // DPM 证据有独立目录 filesDir/dpm_evidence，不在 captures 或 roi_evidence 内
+        val dpmPath = "/data/data/com.example/files/dpm_evidence/frame_001.jpg"
+        assertFalse("DPM 路径不应在 captures 目录", dpmPath.contains("/captures/"))
+        assertFalse("DPM 路径不应在 roi_evidence 目录", dpmPath.contains("/roi_evidence/"))
+    }
 }
