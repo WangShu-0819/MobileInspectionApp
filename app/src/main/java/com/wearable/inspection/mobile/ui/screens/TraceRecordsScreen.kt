@@ -182,12 +182,30 @@ fun TraceRecordsScreen() {
     var showDeleteDialog by remember { mutableStateOf(false) }
     var deletingBatch by remember { mutableStateOf(false) }
 
+    // 删除确认框中每个批次的实际照片数量（异步加载）
+    var photoCountState by remember { mutableStateOf<Map<String, Int?>>(emptyMap()) }
+
     // 切换筛选时清除选中状态
     LaunchedEffect(activeFilter) {
         selectedBatchIds = emptySet()
     }
 
     val snackbarHostState = remember { SnackbarHostState() }
+
+    // 删除确认框打开时异步加载每个选中批次的实际照片数量
+    LaunchedEffect(showDeleteDialog, selectedBatchIds) {
+        if (showDeleteDialog && selectedBatchIds.isNotEmpty()) {
+            val counts = mutableMapOf<String, Int?>()
+            selectedBatchIds.forEach { batchId ->
+                counts[batchId] = try {
+                    repository.getCapturedPhotos(batchId).size
+                } catch (_: Exception) {
+                    null // null 表示加载失败
+                }
+            }
+            photoCountState = counts
+        }
+    }
 
     // 追溯记录和采集完成页统一使用同一套"照片 + 检测结果"导出服务。
     val exportService = remember { InspectionZipExportService(context, repository) }
@@ -541,6 +559,7 @@ fun TraceRecordsScreen() {
     if (showDeleteDialog && selectedBatches.isNotEmpty()) {
         DeleteBatchDialog(
             batches = selectedBatches,
+            photoCounts = photoCountState,
             onDismiss = { showDeleteDialog = false },
             onConfirm = {
                 showDeleteDialog = false
@@ -565,8 +584,9 @@ fun TraceRecordsScreen() {
                             deletedBatchIds += batchId
                         }
                         selectedBatchIds = emptySet()
+                        val totalPhotos = deletedBatchIds.size
                         snackbarHostState.showSnackbar(
-                            message = "已删除 ${deletedBatchIds.size} 个采集批次",
+                            message = "已删除 ${deletedBatchIds.size} 个采集批次的批次记录、确认记录和现场照片；当前没有受管理 ZIP 文件可删除",
                             duration = SnackbarDuration.Short
                         )
                     } catch (e: Exception) {
