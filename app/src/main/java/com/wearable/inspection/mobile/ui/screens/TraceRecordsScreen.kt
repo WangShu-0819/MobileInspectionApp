@@ -902,9 +902,16 @@ private fun BatchEmptyState(
 @Composable
 private fun DeleteBatchDialog(
     batches: List<CaptureBatchEntity>,
+    photoCounts: Map<String, Int?>,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit
 ) {
+    // 检查是否有批次的照片数量仍在加载中
+    val anyLoading = batches.any { photoCounts[it.batchId] == null && photoCounts.containsKey(it.batchId).not() }
+        || batches.any { it.batchId !in photoCounts }
+    val anyFailed = batches.any { photoCounts.containsKey(it.batchId) && photoCounts[it.batchId] == null }
+    val allReady = batches.all { photoCounts[it.batchId] != null }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
@@ -914,29 +921,37 @@ private fun DeleteBatchDialog(
             )
         },
         text = {
-            val shownBatches = batches.take(3)
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                shownBatches.forEach { batch ->
+                batches.take(3).forEach { batch ->
+                    val count = photoCounts[batch.batchId]
+                    val countText = when {
+                        count == null && batch.batchId !in photoCounts -> "加载中…"
+                        count == null -> "加载失败"
+                        else -> "$count 张照片"
+                    }
                     Text(
-                        text = "${batch.partName ?: "未关联零件"} · ${batch.batchId.take(8)}…",
+                        text = "${batch.partName ?: "未关联零件"} · ${batch.batchId.take(8)}… · $countText",
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
-                if (batches.size > shownBatches.size) {
-                    Text(text = "及其他 ${batches.size - shownBatches.size} 个批次")
+                if (batches.size > 3) {
+                    Text(text = "及其他 ${batches.size - 3} 个批次")
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "将删除所选批次的所有照片和确认记录，此操作无法恢复。",
+                    text = "将删除所选批次的批次记录、确认记录和现场照片文件。当前没有受管理 ZIP 文件需要删除。此操作无法恢复。",
                     color = FailColor,
                     style = MaterialTheme.typography.bodySmall
                 )
             }
         },
         confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text("确认删除", color = FailColor)
+            TextButton(
+                onClick = onConfirm,
+                enabled = allReady
+            ) {
+                Text("确认删除", color = if (allReady) FailColor else PlaceholderColor)
             }
         },
         dismissButton = {
