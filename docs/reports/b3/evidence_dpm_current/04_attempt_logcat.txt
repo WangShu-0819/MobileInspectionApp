@@ -1,0 +1,195 @@
+09-15 18:11:52.292 16456 16456 D DpmScanScreen: onConnected: sessionId=1afdb0b5-60ce-4445-9d4f-2531b5ae1883
+09-15 18:11:52.292 16456 16456 D DpmScanViewModel: startScan: sessionId=1afdb0b5-60ce-4445-9d4f-2531b5ae1883, controller=com.wearable.inspection.mobile.camera.CameraController@fc43ba1, batchId=null
+09-15 18:11:52.857 16456 18337 D DpmFrameAnalyzer: analyze: frame received, format=35, size=1440x1080, rotation=90
+09-15 18:11:52.926 16456 18337 D DpmFrameAnalyzer: analyze: bitmap converted, size=1080x1440, scanRoi=Rect(189, 369 - 891, 1071)
+09-15 18:11:52.926 16456 18337 D DpmFrameAnalyzer: analyze: frame received, format=35, size=1440x1080, rotation=90
+09-15 18:11:52.932 16456 16456 D DpmAnalyzer: analyze: frame=1080x1440, roi=Rect(189, 369 - 891, 1071), focus=FOCUSED, mode=SCAN
+09-15 18:11:52.932 16456 16456 D DpmAnalyzer: analyze: starting performMultiStrategyDecode
+09-15 18:11:52.932 16456 16456 D DpmAnalyzer: performMultiStrategyDecode: frame=1080x1440, roi=Rect(189, 369 - 891, 1071), strategies=1
+09-15 18:11:52.939 16456 16456 D DpmAnalyzer: Stage1: ROI 702x702 → scaled 400x400
+09-15 18:11:53.017 16456 18337 D DpmFrameAnalyzer: analyze: bitmap converted, size=1080x1440, scanRoi=Rect(189, 369 - 891, 1071)
+09-15 18:11:53.017 16456 16456 D DpmAnalyzer: Stage1: MISS
+09-15 18:11:53.017 16456 16456 D DpmAnalyzer: scanRoi present, skipping full-image stages
+09-15 18:11:53.017 16456 16456 D DpmAnalyzer: analyze: decodedCodeLength=0
+09-15 18:11:53.017 16456 16456 D DpmFrameAnalyzer: analyze: result status=NO_CODE, codeLength=0, source=null, frameToken=1
+09-15 18:11:53.017 16456 18337 D DpmFrameAnalyzer: analyze: frame received, format=35, size=1440x1080, rotation=90
+09-15 18:11:53.025 16456 16456 D DpmAnalyzer: analyze: frame=1080x1440, roi=Rect(189, 369 - 891, 1071), focus=FOCUSED, mode=SCAN
+09-15 18:11:53.025 16456 16456 D DpmAnalyzer: analyze: THROTTLED by timing gate
+09-15 18:11:53.025 16456 16456 D DpmFrameAnalyzer: analyze: result status=THROTTLED, codeLength=0, source=null, frameToken=2
+09-15 18:11:53.096 16456 18337 D DpmFrameAnalyzer: analyze: bitmap converted, size=1080x1440, scanRoi=Rect(189, 369 - 891, 1071)
+09-15 18:11:53.097 16456 18337 D DpmFrameAnalyzer: analyze: frame received, format=35, size=1440x1080, rotation=90
+09-15 18:11:53.103 16456 16456 D DpmAnalyzer: analyze: frame=1080x1440, roi=Rect(189, 369 - 891, 1071), focus=FOCUSED, mode=SCAN
+09-15 18:11:53.103 16456 16456 D DpmAnalyzer: analyze: THROTTLED by timing gate
+09-15 18:11:53.103 16456 16456 D DpmFrameAnalyzer: analyze: result status=THROTTLED, codeLength=0, source=null, frameToken=3
+09-15 18:11:53.159 16456 18337 D DpmFrameAnalyzer: analyze: bitmap converted, size=1080x1440, scanRoi=Rect(189, 369 - 891, 1071)
+09-15 18:11:53.160 16456 18337 D DpmFrameAnalyzer: analyze: frame received, format=35, size=1440x1080, rotation=90
+09-15 18:11:53.165 16456 16456 D DpmAnalyzer: analyze: frame=1080x1440, roi=Rect(189, 369 - 891, 1071), focus=FOCUSED, mode=SCAN
+09-15 18:11:53.166 16456 16456 D DpmAnalyzer: analyze: starting performMultiStrategyDecode
+09-15 18:11:53.166 16456 16456 D DpmAnalyzer: performMultiStrategyDecode: frame=1080x1440, roi=Rect(189, 369 - 891, 1071), strategies=1
+09-15 18:11:53.171 16456 16456 D DpmAnalyzer: Stage1: ROI 702x702 → scaled 400x400
+09-15 18:11:53.213 16456 16456 D DpmAnalyzer: Stage1: MISS
+09-15 18:11:53.213 16456 16456 D DpmAnalyzer: scanRoi present, skipping full-image stages
+09-15 18:11:53.213 16456 16456 D DpmAnalyzer: analyze: decodedCodeLength=0
+09-15 18:11:53.213 16456 16456 D DpmFrameAnalyzer: analyze: result status=NO_CODE, codeLength=0, source=null, frameToken=4
+09-15 18:11:53.225 16456 18337 D DpmFrameAnalyzer: analyze: bitmap converted, size=1080x1440, scanRoi=Rect(189, 369 - 891, 1071)
+09-15 18:11:53.226 16456 18337 D DpmFrameAnalyzer: analyze: frame received, format=35, size=1440x1080, rotation=90
+09-15 18:11:53.230 16456 16456 D DpmAnalyzer: analyze: frame=1080x1440, roi=Rect(189, 369 - 891, 1071), focus=FOCUSED, mode=SCAN
+09-15 18:11:53.230 16456 16456 D DpmAnalyzer: analyze: THROTTLED by timing gate
+09-15 18:11:53.230 16456 16456 D DpmFrameAnalyzer: analyze: result status=THROTTLED, codeLength=0, source=null, frameToken=5
+09-15 18:11:53.308 16456 18337 D DpmFrameAnalyzer: analyze: bitmap converted, size=1080x1440, scanRoi=Rect(189, 369 - 891, 1071)
+09-15 18:11:53.308 16456 18337 D DpmFrameAnalyzer: analyze: frame received, format=35, size=1440x1080, rotation=90
+09-15 18:11:53.316 16456 16456 D DpmAnalyzer: analyze: frame=1080x1440, roi=Rect(189, 369 - 891, 1071), focus=FOCUSED, mode=SCAN
+09-15 18:11:53.316 16456 16456 D DpmAnalyzer: analyze: starting performMultiStrategyDecode
+09-15 18:11:53.316 16456 16456 D DpmAnalyzer: performMultiStrategyDecode: frame=1080x1440, roi=Rect(189, 369 - 891, 1071), strategies=1
+09-15 18:11:53.321 16456 16456 D DpmAnalyzer: Stage1: ROI 702x702 → scaled 400x400
+09-15 18:11:53.373 16456 16456 D DpmAnalyzer: Stage1: MISS
+09-15 18:11:53.373 16456 16456 D DpmAnalyzer: scanRoi present, skipping full-image stages
+09-15 18:11:53.373 16456 16456 D DpmAnalyzer: analyze: decodedCodeLength=0
+09-15 18:11:53.373 16456 16456 D DpmFrameAnalyzer: analyze: result status=NO_CODE, codeLength=0, source=null, frameToken=6
+09-15 18:11:53.381 16456 18337 D DpmFrameAnalyzer: analyze: bitmap converted, size=1080x1440, scanRoi=Rect(189, 369 - 891, 1071)
+09-15 18:11:53.381 16456 18337 D DpmFrameAnalyzer: analyze: frame received, format=35, size=1440x1080, rotation=90
+09-15 18:11:53.387 16456 16456 D DpmAnalyzer: analyze: frame=1080x1440, roi=Rect(189, 369 - 891, 1071), focus=FOCUSED, mode=SCAN
+09-15 18:11:53.387 16456 16456 D DpmAnalyzer: analyze: THROTTLED by timing gate
+09-15 18:11:53.387 16456 16456 D DpmFrameAnalyzer: analyze: result status=THROTTLED, codeLength=0, source=null, frameToken=7
+09-15 18:11:53.463 16456 18337 D DpmFrameAnalyzer: analyze: bitmap converted, size=1080x1440, scanRoi=Rect(189, 369 - 891, 1071)
+09-15 18:11:53.464 16456 18337 D DpmFrameAnalyzer: analyze: frame received, format=35, size=1440x1080, rotation=90
+09-15 18:11:53.471 16456 16456 D DpmAnalyzer: analyze: frame=1080x1440, roi=Rect(189, 369 - 891, 1071), focus=FOCUSED, mode=SCAN
+09-15 18:11:53.471 16456 16456 D DpmAnalyzer: analyze: THROTTLED by timing gate
+09-15 18:11:53.471 16456 16456 D DpmFrameAnalyzer: analyze: result status=THROTTLED, codeLength=0, source=null, frameToken=8
+09-15 18:11:53.537 16456 18337 D DpmFrameAnalyzer: analyze: bitmap converted, size=1080x1440, scanRoi=Rect(189, 369 - 891, 1071)
+09-15 18:11:53.538 16456 18337 D DpmFrameAnalyzer: analyze: frame received, format=35, size=1440x1080, rotation=90
+09-15 18:11:53.545 16456 16456 D DpmAnalyzer: analyze: frame=1080x1440, roi=Rect(189, 369 - 891, 1071), focus=FOCUSED, mode=SCAN
+09-15 18:11:53.545 16456 16456 D DpmAnalyzer: analyze: starting performMultiStrategyDecode
+09-15 18:11:53.545 16456 16456 D DpmAnalyzer: performMultiStrategyDecode: frame=1080x1440, roi=Rect(189, 369 - 891, 1071), strategies=1
+09-15 18:11:53.551 16456 16456 D DpmAnalyzer: Stage1: ROI 702x702 → scaled 400x400
+09-15 18:11:53.600 16456 16456 D DpmAnalyzer: Stage1: MISS
+09-15 18:11:53.600 16456 16456 D DpmAnalyzer: scanRoi present, skipping full-image stages
+09-15 18:11:53.601 16456 16456 D DpmAnalyzer: analyze: decodedCodeLength=0
+09-15 18:11:53.601 16456 16456 D DpmFrameAnalyzer: analyze: result status=NO_CODE, codeLength=0, source=null, frameToken=9
+09-15 18:11:53.612 16456 18337 D DpmFrameAnalyzer: analyze: bitmap converted, size=1080x1440, scanRoi=Rect(189, 369 - 891, 1071)
+09-15 18:11:53.613 16456 18337 D DpmFrameAnalyzer: analyze: frame received, format=35, size=1440x1080, rotation=90
+09-15 18:11:53.620 16456 16456 D DpmAnalyzer: analyze: frame=1080x1440, roi=Rect(189, 369 - 891, 1071), focus=FOCUSED, mode=SCAN
+09-15 18:11:53.621 16456 16456 D DpmAnalyzer: analyze: THROTTLED by timing gate
+09-15 18:11:53.621 16456 16456 D DpmFrameAnalyzer: analyze: result status=THROTTLED, codeLength=0, source=null, frameToken=10
+09-15 18:11:53.688 16456 18337 D DpmFrameAnalyzer: analyze: bitmap converted, size=1080x1440, scanRoi=Rect(189, 369 - 891, 1071)
+09-15 18:11:53.688 16456 18337 D DpmFrameAnalyzer: analyze: frame received, format=35, size=1440x1080, rotation=90
+09-15 18:11:53.695 16456 16456 D DpmAnalyzer: analyze: frame=1080x1440, roi=Rect(189, 369 - 891, 1071), focus=FOCUSED, mode=SCAN
+09-15 18:11:53.695 16456 16456 D DpmAnalyzer: analyze: THROTTLED by timing gate
+09-15 18:11:53.696 16456 16456 D DpmFrameAnalyzer: analyze: result status=THROTTLED, codeLength=0, source=null, frameToken=11
+09-15 18:11:53.763 16456 18337 D DpmFrameAnalyzer: analyze: bitmap converted, size=1080x1440, scanRoi=Rect(189, 369 - 891, 1071)
+09-15 18:11:53.763 16456 18337 D DpmFrameAnalyzer: analyze: frame received, format=35, size=1440x1080, rotation=90
+09-15 18:11:53.772 16456 16456 D DpmAnalyzer: analyze: frame=1080x1440, roi=Rect(189, 369 - 891, 1071), focus=FOCUSED, mode=SCAN
+09-15 18:11:53.772 16456 16456 D DpmAnalyzer: analyze: starting performMultiStrategyDecode
+09-15 18:11:53.772 16456 16456 D DpmAnalyzer: performMultiStrategyDecode: frame=1080x1440, roi=Rect(189, 369 - 891, 1071), strategies=1
+09-15 18:11:53.777 16456 16456 D DpmAnalyzer: Stage1: ROI 702x702 → scaled 400x400
+09-15 18:11:53.829 16456 18337 D DpmFrameAnalyzer: analyze: bitmap converted, size=1080x1440, scanRoi=Rect(189, 369 - 891, 1071)
+09-15 18:11:53.830 16456 18337 D DpmFrameAnalyzer: analyze: frame received, format=35, size=1440x1080, rotation=90
+09-15 18:11:53.837 16456 16456 D DpmAnalyzer: analyze: frame=1080x1440, roi=Rect(189, 369 - 891, 1071), focus=FOCUSED, mode=SCAN
+09-15 18:11:53.837 16456 16456 D DpmAnalyzer: analyze: THROTTLED (already running)
+09-15 18:11:53.837 16456 16456 D DpmFrameAnalyzer: analyze: result status=THROTTLED, codeLength=0, source=null, frameToken=13
+09-15 18:11:53.849 16456 16456 D DpmAnalyzer: Stage1: MISS
+09-15 18:11:53.849 16456 16456 D DpmAnalyzer: scanRoi present, skipping full-image stages
+09-15 18:11:53.849 16456 16456 D DpmAnalyzer: analyze: decodedCodeLength=0
+09-15 18:11:53.849 16456 16456 D DpmFrameAnalyzer: analyze: result status=NO_CODE, codeLength=0, source=null, frameToken=12
+09-15 18:11:53.920 16456 18337 D DpmFrameAnalyzer: analyze: bitmap converted, size=1080x1440, scanRoi=Rect(189, 369 - 891, 1071)
+09-15 18:11:53.921 16456 18337 D DpmFrameAnalyzer: analyze: frame received, format=35, size=1440x1080, rotation=90
+09-15 18:11:53.928 16456 16456 D DpmAnalyzer: analyze: frame=1080x1440, roi=Rect(189, 369 - 891, 1071), focus=FOCUSED, mode=SCAN
+09-15 18:11:53.928 16456 16456 D DpmAnalyzer: analyze: THROTTLED by timing gate
+09-15 18:11:53.928 16456 16456 D DpmFrameAnalyzer: analyze: result status=THROTTLED, codeLength=0, source=null, frameToken=14
+09-15 18:11:53.996 16456 18337 D DpmFrameAnalyzer: analyze: bitmap converted, size=1080x1440, scanRoi=Rect(189, 369 - 891, 1071)
+09-15 18:11:53.996 16456 18337 D DpmFrameAnalyzer: analyze: frame received, format=35, size=1440x1080, rotation=90
+09-15 18:11:54.004 16456 16456 D DpmAnalyzer: analyze: frame=1080x1440, roi=Rect(189, 369 - 891, 1071), focus=FOCUSED, mode=SCAN
+09-15 18:11:54.004 16456 16456 D DpmAnalyzer: analyze: starting performMultiStrategyDecode
+09-15 18:11:54.004 16456 16456 D DpmAnalyzer: performMultiStrategyDecode: frame=1080x1440, roi=Rect(189, 369 - 891, 1071), strategies=1
+09-15 18:11:54.012 16456 16456 D DpmAnalyzer: Stage1: ROI 702x702 → scaled 400x400
+09-15 18:11:54.065 16456 18337 D DpmFrameAnalyzer: analyze: bitmap converted, size=1080x1440, scanRoi=Rect(189, 369 - 891, 1071)
+09-15 18:11:54.066 16456 18337 D DpmFrameAnalyzer: analyze: frame received, format=35, size=1440x1080, rotation=90
+09-15 18:11:54.070 16456 16456 D DpmAnalyzer: analyze: frame=1080x1440, roi=Rect(189, 369 - 891, 1071), focus=FOCUSED, mode=SCAN
+09-15 18:11:54.070 16456 16456 D DpmAnalyzer: analyze: THROTTLED (already running)
+09-15 18:11:54.070 16456 16456 D DpmFrameAnalyzer: analyze: result status=THROTTLED, codeLength=0, source=null, frameToken=16
+09-15 18:11:54.084 16456 16456 D DpmAnalyzer: Stage1: MISS
+09-15 18:11:54.084 16456 16456 D DpmAnalyzer: scanRoi present, skipping full-image stages
+09-15 18:11:54.084 16456 16456 D DpmAnalyzer: analyze: decodedCodeLength=0
+09-15 18:11:54.085 16456 16456 D DpmFrameAnalyzer: analyze: result status=NO_CODE, codeLength=0, source=null, frameToken=15
+09-15 18:11:54.142 16456 18337 D DpmFrameAnalyzer: analyze: bitmap converted, size=1080x1440, scanRoi=Rect(189, 369 - 891, 1071)
+09-15 18:11:54.143 16456 18337 D DpmFrameAnalyzer: analyze: frame received, format=35, size=1440x1080, rotation=90
+09-15 18:11:54.150 16456 16456 D DpmAnalyzer: analyze: frame=1080x1440, roi=Rect(189, 369 - 891, 1071), focus=FOCUSED, mode=SCAN
+09-15 18:11:54.150 16456 16456 D DpmAnalyzer: analyze: THROTTLED by timing gate
+09-15 18:11:54.150 16456 16456 D DpmFrameAnalyzer: analyze: result status=THROTTLED, codeLength=0, source=null, frameToken=17
+09-15 18:11:54.213 16456 18337 D DpmFrameAnalyzer: analyze: bitmap converted, size=1080x1440, scanRoi=Rect(189, 369 - 891, 1071)
+09-15 18:11:54.213 16456 18337 D DpmFrameAnalyzer: analyze: frame received, format=35, size=1440x1080, rotation=90
+09-15 18:11:54.221 16456 16456 D DpmAnalyzer: analyze: frame=1080x1440, roi=Rect(189, 369 - 891, 1071), focus=FOCUSED, mode=SCAN
+09-15 18:11:54.221 16456 16456 D DpmAnalyzer: analyze: starting performMultiStrategyDecode
+09-15 18:11:54.221 16456 16456 D DpmAnalyzer: performMultiStrategyDecode: frame=1080x1440, roi=Rect(189, 369 - 891, 1071), strategies=1
+09-15 18:11:54.230 16456 16456 D DpmAnalyzer: Stage1: ROI 702x702 → scaled 400x400
+09-15 18:11:54.278 16456 18337 D DpmFrameAnalyzer: analyze: bitmap converted, size=1080x1440, scanRoi=Rect(189, 369 - 891, 1071)
+09-15 18:11:54.281 16456 18337 D DpmFrameAnalyzer: analyze: frame received, format=35, size=1440x1080, rotation=90
+09-15 18:11:54.286 16456 16456 D DpmAnalyzer: analyze: frame=1080x1440, roi=Rect(189, 369 - 891, 1071), focus=FOCUSED, mode=SCAN
+09-15 18:11:54.286 16456 16456 D DpmAnalyzer: analyze: THROTTLED (already running)
+09-15 18:11:54.286 16456 16456 D DpmFrameAnalyzer: analyze: result status=THROTTLED, codeLength=0, source=null, frameToken=19
+09-15 18:11:54.321 16456 16456 D DpmAnalyzer: Stage1: MISS
+09-15 18:11:54.321 16456 16456 D DpmAnalyzer: scanRoi present, skipping full-image stages
+09-15 18:11:54.321 16456 16456 D DpmAnalyzer: analyze: decodedCodeLength=0
+09-15 18:11:54.321 16456 16456 D DpmFrameAnalyzer: analyze: result status=NO_CODE, codeLength=0, source=null, frameToken=18
+09-15 18:11:54.373 16456 18337 D DpmFrameAnalyzer: analyze: bitmap converted, size=1080x1440, scanRoi=Rect(189, 369 - 891, 1071)
+09-15 18:11:54.373 16456 18337 D DpmFrameAnalyzer: analyze: frame received, format=35, size=1440x1080, rotation=90
+09-15 18:11:54.380 16456 16456 D DpmAnalyzer: analyze: frame=1080x1440, roi=Rect(189, 369 - 891, 1071), focus=FOCUSED, mode=SCAN
+09-15 18:11:54.380 16456 16456 D DpmAnalyzer: analyze: THROTTLED by timing gate
+09-15 18:11:54.381 16456 16456 D DpmFrameAnalyzer: analyze: result status=THROTTLED, codeLength=0, source=null, frameToken=20
+09-15 18:11:54.443 16456 18337 D DpmFrameAnalyzer: analyze: bitmap converted, size=1080x1440, scanRoi=Rect(189, 369 - 891, 1071)
+09-15 18:11:54.443 16456 18337 D DpmFrameAnalyzer: analyze: frame received, format=35, size=1440x1080, rotation=90
+09-15 18:11:54.450 16456 16456 D DpmAnalyzer: analyze: frame=1080x1440, roi=Rect(189, 369 - 891, 1071), focus=FOCUSED, mode=SCAN
+09-15 18:11:54.450 16456 16456 D DpmAnalyzer: analyze: starting performMultiStrategyDecode
+09-15 18:11:54.450 16456 16456 D DpmAnalyzer: performMultiStrategyDecode: frame=1080x1440, roi=Rect(189, 369 - 891, 1071), strategies=1
+09-15 18:11:54.459 16456 16456 D DpmAnalyzer: Stage1: ROI 702x702 → scaled 400x400
+09-15 18:11:54.490 16456 16456 D DpmAnalyzer: Stage1: MISS
+09-15 18:11:54.490 16456 16456 D DpmAnalyzer: scanRoi present, skipping full-image stages
+09-15 18:11:54.490 16456 16456 D DpmAnalyzer: analyze: decodedCodeLength=0
+09-15 18:11:54.490 16456 16456 D DpmFrameAnalyzer: analyze: result status=NO_CODE, codeLength=0, source=null, frameToken=21
+09-15 18:11:54.507 16456 18337 D DpmFrameAnalyzer: analyze: bitmap converted, size=1080x1440, scanRoi=Rect(189, 369 - 891, 1071)
+09-15 18:11:54.507 16456 18337 D DpmFrameAnalyzer: analyze: frame received, format=35, size=1440x1080, rotation=90
+09-15 18:11:54.511 16456 16456 D DpmAnalyzer: analyze: frame=1080x1440, roi=Rect(189, 369 - 891, 1071), focus=FOCUSED, mode=SCAN
+09-15 18:11:54.512 16456 16456 D DpmAnalyzer: analyze: THROTTLED by timing gate
+09-15 18:11:54.512 16456 16456 D DpmFrameAnalyzer: analyze: result status=THROTTLED, codeLength=0, source=null, frameToken=22
+09-15 18:11:54.595 16456 18337 D DpmFrameAnalyzer: analyze: bitmap converted, size=1080x1440, scanRoi=Rect(189, 369 - 891, 1071)
+09-15 18:11:54.595 16456 18337 D DpmFrameAnalyzer: analyze: frame received, format=35, size=1440x1080, rotation=90
+09-15 18:11:54.603 16456 16456 D DpmAnalyzer: analyze: frame=1080x1440, roi=Rect(189, 369 - 891, 1071), focus=FOCUSED, mode=SCAN
+09-15 18:11:54.603 16456 16456 D DpmAnalyzer: analyze: starting performMultiStrategyDecode
+09-15 18:11:54.603 16456 16456 D DpmAnalyzer: performMultiStrategyDecode: frame=1080x1440, roi=Rect(189, 369 - 891, 1071), strategies=1
+09-15 18:11:54.613 16456 16456 D DpmAnalyzer: Stage1: ROI 702x702 → scaled 400x400
+09-15 18:11:54.656 16456 16456 D DpmAnalyzer: Stage1: MISS
+09-15 18:11:54.656 16456 16456 D DpmAnalyzer: scanRoi present, skipping full-image stages
+09-15 18:11:54.656 16456 16456 D DpmAnalyzer: analyze: decodedCodeLength=0
+09-15 18:11:54.656 16456 16456 D DpmFrameAnalyzer: analyze: result status=NO_CODE, codeLength=0, source=null, frameToken=23
+09-15 18:11:54.665 16456 18337 D DpmFrameAnalyzer: analyze: bitmap converted, size=1080x1440, scanRoi=Rect(189, 369 - 891, 1071)
+09-15 18:11:54.666 16456 18337 D DpmFrameAnalyzer: analyze: frame received, format=35, size=1440x1080, rotation=90
+09-15 18:11:54.670 16456 16456 D DpmAnalyzer: analyze: frame=1080x1440, roi=Rect(189, 369 - 891, 1071), focus=FOCUSED, mode=SCAN
+09-15 18:11:54.670 16456 16456 D DpmAnalyzer: analyze: THROTTLED by timing gate
+09-15 18:11:54.670 16456 16456 D DpmFrameAnalyzer: analyze: result status=THROTTLED, codeLength=0, source=null, frameToken=24
+09-15 18:11:54.747 16456 18337 D DpmFrameAnalyzer: analyze: bitmap converted, size=1080x1440, scanRoi=Rect(189, 369 - 891, 1071)
+09-15 18:11:54.748 16456 18337 D DpmFrameAnalyzer: analyze: frame received, format=35, size=1440x1080, rotation=90
+09-15 18:11:54.755 16456 16456 D DpmAnalyzer: analyze: frame=1080x1440, roi=Rect(189, 369 - 891, 1071), focus=FOCUSED, mode=SCAN
+09-15 18:11:54.755 16456 16456 D DpmAnalyzer: analyze: THROTTLED by timing gate
+09-15 18:11:54.755 16456 16456 D DpmFrameAnalyzer: analyze: result status=THROTTLED, codeLength=0, source=null, frameToken=25
+09-15 18:11:54.828 16456 18337 D DpmFrameAnalyzer: analyze: bitmap converted, size=1080x1440, scanRoi=Rect(189, 369 - 891, 1071)
+09-15 18:11:54.829 16456 18337 D DpmFrameAnalyzer: analyze: frame received, format=35, size=1440x1080, rotation=90
+09-15 18:11:54.837 16456 16456 D DpmAnalyzer: analyze: frame=1080x1440, roi=Rect(189, 369 - 891, 1071), focus=FOCUSED, mode=SCAN
+09-15 18:11:54.837 16456 16456 D DpmAnalyzer: analyze: starting performMultiStrategyDecode
+09-15 18:11:54.837 16456 16456 D DpmAnalyzer: performMultiStrategyDecode: frame=1080x1440, roi=Rect(189, 369 - 891, 1071), strategies=1
+09-15 18:11:54.847 16456 16456 D DpmAnalyzer: Stage1: ROI 702x702 → scaled 400x400
+09-15 18:11:54.901 16456 18337 D DpmFrameAnalyzer: analyze: bitmap converted, size=1080x1440, scanRoi=Rect(189, 369 - 891, 1071)
+09-15 18:11:54.902 16456 18337 D DpmFrameAnalyzer: analyze: frame received, format=35, size=1440x1080, rotation=90
+09-15 18:11:54.908 16456 16456 D DpmAnalyzer: analyze: frame=1080x1440, roi=Rect(189, 369 - 891, 1071), focus=FOCUSED, mode=SCAN
+09-15 18:11:54.908 16456 16456 D DpmAnalyzer: analyze: THROTTLED (already running)
+09-15 18:11:54.908 16456 16456 D DpmFrameAnalyzer: analyze: result status=THROTTLED, codeLength=0, source=null, frameToken=27
+09-15 18:11:54.912 16456 16456 D DpmAnalyzer: Stage1: MISS
+09-15 18:11:54.912 16456 16456 D DpmAnalyzer: scanRoi present, skipping full-image stages
+09-15 18:11:54.912 16456 16456 D DpmAnalyzer: analyze: decodedCodeLength=0
+09-15 18:11:54.912 16456 16456 D DpmFrameAnalyzer: analyze: result status=NO_CODE, codeLength=0, source=null, frameToken=26
+09-15 18:11:54.991 16456 18337 D DpmFrameAnalyzer: analyze: bitmap converted, size=1080x1440, scanRoi=Rect(189, 369 - 891, 1071)
+09-15 18:11:54.992 16456 18337 D DpmFrameAnalyzer: analyze: frame received, format=35, size=1440x1080, rotation=90
+09-15 18:11:54.999 16456 16456 D DpmAnalyzer: analyze: frame=1080x1440, roi=Rect(189, 369 - 891, 1071), focus=FOCUSED, mode=SCAN
+09-15 18:11:55.000 16456 16456 D DpmAnalyzer: analyze: THROTTLED by timing gate
+09-15 18:11:55.000 16456 16456 D DpmFrameAnalyzer: analyze: result status=THROTTLED, codeLength=0, source=null, frameToken=28
+09-15 18:11:55.069 16456 18337 D DpmFrameAnalyzer: analyze: bitmap converted, size=1080x1440, scanRoi=Rect(189, 369 - 891, 1071)
+09-15 18:11:55.070 16456 18337 D DpmFrameAnalyzer: analyze: frame received, format=35, size=1440x1080, rotation=90

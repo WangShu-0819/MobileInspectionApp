@@ -1,0 +1,1219 @@
+--------- beginning of main
+09-16 09:41:56.073  1591  3146 I HwCameraServiceProxy: notifyCameraStateChangeForSarService begin cameraId 0, newCameraState 0, clientName com.wearable.inspection.mobile
+09-16 09:41:56.073  1591  3146 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-16 09:41:56.073  1591  3146 I HwCameraServiceProxy: no need to start service
+09-16 09:41:56.074   761  1641 D AudioFlinger: setParameters(): io 0, keyvalue debug log is close, calling pid 1591 calling uid 1000
+09-16 09:41:56.074  1034  2549 I CameraProviderManager: Camera device device@3.4/legacy/0 torch status is now NOT_AVAILABLE
+09-16 09:41:56.074  1034  2549 I CameraService: onTorchStatusChangedLocked: Torch status changed for cameraId=0, newStatus=0
+09-16 09:41:56.074  1034  2549 V Camera3-Device: Session interface chain:
+09-16 09:41:56.074  1034  2549 V Camera3-Device:   android.hardware.camera.device@3.4::ICameraDeviceSession
+09-16 09:41:56.074  1034  2549 V Camera3-Device:   android.hardware.camera.device@3.3::ICameraDeviceSession
+09-16 09:41:56.074  1034  2549 V Camera3-Device:   android.hardware.camera.device@3.2::ICameraDeviceSession
+09-16 09:41:56.074  1034  2549 V Camera3-Device:   android.hidl.base@1.0::IBase
+09-16 09:41:56.074  1034  2549 E VendorTagDescriptor: lookupTag: Tag name 'dropSAR' does not exist.
+09-16 09:41:56.074  1034  2549 E Camera2-Metadata: getTagFromName: not found name(dropSAR)
+09-16 09:41:56.074  1034  2549 V Camera3-Device: initialize: dropSar tag value is -1
+--------- beginning of system
+09-16 09:41:56.075  1591  2759 I CameraService_proxy: Get isLightStrapCaseOn in cameraserviceproxy.
+09-16 09:41:56.075  1591  2759 D HwCameraServiceProxy: Get isLightStrapCaseOn in HwCameraServiceProxy
+09-16 09:41:56.075  1034  2549 D CameraService: isProxyLightStrapCaseOn: Get isProxyLightStrapCaseOn : 0
+09-16 09:41:56.075  1034  2549 D         : GetModePhysicalId: wide mode physical id 3
+09-16 09:41:56.075  1034  2549 D         : GetModePhysicalId: tele mode physical id 4
+09-16 09:41:56.075  1034  2549 I FrameSynchronizer: SetCloseListener:set Close Listener
+09-16 09:41:56.075  1034  2549 I HwPerformEx: setInfo(0xe9866760)
+09-16 09:41:56.075  1034  2549 I HwPerformEx: setInfo(), get vendor tag id: 3854507339.
+09-16 09:41:56.075  1034  2549 I HwName2Tag: createInstance()
+09-16 09:41:56.075  1034  2549 I HwName2Tag: ~HwName2Tag(0xe9818108)
+09-16 09:41:56.075  1034  2549 I HwName2Tag: HwName2Tag(0xe9818108), vendor tag id: 3854507339.
+09-16 09:41:56.076  1034  2549 I CameraService: NFC polling true
+09-16 09:41:56.076   737  1660 I AudioModuleManager: [AudioModuleSetParameters:51]: list size: 13
+09-16 09:41:56.076   737  1660 I HuaweiAudioAlgoService: set_parameter_camera_facing: HuaweiProcess, value is back
+09-16 09:41:56.076   737  1660 E HuaweiProcessing: set_parameter_l: Can't support algo FACING!!!
+09-16 09:41:56.076  1034  2549 I         : open camera, send msg to nfc, close nfc!
+09-16 09:41:56.077  6425  5551 D NfcNci:HwCustNfcService: isIWareCalling Calling UID = 1047
+09-16 09:41:56.077  6425  5551 I NfcNci:HwCustNfcService: disablePolling
+09-16 09:41:56.077  1034  2549 I CameraService: connectDevice(), exit.
+09-16 09:41:56.078  1591  1979 I PowerManagerService: handleSandman: wakefulness: 1,startDreaming: false
+09-16 09:41:56.078  6425  7263 E NfcNci:HwCustNfcService: applyRouting -1.1
+09-16 09:41:56.078  1591  1979 I PowerManagerService: handleSandman: wakefulness: 1,startDreaming: false
+09-16 09:41:56.078  2654  3618 I AppManager: handleVideoRecord, add: true, pid: , uid: 10328, type: 1
+09-16 09:41:56.078  2654  3618 I DeviceStateService: received camera state: 1
+09-16 09:41:56.079  1591  3146 D HwCameraServiceProxy: It is not the fold camera device.
+09-16 09:41:56.079  1591  3146 I HwCameraServiceProxy: notifyCameraStateChangeForMediaAssistant cameraId 0, newCameraState 101, facing 0
+09-16 09:41:56.079  1591  3146 I HwCameraServiceProxy: notifyCameraStateChangeForRotate begin cameraId 0, newCameraState 101, facing 0
+09-16 09:41:56.079  1591  3146 I HwCameraServiceProxy: notifyCameraStateChangeForRotate end
+09-16 09:41:56.079  1591  3146 I HwCameraServiceProxy: notifyCameraStateChangeForVibrator begin cameraId 0, newCameraState 101, facing 0
+09-16 09:41:56.079  1591  3146 I HwCameraServiceProxy: notifyCameraStateChangeForVibrator end
+09-16 09:41:56.079  1591  3146 I HwCameraServiceProxy: notifyCameraStateChangeForSarService begin cameraId 0, newCameraState 101, clientName com.wearable.inspection.mobile
+09-16 09:41:56.079  1591  3146 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-16 09:41:56.079  1591  3146 I HwCameraServiceProxy: no need to start service
+09-16 09:41:56.079 10962 11188 D Camera2CameraImpl: {Camera@9ce9f1f[id=0]} Use case androidx.camera.core.Preview-7e6356da-259b-4c3d-825e-01141b3d9445146685315 ACTIVE
+09-16 09:41:56.080 10962 11188 D UseCaseAttachState: Active and attached use case: [androidx.camera.core.ImageCapture-13b6ecee-a172-4692-83bf-8e8e97850122231350073, androidx.camera.core.Preview-7e6356da-259b-4c3d-825e-01141b3d9445146685315] for camera: 0
+09-16 09:41:56.081 10962 11188 D Camera2CameraImpl: {Camera@9ce9f1f[id=0]} Use case androidx.camera.core.ImageAnalysis-99b54648-186d-4c12-bc30-8ec1bfd00ebb101731072 INACTIVE
+09-16 09:41:56.081 10962 11188 D UseCaseAttachState: Active and attached use case: [androidx.camera.core.ImageCapture-13b6ecee-a172-4692-83bf-8e8e97850122231350073, androidx.camera.core.Preview-7e6356da-259b-4c3d-825e-01141b3d9445146685315] for camera: 0
+09-16 09:41:56.082  1052  1904 I chatty  : uid=1013(media) threadSensorPow expire 27 lines
+09-16 09:41:56.083  1057  1057 E Sensors@1.2-impl: rgb color sensor data not ready
+09-16 09:41:56.083 10962 11188 D Camera2CameraImpl: {Camera@9ce9f1f[id=0]} Use case androidx.camera.core.ImageCapture-13b6ecee-a172-4692-83bf-8e8e97850122231350073 ACTIVE
+09-16 09:41:56.084 10962 11188 D UseCaseAttachState: Active and attached use case: [androidx.camera.core.ImageCapture-13b6ecee-a172-4692-83bf-8e8e97850122231350073, androidx.camera.core.Preview-7e6356da-259b-4c3d-825e-01141b3d9445146685315] for camera: 0
+09-16 09:41:56.084 10962 11188 D Camera2CameraImpl: {Camera@9ce9f1f[id=0]} CameraDevice.onOpened()
+09-16 09:41:56.084 10962 11188 D Camera2CameraImpl: {Camera@9ce9f1f[id=0]} Transitioning camera internal state: OPENING --> OPENED
+09-16 09:41:56.085 10962 11188 D CameraStateRegistry: Recalculating open cameras:
+09-16 09:41:56.085 10962 11188 D CameraStateRegistry: Camera                                       State                 
+09-16 09:41:56.085 10962 11188 D CameraStateRegistry: -------------------------------------------------------------------
+09-16 09:41:56.085 10962 11188 D CameraStateRegistry: Camera@9ce9f1f[id=0]                         OPEN                  
+09-16 09:41:56.085 10962 11188 D CameraStateRegistry: Camera@aa7bd15[id=4]                         UNKNOWN               
+09-16 09:41:56.085 10962 11188 D CameraStateRegistry: Camera@6058cf6[id=5]                         UNKNOWN               
+09-16 09:41:56.085 10962 11188 D CameraStateRegistry: Camera@f719304[id=1]                         UNKNOWN               
+09-16 09:41:56.085 10962 11188 D CameraStateRegistry: Camera@463e9c[id=2]                          UNKNOWN               
+09-16 09:41:56.085 10962 11188 D CameraStateRegistry: Camera@7c90646[id=3]                         UNKNOWN               
+09-16 09:41:56.085 10962 11188 D CameraStateRegistry: -------------------------------------------------------------------
+09-16 09:41:56.085 10962 11188 D CameraStateRegistry: Open count: 1 (Max allowed: 1)
+09-16 09:41:56.085 10962 11188 D CameraStateMachine: New public camera state CameraState{type=OPEN, error=null} from OPEN and null
+09-16 09:41:56.085 10962 11188 D CameraStateMachine: Publishing new public camera state CameraState{type=OPEN, error=null}
+09-16 09:41:56.085 10962 11188 D UseCaseAttachState: All use case: [androidx.camera.core.ImageCapture-13b6ecee-a172-4692-83bf-8e8e97850122231350073, androidx.camera.core.Preview-7e6356da-259b-4c3d-825e-01141b3d9445146685315, androidx.camera.core.ImageAnalysis-99b54648-186d-4c12-bc30-8ec1bfd00ebb101731072] for camera: 0
+09-16 09:41:56.085 10962 11188 D UseCaseAttachState: Active and attached use case: [androidx.camera.core.ImageCapture-13b6ecee-a172-4692-83bf-8e8e97850122231350073, androidx.camera.core.Preview-7e6356da-259b-4c3d-825e-01141b3d9445146685315] for camera: 0
+09-16 09:41:56.086 10962 11188 D SyncCaptureSessionBase: [androidx.camera.camera2.internal.SynchronizedCaptureSessionBaseImpl@89c55a7] getSurface...done
+09-16 09:41:56.086 10962 11188 D CaptureSession: Opening capture session.
+09-16 09:41:56.087  1034  2549 V Camera3-Device: createDefaultRequest: for template 1
+09-16 09:41:56.087  1034  2549 I CameraDeviceClient: CameraDeviceClient packageName: com.wearable.inspection.mobile
+09-16 09:41:56.091 10962 11188 D DeferrableSurface: use count+1, useCount=2 androidx.camera.core.SurfaceRequest$2@4f98d73
+09-16 09:41:56.091 10962 11188 D DeferrableSurface: New surface in use[total_surfaces=4, used_surfaces=2](androidx.camera.core.impl.ImmediateSurface@e9e9948}
+09-16 09:41:56.091 10962 11188 D DeferrableSurface: use count+1, useCount=1 androidx.camera.core.impl.ImmediateSurface@e9e9948
+09-16 09:41:56.091 10962 11188 D DeferrableSurface: New surface in use[total_surfaces=4, used_surfaces=3](androidx.camera.core.impl.ImmediateSurface@33ca35c}
+09-16 09:41:56.091 10962 11188 D DeferrableSurface: use count+1, useCount=1 androidx.camera.core.impl.ImmediateSurface@33ca35c
+09-16 09:41:56.091  1034  2549 V Camera3-Device: waitUntilDrainedLocked: Already idle
+09-16 09:41:56.093  1057  1094 E Sensors@1.2-impl: rgb color sensor data not ready
+09-16 09:41:56.096  1034  2549 I CameraDeviceClient: createStream
+09-16 09:41:56.096  1034  2549 W CameraDeviceClient: createSurfaceFromGbp: Camera 0 with consumer usage flag: 2304: Forcing asynchronous mode for stream
+09-16 09:41:56.103 10962 10962 D LiveInspection: Camera ready
+09-16 09:41:56.103  1034  2549 W CameraDeviceClient: createSurfaceFromGbp: Camera 0: Overriding format 0x4 to IMPLEMENTATION_DEFINED
+09-16 09:41:56.103  1034  2549 E VendorTagDescriptor: lookupTag: Tag name 'hwStreamConfigurations' does not exist.
+09-16 09:41:56.103  1034  2549 E Camera2-Metadata: getTagFromName: not found name(hwStreamConfigurations)
+09-16 09:41:56.103  1052  1903 I chatty  : uid=1013(media) pl#6 expire 128 lines
+09-16 09:41:56.104  1057  1094 E Sensors@1.2-impl: rgb color sensor data not ready
+09-16 09:41:56.104  1034  2549 V Camera3-Device: Camera 0: Creating new stream 0: 1440 x 1080, format 34, dataspace 0 rotation 0 consumer usage 0, isShared 0, physicalCameraId 
+09-16 09:41:56.104  1034  2549 I Camera3-Stream: Camera3Stream(), create stream 0xe9861a00, 1440 x 1080, format: 0x22
+09-16 09:41:56.104  1034  2549 V Camera3-Device: Camera 0: Created new stream
+09-16 09:41:56.104  1034  2549 I CameraDeviceClient: createStream
+09-16 09:41:56.104  1034  2549 E VendorTagDescriptor: lookupTag: Tag name 'hwStreamConfigurations' does not exist.
+09-16 09:41:56.104  1034  2549 E Camera2-Metadata: getTagFromName: not found name(hwStreamConfigurations)
+09-16 09:41:56.105  1034  2549 V Camera3-Device: Camera 0: Creating new stream 1: 8000 x 6000, format 33, dataspace 146931712 rotation 0 consumer usage 0, isShared 0, physicalCameraId 
+09-16 09:41:56.105  1034  2549 I Camera3-Stream: Camera3Stream(), create stream 0xe9861140, 8000 x 6000, format: 0x21
+09-16 09:41:56.105  1034  2549 V Camera3-Device: Camera 0: Created new stream
+09-16 09:41:56.105  1034  2549 I CameraDeviceClient: createStream
+09-16 09:41:56.105  1034  2549 E VendorTagDescriptor: lookupTag: Tag name 'hwStreamConfigurations' does not exist.
+09-16 09:41:56.105  1034  2549 E Camera2-Metadata: getTagFromName: not found name(hwStreamConfigurations)
+09-16 09:41:56.105  1034  2549 V Camera3-Device: Camera 0: Creating new stream 2: 640 x 480, format 35, dataspace 146931712 rotation 0 consumer usage 0, isShared 0, physicalCameraId 
+09-16 09:41:56.105  1034  2549 I Camera3-Stream: Camera3Stream(), create stream 0xe985fc40, 640 x 480, format: 0x23
+09-16 09:41:56.105  1034  2549 V Camera3-Device: Camera 0: Created new stream
+09-16 09:41:56.106  1034  2549 V Camera3-Device: configureStreams: E
+09-16 09:41:56.106  1034  2549 V Camera3-Device: configureStreams: Camera 0, Facing 0
+09-16 09:41:56.106  1034  2549 V Camera3-Device: configureStreamsLocked: Camera 0: Starting stream configuration
+09-16 09:41:56.106  1591  2759 D HwCameraServiceProxy: It is not the fold camera device.
+09-16 09:41:56.106  1591  2759 I HwCameraServiceProxy: notifyCameraStateChangeForMediaAssistant cameraId 0, newCameraState 102, facing 0
+09-16 09:41:56.106  1591  2759 I HwCameraServiceProxy: notifyCameraStateChangeForRotate begin cameraId 0, newCameraState 102, facing 0
+09-16 09:41:56.106  1034  2549 I Camera3-Device: hwMapToStreamRotation: streamRotation is 0
+09-16 09:41:56.106  1591  2759 I HwCameraServiceProxy: notifyCameraStateChangeForRotate end
+09-16 09:41:56.106  1034  2549 I Camera3-Device: hwMapToStreamRotation: streamRotation is 0
+09-16 09:41:56.106  1591  2759 I HwCameraServiceProxy: notifyCameraStateChangeForVibrator begin cameraId 0, newCameraState 102, facing 0
+09-16 09:41:56.106  1034  2549 I Camera3-Device: hwMapToStreamRotation: streamRotation is 0
+09-16 09:41:56.106  1591  2759 I HwCameraServiceProxy: notifyCameraStateChangeForVibrator end
+09-16 09:41:56.106  1034  2549 V Camera3-Device: configureStreams: v3.4 device found
+09-16 09:41:56.106  1591  2759 I HwCameraServiceProxy: notifyCameraStateChangeForSarService begin cameraId 0, newCameraState 102, clientName defaultActivity
+09-16 09:41:56.106  1591  2759 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-16 09:41:56.106  1591  2759 I HwCameraServiceProxy: no need to start service
+09-16 09:41:56.106  1052  8491 I chatty  : uid=1013(media) HwBinder:1052_6 expire 16 lines
+09-16 09:41:56.106  1034  2549 I Camera3-OutputStream: configureConsumerQueueLocked(), connect stream 0 to native window, for stream: 0xe9861a00
+09-16 09:41:56.106  1034  2549 I Camera3-OutputStream: configureConsumerQueueLocked: Consumer wants 1 buffers, HAL wants 7, type: 0x22
+09-16 09:41:56.107  1034  2549 I Camera3-OutputStream: configureConsumerQueueLocked(), connect stream 1 to native window, for stream: 0xe9861140
+09-16 09:41:56.107  1034  2549 I Camera3-OutputStream: configureConsumerQueueLocked: Consumer wants 4 buffers, HAL wants 4, type: 0x21
+09-16 09:41:56.107  1034  2549 I Camera3-OutputStream: configureConsumerQueueLocked(), connect stream 2 to native window, for stream: 0xe985fc40
+09-16 09:41:56.108  1034  2549 I Camera3-OutputStream: configureConsumerQueueLocked: Consumer wants 4 buffers, HAL wants 7, type: 0x23
+09-16 09:41:56.108  1034  2549 D Camera3-Device: Set real time priority for request queue thread (tid 12057)
+09-16 09:41:56.108  1034  2549 V Camera3-Device: configureStreamsLocked: Camera 0: Stream configuration complete
+09-16 09:41:56.109 10962 11188 D CaptureSession: Attempting to send capture request onConfigured
+09-16 09:41:56.109 10962 11188 D CaptureSession: Issuing request for session.
+09-16 09:41:56.109 10962 11188 D Camera2CaptureRequestBuilder: createCaptureRequest
+09-16 09:41:56.109  1034  2549 V Camera3-Device: createDefaultRequest: for template 1
+09-16 09:41:56.109  1034  2549 I CameraDeviceClient: CameraDeviceClient packageName: com.wearable.inspection.mobile
+09-16 09:41:56.110  1034  2549 V Camera3-Device: convertMetadataListToRequestListLocked: requestId = 0
+09-16 09:41:56.110  1034  2549 I FrameSynchronizer: SetPaused:set Paused status(0)
+09-16 09:41:56.110  1034  2549 V Camera3-Device: unpauseForNewRequests: RequestThread: Going active
+09-16 09:41:56.110  1034 12056 V Camera3-Device: notifyStatus: Camera 0: Now active, pauseState: false
+09-16 09:41:56.110  1034 12057 V Camera3-Device: prepareHalRequests: Request (frame num 0) had AF trigger 0x0
+09-16 09:41:56.110  1034  2549 V Camera3-Device: Camera 0: Capture request 0 enqueued
+09-16 09:41:56.110 10962 11188 D CaptureSession: CameraCaptureSession.onConfigured() mState=OPENED
+09-16 09:41:56.111 10962 11188 D CaptureSession: CameraCaptureSession.onReady() OPENED
+09-16 09:41:56.111  1034 12057 V Camera3-Device: isCustomizedMode: expo time 0, pro mode 0, exposure mode 0
+09-16 09:41:56.111  1052 12062 I chatty  : uid=1013(media) oisController expire 5 lines
+09-16 09:41:56.112  1034 12057 V Camera3-Device: stream 0 now have 1 buffer caches, buf 0xe604c680
+09-16 09:41:56.112  1052 12065 I chatty  : uid=1013(media) oisController expire 1 line
+09-16 09:41:56.113 10962 10962 D CameraPreview: === 画幅诊断 ===
+09-16 09:41:56.113 10962 10962 D CameraPreview: PreviewView: 1080x579
+09-16 09:41:56.113 10962 10962 D CameraPreview: 流尺寸: 640x480
+09-16 09:41:56.113 10962 10962 D CameraPreview: 旋转: 90°
+09-16 09:41:56.113 10962 10962 D CameraPreview: 旋转后: 480x640
+09-16 09:41:56.113 10962 10962 D CameraPreview: scaleType: FIT_CENTER
+09-16 09:41:56.113 10962 10962 D CameraPreview: contentRect: Rect(323, 0 - 757, 579)
+09-16 09:41:56.114  1057  1094 E Sensors@1.2-impl: rgb color sensor data not ready
+09-16 09:41:56.115  1052  1052 I chatty  : uid=1013(media) /vendor/bin/CameraDaemon expire 1 line
+09-16 09:41:56.116  1034 12057 V Camera3-Device: isCustomizedMode: expo time 0, pro mode 0, exposure mode 0
+09-16 09:41:56.116  1034 12057 V Camera3-Device: stream 0 now have 2 buffer caches, buf 0xe604c980
+09-16 09:41:56.118   523   523 I         : CheckPropValue: ro.hardware : kirin980
+09-16 09:41:56.118   523   523 I         : CheckPropValue: ro.runmode : normal
+09-16 09:41:56.118  1034 12057 V Camera3-Device: isCustomizedMode: expo time 0, pro mode 0, exposure mode 0
+09-16 09:41:56.118   523   523 I         : CheckPropValue: ro.hardware : kirin980
+09-16 09:41:56.118   523   523 I         : CheckPropValue: ro.runmode : normal
+09-16 09:41:56.118  1034 12057 V Camera3-Device: stream 0 now have 3 buffer caches, buf 0xe604cc80
+09-16 09:41:56.119  1034 12057 V Camera3-Device: isCustomizedMode: expo time 0, pro mode 0, exposure mode 0
+09-16 09:41:56.119  1034 12057 V Camera3-Device: stream 0 now have 4 buffer caches, buf 0xe604ce00
+09-16 09:41:56.121  1034 12057 V Camera3-Device: isCustomizedMode: expo time 0, pro mode 0, exposure mode 0
+09-16 09:41:56.121  1034 12057 V Camera3-Device: stream 0 now have 5 buffer caches, buf 0xe604cf80
+09-16 09:41:56.122  1052  1903 I chatty  : uid=1013(media) pl#6 expire 193 lines
+09-16 09:41:56.122  1034 12057 V Camera3-Device: isCustomizedMode: expo time 0, pro mode 0, exposure mode 0
+09-16 09:41:56.122  1034 12057 V Camera3-Device: stream 0 now have 6 buffer caches, buf 0xe604d100
+09-16 09:41:56.123  1052 12065 I chatty  : uid=1013(media) oisController expire 2 lines
+09-16 09:41:56.123   523   523 I         : CheckPropValue: ro.hardware : kirin980
+09-16 09:41:56.123   523   523 I         : CheckPropValue: ro.runmode : normal
+09-16 09:41:56.124  1034 12057 V Camera3-Device: isCustomizedMode: expo time 0, pro mode 0, exposure mode 0
+09-16 09:41:56.124  1034 12057 V Camera3-Device: stream 0 now have 7 buffer caches, buf 0xe604d280
+09-16 09:41:56.124  1052  1052 I chatty  : uid=1013(media) /vendor/bin/CameraDaemon expire 1 line
+09-16 09:41:56.124  1052 12045 I chatty  : uid=1013(media) /vendor/bin/CameraDaemon expire 1 line
+09-16 09:41:56.124   523   523 I         : CheckPropValue: ro.hardware : kirin980
+09-16 09:41:56.124   523   523 I         : CheckPropValue: ro.runmode : normal
+09-16 09:41:56.126  1052  1893 I chatty  : uid=1013(media) IppAlgo expire 1 line
+09-16 09:41:56.139  2594  4193 E Booster_Qoe: PreprocessModemData, IsCellularCtx false
+09-16 09:41:56.139  2594  4193 I Booster_Qoe: AdaBoostPredict rlt,index:7,NisPsSlow:0,NProba:312,rsrp(rssi):-40,rsrq(noise):-82,rtt(chload):536,buffhigh(uldelay):0,buffcomm(rtt):0
+09-16 09:41:56.139  2594  4193 E Booster_Qoe: PreprocessModemData, IsCellularCtx false
+09-16 09:41:56.140  2594  4193 I Booster_Qoe: AdaBoostPredict rlt,index:2,NisPsSlow:0,NProba:312,rsrp(rssi):-40,rsrq(noise):-82,rtt(chload):536,buffhigh(uldelay):0,buffcomm(rtt):25
+09-16 09:41:56.140  2594  3135 I NetworkQoeProxy: setChannelQoeValid invalid channel id = 4
+09-16 09:41:56.140  2594  3135 I NetworkQoeProxy: calcChannelNoRx dnsData is not present
+09-16 09:41:56.141  2594  3135 E BoosterUtil: convertSubIdToSlotId failed, subId:2, slotId:-1
+09-16 09:41:56.141  2594  3135 E BoosterUtil: getDefaultDataSlotId failed, invalid slotId:-1, subId:2
+09-16 09:41:56.141  2594  3135 E NrSmartCure: onNetworkQoeUpdate failed, invalid defaultDataSlotId=-1
+09-16 09:41:56.141  2594  3135 D NpdcpAliveManager: ro.odm.npdcp_alive_cfg_enable is false
+09-16 09:41:56.141  2594  3135 E FourNetCombinationChr: getNetworkQoeInfo failed, qoeTcpDataOpt is null
+09-16 09:41:56.141  1052  1903 I chatty  : uid=1013(media) pl#6 expire 34 lines
+09-16 09:41:56.142  1052  1893 I chatty  : uid=1013(media) IppAlgo expire 1 line
+09-16 09:41:56.142  1052  1903 I chatty  : uid=1013(media) pl#6 expire 149 lines
+09-16 09:41:56.143  1591  2245 I WiFi_PRO_WifiProStateMachine: APP_SERVICE_QOE_NOTIFY Qoe info 10328,4,0,312,1,2,4,0,312,433300,433300,10,10,0,1,0,0 CID 2 mMasterWifiRssi -36 mMasterCardAmbr 1048576 mSlaveCardAmbr 1048576
+09-16 09:41:56.143  1052  1892 I chatty  : uid=1013(media) IppAlgo expire 31 lines
+09-16 09:41:56.143  1591  2245 I WifiService: getConnectionInfo uid=1000
+09-16 09:41:56.143  1591  2245 I HwWifiProServiceProxy: ctrlHwWifiNetwork pkgName: WIFIPRO_SERVICE interfaceId: 9
+09-16 09:41:56.143  1591  2245 I WiFi_PRO_WifiProStateMachine: isWifi2WifiProcess = false, mIsNeedIgnoreQoeUpdate = false, mIsAppInBlacklist = false, mIsAppInBlacklistFullScreen = false, mIsWiFiNoInternet false, screen on = true, full screen = false, isLandscapeMode = false, mNotifyWifiLinkPoorReason = -1
+09-16 09:41:56.143  1591  2245 I WiFi_PRO_WifiProStateMachine: mChannelQoeBadCnt = 0, mAppQoeBadCnt = 0, mNetworkSlowReason = 0, mNetworkSlowChannelBadCnt = 0
+09-16 09:41:56.143  2594  4193 I Collector: HandleRawWifiInfo: flag:0, netId:0!
+09-16 09:41:56.144  1591  2245 E WiFi_PROHumanFactorRecommend: isRichTrafficUser, invalid slotId=-1
+09-16 09:41:56.144  1591  2245 I WifiService: getConnectionInfo uid=1000
+09-16 09:41:56.144  1052  8423 I chatty  : uid=1013(media) PreProcFilter expire 32 lines
+09-16 09:41:56.144  1591  2245 E WiFi_PROHumanFactorRecommend: isEconomicTrafficUser, invalid slotId=-1
+09-16 09:41:56.149 10962 10962 E CameraPreview: Template overlay load failed
+09-16 09:41:56.149 10962 10962 E CameraPreview: androidx.compose.runtime.LeftCompositionCancellationException: The coroutine scope left the composition
+09-16 09:41:56.152  1052 12086 I chatty  : uid=1013(media) OV08A10_PD expire 8 lines
+09-16 09:41:56.169  1052 12089 I chatty  : uid=1013(media) PREPROC_AFSTAT expire 5 lines
+09-16 09:41:56.220  1591  2146 I WificondControl: Noise: -82, Snr: 127, Chload: 536, rssi: -34, txBitrate: 433, rxBitrate: 433, frequency: 5220, UlDelay: -1, currentTxBytes: 269343960, currentTxPackets: 367884, currentTxFailed: 0, currentRxBytes: -872980080, currentRxPackets: 355561
+09-16 09:41:56.220  1591  2146 I WifiClientModeImpl: fetchRssiLinkSpeedAndFrequencyNative rssi=-34 TxLinkspeed=433 freq=5220 RxLinkSpeed=433
+09-16 09:41:56.220  1591  2146 D SupplicantStaIfaceHal: ISupplicantStaIface.pwrPercentBoostModeset succeeded
+09-16 09:41:56.220  1591  2146 I WifiConfigManager: Updating scan detail cache freq=5220 BSSID=58B7B5F9F7 RSSI=-34 for "11ED9C746
+09-16 09:41:56.221  1591  2249 I HuaweiWifiWatchdogStateMachine: POta txb txg rxg:0, 9, 0. Lr =0% Totpkt=9
+09-16 09:41:56.221  1591  2145 I WiFi_PRO: MSG_RETURN_AP_CURRY_RSSI rssi = -34
+09-16 09:41:56.221  1591  2145 I QosMonitor: queryRtt: rttType = 3
+09-16 09:41:56.221  1591  2145 I HwWifiProServiceProxy: ctrlHwWifiNetwork pkgName: WIFIPRO_SERVICE interfaceId: 8
+09-16 09:41:56.222  1591  2145 I QosMonitor: postEventFromNative: msg=100,arg1=4,arg2=10
+09-16 09:41:56.222  1591  2145 I HwWifiProServiceProxy: ctrlHwWifiNetwork pkgName: WIFIPRO_SERVICE interfaceId: 8
+09-16 09:41:56.222  1591  2145 I QosMonitor: postEventFromNative: msg=100,arg1=0,arg2=10
+09-16 09:41:56.222  1591  2145 I MQoS    : rtt=288,tcpTxPkts=459742,tcpRxPkts=728198
+09-16 09:41:56.222  1591  2252 I HwDualBandManager: handle2gApStrongWifiRssiChange
+09-16 09:41:56.222  1591  2252 I WifiService: getConnectionInfo uid=1000
+09-16 09:41:56.222  1591 11661 D HwConnectivityServiceEx: set 1000 wlan0 value false
+09-16 09:41:56.222  1591 11661 I MQoS    : QOS_level:0(0),DataDisable;use level-0
+09-16 09:41:56.222  1591 11661 I MQoS    : skip-low-Level:0(0),DataDisable;use level-0
+09-16 09:41:56.223  1591  2249 I HuaweiWifiWatchdogStateMachine: PTcp RTT:0, rtt pkt=0, tcp_rx=2, tcp_tx=2, tcp_reTran=0, rtRate=0
+09-16 09:41:56.223  1591  2249 I HuaweiWifiWatchdogStateMachine: rssi bad, mrssi=-35 < TargetRssi=-38
+09-16 09:41:56.224  1591  2249 I HuaweiWifiWatchdogStateMachine: start computeQosLevel tcpRtt = 0 ,rssi = -35 ,mBestSpeedInPeriod = 235
+09-16 09:41:56.224  1591  2249 I HuaweiWifiWatchdogStateMachine: smoothConsecutiveQosResults, currentQosLevel = 3
+09-16 09:41:56.229 10962 10962 E CameraPreview: Template overlay load failed
+09-16 09:41:56.229 10962 10962 E CameraPreview: androidx.compose.runtime.LeftCompositionCancellationException: The coroutine scope left the composition
+09-16 09:41:56.240  1052  1244 I chatty  : uid=1013(media) ispack expire 2 lines
+09-16 09:41:56.240  1052 12062 I chatty  : uid=1013(media) oisController expire 1 line
+09-16 09:41:56.250  1052 12065 I chatty  : uid=1013(media) oisController expire 1 line
+09-16 09:41:56.253  1052  1900 I chatty  : uid=1013(media) PpAlgo expire 8 lines
+09-16 09:41:56.253  1052  1893 I chatty  : uid=1013(media) IppAlgo expire 6 lines
+09-16 09:41:56.285  2918 12040 I LooperFactory: releaseLooper:MBcDeliver, other:[]
+09-16 09:41:56.304   523   523 I         : CheckPropValue: ro.hardware : kirin980
+09-16 09:41:56.304   523   523 I         : CheckPropValue: ro.runmode : normal
+09-16 09:41:56.307   523   523 I         : CheckPropValue: ro.hardware : kirin980
+09-16 09:41:56.307   523   523 I         : CheckPropValue: ro.runmode : normal
+09-16 09:41:56.307  1052  1903 I chatty  : uid=1013(media) pl#6 expire 3 lines
+09-16 09:41:56.307  1052  1903 I FLashInfoProcess: getFlashAwbData,data for algorithm currenindex[7] = 271,r_gain = 1.996101,b_gain = 1.896296
+09-16 09:41:56.307  1052  1903 I FLashInfoProcess: getFlashAwbData,data for algorithm currenindex[8] = 303,r_gain = 2.019724,b_gain = 1.858439
+09-16 09:41:56.307  1052  1903 I         : enter df_load_rgain_slope_limit()
+09-16 09:41:56.307  1052  1903 I         : df_load_rgain_slope_limit: -10.000000 10.015000 -10.000000 10.015500 -10.000000 10.011000 -10.000000 10.011000
+09-16 09:41:56.307  1052  1903 I         : enter df_load_product_misc_config()
+09-16 09:41:56.307  1052  1903 I         : df_load_product_misc_config: flash_weight_config = 1
+09-16 09:41:56.307  1052  1903 E FLashInfoProcess: getVcmOtpInfo() get spSM failed 
+09-16 09:41:56.307  1052  1903 I SensorManager: startStreaming: enter instance(0x745888de80)
+09-16 09:41:56.307  1052  1903 I SensorController: doStartStreaming: mask(2) position(4) type(10) mode(0)
+09-16 09:41:56.307  1052  1903 I SensorManager: startStreaming: enter instance(0x74588785c0)
+09-16 09:41:56.308  1052  1903 I SensorController: doStartStreaming: mask(2) position(6) type(10) mode(0)
+09-16 09:41:56.308  1052  1903 I FLashInfoProcess: getFlashType, dual flash is not support on this product
+09-16 09:41:56.308  1052  1903 I         : df_load_flash_cal_data() file name=/odm/etc/camera/dflash/default_curren_data_white.txt
+09-16 09:41:56.309  1052  1903 I         : enter df_load_cal_para_for_selection()
+09-16 09:41:56.309  1052  1903 I         : df_load_cal_para_for_selection: -5000 6000 20 40 90 120 0 0
+09-16 09:41:56.309  1052  1903 I         : enter df_load_calibration_current_index()
+09-16 09:41:56.309  1052  1903 I         : df_load_calibration_current_index() file name=/odm/etc/camera/dflash/calibration_currentindex_white.txt
+09-16 09:41:56.309  1052  1903 I         : df_load_calibration_current_index: 750 1000 135 159 183 239 271 303 63 79 95
+09-16 09:41:56.310   523   523 I         : CheckPropValue: ro.hardware : kirin980
+09-16 09:41:56.310   523   523 I         : CheckPropValue: ro.runmode : normal
+09-16 09:41:56.310  1052  1903 D FLashInfoProcess: getCaliDataFromNV,currentIndex(135):r_gain = 1.996101,b_gain=1.896296,
+09-16 09:41:56.310  1052  1903 D FLashInfoProcess: getCaliDataFromNV,currentIndex(159):r_gain = 2.019724,b_gain=1.858439,
+09-16 09:41:56.310  1052  1903 D FLashInfoProcess: getCaliDataFromNV,currentIndex(183):r_gain = 1.996101,b_gain=1.896296,
+09-16 09:41:56.310  1052  1903 D FLashInfoProcess: getCaliDataFromNV,currentIndex(239):r_gain = 2.019724,b_gain=1.858439,
+09-16 09:41:56.310  1052  1903 D FLashInfoProcess: getCaliDataFromNV,currentIndex(271):r_gain = 1.996101,b_gain=1.896296,
+09-16 09:41:56.310  1052  1903 D FLashInfoProcess: getCaliDataFromNV,currentIndex(303):r_gain = 2.019724,b_gain=1.858439,
+09-16 09:41:56.310  1052  1903 I FLashInfoProcess: getFlashAwbData,data for algorithm currenindex[0] = 63,r_gain = 1.996101,b_gain = 1.896296
+09-16 09:41:56.310  1052  1903 I FLashInfoProcess: getFlashAwbData,data for algorithm currenindex[1] = 79,r_gain = 2.019724,b_gain = 1.858439
+09-16 09:41:56.310  1052  1903 I FLashInfoProcess: getFlashAwbData,data for algorithm currenindex[2] = 95,r_gain = 1.996101,b_gain = 1.896296
+09-16 09:41:56.310  1052  1903 I FLashInfoProcess: getFlashAwbData,data for algorithm currenindex[3] = 135,r_gain = 1.996101,b_gain = 1.896296
+09-16 09:41:56.310  1052  1903 I FLashInfoProcess: getFlashAwbData,data for algorithm currenindex[4] = 159,r_gain = 2.019724,b_gain = 1.858439
+09-16 09:41:56.310  1052  1903 I FLashInfoProcess: getFlashAwbData,data for algorithm currenindex[5] = 183,r_gain = 1.996101,b_gain = 1.896296
+09-16 09:41:56.310  1052  1903 I FLashInfoProcess: getFlashAwbData,data for algorithm currenindex[6] = 239,r_gain = 2.019724,b_gain = 1.858439
+09-16 09:41:56.310  1052  1903 I FLashInfoProcess: getFlashAwbData,data for algorithm currenindex[7] = 271,r_gain = 1.996101,b_gain = 1.896296
+09-16 09:41:56.310  1052  1903 I FLashInfoProcess: getFlashAwbData,data for algorithm currenindex[8] = 303,r_gain = 2.019724,b_gain = 1.858439
+09-16 09:41:56.310  1052  1903 I         : enter df_load_rgain_slope_limit()
+09-16 09:41:56.310  1052  1903 I         : df_load_rgain_slope_limit: -10.000000 10.015000 -10.000000 10.015500 -10.000000 10.011000 -10.000000 10.011000
+09-16 09:41:56.310  1052  1903 I         : enter df_load_product_misc_config()
+09-16 09:41:56.310  1052  1903 I         : df_load_product_misc_config: flash_weight_config = 1
+09-16 09:41:56.310  1052  1903 E FLashInfoProcess: getVcmOtpInfo() get spSM failed 
+09-16 09:41:56.310  1052  1903 I 200DmapM: startStreaming
+09-16 09:41:56.310  1052  1903 I HispManager: startStreaming: enter.
+09-16 09:41:56.310  1052  1903 I HispManager: notifyHispPreviewCamera logic cam: 0,physical cam:2
+09-16 09:41:56.310  1052  1903 I ImagingSystem: #NONE# [6092767930]> startFeatures
+09-16 09:41:56.310  1052  1903 I HISP200Feature: [EIS_GPU]start: ANDROID_HW_EIS_GPU_SUPPORTED 1
+09-16 09:41:56.310  1052  1903 I HISP200Feature: set SUBCMD_ENABLE_TNR(1)
+09-16 09:41:56.310   523   523 I         : CheckPropValue: ro.hardware : kirin980
+09-16 09:41:56.310   523   523 I         : CheckPropValue: ro.runmode : normal
+09-16 09:41:56.311   523   523 I         : CheckPropValue: ro.hardware : kirin980
+09-16 09:41:56.311   523   523 I         : CheckPropValue: ro.runmode : normal
+09-16 09:41:56.311   523   523 I         : CheckPropValue: ro.hardware : kirin980
+09-16 09:41:56.311   523   523 I         : CheckPropValue: ro.runmode : normal
+09-16 09:41:56.311  1052  1903 I HISP200Feature: setPDAFResult back PDAF result distance=170 vcmCode=[470 298 562] pdCode=[464 482 471] pd:[0.500000 -14.625000 7.208333]
+09-16 09:41:56.311  1052  1903 I HISP200Feature: setPDAFResult front PDAF result distance=0 vcmCode=[0 0 0] pdCode=[0 0 0] pd:[0.000000 0.000000 0.000000]
+09-16 09:41:56.311   523   523 I         : CheckPropValue: ro.hardware : kirin980
+09-16 09:41:56.311   523   523 I         : CheckPropValue: ro.runmode : normal
+09-16 09:41:56.311   523   523 I         : CheckPropValue: ro.hardware : kirin980
+09-16 09:41:56.311   523   523 I         : CheckPropValue: ro.runmode : normal
+09-16 09:41:56.311   523   523 I         : CheckPropValue: ro.hardware : kirin980
+09-16 09:41:56.311   523   523 I         : CheckPropValue: ro.runmode : normal
+09-16 09:41:56.311  1052  1903 I HISP200Feature: sendAFOtpStartCmd: set af otp start mode to 1
+09-16 09:41:56.311   523   523 I         : CheckPropValue: ro.hardware : kirin980
+09-16 09:41:56.311   523   523 I         : CheckPropValue: ro.runmode : normal
+09-16 09:41:56.312  1052  1903 I HISP200Feature: setAFPdOffsetResult, pd offset calib result isSuccess=1 calibNum=9  pd offset[1.125000 0.375000 -0.041667 0.500000 0.500000 0.333333 0.250000 0.500000 1.250000]
+09-16 09:41:56.312   523   523 I         : CheckPropValue: ro.hardware : kirin980
+09-16 09:41:56.312   523   523 I         : CheckPropValue: ro.runmode : normal
+09-16 09:41:56.312  1052  1903 I HISP200Feature: setAFPdOffsetResult, pd offset calib result isSuccess=0 calibNum=0  pd offset[0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000]
+09-16 09:41:56.312   523   523 I         : CheckPropValue: ro.hardware : kirin980
+09-16 09:41:56.312   523   523 I         : CheckPropValue: ro.runmode : normal
+09-16 09:41:56.312   523   523 I         : CheckPropValue: ro.hardware : kirin980
+09-16 09:41:56.312   523   523 I         : CheckPropValue: ro.runmode : normal
+09-16 09:41:56.312  1052  1903 I HISP200Feature: sendSecondAFCData, moduleId size=37, moduleId=[20 4 48 48] downPos afc_data=[0 0 0 0 0 0 0 0 500 0 0 0] info=2
+09-16 09:41:56.312  1052  1903 I HISP200Feature: sendSecondAFCData, horPos afc_data=[0 0 0 0 0 0 0 0 631 0 0 0]
+09-16 09:41:56.312  1052  1903 I HISP200Feature: sendSecondAFCData, upPos afc_data=[0 0 0 0 0 0 0 0 0 0 0 0]
+09-16 09:41:56.312   523   523 I         : CheckPropValue: ro.hardware : kirin980
+09-16 09:41:56.312   523   523 I         : CheckPropValue: ro.runmode : normal
+09-16 09:41:56.312  1052  1903 I HISP200Feature: sendExtendCmd: camera id 0, fbcd[1]
+09-16 09:41:56.312  1052  1903 I Feature : start fbcd raw value = 1
+09-16 09:41:56.312  1052  1903 I HISP200Feature: [DYNAMIC_FPS_VIDEO] start enter
+09-16 09:41:56.312  1052  1903 I Feature : IsLowTemperatureRearNormalPreviewMode(1515) facing:1, m_sceneMode:-1,rearNormalPreviewvLowFpsSupported=0
+09-16 09:41:56.312  1052  1903 I HISP200Feature: setPowerSaveRawRequestStatus: flow:single camera status:no fill raw
+09-16 09:41:56.312  1052  1903 I ImagingSystem: sendCameraFovRatio: send SUBCMD_SET_CAM_FOV_RATIO ok!
+09-16 09:41:56.312  1052  1903 I HISP200Feature: doSetRAWNFDSFillStatus: multiscale set fill rawnfds status(enable)
+09-16 09:41:56.312  1052  1903 I HISPMonitor: start
+09-16 09:41:56.312  1052  1903 I HISPMonitor: support_dev_ctl = 0
+09-16 09:41:56.313  1052  1903 I ImagingSystem: #NONE# [6092767930]< startFeatures
+09-16 09:41:56.313  1052  1903 I HISPOisController: startStreaming ANDROID_HW_OIS_MOUNT_POSITION = 5
+09-16 09:41:56.313  1052  1903 E HISP200OisController: readOISShakeInfoFromFile failed to open OIS shake info file.
+09-16 09:41:56.313  1052  1903 I HISPOisController: getDefaultGyroGain() default gryo gain = (0.460000, 0.533333)
+09-16 09:41:56.313  1052  1903 I HISPOisController: startStreaming() dynamically get default gryo gain = (0.460000, 0.533333)
+09-16 09:41:56.313  1052  1903 I HISPOisController: startStreaming ANDROID_HW_OIS_MOUNT_POSITION = 5
+09-16 09:41:56.313  1052  1903 E HISP200OisController: readOISShakeInfoFromFile failed to open OIS shake info file.
+09-16 09:41:56.313  1052  1903 I HISPOisController: getDefaultGyroGain() default gryo gain = (0.460000, 0.533333)
+09-16 09:41:56.313  1052  1903 I HISPOisController: startStreaming() dynamically get default gryo gain = (0.460000, 0.533333)
+09-16 09:41:56.313  1052  1903 I HispManager: maxFourthSensor(1600, 1200)
+09-16 09:41:56.313  1052  1903 I HispManager: maxSensor(8000, 6000), maxSubSensor(4608, 3456), maxThirdSensor(3264, 2448)
+09-16 09:41:56.313  1052  1903 I HISPPQSetting: init: SceneStringMode is set
+09-16 09:41:56.313  1052  1903 I HISP200Feature: doSendRefAEParamsInfo: cam:0, valid = 1, preview camera = 0,                    exit_target_lum = 44, exit_curr_lum = 49, exit_stable = 0                   expo = 10000, gain = 1198,                    light sensor info:[352, 0] -> [352, 0],                    awb sensor info:[-1, -1, -1, -1, -1, -1] -> [-1, -1, -1, -1, -1, -1]
+09-16 09:41:56.313  1052  1903 I HispManager: updateFeRawStreamConfig: w:4000 h:2992 CameraId:0
+09-16 09:41:56.313  1052  1903 I HISP200Feature: getExtension : get seamless extension enter flag = 0 seq_num = 0, capturemode=0
+09-16 09:41:56.313  1052  1903 I HISP200Feature: getExtension frequency adaption is not supported, use default gear(0).
+09-16 09:41:56.313  1052  1903 I Processor: usecaseConfig: cam_id = 0, externsion =0, [0]config(0, 0, 0, 0, 0, 0)
+09-16 09:41:56.313  1052  1903 I Processor: usecaseConfig: cam_id = 0, externsion =0, [1]config(0, 4000, 3000, 0, 0, 0)
+09-16 09:41:56.313  1052  1903 I Processor: usecaseConfig: cam_id = 0, externsion =0, [2]config(1, 1440, 1080, 0, 6, 0)
+09-16 09:41:56.313  1052  1903 I Processor: usecaseConfig: cam_id = 0, externsion =0, [3]config(0, 0, 0, 0, 0, 0)
+09-16 09:41:56.313  1052  1903 I Processor: usecaseConfig: cam_id = 0, externsion =0, [4]config(1, 4000, 2992, 4096, 5, 0)
+09-16 09:41:56.313  1052  1903 I Processor: usecaseConfig: cam_id = 0, externsion =0, [5]config(1, 768, 576, 0, 6, 0)
+09-16 09:41:56.313  1052  1903 I Processor: usecaseConfig: cam_id = 0, externsion =0, [6]config(1, 4000, 2992, 0, 0, 0)
+09-16 09:41:56.313  1052  1903 I Processor: usecaseConfig: cam_id = 0, externsion =0, [7]config(0, 0, 0, 0, 0, 0)
+09-16 09:41:56.313  1052  1903 I Processor: usecaseConfig: cam_id = 0, externsion =0, [8]config(0, 0, 0, 0, 0, 0)
+09-16 09:41:56.313  1052  1903 I Processor: usecaseConfig: cam_id = 0, externsion =0, [9]config(1, 233984, 4, 0, 778, 0)
+09-16 09:41:56.313  1052  1903 I Processor: usecaseConfig: cam_id = 0, externsion =0, [10]config(0, 0, 0, 0, 0, 0)
+09-16 09:41:56.313  1052  1903 I Processor: usecaseConfig: cam_id = 0, externsion =0, [11]config(0, 0, 0, 0, 0, 0)
+09-16 09:41:56.313  1052  1903 I Processor: usecaseConfig: cam_id = 0, externsion =0, [12]config(0, 0, 0, 0, 0, 0)
+09-16 09:41:56.313  1052  1903 I Processor: usecaseConfig: cam_id = 0, externsion =0, [13]config(0, 0, 0, 0, 0, 0)
+09-16 09:41:56.313  1052  1903 I Processor: #Camera# [6092771037]> UsecaseConfig_0
+09-16 09:41:56.332  1052 12043 D ImagingSystem: lazyStart(4142): instance[0x73e00e5800]. 
+09-16 09:41:56.352  1052  1244 I HispManager: onUsecaseConfigAck: id(0) usecase config ack. w(4000) h(3000)
+09-16 09:41:56.352  1052  1244 I HispManager: calculateCropRegionEx 2957 crop_region:[0 0 8000 6000],0 0
+09-16 09:41:56.352  1052  1244 W HispCropMgr: updateCropInfo not update crop info[logic id 0, crop offset info cnt 0]
+09-16 09:41:56.352  1052  1244 W HispCropMgr: CropRegionOffset the camera[0] not need to set offset
+09-16 09:41:56.352  1052  1244 I HispManager: saveValidCropregion [0] save lastvaid [0,0,4000,3000]
+09-16 09:41:56.352  1052  1244 I HispManager: sendCropRegionCmd: camera id 0, count:1, crop region[0 0 4000 3000]
+09-16 09:41:56.352  1052  1244 D LaserManager: sendLaserInfo2AF(2478): laser L1 version is not supported on boston
+09-16 09:41:56.352  1052  1903 I Processor: #Camera# [6092771037]< UsecaseConfig_0
+09-16 09:41:56.352  1052  1903 I HISP200OisController: wait4HardwareReady sensor_id 0
+09-16 09:41:56.352  1052  1903 D HISP200OisController: wait4HardwareReady: need wait ois load firmware done, cam_id(0)
+09-16 09:41:56.352  1052  1903 I HISPOisController: wait4HardwareReady wait ois load firmware begin
+09-16 09:41:56.352  1052  1903 I HISPOisController: wait4HardwareReady ois load firmware done
+09-16 09:41:56.352  1052  1903 I HISPOisController: wait4HardwareReady wait ois load firmware end
+09-16 09:41:56.352  1052  1903 I HISP200OisController: wait4HardwareReady sensor_id 3
+09-16 09:41:56.353  1052  1903 I Processor: getStreamOnMsg: camera id:0.
+09-16 09:41:56.353  1052 12111 I HispManager: reqRequest0(0):pre(0)tiny(0)feraw(0)afstat(0) outmeta(1)
+09-16 09:41:56.353  1052  1902 I IppAlgoFilter: [HWA_CAM3]this=0x73e014a000, ipptype=0, enter notifyPreLoadSo() 
+09-16 09:41:56.353  1052  1902 D IppAlgo : [HWA_CAM3]ipp=StatIpp KEY_CA_CAM3 PREV enter loadLibrary this=0x73e0127c88
+09-16 09:41:56.353  1052  1902 I MetaFilter: feedback feedback m_activeSensorWidth = 4000 m_activeSensorHeight = 3000)
+09-16 09:41:56.353  1052  1892 D IppAlgo : [HWA_CAM3]ipp=StatIpp KEY_CA_CAM3 PREV enter _loadLibrary this=0x73e0127c88
+09-16 09:41:56.353  1052  1892 D IppAlgoSmartAE: [e89d7bf_64D] enter onLoadLibrary()
+09-16 09:41:56.353  1052  1892 I DLibLoader: [e89d7bf_64I] enter loadSo(), soName=NULL, mSoName=libSmartAE.so
+09-16 09:41:56.353  1052 12111 I HispManager: reqRequest0(1):pre(0)tiny(0)feraw(0)afstat(0) outmeta(1)
+09-16 09:41:56.353  1052 12111 I HispManager: reqRequest0(2):pre(0)tiny(0)feraw(0)afstat(0) outmeta(1)
+09-16 09:41:56.354  1052 12111 I HispManager: reqRequest0(3):pre(0)tiny(0)feraw(0)afstat(0) outmeta(1)
+09-16 09:41:56.356  1052  1892 D SmartAEDLibLoader: [e89d7bf_64D] enter loadFuns()
+09-16 09:41:56.356  1052  1892 I DLibLoader: [e89d7bf_64I] enter loadFun(), funName=initSmartAEAlgo
+09-16 09:41:56.356  1052  1892 I DLibLoader: [e89d7bf_64I] enter loadFun(), funName=setFrameExpo
+09-16 09:41:56.356  1052  1892 I DLibLoader: [e89d7bf_64I] enter loadFun(), funName=deinitSmartAEAlgo
+09-16 09:41:56.356  1052  1892 D SmartAEDLibLoader: [e89d7bf_64D] exit loadFuns() successful
+09-16 09:41:56.356  1052  1892 I DLibLoader: [e89d7bf_64I] CAMERA3_exit loadSo(). successful.
+09-16 09:41:56.356  1052  1892 D IppAlgoSmartAE: [e89d7bf_64D] onLoadLibrary() Sucess to mSmartAEDLibLoader.loadSo
+09-16 09:41:56.356  1052  1892 D IppAlgo : [HWA_CAM3]ipp=StatIpp KEY_CA_CAM3 PREV exit _loadLibrary this=0x73e0127c88
+09-16 09:41:56.405  1052  1903 I AwbSensorImpl: enableSensor: SuperFastShot awb sensor already enabled
+09-16 09:41:56.405  1052  1903 I HISPMonitor: streaming
+09-16 09:41:56.405  1052  1903 I ReprocessManager: startStreaming: enter.
+09-16 09:41:56.405  1052  1903 I ReprocessManager: startStreaming: seamlessQRSupport(1, 0, 0).
+09-16 09:41:56.405  1052  1903 I LaserManager: startStreaming: enter.
+09-16 09:41:56.405  1052  1903 I LaserManager: startDevice(2205) startDevice async=0 m_state4StartLaser=start
+09-16 09:41:56.405  1052  1903 I LaserManager: startDevice(2223): laser started
+09-16 09:41:56.405  1052  1903 D CameraDvfs: voteIsp: HISP_CONFIG_ISP_TURBO
+09-16 09:41:56.405  1052  1903 D CameraDvfs: voteR8: HISP_CONFIG_R8_TURBO
+09-16 09:41:56.406  1052  1903 I ImagingSystem: #Camera# [6092619893]< 1_startStreaming
+09-16 09:41:56.406  1052  1903 D IppAlgoFilter: [HWA_CAM3]enter onThermalCommand(), this=0x73e0156000, strCmd=0
+09-16 09:41:56.406  1052  1903 D IppAlgoFilter: [HWA_CAM3]enter onThermalCommand(), this=0x73e014a000, strCmd=0
+09-16 09:41:56.455 12116 12116 D skia    : HME hme_jpeg_dec version=JPEG_DEC_16.12.1, releasetime=12:06:23 May 10 2021
+09-16 09:41:56.455 12116 12116 D skia    : HME SkHmeDecFunction1 constructor ok
+09-16 09:41:56.456 12116 12116 D HiTraceC: entered HiTraceInit, Log Registered: 1
+09-16 09:41:56.461   765   765 I SurfaceFlinger: not capture this layer: com.huawei.android.FloatTasks.views.AbstractView#0
+09-16 09:41:56.461   765   765 I SurfaceFlinger: not capture this layer: com.huawei.android.FloatTasks.views.FloatView#0
+09-16 09:41:56.462  1052 12089 I afstatAlgo: do_afstat_num:0,flow =0, aftype:0, focus_stage = 0,focus_scene:0 fv[code:0 normalFV:0, peakHoldFV:0],frame_rect[0, 0], focus_rect[0 0 0 0]
+09-16 09:41:56.468   505   505 I hwservicemanager: getTransport: Cannot find entry android.hardware.graphics.mapper@3.0::IMapper/default in either framework or device manifest.
+09-16 09:41:56.468 12116 12116 W Gralloc3: mapper 3.x is not supported
+09-16 09:41:56.478  1052 12101 I IppAlgoPortIn: [HWA_CAM3]this=0x73e0156088, ipptype=256, enter receive(), pBuf=0x7457484e10
+09-16 09:41:56.478  1052  1903 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x100, ret=0
+09-16 09:41:56.478  1057  1057 E Sensors@1.2-impl: rgb color sensor data not ready
+09-16 09:41:56.478  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.478  1052  1903 I HwaUtils: [e89d7bf_64I] getProductExtendName() path=YAL/YAL-Professional
+09-16 09:41:56.478  1052 12101 D LosMemPoolMonitor: [e89d7bf_64D] HwCamMem in registerAllocatorRef(), mAllocatorRef[Preview]=1, ObjectDetectionDraw +
+09-16 09:41:56.478  1052  1903 I HwaUtils: [e89d7bf_64I] getOneCfgFile() path=nullptr
+09-16 09:41:56.478  1052  1903 I HwaDMapIpp: [e89d7bf_64I] checkNeedSwapCalibrationData() ConfigFile NULL
+09-16 09:41:56.478  1052 12101 I ObjectDetectionDraw: [e89d7bf_64I] enter onStart()
+09-16 09:41:56.478  1052  1903 D Misc____: [e89d7bf_64D] enter loadRequest
+09-16 09:41:56.478  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.478  1052  1903 D IppAlgoFilter: [HWA_CAM3]loadPreviewRequest() REQUEST_DMAP_SWAP, status:0
+09-16 09:41:56.478  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.478  1052  1903 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x10000, ret=0
+09-16 09:41:56.478  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.478  1052  1903 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x20000, ret=0
+09-16 09:41:56.478  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.478  1591  2759 D HwCameraServiceProxy: It is not the fold camera device.
+09-16 09:41:56.478  1591  2759 I HwCameraServiceProxy: notifyCameraStateChangeForMediaAssistant cameraId 0, newCameraState 1, facing 0
+09-16 09:41:56.478  1052 12101 I IppAlgoPortOut: [HWA_CAM3]this=0x73e01562f0, ipptype=256, enter deliver(), pBuf=0x7457484e10
+09-16 09:41:56.478  1052 12103 I IppAlgoPortIn: [HWA_CAM3]this=0x73e014a088, ipptype=0, enter receive(), pBuf=0x7457486150
+09-16 09:41:56.478  1052 12103 D LosMemPoolMonitor: [e89d7bf_64D] HwCamMem in registerAllocatorRef(), mAllocatorRef[Preview]=2, SmartAE +
+09-16 09:41:56.478  1052  1893 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x100, ret=0
+09-16 09:41:56.478  1052 12103 D IppAlgoSmartAE: [e89d7bf_64D] enter onCreate() mSmartAESoLoadState:2
+09-16 09:41:56.478  1052 12103 D IppAlgoSmartAE: [e89d7bf_64D] enter getDefAETargetFromDriver()
+09-16 09:41:56.478  1052 12103 D IppAlgoSmartAE: [e89d7bf_64D] enter initSmartAE()
+09-16 09:41:56.478  1052 12103 I IppAlgoSmartAE: [e89d7bf_64I] mApertureMode = 0   line = 926
+09-16 09:41:56.478  1052 12103 D SmartAEDLibLoader: [e89d7bf_64D] enter LINK_smartAE_init()
+09-16 09:41:56.478  1052 12078 D LosMemPoolMonitor: [e89d7bf_64D] HwCamMem in registerAllocatorRef(), mAllocatorRef[Preview]=3, FNFaceDetect +
+09-16 09:41:56.479  1052 12103 I HwaUtils: [e89d7bf_64I] getConfigPath(), mirrorFrontMode = 0, sensor_name = YAL_IMX586YALZX_SUNNY
+09-16 09:41:56.479  1052 12078 D FNFaceDetect: [e89d7bf_64D] enter onCreate()
+09-16 09:41:56.479  1052 12103 D SmartAEDLibLoader: [e89d7bf_64D] success to get smartAE ConfigPath, will use the para path : /odm/etc/camera/smartae/zx/imx586/SmartAE.xml
+09-16 09:41:56.479  1052 12078 I FNFaceDetect: [e89d7bf_64I] use ai face:1, mAiFaceVersion:1
+09-16 09:41:56.479  1052 12078 D FNFaceDetectAlgoProxy: [e89d7bf_64D] enter FNFaceDetectAlgoProxy
+09-16 09:41:56.479  1052 12078 D FNFaceDetectAlgoProxy: [e89d7bf_64D] enter initFNAlgo
+09-16 09:41:56.479  1052 12078 V FNFaceDetectLibLoader: [e89d7bf_64V] enter getInstance()
+09-16 09:41:56.479  1052 12078 I DLibLoader: [e89d7bf_64I] enter DLibLoader(), soName=libFNFD.so
+09-16 09:41:56.479  1052 12078 V FNFaceDetectLibLoader: [e89d7bf_64V] enter FNFDLibLoader()
+09-16 09:41:56.479  1052 12078 V FNFaceDetectLibLoader: [e89d7bf_64V] enter setFunsToDefault()
+09-16 09:41:56.479  1052 12078 I DLibLoader: [e89d7bf_64I] enter loadSo(), soName=NULL, mSoName=libFNFD.so
+09-16 09:41:56.479  1052 12078 V FNFaceDetectLibLoader: [e89d7bf_64V] enter setFunsToDefault()
+09-16 09:41:56.479  1052 12103 I SmartAE : [SmartAE_version:V1.7.0036.1]  [compile time:Aug  5 2019,18:21:00]
+09-16 09:41:56.479  1034  9203 I Camera3-Stream: returnBuffer: begin(0)
+09-16 09:41:56.480  1052  1620 I PerfTrace: launch:total<70832665>this time errorextinfo:camid[0] usertype[1] ext[(appname:com.wearable.inspection.mobile)]
+09-16 09:41:56.480  2594 10532 I HwMediaAssistantService: notifyCameraStateChange
+09-16 09:41:56.480 10962 11183 D StreamStateObserver: Update Preview stream state to STREAMING
+09-16 09:41:56.480  2594 10532 I HwMediaAssistantService: sendCameraChangeBroadcast to com.huawei.harmonyos.foundation cameraId(0), facing(0), newCameraState(1), clientName(com.wearable.inspection.mobile)
+09-16 09:41:56.480  2594 10532 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.sendBroadcast:1183 android.content.ContextWrapper.sendBroadcast:453 com.huawei.systemserver.mediaassist.HwMediaAssistantService.sendCameraChangeBroadcast:518 com.huawei.systemserver.mediaassist.HwMediaAssistantService.notifyCameraStateChange:246 com.huawei.systemserver.mediaassist.IMediaAssist$Stub.onTransact:67 
+09-16 09:41:56.481  1034  9203 I Camera3-Stream: returnBuffer: end(0)
+09-16 09:41:56.482  2594 10532 I HwMediaAssistantService: newCameraState: 1 mIsVideocallUsed: false
+09-16 09:41:56.482  2594 10532 I HwMediaAssistantService: Not in SUPPORT_VIDEOCALL_LIST
+09-16 09:41:56.482  1052 12078 V FNFaceDetectLibLoader: [e89d7bf_64V] enter loadFuns()
+09-16 09:41:56.482  1052 12078 I DLibLoader: [e89d7bf_64I] enter loadFun(), funName=FnfdLibGet
+09-16 09:41:56.482  1052 12078 I FNFaceDetectLibLoader: [e89d7bf_64I] exit loadFuns(). successful
+09-16 09:41:56.482  1052 12078 I DLibLoader: [e89d7bf_64I] CAMERA3_exit loadSo(). successful.
+09-16 09:41:56.482  1052 12078 I DLibLoader: [e89d7bf_64I] enter DLibLoader(), soName=libFNFFD.so
+09-16 09:41:56.482  1052 12078 V FNFaceDetectLibLoader: [e89d7bf_64V] enter FNFFDLibLoader()
+09-16 09:41:56.482  1052 12078 V FNFaceDetectLibLoader: [e89d7bf_64V] enter setFunsToDefault()
+09-16 09:41:56.482  1052 12078 I DLibLoader: [e89d7bf_64I] enter loadSo(), soName=NULL, mSoName=libFNFFD.so
+09-16 09:41:56.482  1052 12078 V FNFaceDetectLibLoader: [e89d7bf_64V] enter setFunsToDefault()
+09-16 09:41:56.483  1034 12057 V Camera3-Device: isCustomizedMode: expo time 0, pro mode 0, exposure mode 0
+09-16 09:41:56.483  1034 12057 V Camera3-Device: stream 0 now have 8 buffer caches, buf 0xe604d400
+09-16 09:41:56.484  1052 12078 V FNFaceDetectLibLoader: [e89d7bf_64V] enter loadFuns()
+09-16 09:41:56.484  1052 12078 I DLibLoader: [e89d7bf_64I] enter loadFun(), funName=FnFfdLibGet
+09-16 09:41:56.484  1052 12078 I FNFaceDetectLibLoader: [e89d7bf_64I] exit loadFuns(). successful
+09-16 09:41:56.484  1052 12078 I DLibLoader: [e89d7bf_64I] CAMERA3_exit loadSo(). successful.
+09-16 09:41:56.484  1052 12078 V FNFaceDetectLibLoader: [e89d7bf_64V] enter getInstance()
+09-16 09:41:56.484  1052 12078 I DLibLoader: [e89d7bf_64I] enter DLibLoader(), soName=libIPU12DriverUser.so
+09-16 09:41:56.484  1052 12078 I FNFaceDetectLibLoader: [e89d7bf_64I] enter FNIPU12LibLoader()
+09-16 09:41:56.484  1052 12078 I FNFaceDetectLibLoader: [e89d7bf_64I] enter setFunsToDefault()
+09-16 09:41:56.484  1052 12078 I DLibLoader: [e89d7bf_64I] enter loadSo(), soName=NULL, mSoName=libIPU12DriverUser.so
+09-16 09:41:56.484  1052 12078 I FNFaceDetectLibLoader: [e89d7bf_64I] enter setFunsToDefault()
+09-16 09:41:56.484  1052 12078 I FNFaceDetectLibLoader: [e89d7bf_64I] enter loadFuns()
+09-16 09:41:56.484  1052 12078 I DLibLoader: [e89d7bf_64I] enter loadFun(), funName=Ipu12DrvGet
+09-16 09:41:56.484  1052 12078 I DLibLoader: [e89d7bf_64I] enter loadFun(), funName=Ipu12DrvGetPriv
+09-16 09:41:56.484  1052 12078 I FNFaceDetectLibLoader: [e89d7bf_64I] exit loadFuns(). successful
+09-16 09:41:56.484  1052 12078 I DLibLoader: [e89d7bf_64I] CAMERA3_exit loadSo(). successful.
+09-16 09:41:56.485  1052 12078 I FNFaceDetectAlgoProxy: [e89d7bf_64I] createLibLoader: fdLibInfo.libVer=1.13.0.1.0, apiVer=0x20002, buildDate=Feb 13 2019 14:04:37, label=Android
+09-16 09:41:56.485  1052 12078 I FNFaceDetectAlgoProxy: [e89d7bf_64I] createLibLoader: ffdLibInfo.libVer=2.9.9.1.0, apiVer=0x20001, buildDate=Sep 10 2018 21:05:49, label=Face Feature Detection D Library Android for Huawei v.2-9-9-1 -- CONFIDENTIAL
+09-16 09:41:56.485  2594 10532 I HwMediaAssistantService: isInCall : false
+09-16 09:41:56.485  2594 10532 W HwMediaAssistantService: new camera state and mIsVideocallUsed is not valid
+09-16 09:41:56.485  2594 10532 I HwMediaAssistantService: send MESSAGE_DOUBLE_CHECK_VOLUME
+09-16 09:41:56.485  1052 12078 W GRALLOC : GetSizeAndDimensions:92: vendor don't support this format(0x30a)
+09-16 09:41:56.485  1591  2759 I HwCameraServiceProxy: notifyCameraStateChangeForRotate begin cameraId 0, newCameraState 1, facing 0
+09-16 09:41:56.486  1591  2759 I HwCameraServiceProxy: notifyCameraStateChangeForRotate end
+09-16 09:41:56.486  1591  2759 I HwCameraServiceProxy: notifyCameraStateChangeForVibrator begin cameraId 0, newCameraState 1, facing 0
+09-16 09:41:56.486  1591  2759 I HwCameraServiceProxy: notifyCameraStateChangeForVibrator end
+09-16 09:41:56.486  1591  2759 I HwCameraServiceProxy: notifyCameraStateChangeForSarService begin cameraId 0, newCameraState 1, clientName com.wearable.inspection.mobile
+09-16 09:41:56.486  1591  2759 I HwCameraServiceProxy: Start notify service:com.huawei.camera, com.huawei.camera.controller.hm.HmCameraControllerService
+09-16 09:41:56.486  1591  2759 I HwCameraServiceProxy: no need to start service
+09-16 09:41:56.487  1052 12078 D FNFaceDetect: [e89d7bf_64D] enter onStart()
+09-16 09:41:56.492  1052 12103 D IppAlgoSmartAE: [e89d7bf_64D] enter onStart()
+09-16 09:41:56.493  1052 12103 E IppAlgoSmartAE: [e89d7bf_64E] doSmartAEAlgo() failed to getSceneMode
+09-16 09:41:56.493  1052 12080 D LosMemPoolMonitor: [e89d7bf_64D] HwCamMem in registerAllocatorRef(), mAllocatorRef[Preview]=4, Misc +
+09-16 09:41:56.493  1052 12080 D Misc____: [e89d7bf_64D] enter onCreate()
+09-16 09:41:56.493  1052 12084 D LosMemPoolMonitor: [e89d7bf_64D] HwCamMem in registerAllocatorRef(), mAllocatorRef[Preview]=5, AIQIppAlgo +
+09-16 09:41:56.493  1052 12084 I DLibLoader: [e89d7bf_64I] enter DLibLoader(), soName=libaiq.so
+09-16 09:41:56.493  1052 12083 D LosMemPoolMonitor: [e89d7bf_64D] HwCamMem in registerAllocatorRef(), mAllocatorRef[Preview]=6, IspEnhncAlgo +
+09-16 09:41:56.493  1052 12084 I DLibLoader: [e89d7bf_64I] enter loadSo(), soName=NULL, mSoName=libaiq.so
+09-16 09:41:56.493  1052 12083 I DLibLoader: [e89d7bf_64I] enter DLibLoader(), soName=libispenhnc.so
+09-16 09:41:56.493  1052 12081 D LosMemPoolMonitor: [e89d7bf_64D] HwCamMem in registerAllocatorRef(), mAllocatorRef[Preview]=7, AssistAF +
+09-16 09:41:56.493  1052 12083 I DLibLoader: [e89d7bf_64I] enter loadSo(), soName=NULL, mSoName=libispenhnc.so
+09-16 09:41:56.493  1052 12081 I DeviceBaseImpl: [HWA_CAM3]getIsFFCamera, dim:5, pAfModes:0x74566afb1c, pAfModes[0]:0
+09-16 09:41:56.493  1052 12081 D AssistAF: [e89d7bf_64D] enter onStart()
+09-16 09:41:56.493  1052 12081 D AssistAF: [e89d7bf_64D] loadAfOtpCalibData(), infCodeSum=[0 0 0 0 0, 0 0 0 0 0], infCodeCnt=[0 0 0 0 0, 0 0 0 0 0]
+09-16 09:41:56.493  1052 12082 D LosMemPoolMonitor: [e89d7bf_64D] HwCamMem in registerAllocatorRef(), mAllocatorRef[Preview]=8, LaserMgr +
+09-16 09:41:56.493  1052 12082 D LaserMgr: [e89d7bf_64D] enter onCreate()
+09-16 09:41:56.493  1052 12082 D LaserMgrLibLoader: [e89d7bf_64D] enter getInstance()
+09-16 09:41:56.493  1052 12082 I DLibLoader: [e89d7bf_64I] enter DLibLoader(), soName=libLaserSelfCali.so
+09-16 09:41:56.493  1052 12082 D LaserMgrLibLoader: [e89d7bf_64D] enter LaserMgrLibLoader()
+09-16 09:41:56.493  1052 12082 D LaserMgrLibLoader: [e89d7bf_64D] enter setFunsToDefault()
+09-16 09:41:56.493  1052 12082 I DLibLoader: [e89d7bf_64I] enter loadSo(), soName=NULL, mSoName=libLaserSelfCali.so
+09-16 09:41:56.493  1052 12082 D LaserMgrLibLoader: [e89d7bf_64D] enter setFunsToDefault()
+09-16 09:41:56.493  1052 12080 D Misc____: [e89d7bf_64D] loadPowerMonitorConfig(), mPowerMonitorEnable=1
+09-16 09:41:56.493  1052 12080 I Misc____: [e89d7bf_64I] loadPowerMonitorConfig(), PowerMonitor SKIP_NUM=150 LVL1=[60000,43000,20], LVL2=[120000,45000,18], node=[/sys/class/thermal/thermal_zone12/temp], mPowerMonitorForePortraitFPSLimit=[1], mPowerMonitorForePortraitMaxFps=[24]
+09-16 09:41:56.493  1052 12080 I Misc____: [e89d7bf_64I] loadVideoPowerMonitorConfig(), Video Escape enable is 1,  moca:1, tnr:1, hdr:1, ois:1, dynamic 60fps:1
+09-16 09:41:56.493  1052 12080 I Misc____: [e89d7bf_64I] Video item thresh, moca:1, ois:1, dynamic_60fps:1, hdr:1, tnr:1
+09-16 09:41:56.493  1052 12080 D Misc____: [e89d7bf_64D] loadCapturePowerMonitorConfig(), content /sys/class/thermal/thermal_zone3/temp
+09-16 09:41:56.493  1052 12080 D Misc____: [e89d7bf_64D] loadCapturePowerMonitorConfig(), config[0] [1 53000 51000]
+09-16 09:41:56.493  1052 12080 D Misc____: [e89d7bf_64D] loadCapturePowerMonitorConfig(), config[1] [1 47000 45000]
+09-16 09:41:56.493  1052 12080 I Misc____: [e89d7bf_64I] loadSuperMacroConfig(), mMacroEnable 1 offset[450 0 0 0] smoothnessGainValue 0
+09-16 09:41:56.493  1052 12080 D Misc____: [e89d7bf_64D] loadIRTempMonitorConfig(), LoadFile /odm/etc/camera/irtempmonitor/config.xml failed!
+09-16 09:41:56.493  1052 12080 D Misc____: [e89d7bf_64D] loadMoonEnhanceConfig(), LoadFile /odm/etc/camera/moon/config.xml failed!
+09-16 09:41:56.493  1052 12080 D Misc____: [e89d7bf_64D] loadHistcConfig(), LoadFile /odm/etc/camera/hist/config.xml failed!
+09-16 09:41:56.493  1052 12080 I HwaUtils: [e89d7bf_64I] getProductExtendName() path=YAL/YAL-Professional
+09-16 09:41:56.493  1052 12080 I HwaUtils: [e89d7bf_64I] getOneCfgFile() path=/odm/etc/camera/dcamera/YAL/YAL-Professional/config.xml
+09-16 09:41:56.493  1052 12080 I Misc____: [e89d7bf_64I] loadApertureSeamlessFpsConfig: mApertureSeamlessEnable = 1, mApertureSeamlessFps = 20
+09-16 09:41:56.493  1052 12080 I DeviceHistarImpl: [HWA_CAM3]getLaserVersion() success = 2
+09-16 09:41:56.493  1052 12080 E HwaUtils: [e89d7bf_64E] FirstLevelXmlParser() LoadFile /odm/etc/camera/rawhdr/config.xml Failed
+09-16 09:41:56.493  1052 12080 E HwaUtils: [e89d7bf_64E] getAttributeValue() mFirstLevelElement Is NULL
+09-16 09:41:56.493  1052 12084 I DLibLoader: [e89d7bf_64I] enter loadFun(), funName=createAIQ
+09-16 09:41:56.493  1052 12080 E HwaUtils: [e89d7bf_64E] FirstLevelXmlParser() LoadFile /odm/etc/camera/hdr/config.xml Failed
+09-16 09:41:56.493  1052 12080 E HwaUtils: [e89d7bf_64E] getAttributeValue() mFirstLevelElement Is NULL
+09-16 09:41:56.493  1052 12080 D Misc____: [e89d7bf_64D] enter onStart()
+09-16 09:41:56.493  1052 12080 I Misc____: [e89d7bf_64I] dynamicVideoFpsMode = 0
+09-16 09:41:56.493  1052 12080 D SensorGatherMisc: [e89d7bf_64D] enter SensorGatherMisc()
+09-16 09:41:56.493  1052 12084 I DLibLoader: [e89d7bf_64I] enter loadFun(), funName=destroyAIQ
+09-16 09:41:56.493  1052 12080 D SensorGatherMisc: [e89d7bf_64D] enter config()
+09-16 09:41:56.493  1052 12084 I DLibLoader: [e89d7bf_64I] enter loadFun(), funName=processAIQ
+09-16 09:41:56.493  1052 12084 I DLibLoader: [e89d7bf_64I] enter loadFun(), funName=startAIQ
+09-16 09:41:56.493  1052 12084 I DLibLoader: [e89d7bf_64I] enter loadFun(), funName=stopAIQ
+09-16 09:41:56.493  1052 12084 I DLibLoader: [e89d7bf_64I] CAMERA3_exit loadSo(). successful.
+09-16 09:41:56.493  1052 12084 I HwaUtils: [e89d7bf_64I] getOneCfgFile() path=/odm/etc/camera/aiq/aiqconfig.xml
+09-16 09:41:56.494  1052 12084 I AIQ     : [e89d7bf_64I] aiq_omd_xml_path:/odm/etc/camera/aiq/aiqconfig.xml
+09-16 09:41:56.494  1052 12103 D LosMemPoolMonitor: [e89d7bf_64D] HwCamMem in registerAllocatorRef(), mAllocatorRef[Preview]=9, OisMgr +
+09-16 09:41:56.494  1052 12103 D OisMgr  : [e89d7bf_64D] enter onCreate()
+09-16 09:41:56.494  1052 12103 I HwaUtils: [e89d7bf_64I] getOneCfgFile() path=/odm/etc/camera/oismgr/oismgr.xml
+09-16 09:41:56.494  1052 12103 E HwaUtils: [e89d7bf_64E] str2float(), input or value is NULL
+09-16 09:41:56.494  1052 12103 E OisMgr  : [e89d7bf_64E] loadACameraOisMgrConfig(), config file error! value=SECOND_THRESHOLD
+09-16 09:41:56.494  1052 12103 E OisMgr  : [e89d7bf_64E] loadACameraOisMgrConfig(), config file error! value=SECOND_OIS_MODE
+09-16 09:41:56.494  1052 12103 D OisMgr  : [e89d7bf_64D] loadACameraOisMgrConfig(), threshold[ev1=1024, ev2=28672, deltaLens=2, waitFrmNum=5, beginningSetOISCount=5 bokehZoomRatio=1.000000],
+09-16 09:41:56.494  1052 12103 D OisMgr  :  oisMode[ usedScene = V 90 76 zoom=on, video=off, videoBokeh=off, captureBokeh=off, videoBokeh_zoom=off, captureBokeh_zoom=off,
+09-16 09:41:56.494  1052 12103 D OisMgr  :  previewBright=off, previewNormal=off, previewDark=on, captureBright=off, captureNormal=off, captureDark=on
+09-16 09:41:56.494  1052 12103 E OisMgr  : [e89d7bf_64E] loadACameraOisMgrConfig(), config file error! value=FIRST_THRESHOLD
+09-16 09:41:56.494  1052 12103 E OisMgr  : [e89d7bf_64E] loadACameraOisMgrConfig(), config file error! value=FIRST_OIS_MODE
+09-16 09:41:56.494  1052 12103 E HwaUtils: [e89d7bf_64E] str2float(), input or value is NULL
+09-16 09:41:56.494  1052 12103 D OisMgr  : [e89d7bf_64D] loadACameraOisMgrConfig(), threshold[ev1=1024, ev2=28672, deltaLens=2, waitFrmNum=5, beginningSetOISCount=5 bokehZoomRatio=1.000000],
+09-16 09:41:56.494  1052 12103 D OisMgr  :  oisMode[ usedScene = V 90 76 zoom=on, video=off, videoBokeh=off, captureBokeh=off, videoBokeh_zoom=off, captureBokeh_zoom=off,
+09-16 09:41:56.494  1052 12103 D OisMgr  :  previewBright=on, previewNormal=on, previewDark=on, captureBright=on, captureNormal=on, captureDark=on
+09-16 09:41:56.494  1052 12103 D OisMgr  : [e89d7bf_64D] enter onStart()
+09-16 09:41:56.494  1052 12103 D OisMgr  : [e89d7bf_64D] onStart, mWidth=768, mHeight=576, mSize=667648
+09-16 09:41:56.494  1052 12103 D OisMgr  : [e89d7bf_64D] onStart(), mHwCam2Flag=0
+09-16 09:41:56.494  1052 12103 D LosMemPoolMonitor: [e89d7bf_64D] HwCamMem in registerAllocatorRef(), mAllocatorRef[Preview]=10, MultiScale +
+09-16 09:41:56.494  1052 12103 D MultiScale: [e89d7bf_64D] enter onCreate()
+09-16 09:41:56.494  1052 12103 D MultiScale: [e89d7bf_64D] enter onStart()
+09-16 09:41:56.494  1052 12103 I IppAlgoPortOut: [HWA_CAM3]this=0x73e014a2f0, ipptype=0, enter deliver(), pBuf=0x7457486150
+09-16 09:41:56.494  1052 12085 D LosMemPoolMonitor: [e89d7bf_64D] HwCamMem in registerAllocatorRef(), mAllocatorRef[Preview]=11, CIEProxy +
+09-16 09:41:56.494  1052 12085 D CIEProxy: Enter CIEProxy::onCreate
+09-16 09:41:56.494  1052 12085 I         : Enter CIEClientMgr::CIEClientMgr
+09-16 09:41:56.494  1052 12083 I DLibLoader: [e89d7bf_64I] enter loadFun(), funName=createIspEnhncAlgo
+09-16 09:41:56.494  1052 12083 I DLibLoader: [e89d7bf_64I] enter loadFun(), funName=destroyIspEnhncAlgo
+09-16 09:41:56.494  1052  1903 D PpAlgoFilter: [HWA_CAM3]SetSpecialCombineWideCameraFlag, isSpecialCombineWideCamFlag=0
+09-16 09:41:56.494  1052 12083 I DLibLoader: [e89d7bf_64I] enter loadFun(), funName=onIspEnhncProcess
+09-16 09:41:56.494  1052 12083 I DLibLoader: [e89d7bf_64I] CAMERA3_exit loadSo(). successful.
+09-16 09:41:56.494  1052  1903 E HwaStatInfo: [e89d7bf_64E] getSeamlessStatus memcpy_s(seamlessSize, size * sizeof(int), mSeamlessSize, size*sizeof(int)) failed
+09-16 09:41:56.494  1052 12083 I YuvCalculate: enter YuvCalculate
+09-16 09:41:56.494  1052  1903 I DeviceBaseImpl: [HWA_CAM3]getRemosaicPostProcMode remosaicPostProcMode = 0
+09-16 09:41:56.494  1052 12083 I IspEnhncAlgosMgr: g_ispenhance_algos name=YuvCalculate is loaded.
+09-16 09:41:56.494  1052 12083 W AntiBanding: get flkRowDepthTh fail!
+09-16 09:41:56.494  1052 12083 W AntiBanding: get flkRowAverageTh fail!
+09-16 09:41:56.494  1052 12083 W AntiBanding: get mocaDepthTh fail!
+09-16 09:41:56.494  1052 12083 I AntiBanding: antiBandingLoadConfig(), spt: 0, fs: 1000, size: 256, [agv, depth, moca] = [5, 5, 0]
+09-16 09:41:56.494  1052 12083 I IspEnhncAlgosMgr: g_ispenhance_algos name=AntiBanding is loaded.
+09-16 09:41:56.494  1052 12083 I YuvCalculate: mono_mode: 0, ae_stable: [0, 0], colorDis: 0, buf_cnt:1
+09-16 09:41:56.494  1052  1903 D HwaPPStrategy: [e89d7bf_64D] KEY_CA_ALGO SNAP indentify fore Ground front: type: 1(normal), mode: 1(single)
+09-16 09:41:56.494  1052  1903 I HwaPPExecuter: [checkPpAlgoMaxMem]type=1,mode=1
+09-16 09:41:56.494  1052  1903 I HwaPPExecuter: [checkPpAlgoMaxMem] PictureSize = 48000000, IspOutSize=48000000
+09-16 09:41:56.494  1052  1903 I         : getTotalMemoryFromDDRInfo, buffer = 0x806
+09-16 09:41:56.494  1052  1903 I         : , len = 6
+09-16 09:41:56.494  1052  1903 I         : [getTotalMemoryFromDDRInfo] total memory =8388608KB
+09-16 09:41:56.494  1052  1903 D HwaPPExecuter: [e89d7bf_64D] LoadPPAlgoMaxMemConfig(3235) path=/odm/etc/camera/pp_max_mem_config/pp_max_mem_config.xml
+09-16 09:41:56.494  1052  1903 E HwaPPExecuter: [e89d7bf_64E] enter LoadPPAlgoMaxMemConfig() loadFile /odm/etc/camera/pp_max_mem_config/pp_max_mem_config.xml fail
+09-16 09:41:56.494  1052  1903 I HwaPPExecuter: [checkPpAlgoMaxMem]maxM=72000008
+09-16 09:41:56.495  1052 12083 I YuvCalculate: onSubAlgoProcess() yuv lum calc, main_lum:0, aux_lum:0, sat:0, green:0, blue:4, expo0:[0, 0x0, 0], expo1:[0, 0x0, 0]
+09-16 09:41:56.495  1052 12083 I AntiBanding: antiBandingIamgeProcess(): ByPassCheck is True, algorithm returned !
+09-16 09:41:56.495  1052 12082 D LaserMgrLibLoader: [e89d7bf_64D] enter loadFuns()
+09-16 09:41:56.495  1052 12082 I DLibLoader: [e89d7bf_64I] enter loadFun(), funName=initLaserSelfCaliAlgo
+09-16 09:41:56.495  1052 12082 I DLibLoader: [e89d7bf_64I] enter loadFun(), funName=doSelfCaliProcess
+09-16 09:41:56.495  1052 12082 I DLibLoader: [e89d7bf_64I] enter loadFun(), funName=deinitLaserSelfCaliAlgo
+09-16 09:41:56.495  1052 12082 D LaserMgrLibLoader: [e89d7bf_64D] exit loadFuns() successful
+09-16 09:41:56.495  1052 12082 I DLibLoader: [e89d7bf_64I] CAMERA3_exit loadSo(). successful.
+09-16 09:41:56.495  1052 12082 I DeviceHistarImpl: [HWA_CAM3]getLaserVersion() success = 2
+09-16 09:41:56.495  1052  1052 I CfgServer: nCap=0x640011 nLowCap=17 nHighCap=100 nPss=881788 nFree=1215364 totalFd=504 m_cMeta=52, m_nPPSize=70312, m_cFds=20
+09-16 09:41:56.495  1052 12085 I CIEProxy: CIEProxyLibLoaderMgr::getFunction::find CIECreate in lib /vendor/lib64/libcie.so successfully.
+09-16 09:41:56.495  1052 12085 I cie     : Enter CIE::CIE
+09-16 09:41:56.495  1052 12085 W cie     : CIE::loadXmlConfig::load config file error. 
+09-16 09:41:56.495  1052 12085 I cie     : PublicBufMgr::PublicBufMgr
+09-16 09:41:56.495  1052 12085 I cie     : Enter AiEngineObjectDetection::ObjectDetectionAlgo
+09-16 09:41:56.495  1052 12085 I cie     : algoEnable: 1, detectFrequency: 10
+09-16 09:41:56.495  1052 12085 I cie     : SceneStabilization::SceneStabilization:: Enter!
+09-16 09:41:56.495  1052 12085 I cie     : SceneStabilization::LoadStabilizationConfigXml:: (5)(5)(3)(6)(6)(3)(950)(750)(850)(0)(10)(50)(150)(700)(300)
+09-16 09:41:56.495  1052 12085 I cie     : Enter SceneRecognition::SceneRecognition
+09-16 09:41:56.496  1052 12085 I cie     : algoEnable: 1, videoEnable: 1,frontEnable: 1, version: 22, stableFrame: 15, unstableFrame: 15
+09-16 09:41:56.496  1052 12085 I cie     : Enter FoodRecognition::FoodRecognition
+09-16 09:41:56.496  1052 12085 I cie     : algoEnable: 1, videoEnable: 1, version: 1, stableFrame: 15, unstableFrame: 15
+09-16 09:41:56.496  1052 12085 I cie     : 1Enter HiTracking::newCIEAlgo
+09-16 09:41:56.496  1052 12085 I cie     : Enter HiTracking::HiTracking
+09-16 09:41:56.496  1052 12085 I cie     : algoEnable: 1, multiScale: 1
+09-16 09:41:56.496  1052 12085 I cie     : HiTracking Version is HiTrackerAlgo_001.004.000
+09-16 09:41:56.497  1052 12080 D SensorGatherMisc: [e89d7bf_64D] enter ConfigSensor(), sensorType is 1
+09-16 09:41:56.497  1052 12080 D SensorGatherMisc: [e89d7bf_64D] enter ConfigSensor(), sensorType is 10
+09-16 09:41:56.497  1052 12085 I cie     : Enter FaceStoryAlgo::FaceStoryAlgo
+09-16 09:41:56.497  1052 12085 I cie     : FACE_EXIST_FRAME_TH IS 3, mConfig.faceDetectFreq is 0
+09-16 09:41:56.497  1052 12080 D SensorGatherMisc: [e89d7bf_64D] enter ConfigSensor(), sensorType is 4
+09-16 09:41:56.497  1052 12085 I cie     : algoEnable: 0, faceClassifyFreq: 4, faceDetectFreq: 4, funcAttr: 0.
+09-16 09:41:56.497  1052 12085 I cie     : Enter CIE::onCreate
+09-16 09:41:56.497  1052 12085 I cie     : CIE::onCreate::FaceStoryAlgo algo is disabled, create bypass 
+09-16 09:41:56.497  1052 12085 D CIEProxy: Leave CIEProxy::onCreate
+09-16 09:41:56.497  1052 12080 D SensorGatherMisc: [e89d7bf_64D] enter ConfigSensor(), sensorType is 3
+09-16 09:41:56.497  1052 12085 D CIEProxy: Enter CIEProxy::onStart
+09-16 09:41:56.497  1052 12085 I EnvImpl : [HWA_CAM3]getArCalorieMode mArCalorieMode 0
+09-16 09:41:56.497  1052 12085 I CIEProxy: CIEProxyLibLoaderMgr::getFunction::find CIEInit in lib /vendor/lib64/libcie.so successfully.
+09-16 09:41:56.497  1052 12085 I cie     : Enter CIE::onInit
+09-16 09:41:56.497  1052 12085 I cie     : Enter AiEngineObjectDetection::init
+09-16 09:41:56.497  1052 12085 I         : Enter CIEClientMgr::init::AiObjectDetectionService
+09-16 09:41:56.497  1052 12085 I         : Enter CIEClientMgr::createClientMap::AiObjectDetectionService
+09-16 09:41:56.497  1052 12085 I AIClientHIDL: Init(192)::"client[AiObjectDetectionService] AIClientHIDL Init"
+09-16 09:41:56.497  1052 12080 I SensorGatherMisc: [e89d7bf_64I] enter config() [0 0 0 0]
+09-16 09:41:56.497  1591  2398 I SensorService: createSensorEventConnection begin
+09-16 09:41:56.497  1591  2398 I SensorService: SensorEventConnection begin
+09-16 09:41:56.497  1591  2398 I SensorService: SensorEventConnection end
+09-16 09:41:56.497  1591  2398 I SensorService: createSensorEventConnection end
+09-16 09:41:56.497   729   860 W hwcomposer: setGpuFreqBoost:154: boostGpuFreq succ !
+09-16 09:41:56.497  1052 12080 D SensorGatherMisc: [e89d7bf_64D] enter EnableSensor(), sensorType is 1
+09-16 09:41:56.498  1591  2398 I SensorService: enable begin
+09-16 09:41:56.498  1591  2398 I SensorService: batch begin
+09-16 09:41:56.498  1591  2398 I SensorService: batch end
+09-16 09:41:56.498  1057  1057 I SensorHub: Flush, handle = 0
+09-16 09:41:56.499  1052  1052 W Misc    : type=1400 audit(0.0:1874020): avc: denied { read } for pid=1052 name="u:object_r:default_prop:s0" dev="tmpfs" ino=17044 scontext=u:r:hal_camera_default:s0 tcontext=u:object_r:default_prop:s0 tclass=file permissive=0
+09-16 09:41:56.499  1057  1085 I SensorHub: GetMetadDataEvent: handle = 0
+09-16 09:41:56.499  1060  1495 I AIServiceHIDL: Init(94)::"AIServiceHIDL Init"
+09-16 09:41:56.499  1060  1495 D ObjectDetection: [HIAI][ObjectDetection]AiObjectDetectionServiceV1: "Enter."
+09-16 09:41:56.499  1060  1495 I         : CreateNNNode(26)::"Create nnnode[AiObjectDetectionService] success! \n"
+09-16 09:41:56.499  1060  1495 I         : CreateTimer(207)::"leave createTimer success. fd=[13]"
+09-16 09:41:56.499  1060  1495 I ObjectDetection: [HIAI][ObjectDetection]Init: "Enter."
+09-16 09:41:56.499  1052 12085 I AIClientHIDL: SetListener(408)::"client[AiObjectDetectionService] AIClientHIDL SetListener"
+09-16 09:41:56.499  1060  1495 I AIServiceHIDL: SetListener(346)::"AIServiceHIDL SetListener service 1052:349 set complete"
+09-16 09:41:56.499  1052 12085 I cie     : CIE::onInit::ObjectDetectionAlgo onInit success,TimeCost: 2(ms) 
+09-16 09:41:56.499  1052 12085 I cie     : Enter SceneRecognition::init
+09-16 09:41:56.499  1052 12085 D cie     : SceneRecognition::init CIEMetadata.SensorPosition [0]
+09-16 09:41:56.499  1052 12085 I         : Enter CIEClientMgr::init::AIEngineSceneRecognitionV2
+09-16 09:41:56.499  1052 12085 I         : Enter CIEClientMgr::createClientMap::AIEngineSceneRecognitionV2
+09-16 09:41:56.499  1052 12085 I AIClientHIDL: Init(192)::"client[AIEngineSceneRecognitionV2] AIClientHIDL Init"
+09-16 09:41:56.499  1060 12118 I         : TaskThreadProc(274)::"async thread func enter ! \n"
+09-16 09:41:56.500  1060  1495 I AIServiceHIDL: Init(94)::"AIServiceHIDL Init"
+09-16 09:41:56.500  1060  1495 I SceneRecognition: [HIAI][SceneRecognition]AIEngineSceneRecognitionV2: "Create AIEngineSceneRecognitionV2 0x7492512018"
+09-16 09:41:56.500  1060  1495 I         : CreateNNNode(26)::"Create nnnode[AIEngineSceneRecognitionV2] success! \n"
+09-16 09:41:56.500  1060  1495 I         : CreateTimer(207)::"leave createTimer success. fd=[14]"
+09-16 09:41:56.500  1060  1495 I SceneRecognition: [HIAI][SceneRecognition]Init: "Enter Init"
+09-16 09:41:56.501  1052 12089 I afstatAlgo: do_afstat_num:0,flow =0, aftype:1, focus_stage = 1,focus_scene:1 fv[code:441 normalFV:0, peakHoldFV:0],frame_rect[664, 664], focus_rect[0 0 0 0]
+09-16 09:41:56.501  1052 12085 I AIClientHIDL: SetListener(408)::"client[AIEngineSceneRecognitionV2] AIClientHIDL SetListener"
+09-16 09:41:56.501  1060  1495 I AIServiceHIDL: SetListener(346)::"AIServiceHIDL SetListener service 1052:350 set complete"
+09-16 09:41:56.501  1052 12085 I cie     : SceneStabilization::Init:: Enter!
+09-16 09:41:56.501  1052 12085 I cie     : CIE::onInit::SceneRecognition onInit success,TimeCost: 2(ms) 
+09-16 09:41:56.501  1052 12085 I cie     : Enter FoodRecognition::init
+09-16 09:41:56.501  1052 12085 D EventCallbackImpl: [HWA_CAM3]enter notifyFRResult() 
+09-16 09:41:56.501  1052 12085 I cie     : FoodRecognition::init::init will run after in Camera Mode !
+09-16 09:41:56.501  1052 12085 I cie     : CIE::onInit::FoodRecognition onInit success,TimeCost: 0(ms) 
+09-16 09:41:56.501  1052 12085 I cie     : Enter HiTracking::init
+09-16 09:41:56.501  1052 12085 I cie     : CIE::onInit::HiTracking onInit success,TimeCost: 0(ms) 
+09-16 09:41:56.501  1052 12085 I cie     : CIE::onInit::FaceStoryAlgo algo is disabled, init bypass 
+09-16 09:41:56.501  1052 12085 I CIEProxy: CIEProxy::doStart TimeCost: 4(ms) 
+09-16 09:41:56.501  1052 12085 D CIEProxy: Leave CIEProxy::onStart
+09-16 09:41:56.501  1052 12085 I EnvImpl : [HWA_CAM3]getArCalorieMode mArCalorieMode 0
+09-16 09:41:56.501  1052 12085 I CIEProxy: CIEProxyLibLoaderMgr::getFunction::find CIEProcess in lib /vendor/lib64/libcie.so successfully.
+09-16 09:41:56.501  1052 12085 D cie     : Enter CIE::onProcess
+09-16 09:41:56.501  1052 12085 I cie     : Tracking_status =0 Tracking_FSM_curr_last=[0 0] Tracking_TYPE = 0, Tracking_OD_TYPE=0, Tracking Result_rect=[0 0 0 0] frame=0 mApce= 0.000000, confidence=0.000000,
+09-16 09:41:56.501  1052 12085 I CIEProxy: reportAIFocusingStatus, zoomRatio:1.000000, mVcmCode:193,  mAfmodeNormal:3, mfTafToCaf:0, LV:73, face_width:0, widthThreshod:0, trackingModeEnable:1, aiFocusDisable =0, needReportMoving:0
+09-16 09:41:56.501  1060 12119 I         : TaskThreadProc(274)::"async thread func enter ! \n"
+09-16 09:41:56.503  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.503  1591  2398 I SensorService: enableSensor handle:0, packageName:hidl_client_pid_1052, opPackageName:android.frameworks.sensorservice@1.0::ISensorManager , rate=10000000
+09-16 09:41:56.503  1591  2398 I SensorService: enable activate begin
+09-16 09:41:56.503  1591  2398 I SensorService: enable activate end
+09-16 09:41:56.503  1591  2398 I SensorService: enable end
+09-16 09:41:56.503  1052 12080 D SensorGatherMisc: [e89d7bf_64D] enter EnableSensor(), sensorType is 10
+09-16 09:41:56.503  1591  2398 I SensorService: enable begin
+09-16 09:41:56.503  1591  2398 I SensorService: batch begin
+09-16 09:41:56.503  1591  2398 I SensorService: batch end
+09-16 09:41:56.503  1057  1094 I SensorHub: Flush, handle = 7
+09-16 09:41:56.504  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.504  1052 12084 I chatty  : uid=1013(media) AIQIppAlgo identical 2 lines
+09-16 09:41:56.504  1591  2398 I SensorService: enableSensor handle:7, packageName:hidl_client_pid_1052, opPackageName:android.frameworks.sensorservice@1.0::ISensorManager , rate=10000000
+09-16 09:41:56.504  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.504  1591  2398 I SensorService: enable activate begin
+09-16 09:41:56.504  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.504  1591  2398 I SensorService: enable activate end
+09-16 09:41:56.504  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.504  1052 12084 I chatty  : uid=1013(media) AIQIppAlgo identical 1 line
+09-16 09:41:56.504  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.504  1591  2398 I SensorService: enable end
+09-16 09:41:56.504  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.504  1052 12084 I chatty  : uid=1013(media) AIQIppAlgo identical 4 lines
+09-16 09:41:56.504  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.504  1052 12080 D SensorGatherMisc: [e89d7bf_64D] enter EnableSensor(), sensorType is 4
+09-16 09:41:56.504  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.504  1052 12084 I chatty  : uid=1013(media) AIQIppAlgo identical 1 line
+09-16 09:41:56.504  1591  2398 I SensorService: enable begin
+09-16 09:41:56.504  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.504  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.504  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.504  1591  2398 I SensorService: batch begin
+09-16 09:41:56.504  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.504  1591  2398 I SensorService: batch end
+09-16 09:41:56.504  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.504  1052 12084 I chatty  : uid=1013(media) AIQIppAlgo identical 1 line
+09-16 09:41:56.504  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.504  1057  1057 I SensorHub: Flush, handle = 5
+09-16 09:41:56.504  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.504  1052 12084 I chatty  : uid=1013(media) AIQIppAlgo identical 2 lines
+09-16 09:41:56.504  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.504  1052 12082 I LaserSelfCali: [LaserSelfCaliVersion:V1.6]  [compile time:Jan 26 2018,10:37:50]
+09-16 09:41:56.504  1052 12082 I LaserSelfCali: laserSelfCali,Filepath:/odm/etc/camera/LaserCali/LaserSelfCali.xml
+09-16 09:41:56.504  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.504  1052 12084 I chatty  : uid=1013(media) AIQIppAlgo identical 2 lines
+09-16 09:41:56.504  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.504  1052 12082 I LaserSelfCali: laser,XMLonoff:200,OnOffThreYmean:30
+09-16 09:41:56.504  1052 12082 I LaserSelfCali: laserSelfCali,resultPath:/data/vendor/camera/LaserSelfCaliResult.dat,init
+09-16 09:41:56.504  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.504  1052 12084 I chatty  : uid=1013(media) AIQIppAlgo identical 2 lines
+09-16 09:41:56.504  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.504  1052 12082 I LaserSelfCali: laser,file,initAlgo,0 0 0 0 0 0
+09-16 09:41:56.504  1052 12082 I LaserSelfCali: laser,file,sizePath:43,reScan:6
+09-16 09:41:56.504  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.504  1052 12082 I LaserSelfCali: boston,laserSelfCali,azrael,initAlgo,dirtyFalg:0,mIsDirty:0,mDirtyXtalk:0
+09-16 09:41:56.504  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.504  1052 12084 I chatty  : uid=1013(media) AIQIppAlgo identical 3 lines
+09-16 09:41:56.504  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.504  1052 12082 I LaserMgr: [e89d7bf_64I] getlaser width:3648 height:2736 selfCaliConfigFile:/odm/etc/camera/LaserCali/LaserSelfCali.xml
+09-16 09:41:56.504  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.504  1052 12082 V AFDepthTrans: [e89d7bf_64V] enter getInstance()
+09-16 09:41:56.504  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.504  1052 12082 V AFDepthTrans: [e89d7bf_64V] enter getInstance()
+09-16 09:41:56.504  1052 12082 I DLibLoader: [e89d7bf_64I] enter DLibLoader(), soName=libtrans_depth_code.so
+09-16 09:41:56.504  1052 12082 D AFDepthTrans: [e89d7bf_64D] enter AFDepthTransLibLoader()
+09-16 09:41:56.504  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.504  1052 12082 I DLibLoader: [e89d7bf_64I] enter loadSo(), soName=NULL, mSoName=libtrans_depth_code.so
+09-16 09:41:56.504  1052 12082 D AFDepthTrans: [e89d7bf_64D] enter setFunsToDefault()
+09-16 09:41:56.504  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.504  1052 12084 I chatty  : uid=1013(media) AIQIppAlgo identical 9 lines
+09-16 09:41:56.505  1052 12082 E DLibLoader: [e89d7bf_64E] CAMERA3_exit loadSo(). failed to dlopen, mSoName=libtrans_depth_code.so, dlerror=dlopen failed: library "libtrans_depth_code.so" not found
+09-16 09:41:56.505  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.505  1052 12082 D AFDepthTrans: [e89d7bf_64D] enter ~AFDepthTransLibLoader()
+09-16 09:41:56.505  1052 12082 I DLibLoader: [e89d7bf_64I] enter ~DLibLoader()
+09-16 09:41:56.505  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.505  1052 12084 I chatty  : uid=1013(media) AIQIppAlgo identical 4 lines
+09-16 09:41:56.505  1591  2398 I SensorService: enableSensor handle:5, packageName:hidl_client_pid_1052, opPackageName:android.frameworks.sensorservice@1.0::ISensorManager , rate=10000000
+09-16 09:41:56.505  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.505  1591  2398 I SensorService: enable activate begin
+09-16 09:41:56.505  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.505  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.505  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.505  1591  2398 I SensorService: enable activate end
+09-16 09:41:56.505  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.505  1591  2398 I SensorService: enable end
+09-16 09:41:56.505  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.505  1052 12084 I chatty  : uid=1013(media) AIQIppAlgo identical 2 lines
+09-16 09:41:56.505  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.505  1052 12080 D SensorGatherMisc: [e89d7bf_64D] enter EnableSensor(), sensorType is 3
+09-16 09:41:56.505  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.505  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.505  1591  2398 I SensorService: enable begin
+09-16 09:41:56.505  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.505  1052 12084 I chatty  : uid=1013(media) AIQIppAlgo identical 1 line
+09-16 09:41:56.505  1591  2398 I SensorService: batch begin
+09-16 09:41:56.505  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.505  1591  2398 I SensorService: batch end
+09-16 09:41:56.505  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.505  1052 12084 I chatty  : uid=1013(media) AIQIppAlgo identical 3 lines
+09-16 09:41:56.505  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.505  1057  1094 I SensorHub: Flush, handle = 2
+09-16 09:41:56.505  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.505  1052 12084 I chatty  : uid=1013(media) AIQIppAlgo identical 17 lines
+09-16 09:41:56.505  1591  2398 I SensorService: enableSensor handle:2, packageName:hidl_client_pid_1052, opPackageName:android.frameworks.sensorservice@1.0::ISensorManager , rate=10000000
+09-16 09:41:56.505  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.505  1591  2398 I SensorService: enable activate begin
+09-16 09:41:56.505  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.505  1591  2398 I SensorService: enable activate end
+09-16 09:41:56.505  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.505  1591  2398 I SensorService: enable end
+09-16 09:41:56.505  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.505  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.505  1052 12084 I chatty  : uid=1013(media) AIQIppAlgo identical 10 lines
+09-16 09:41:56.505  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.505  1052 12080 D SensorGatherMisc: [e89d7bf_64D] getBootTime(), curTime=1789522916505983000, elapsedTime=169528012340660, bootTime=1789353388493642340
+09-16 09:41:56.506  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.506  1052 12084 I chatty  : uid=1013(media) AIQIppAlgo identical 4 lines
+09-16 09:41:56.506  1057  1085 I SensorHub: GetMetadDataEvent: handle = 7
+09-16 09:41:56.506  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.506  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.506  1052 12084 I chatty  : uid=1013(media) AIQIppAlgo identical 5 lines
+09-16 09:41:56.506  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.506  1057  1085 I SensorHub: GetMetadDataEvent: handle = 5
+09-16 09:41:56.506  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.506  1052 12084 I chatty  : uid=1013(media) AIQIppAlgo identical 4 lines
+09-16 09:41:56.506  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.506  1057  1085 I SensorHub: GetMetadDataEvent: handle = 2
+09-16 09:41:56.506  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.506  1052 12080 D Misc____: [e89d7bf_64D] onProcessFrame(673), afDistance(0.000000)
+09-16 09:41:56.506  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.506  1052 12080 I DeviceBaseImpl: [HWA_CAM3]getBinningMap(), Binning[0] Supported status = 0
+09-16 09:41:56.506  1052 12080 I Misc____: [e89d7bf_64I] onProcessFrame BinningMap[0 0 0 0] flow[0]
+09-16 09:41:56.506  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.506  1052 12080 I DeviceBaseImpl: [HWA_CAM3]getBinningMap(), Binning[1] Supported status = 0
+09-16 09:41:56.506  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.506  1052 12080 I Misc____: [e89d7bf_64I] onProcessFrame BinningMap[0 0 0 0] flow[1]
+09-16 09:41:56.506  1052 12080 I DeviceBaseImpl: [HWA_CAM3]getSeamlessMap(), seamless Supported status = 0
+09-16 09:41:56.506  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.506  1052 12080 I ImagingSystem: getVcmOtpInfo rang[193 ~ 720] org[193 ~ 720]
+09-16 09:41:56.506  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.506  1052 12080 I Misc____: [e89d7bf_64I] saveQRSeamlessInfo, mapSize[12]
+09-16 09:41:56.506  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.506  1052 12084 I chatty  : uid=1013(media) AIQIppAlgo identical 11 lines
+09-16 09:41:56.506  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.506  1052 12080 E libc    : Access denied finding property "ro.board.boardid"
+09-16 09:41:56.506  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.506  1052 12084 I chatty  : uid=1013(media) AIQIppAlgo identical 2 lines
+09-16 09:41:56.506  1052 12084 E         : loadAISDAIQStyle,get yShadingElement fail!
+09-16 09:41:56.506  1052 12080 E HwaUtils: [e89d7bf_64E] get_chip_config_value open dts file failed
+09-16 09:41:56.506  1052 12080 D Misc____: [e89d7bf_64D] judgeGPUBoost boardID(0) dtsNoBoost(0) run GPU BOOST
+09-16 09:41:56.506  1052 12080 D Misc____: [e89d7bf_64D] onProcessFrame save once gpuBoost(1) mIsGpuBoostSaved(1)
+09-16 09:41:56.508  1052 12084 I         : [aiqLoadConfig]LoadMark: 227, aisdCnt:[155 250], subsCnt:[157 300], aiqSwitcher: 100, curRatio: 20, multiTags: 1, idFilterth: 3
+09-16 09:41:56.511  1052 12078 I HwaStatInfo: [e89d7bf_64I] algotype is 0, videoRatio is 1.000000, ratio is 1.875000, faceNum is 0
+09-16 09:41:56.517  1052 12101 I IppAlgoPortIn: [HWA_CAM3]this=0x73e0156088, ipptype=256, enter receive(), pBuf=0x7457484fd0
+09-16 09:41:56.517  1052  1903 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x100, ret=0
+09-16 09:41:56.517  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.517  1052  1903 I HwaUtils: [e89d7bf_64I] getProductExtendName() path=YAL/YAL-Professional
+09-16 09:41:56.517  1052  1903 I HwaUtils: [e89d7bf_64I] getOneCfgFile() path=nullptr
+09-16 09:41:56.517  1052  1903 I HwaDMapIpp: [e89d7bf_64I] checkNeedSwapCalibrationData() ConfigFile NULL
+09-16 09:41:56.517  1052  1903 D Misc____: [e89d7bf_64D] enter loadRequest
+09-16 09:41:56.517  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.517  1052  1903 D IppAlgoFilter: [HWA_CAM3]loadPreviewRequest() REQUEST_DMAP_SWAP, status:0
+09-16 09:41:56.517  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.517  1052  1903 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x10000, ret=0
+09-16 09:41:56.517  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.517  1052  1903 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x20000, ret=0
+09-16 09:41:56.517  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.517  1052 12103 I IppAlgoPortIn: [HWA_CAM3]this=0x73e014a088, ipptype=0, enter receive(), pBuf=0x7457486310
+09-16 09:41:56.517  1052 12101 I IppAlgoPortOut: [HWA_CAM3]this=0x73e01562f0, ipptype=256, enter deliver(), pBuf=0x7457484fd0
+09-16 09:41:56.518  1052  1893 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x100, ret=0
+09-16 09:41:56.518  1052 12103 E IppAlgoSmartAE: [e89d7bf_64E] doSmartAEAlgo() failed to getSceneMode
+09-16 09:41:56.518  1052 12083 I YuvCalculate: mono_mode: 0, ae_stable: [0, 0], colorDis: 0, buf_cnt:1
+09-16 09:41:56.518  1052 12103 I IppAlgoPortOut: [HWA_CAM3]this=0x73e014a2f0, ipptype=0, enter deliver(), pBuf=0x7457486310
+09-16 09:41:56.518  1052 12085 I EnvImpl : [HWA_CAM3]getArCalorieMode mArCalorieMode 0
+09-16 09:41:56.518  1052 12085 D cie     : Enter CIE::onProcess
+09-16 09:41:56.518  1052 12085 I cie     : Tracking_status =0 Tracking_FSM_curr_last=[0 0] Tracking_TYPE = 0, Tracking_OD_TYPE=0, Tracking Result_rect=[0 0 0 0] frame=0 mApce= 0.000000, confidence=0.000000,
+09-16 09:41:56.518  1052 12085 I CIEProxy: reportAIFocusingStatus, zoomRatio:1.000000, mVcmCode:441,  mAfmodeNormal:3, mfTafToCaf:0, LV:73, face_width:0, widthThreshod:0, trackingModeEnable:1, aiFocusDisable =0, needReportMoving:0
+09-16 09:41:56.518  1052  1903 D PpAlgoFilter: [HWA_CAM3]SetSpecialCombineWideCameraFlag, isSpecialCombineWideCamFlag=0
+09-16 09:41:56.518  1034  9203 I Camera3-Stream: returnBuffer: begin(1)
+09-16 09:41:56.518  1052 12083 I YuvCalculate: onSubAlgoProcess() yuv lum calc, main_lum:0, aux_lum:0, sat:0, green:0, blue:3, expo0:[0, 0x0, 0], expo1:[0, 0x0, 0]
+09-16 09:41:56.518  1052 12083 I AntiBanding: antiBandingIamgeProcess(): ByPassCheck is True, algorithm returned !
+09-16 09:41:56.520  1052 12080 D Misc____: [e89d7bf_64D] onProcessFrame(673), afDistance(0.000000)
+09-16 09:41:56.520  1052 12080 I Misc____: [e89d7bf_64I] disableLaserInCapture = 1, Status = 0, RangeStatus = 0, Result = 195
+09-16 09:41:56.520  1034  9203 I Camera3-Stream: returnBuffer: end(1)
+09-16 09:41:56.528  1034 12057 V Camera3-Device: isCustomizedMode: expo time 0, pro mode 0, exposure mode 0
+09-16 09:41:56.534  1052 12078 I HwaStatInfo: [e89d7bf_64I] algotype is 0, videoRatio is 1.000000, ratio is 1.875000, faceNum is 0
+09-16 09:41:56.540  1052 12089 I afstatAlgo: do_afstat_num:0,flow =0, aftype:1, focus_stage = 0,focus_scene:2 fv[code:441 normalFV:0, peakHoldFV:0],frame_rect[664, 664], focus_rect[0 0 0 0]
+09-16 09:41:56.559  1052 12103 I IppAlgoPortIn: [HWA_CAM3]this=0x73e014a088, ipptype=0, enter receive(), pBuf=0x74574864d0
+09-16 09:41:56.559  1052 12103 E IppAlgoSmartAE: [e89d7bf_64E] doSmartAEAlgo() failed to getSceneMode
+09-16 09:41:56.559  1052 12083 I YuvCalculate: mono_mode: 0, ae_stable: [0, 0], colorDis: 0, buf_cnt:1
+09-16 09:41:56.559  1052 12101 I IppAlgoPortIn: [HWA_CAM3]this=0x73e0156088, ipptype=256, enter receive(), pBuf=0x7457485190
+09-16 09:41:56.559  1052  1903 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x100, ret=0
+09-16 09:41:56.559  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.559  1052  1903 I HwaUtils: [e89d7bf_64I] getProductExtendName() path=YAL/YAL-Professional
+09-16 09:41:56.559  1052 12083 I YuvCalculate: onSubAlgoProcess() yuv lum calc, main_lum:0, aux_lum:0, sat:0, green:0, blue:4, expo0:[0, 0x0, 0], expo1:[0, 0x0, 0]
+09-16 09:41:56.559  1052  1903 I HwaUtils: [e89d7bf_64I] getOneCfgFile() path=nullptr
+09-16 09:41:56.559  1052  1903 I HwaDMapIpp: [e89d7bf_64I] checkNeedSwapCalibrationData() ConfigFile NULL
+09-16 09:41:56.559  1052 12083 I AntiBanding: antiBandingIamgeProcess(): ByPassCheck is True, algorithm returned !
+09-16 09:41:56.559  1052  1903 D Misc____: [e89d7bf_64D] enter loadRequest
+09-16 09:41:56.559  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.559  1052  1903 D IppAlgoFilter: [HWA_CAM3]loadPreviewRequest() REQUEST_DMAP_SWAP, status:0
+09-16 09:41:56.559  1052 12103 I IppAlgoPortOut: [HWA_CAM3]this=0x73e014a2f0, ipptype=0, enter deliver(), pBuf=0x74574864d0
+09-16 09:41:56.559  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.559  1052  1903 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x10000, ret=0
+09-16 09:41:56.559  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.559  1052  1903 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x20000, ret=0
+09-16 09:41:56.559  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.559  1052 12101 I IppAlgoPortOut: [HWA_CAM3]this=0x73e01562f0, ipptype=256, enter deliver(), pBuf=0x7457485190
+09-16 09:41:56.560  1052 12080 D Misc____: [e89d7bf_64D] onProcessFrame(673), afDistance(0.000000)
+09-16 09:41:56.560  1052  1893 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x100, ret=0
+09-16 09:41:56.560  1052 12085 I EnvImpl : [HWA_CAM3]getArCalorieMode mArCalorieMode 0
+09-16 09:41:56.560  1052 12085 D cie     : Enter CIE::onProcess
+09-16 09:41:56.560  1052 12085 I cie     : Tracking_status =0 Tracking_FSM_curr_last=[0 0] Tracking_TYPE = 0, Tracking_OD_TYPE=0, Tracking Result_rect=[0 0 0 0] frame=0 mApce= 0.000000, confidence=0.000000,
+09-16 09:41:56.560  1052 12085 I CIEProxy: reportAIFocusingStatus, zoomRatio:1.000000, mVcmCode:441,  mAfmodeNormal:3, mfTafToCaf:0, LV:73, face_width:0, widthThreshod:0, trackingModeEnable:1, aiFocusDisable =0, needReportMoving:0
+09-16 09:41:56.560  1034  9203 I Camera3-Stream: returnBuffer: begin(2)
+09-16 09:41:56.560  1052  1903 D PpAlgoFilter: [HWA_CAM3]SetSpecialCombineWideCameraFlag, isSpecialCombineWideCamFlag=0
+09-16 09:41:56.562  1034  9203 I Camera3-Stream: returnBuffer: end(2)
+09-16 09:41:56.576  1052 12078 I HwaStatInfo: [e89d7bf_64I] algotype is 0, videoRatio is 1.000000, ratio is 1.875000, faceNum is 0
+09-16 09:41:56.579  1034 12057 V Camera3-Device: isCustomizedMode: expo time 0, pro mode 0, exposure mode 0
+09-16 09:41:56.579  1052 12089 I afstatAlgo: do_afstat_num:0,flow =0, aftype:1, focus_stage = 0,focus_scene:3 fv[code:441 normalFV:0, peakHoldFV:0],frame_rect[664, 664], focus_rect[0 0 0 0]
+09-16 09:41:56.579  2654  4063 I PGServer: report state:10018 event type:1 pid:0 uid:0 pkg: to pid: 2654
+09-16 09:41:56.579  2654  4063 I ApsAppsTypeHandler: APS: APK: ApsAppsTypeHandler.getInstance, sInstance = com.huawei.android.hwaps.o@abd1c78
+09-16 09:41:56.587   729   862 I hwcomposer: alloc1Mem:248: alloc mBuffers[0] format=1, w=1080, h=2340, size=10551296
+09-16 09:41:56.587   729   862 I hwcomposer: alloc1Mem:248: alloc mBuffers[1] format=1, w=1080, h=2340, size=10551296
+09-16 09:41:56.587   729   862 I hwcomposer: alloc1Mem:248: alloc mBuffers[2] format=1, w=1080, h=2340, size=10551296
+09-16 09:41:56.598  1057  1057 E Sensors@1.2-impl: rgb color sensor data not ready
+09-16 09:41:56.599  1052  1903 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x100, ret=0
+09-16 09:41:56.599  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.599  1052  1903 I HwaUtils: [e89d7bf_64I] getProductExtendName() path=YAL/YAL-Professional
+09-16 09:41:56.599  1052  1903 I HwaUtils: [e89d7bf_64I] getOneCfgFile() path=nullptr
+09-16 09:41:56.599  1052  1903 I HwaDMapIpp: [e89d7bf_64I] checkNeedSwapCalibrationData() ConfigFile NULL
+09-16 09:41:56.599  1052  1903 D Misc____: [e89d7bf_64D] enter loadRequest
+09-16 09:41:56.599  1060  9337 I         : epoll_proc(297)::"event on timer fd=[13]"
+09-16 09:41:56.599  1052 12103 I IppAlgoPortIn: [HWA_CAM3]this=0x73e014a088, ipptype=0, enter receive(), pBuf=0x7457486690
+09-16 09:41:56.599  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.599  1052  1903 D IppAlgoFilter: [HWA_CAM3]loadPreviewRequest() REQUEST_DMAP_SWAP, status:0
+09-16 09:41:56.599  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.599  1052  1903 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x10000, ret=0
+09-16 09:41:56.599  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.599  1052  1903 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x20000, ret=0
+09-16 09:41:56.599  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.599  1052 12103 E IppAlgoSmartAE: [e89d7bf_64E] doSmartAEAlgo() failed to getSceneMode
+09-16 09:41:56.599  1052 12103 I IppAlgoPortOut: [HWA_CAM3]this=0x73e014a2f0, ipptype=0, enter deliver(), pBuf=0x7457486690
+09-16 09:41:56.599  1052 12101 I IppAlgoPortIn: [HWA_CAM3]this=0x73e0156088, ipptype=256, enter receive(), pBuf=0x7457485350
+09-16 09:41:56.599  1052 12083 I YuvCalculate: mono_mode: 0, ae_stable: [0, 0], colorDis: 0, buf_cnt:1
+09-16 09:41:56.599  1052 12101 I IppAlgoPortOut: [HWA_CAM3]this=0x73e01562f0, ipptype=256, enter deliver(), pBuf=0x7457485350
+09-16 09:41:56.599  1052  1893 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x100, ret=0
+09-16 09:41:56.599  1052 12085 I EnvImpl : [HWA_CAM3]getArCalorieMode mArCalorieMode 0
+09-16 09:41:56.599  1052 12083 I YuvCalculate: onSubAlgoProcess() yuv lum calc, main_lum:0, aux_lum:0, sat:0, green:0, blue:9, expo0:[0, 0x0, 0], expo1:[0, 0x0, 0]
+09-16 09:41:56.599  1052 12085 D cie     : Enter CIE::onProcess
+09-16 09:41:56.599  1052 12083 I AntiBanding: antiBandingIamgeProcess(): ByPassCheck is True, algorithm returned !
+09-16 09:41:56.599  1052 12085 I cie     : Tracking_status =0 Tracking_FSM_curr_last=[0 0] Tracking_TYPE = 0, Tracking_OD_TYPE=0, Tracking Result_rect=[0 0 0 0] frame=0 mApce= 0.000000, confidence=0.000000,
+09-16 09:41:56.599  1052 12085 I CIEProxy: reportAIFocusingStatus, zoomRatio:1.000000, mVcmCode:441,  mAfmodeNormal:3, mfTafToCaf:0, LV:76, face_width:0, widthThreshod:0, trackingModeEnable:1, aiFocusDisable =0, needReportMoving:0
+09-16 09:41:56.600  1052 12080 D Misc____: [e89d7bf_64D] onProcessFrame(673), afDistance(0.000000)
+09-16 09:41:56.600  1034  9203 I Camera3-Stream: returnBuffer: begin(3)
+09-16 09:41:56.600  1052  1903 D PpAlgoFilter: [HWA_CAM3]SetSpecialCombineWideCameraFlag, isSpecialCombineWideCamFlag=0
+09-16 09:41:56.600  1060  9337 I         : epoll_proc(297)::"event on timer fd=[14]"
+09-16 09:41:56.601  1034  9203 I Camera3-Stream: returnBuffer: end(3)
+09-16 09:41:56.611   729   860 W hwcomposer: setGpuFreqBoost:159: boostGpuFreq release !
+09-16 09:41:56.611  1034 12057 V Camera3-Device: isCustomizedMode: expo time 0, pro mode 0, exposure mode 0
+09-16 09:41:56.616  1052 12078 I HwaStatInfo: [e89d7bf_64I] algotype is 0, videoRatio is 1.000000, ratio is 1.875000, faceNum is 0
+09-16 09:41:56.616  1591  2145 I TrafficMonitor: update:rxPkts:2,txPkts:2,rxBytes:111,txBytes:80
+09-16 09:41:56.616  1591  2145 I TrafficMonitor: gettimer:interval=2000
+09-16 09:41:56.618  1052 12089 I afstatAlgo: do_afstat_num:0,flow =0, aftype:1, focus_stage = 0,focus_scene:4 fv[code:441 normalFV:0, peakHoldFV:0],frame_rect[664, 664], focus_rect[0 0 0 0]
+09-16 09:41:56.637  1052 12101 I IppAlgoPortIn: [HWA_CAM3]this=0x73e0156088, ipptype=256, enter receive(), pBuf=0x7457485510
+09-16 09:41:56.637  1052 12103 I IppAlgoPortIn: [HWA_CAM3]this=0x73e014a088, ipptype=0, enter receive(), pBuf=0x7457486850
+09-16 09:41:56.637  1052  1903 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x100, ret=0
+09-16 09:41:56.638  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.638  1052  1903 I HwaUtils: [e89d7bf_64I] getProductExtendName() path=YAL/YAL-Professional
+09-16 09:41:56.638  1052  1903 I HwaUtils: [e89d7bf_64I] getOneCfgFile() path=nullptr
+09-16 09:41:56.638  1052  1903 I HwaDMapIpp: [e89d7bf_64I] checkNeedSwapCalibrationData() ConfigFile NULL
+09-16 09:41:56.638  1052  1903 D Misc____: [e89d7bf_64D] enter loadRequest
+09-16 09:41:56.638  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.638  1052  1903 D IppAlgoFilter: [HWA_CAM3]loadPreviewRequest() REQUEST_DMAP_SWAP, status:0
+09-16 09:41:56.638  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.638  1052  1903 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x10000, ret=0
+09-16 09:41:56.638  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.638  1052  1903 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x20000, ret=0
+09-16 09:41:56.638  1052 12103 E IppAlgoSmartAE: [e89d7bf_64E] doSmartAEAlgo() failed to getSceneMode
+09-16 09:41:56.638  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.638  1052 12083 I YuvCalculate: mono_mode: 0, ae_stable: [0, 0], colorDis: 0, buf_cnt:1
+09-16 09:41:56.638  1052 12103 I IppAlgoPortOut: [HWA_CAM3]this=0x73e014a2f0, ipptype=0, enter deliver(), pBuf=0x7457486850
+09-16 09:41:56.638  1052 12085 I EnvImpl : [HWA_CAM3]getArCalorieMode mArCalorieMode 0
+09-16 09:41:56.638  1052 12085 D cie     : Enter CIE::onProcess
+09-16 09:41:56.638  1052 12085 I cie     : Tracking_status =0 Tracking_FSM_curr_last=[0 0] Tracking_TYPE = 0, Tracking_OD_TYPE=0, Tracking Result_rect=[0 0 0 0] frame=0 mApce= 0.000000, confidence=0.000000,
+09-16 09:41:56.638  1052 12085 I CIEProxy: reportAIFocusingStatus, zoomRatio:1.000000, mVcmCode:441,  mAfmodeNormal:3, mfTafToCaf:0, LV:76, face_width:0, widthThreshod:0, trackingModeEnable:1, aiFocusDisable =0, needReportMoving:0
+09-16 09:41:56.638  1052 12101 I IppAlgoPortOut: [HWA_CAM3]this=0x73e01562f0, ipptype=256, enter deliver(), pBuf=0x7457485510
+09-16 09:41:56.638  1052 12083 I YuvCalculate: onSubAlgoProcess() yuv lum calc, main_lum:0, aux_lum:0, sat:0, green:0, blue:20, expo0:[0, 0x0, 0], expo1:[0, 0x0, 0]
+09-16 09:41:56.638  1052 12083 I AntiBanding: antiBandingIamgeProcess(): ByPassCheck is True, algorithm returned !
+09-16 09:41:56.638  1052 12080 D Misc____: [e89d7bf_64D] onProcessFrame(673), afDistance(0.000000)
+09-16 09:41:56.638  1052  1893 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x100, ret=0
+09-16 09:41:56.639  1052  1892 I MRMain  : [e89d7bf_64I] onConfig ret: 0,mLastEnableStatus: 0, mirrorMode(0->0)
+09-16 09:41:56.639  1052  1903 D PpAlgoFilter: [HWA_CAM3]SetSpecialCombineWideCameraFlag, isSpecialCombineWideCamFlag=0
+09-16 09:41:56.640  1034  9203 I Camera3-Stream: returnBuffer: begin(4)
+09-16 09:41:56.641  1034  9203 I Camera3-Stream: returnBuffer: end(4)
+09-16 09:41:56.653  1052 12078 I HwaStatInfo: [e89d7bf_64I] algotype is 0, videoRatio is 1.000000, ratio is 1.875000, faceNum is 0
+09-16 09:41:56.657  1052 12089 I afstatAlgo: do_afstat_num:0,flow =0, aftype:1, focus_stage = 2,focus_scene:5 fv[code:472 normalFV:0, peakHoldFV:0],frame_rect[664, 664], focus_rect[0 0 0 0]
+09-16 09:41:56.661  1034 12057 V Camera3-Device: isCustomizedMode: expo time 0, pro mode 0, exposure mode 0
+09-16 09:41:56.677  1052  1903 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x100, ret=0
+09-16 09:41:56.677  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.677  1052  1903 I HwaUtils: [e89d7bf_64I] getProductExtendName() path=YAL/YAL-Professional
+09-16 09:41:56.677  1052  1903 I HwaUtils: [e89d7bf_64I] getOneCfgFile() path=nullptr
+09-16 09:41:56.677  1052  1903 I HwaDMapIpp: [e89d7bf_64I] checkNeedSwapCalibrationData() ConfigFile NULL
+09-16 09:41:56.677  1052  1903 D Misc____: [e89d7bf_64D] enter loadRequest
+09-16 09:41:56.677  1052 12103 I IppAlgoPortIn: [HWA_CAM3]this=0x73e014a088, ipptype=0, enter receive(), pBuf=0x7457486a10
+09-16 09:41:56.677  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.677  1052  1903 D IppAlgoFilter: [HWA_CAM3]loadPreviewRequest() REQUEST_DMAP_SWAP, status:0
+09-16 09:41:56.677  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.677  1052  1903 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x10000, ret=0
+09-16 09:41:56.677  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.677  1052  1903 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x20000, ret=0
+09-16 09:41:56.677  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.677  1052 12103 E IppAlgoSmartAE: [e89d7bf_64E] doSmartAEAlgo() failed to getSceneMode
+09-16 09:41:56.677  1052 12103 I IppAlgoPortOut: [HWA_CAM3]this=0x73e014a2f0, ipptype=0, enter deliver(), pBuf=0x7457486a10
+09-16 09:41:56.677  1052 12083 I YuvCalculate: mono_mode: 0, ae_stable: [0, 0], colorDis: 0, buf_cnt:1
+09-16 09:41:56.677  1052 12085 I EnvImpl : [HWA_CAM3]getArCalorieMode mArCalorieMode 0
+09-16 09:41:56.677  1052 12085 D cie     : Enter CIE::onProcess
+09-16 09:41:56.677  1052 12085 I cie     : Tracking_status =0 Tracking_FSM_curr_last=[0 0] Tracking_TYPE = 0, Tracking_OD_TYPE=0, Tracking Result_rect=[0 0 0 0] frame=0 mApce= 0.000000, confidence=0.000000,
+09-16 09:41:56.677  1052 12085 I CIEProxy: reportAIFocusingStatus, zoomRatio:1.000000, mVcmCode:472,  mAfmodeNormal:3, mfTafToCaf:0, LV:76, face_width:0, widthThreshod:0, trackingModeEnable:1, aiFocusDisable =0, needReportMoving:0
+09-16 09:41:56.678  1052 12101 I IppAlgoPortIn: [HWA_CAM3]this=0x73e0156088, ipptype=256, enter receive(), pBuf=0x74574856d0
+09-16 09:41:56.678  1052  1893 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x100, ret=0
+09-16 09:41:56.678  1052  1892 I MRMain  : [e89d7bf_64I] checkConfig(), enableV1=0, enableV2=0, enableV3=0
+09-16 09:41:56.678  1052 12101 I IppAlgoPortOut: [HWA_CAM3]this=0x73e01562f0, ipptype=256, enter deliver(), pBuf=0x74574856d0
+09-16 09:41:56.678  1052 12080 D Misc____: [e89d7bf_64D] onProcessFrame(673), afDistance(0.000000)
+09-16 09:41:56.678  1052  1903 D PpAlgoFilter: [HWA_CAM3]SetSpecialCombineWideCameraFlag, isSpecialCombineWideCamFlag=0
+09-16 09:41:56.678  1034  9203 I Camera3-Stream: returnBuffer: begin(5)
+09-16 09:41:56.680  1052 12083 I YuvCalculate: onSubAlgoProcess() yuv lum calc, main_lum:0, aux_lum:0, sat:0, green:0, blue:58, expo0:[0, 0x0, 0], expo1:[0, 0x0, 0]
+09-16 09:41:56.680  1052 12083 I AntiBanding: antiBandingIamgeProcess(): ByPassCheck is True, algorithm returned !
+09-16 09:41:56.680  1034  9203 I Camera3-Stream: returnBuffer: end(5)
+09-16 09:41:56.693  1052 12078 I HwaStatInfo: [e89d7bf_64I] algotype is 0, videoRatio is 1.000000, ratio is 1.875000, faceNum is 0
+09-16 09:41:56.695  1034 12057 V Camera3-Device: isCustomizedMode: expo time 0, pro mode 0, exposure mode 0
+09-16 09:41:56.699  1060  9337 I         : epoll_proc(297)::"event on timer fd=[13]"
+09-16 09:41:56.700  1060  9337 I         : epoll_proc(297)::"event on timer fd=[14]"
+09-16 09:41:56.703  1052 12089 I afstatAlgo: do_afstat_num:1,flow =0, aftype:1, focus_stage = 2,focus_scene:6 fv[code:472 normalFV:281225, peakHoldFV:0],frame_rect[664, 664], focus_rect[0 0 0 0]
+09-16 09:41:56.703  1052 12089 I CPreProcAFStat: flow:0 index:0 fvstat_pos[472 281225] peakhold_pos[0 0] fvstat_win_be_calc:1
+09-16 09:41:56.703  1052 12089 I CPreProcAFStat: flow:0 index:1 fvstat_pos[472 995647] peakhold_pos[0 0] fvstat_win_be_calc:1
+09-16 09:41:56.703  1052 12089 I CPreProcAFStat: flow:0 index:2 fvstat_pos[472 557107] peakhold_pos[0 0] fvstat_win_be_calc:1
+09-16 09:41:56.703  1052 12089 I CPreProcAFStat: flow:0 index:3 fvstat_pos[472 559986] peakhold_pos[0 0] fvstat_win_be_calc:1
+09-16 09:41:56.703  1052 12089 I CPreProcAFStat: flow:0 index:4 fvstat_pos[472 1535116] peakhold_pos[0 0] fvstat_win_be_calc:1
+09-16 09:41:56.703  1052 12089 I CPreProcAFStat: flow:0 index:5 fvstat_pos[472 1552305] peakhold_pos[0 0] fvstat_win_be_calc:1
+09-16 09:41:56.715   680 18260 I netd    : trafficSwapActiveStatsMap() <23.29ms>
+09-16 09:41:56.715  1052 12103 I IppAlgoPortIn: [HWA_CAM3]this=0x73e014a088, ipptype=0, enter receive(), pBuf=0x7457486150
+09-16 09:41:56.716  1052 12103 E IppAlgoSmartAE: [e89d7bf_64E] doSmartAEAlgo() failed to getSceneMode
+09-16 09:41:56.716  1052 12103 I IppAlgoPortOut: [HWA_CAM3]this=0x73e014a2f0, ipptype=0, enter deliver(), pBuf=0x7457486150
+09-16 09:41:56.716  1052 12085 I EnvImpl : [HWA_CAM3]getArCalorieMode mArCalorieMode 0
+09-16 09:41:56.716  1052 12085 D cie     : Enter CIE::onProcess
+09-16 09:41:56.716  1052 12085 I cie     : Tracking_status =0 Tracking_FSM_curr_last=[0 0] Tracking_TYPE = 0, Tracking_OD_TYPE=0, Tracking Result_rect=[0 0 0 0] frame=0 mApce= 0.000000, confidence=0.000000,
+09-16 09:41:56.716  1052 12085 I CIEProxy: reportAIFocusingStatus, zoomRatio:1.000000, mVcmCode:472,  mAfmodeNormal:3, mfTafToCaf:0, LV:76, face_width:0, widthThreshod:0, trackingModeEnable:1, aiFocusDisable =0, needReportMoving:0
+09-16 09:41:56.716  1052 12101 I IppAlgoPortIn: [HWA_CAM3]this=0x73e0156088, ipptype=256, enter receive(), pBuf=0x7457484e10
+09-16 09:41:56.716  1052 12083 I YuvCalculate: mono_mode: 0, ae_stable: [0, 0], colorDis: 0, buf_cnt:1
+09-16 09:41:56.716  1052  1903 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x100, ret=0
+09-16 09:41:56.716  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.716  1052  1903 I HwaUtils: [e89d7bf_64I] getProductExtendName() path=YAL/YAL-Professional
+09-16 09:41:56.716  1052  1903 I HwaUtils: [e89d7bf_64I] getOneCfgFile() path=nullptr
+09-16 09:41:56.716  1052  1903 I HwaDMapIpp: [e89d7bf_64I] checkNeedSwapCalibrationData() ConfigFile NULL
+09-16 09:41:56.716  1052  1903 D Misc____: [e89d7bf_64D] enter loadRequest
+09-16 09:41:56.716  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.716  1052  1903 D IppAlgoFilter: [HWA_CAM3]loadPreviewRequest() REQUEST_DMAP_SWAP, status:0
+09-16 09:41:56.716  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.716  1052  1903 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x10000, ret=0
+09-16 09:41:56.716  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.716  1052  1903 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x20000, ret=0
+09-16 09:41:56.716  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.717  1057  1094 E Sensors@1.2-impl: rgb color sensor data not ready
+09-16 09:41:56.717  1052 12101 I IppAlgoPortOut: [HWA_CAM3]this=0x73e01562f0, ipptype=256, enter deliver(), pBuf=0x7457484e10
+09-16 09:41:56.717  1052  1893 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x100, ret=0
+09-16 09:41:56.717  1052 12080 D Misc____: [e89d7bf_64D] onProcessFrame(673), afDistance(0.000000)
+09-16 09:41:56.717  1052  1903 D PpAlgoFilter: [HWA_CAM3]SetSpecialCombineWideCameraFlag, isSpecialCombineWideCamFlag=0
+09-16 09:41:56.718  1034  9203 I Camera3-Stream: returnBuffer: begin(6)
+09-16 09:41:56.718  1052 12083 I YuvCalculate: onSubAlgoProcess() yuv lum calc, main_lum:0, aux_lum:0, sat:0, green:0, blue:62, expo0:[0, 0x0, 0], expo1:[0, 0x0, 0]
+09-16 09:41:56.718  1052 12083 I AntiBanding: antiBandingIamgeProcess(): ByPassCheck is True, algorithm returned !
+09-16 09:41:56.719  1034  9203 I Camera3-Stream: returnBuffer: end(6)
+09-16 09:41:56.727  1034 12057 V Camera3-Device: isCustomizedMode: expo time 0, pro mode 0, exposure mode 0
+09-16 09:41:56.731  1052 12078 I HwaStatInfo: [e89d7bf_64I] algotype is 0, videoRatio is 1.000000, ratio is 1.875000, faceNum is 0
+09-16 09:41:56.736  1052 12089 I afstatAlgo: do_afstat_num:1,flow =0, aftype:1, focus_stage = 2,focus_scene:7 fv[code:479 normalFV:0, peakHoldFV:0],frame_rect[664, 664], focus_rect[0 0 0 0]
+09-16 09:41:56.755  1052 12101 I IppAlgoPortIn: [HWA_CAM3]this=0x73e0156088, ipptype=256, enter receive(), pBuf=0x7457484fd0
+09-16 09:41:56.755  1052 12103 I IppAlgoPortIn: [HWA_CAM3]this=0x73e014a088, ipptype=0, enter receive(), pBuf=0x7457486310
+09-16 09:41:56.756  1052 12103 E IppAlgoSmartAE: [e89d7bf_64E] doSmartAEAlgo() failed to getSceneMode
+09-16 09:41:56.756  1052 12103 I IppAlgoPortOut: [HWA_CAM3]this=0x73e014a2f0, ipptype=0, enter deliver(), pBuf=0x7457486310
+09-16 09:41:56.756  1052 12101 I IppAlgoPortOut: [HWA_CAM3]this=0x73e01562f0, ipptype=256, enter deliver(), pBuf=0x7457484fd0
+09-16 09:41:56.756  1052 12083 I YuvCalculate: mono_mode: 0, ae_stable: [0, 0], colorDis: 0, buf_cnt:1
+09-16 09:41:56.756  1052  1903 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x100, ret=0
+09-16 09:41:56.756  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.756  1052  1903 I HwaUtils: [e89d7bf_64I] getProductExtendName() path=YAL/YAL-Professional
+09-16 09:41:56.756  1052  1903 I HwaUtils: [e89d7bf_64I] getOneCfgFile() path=nullptr
+09-16 09:41:56.756  1052  1903 I HwaDMapIpp: [e89d7bf_64I] checkNeedSwapCalibrationData() ConfigFile NULL
+09-16 09:41:56.756  1052  1903 D Misc____: [e89d7bf_64D] enter loadRequest
+09-16 09:41:56.756  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.756  1052  1903 D IppAlgoFilter: [HWA_CAM3]loadPreviewRequest() REQUEST_DMAP_SWAP, status:0
+09-16 09:41:56.756  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.756  1052  1903 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x10000, ret=0
+09-16 09:41:56.756  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.756  1052  1903 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x20000, ret=0
+09-16 09:41:56.756  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.756  1052 12083 I YuvCalculate: onSubAlgoProcess() yuv lum calc, main_lum:0, aux_lum:0, sat:0, green:2, blue:58, expo0:[0, 0x0, 0], expo1:[0, 0x0, 0]
+09-16 09:41:56.756  1052 12083 I AntiBanding: antiBandingIamgeProcess(): ByPassCheck is True, algorithm returned !
+09-16 09:41:56.757  1052 12080 D Misc____: [e89d7bf_64D] onProcessFrame(673), afDistance(0.000000)
+09-16 09:41:56.757  1034  9203 I Camera3-Stream: returnBuffer: begin(7)
+09-16 09:41:56.757  1052  1893 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x100, ret=0
+09-16 09:41:56.757  1052 12084 I AIQ     : [e89d7bf_64I] sendAIQState(691), state=[0 0 0 0], stable=[0 0], enable=[0,0,0],id=[0,0], tag=[0,0], rat=[0,0], cam=0
+09-16 09:41:56.757  1052 12085 I EnvImpl : [HWA_CAM3]getArCalorieMode mArCalorieMode 0
+09-16 09:41:56.757  1052 12085 D cie     : Enter CIE::onProcess
+09-16 09:41:56.757  1052 12085 I cie     : Tracking_status =0 Tracking_FSM_curr_last=[0 0] Tracking_TYPE = 0, Tracking_OD_TYPE=0, Tracking Result_rect=[0 0 0 0] frame=0 mApce= 0.000000, confidence=0.000000,
+09-16 09:41:56.757  1052 12085 I CIEProxy: reportAIFocusingStatus, zoomRatio:1.000000, mVcmCode:479,  mAfmodeNormal:3, mfTafToCaf:0, LV:76, face_width:0, widthThreshod:0, trackingModeEnable:1, aiFocusDisable =0, needReportMoving:0
+09-16 09:41:56.757  1052  1903 D PpAlgoFilter: [HWA_CAM3]SetSpecialCombineWideCameraFlag, isSpecialCombineWideCamFlag=0
+09-16 09:41:56.758  1034  9203 I Camera3-Stream: returnBuffer: end(7)
+09-16 09:41:56.771  1052 12078 I HwaStatInfo: [e89d7bf_64I] algotype is 0, videoRatio is 1.000000, ratio is 1.875000, faceNum is 0
+09-16 09:41:56.777  1034 12057 V Camera3-Device: isCustomizedMode: expo time 0, pro mode 0, exposure mode 0
+09-16 09:41:56.794  1052 12089 I afstatAlgo: do_afstat_num:2,flow =0, aftype:1, focus_stage = 2,focus_scene:8 fv[code:479 normalFV:324670, peakHoldFV:0],frame_rect[664, 664], focus_rect[0 0 0 0]
+09-16 09:41:56.795  1052 12101 I IppAlgoPortIn: [HWA_CAM3]this=0x73e0156088, ipptype=256, enter receive(), pBuf=0x7457485190
+09-16 09:41:56.795  1052 12089 I CPreProcAFStat: flow:0 index:0 fvstat_pos[479 324670] peakhold_pos[0 0] fvstat_win_be_calc:1
+09-16 09:41:56.795  1052 12089 I CPreProcAFStat: flow:0 index:1 fvstat_pos[479 1106911] peakhold_pos[0 0] fvstat_win_be_calc:1
+09-16 09:41:56.795  1052  1903 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x100, ret=0
+09-16 09:41:56.795  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.795  1052 12101 I IppAlgoPortOut: [HWA_CAM3]this=0x73e01562f0, ipptype=256, enter deliver(), pBuf=0x7457485190
+09-16 09:41:56.795  1052 12103 I IppAlgoPortIn: [HWA_CAM3]this=0x73e014a088, ipptype=0, enter receive(), pBuf=0x74574864d0
+09-16 09:41:56.795  1052  1903 I HwaUtils: [e89d7bf_64I] getProductExtendName() path=YAL/YAL-Professional
+09-16 09:41:56.795  1052 12089 I CPreProcAFStat: flow:0 index:2 fvstat_pos[479 482928] peakhold_pos[0 0] fvstat_win_be_calc:1
+09-16 09:41:56.795  1052 12089 I CPreProcAFStat: flow:0 index:3 fvstat_pos[479 541829] peakhold_pos[0 0] fvstat_win_be_calc:1
+09-16 09:41:56.795  1052 12089 I CPreProcAFStat: flow:0 index:4 fvstat_pos[479 1598460] peakhold_pos[0 0] fvstat_win_be_calc:1
+09-16 09:41:56.795  1052 12089 I CPreProcAFStat: flow:0 index:5 fvstat_pos[479 1657888] peakhold_pos[0 0] fvstat_win_be_calc:1
+09-16 09:41:56.795  1052  1903 I HwaUtils: [e89d7bf_64I] getOneCfgFile() path=nullptr
+09-16 09:41:56.795  1052  1903 I HwaDMapIpp: [e89d7bf_64I] checkNeedSwapCalibrationData() ConfigFile NULL
+09-16 09:41:56.795  1052  1903 D Misc____: [e89d7bf_64D] enter loadRequest
+09-16 09:41:56.795  1052 12103 E IppAlgoSmartAE: [e89d7bf_64E] doSmartAEAlgo() failed to getSceneMode
+09-16 09:41:56.795  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.795  1052  1903 D IppAlgoFilter: [HWA_CAM3]loadPreviewRequest() REQUEST_DMAP_SWAP, status:0
+09-16 09:41:56.795  1052 12103 I IppAlgoPortOut: [HWA_CAM3]this=0x73e014a2f0, ipptype=0, enter deliver(), pBuf=0x74574864d0
+09-16 09:41:56.795  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.795  1052 12085 I EnvImpl : [HWA_CAM3]getArCalorieMode mArCalorieMode 0
+09-16 09:41:56.795  1052  1903 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x10000, ret=0
+09-16 09:41:56.795  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.795  1052  1903 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x20000, ret=0
+09-16 09:41:56.795  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.795  1052 12085 D cie     : Enter CIE::onProcess
+09-16 09:41:56.796  1052 12085 I cie     : Tracking_status =0 Tracking_FSM_curr_last=[0 0] Tracking_TYPE = 0, Tracking_OD_TYPE=0, Tracking Result_rect=[0 0 0 0] frame=0 mApce= 0.000000, confidence=0.000000,
+09-16 09:41:56.796  1052 12080 D Misc____: [e89d7bf_64D] onProcessFrame(673), afDistance(0.000000)
+09-16 09:41:56.796  1052 12085 I CIEProxy: reportAIFocusingStatus, zoomRatio:1.000000, mVcmCode:479,  mAfmodeNormal:3, mfTafToCaf:0, LV:75, face_width:0, widthThreshod:0, trackingModeEnable:1, aiFocusDisable =0, needReportMoving:0
+09-16 09:41:56.796  1052 12083 I YuvCalculate: mono_mode: 0, ae_stable: [0, 0], colorDis: 0, buf_cnt:1
+09-16 09:41:56.796  1052  1893 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x100, ret=0
+09-16 09:41:56.796  1052 12083 I YuvCalculate: onSubAlgoProcess() yuv lum calc, main_lum:0, aux_lum:0, sat:0, green:1, blue:44, expo0:[0, 0x0, 0], expo1:[0, 0x0, 0]
+09-16 09:41:56.796  1052 12083 I AntiBanding: antiBandingIamgeProcess(): ByPassCheck is True, algorithm returned !
+09-16 09:41:56.796  1052  1903 D PpAlgoFilter: [HWA_CAM3]SetSpecialCombineWideCameraFlag, isSpecialCombineWideCamFlag=0
+09-16 09:41:56.796  1034  9203 I Camera3-Stream: returnBuffer: begin(8)
+09-16 09:41:56.797  1034  9203 I Camera3-Stream: returnBuffer: end(8)
+09-16 09:41:56.799  1060  9337 I         : epoll_proc(297)::"event on timer fd=[13]"
+09-16 09:41:56.800  1060  9337 I         : epoll_proc(297)::"event on timer fd=[14]"
+09-16 09:41:56.811  1034 12057 V Camera3-Device: isCustomizedMode: expo time 0, pro mode 0, exposure mode 0
+09-16 09:41:56.813  1052 12078 I HwaStatInfo: [e89d7bf_64I] algotype is 0, videoRatio is 1.000000, ratio is 1.875000, faceNum is 0
+09-16 09:41:56.814  1052 12089 I afstatAlgo: do_afstat_num:2,flow =0, aftype:1, focus_stage = 2,focus_scene:9 fv[code:467 normalFV:0, peakHoldFV:0],frame_rect[664, 664], focus_rect[0 0 0 0]
+09-16 09:41:56.834  1057  1057 E Sensors@1.2-impl: rgb color sensor data not ready
+09-16 09:41:56.834  1052 12101 I IppAlgoPortIn: [HWA_CAM3]this=0x73e0156088, ipptype=256, enter receive(), pBuf=0x7457485350
+09-16 09:41:56.834  1052 12101 I IppAlgoPortOut: [HWA_CAM3]this=0x73e01562f0, ipptype=256, enter deliver(), pBuf=0x7457485350
+09-16 09:41:56.834  1052  1903 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x100, ret=0
+09-16 09:41:56.834  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.835  1052  1903 I HwaUtils: [e89d7bf_64I] getProductExtendName() path=YAL/YAL-Professional
+09-16 09:41:56.835  1052  1903 I HwaUtils: [e89d7bf_64I] getOneCfgFile() path=nullptr
+09-16 09:41:56.835  1052  1903 I HwaDMapIpp: [e89d7bf_64I] checkNeedSwapCalibrationData() ConfigFile NULL
+09-16 09:41:56.835  1052  1903 D Misc____: [e89d7bf_64D] enter loadRequest
+09-16 09:41:56.835  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.835  1052  1903 D IppAlgoFilter: [HWA_CAM3]loadPreviewRequest() REQUEST_DMAP_SWAP, status:0
+09-16 09:41:56.835  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.835  1052  1903 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x10000, ret=0
+09-16 09:41:56.835  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.835  1052  1903 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x20000, ret=0
+09-16 09:41:56.835  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:56.835  1034  9203 I Camera3-Stream: returnBuffer: begin(9)
+09-16 09:41:56.835  1052  1893 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x100, ret=0
+09-16 09:41:56.835  1034  9203 I Camera3-Stream: returnBuffer: end(9)
+09-16 09:41:56.836  1052  1903 D PpAlgoFilter: [HWA_CAM3]SetSpecialCombineWideCameraFlag, isSpecialCombineWideCamFlag=0
+09-16 09:41:56.836  1052 12103 I IppAlgoPortIn: [HWA_CAM3]this=0x73e014a088, ipptype=0, enter receive(), pBuf=0x7457486690
+09-16 09:41:56.836  1052 12103 E IppAlgoSmartAE: [e89d7bf_64E] doSmartAEAlgo() failed to getSceneMode
+09-16 09:41:56.836  1052 12103 I IppAlgoPortOut: [HWA_CAM3]this=0x73e014a2f0, ipptype=0, enter deliver(), pBuf=0x7457486690
+09-16 09:41:56.836  1052 12083 I YuvCalculate: mono_mode: 0, ae_stable: [0, 0], colorDis: 0, buf_cnt:1
+09-16 09:41:56.836  1052 12085 I EnvImpl : [HWA_CAM3]getArCalorieMode mArCalorieMode 0
+09-16 09:41:56.836  1052 12085 D cie     : Enter CIE::onProcess
+09-16 09:41:56.836  1052 12085 I cie     : AiEngineObjectDetection::isCurFrameRun trigger true. 
+09-16 09:41:56.836  1052 12085 W cie     : PublicBufMgr::getValidBuf::Cannot find frame info. Frame width is 300, height is 200, pixfromat = 11.
+09-16 09:41:56.837  1052 12080 D Misc____: [e89d7bf_64D] onProcessFrame(673), afDistance(0.000000)
+09-16 09:41:56.837  1052 12083 I YuvCalculate: onSubAlgoProcess() yuv lum calc, main_lum:0, aux_lum:0, sat:0, green:5, blue:38, expo0:[0, 0x0, 0], expo1:[0, 0x0, 0]
+09-16 09:41:56.837  1052 12083 I AntiBanding: antiBandingIamgeProcess(): ByPassCheck is True, algorithm returned !
+09-16 09:41:56.837  1052 12085 I cie     : PublicBufMgr::createAITensor n[1], c[3], h[200], w[300], size[180000]
+09-16 09:41:56.837  1052 12085 I cie     : PublicBufMgr::createBuf::createBuf(0x74589a6838)
+09-16 09:41:56.839  1052 12085 I cie     : Enter AiEngineObjectDetection::process.
+09-16 09:41:56.840  1052 12085 I cie     : AIOD stores frame buffer info for other algo use! buffer = 0x738e42df40, mFrameNumber=9, w_h = [768 576 ], previewCam[0], ispCropReigion[0 0 4000 3000]
+09-16 09:41:56.840  1052 12085 I cie     : AiEngineObjectDetection::createNeuralNetworkBuffer n[1], c[1], h[1], w[240], size[240]
+09-16 09:41:56.840  1052 12085 I AIClientHIDL: Process(341)::"client[AiObjectDetectionService] AIClientHIDL Process"
+09-16 09:41:56.840  1060  1495 I AIServiceHIDL: Process(194)::"AIServiceHIDL Process"
+09-16 09:41:56.840  1060  1495 I AIServiceHIDL: Process(245)::"Process context: imageFormat$11$imageHeight$200$imageStride$300$imageWidth$300$"
+09-16 09:41:56.840  1060  1495 I ObjectDetection: [HIAI][ObjectDetection]Process: "Enter."
+09-16 09:41:56.840  1060  1495 D ObjectDetection: [HIAI][ObjectDetection]AiObjectDetectionTask: "Enter."
+09-16 09:41:56.840  1060  1495 I         : CreateTimer(207)::"leave createTimer success. fd=[23]"
+09-16 09:41:56.840  1060  1495 I         : ScheduleTask(267)::"async task ! \n"
+09-16 09:41:56.840  1060 12118 I AIDefaultTaskHandle: [HIAI][AIDefaultTaskHandle]DoAsync: "Task :0x74924319c0 begin to running"
+09-16 09:41:56.840  1060 12118 I         : CloseTimer(255)::"close timer fd=[23] finish."
+09-16 09:41:56.840  1052 12085 I cie     : Tracking_status =0 Tracking_FSM_curr_last=[0 0] Tracking_TYPE = 0, Tracking_OD_TYPE=0, Tracking Result_rect=[0 0 0 0] frame=0 mApce= 0.000000, confidence=0.000000,
+09-16 09:41:56.840  1060 12118 I         : DestroyTimer(233)::"leave destroyTimer success. fd=[-1]"
+09-16 09:41:56.840  1060 12118 I AIDefaultTaskHandle: [HIAI][AIDefaultTaskHandle]DoAsync: "Notify client"
+09-16 09:41:56.840  1060 12118 I ObjectDetection: [HIAI][ObjectDetection]Run: "Enter."
+09-16 09:41:56.840  1060 12118 I ObjectDetection: [HIAI][ObjectDetection]RefresModelsRunEnv: "Enter RefresModelsRunEnv"
+09-16 09:41:56.840  1052 12085 I CIEProxy: reportAIFocusingStatus, zoomRatio:1.000000, mVcmCode:467,  mAfmodeNormal:3, mfTafToCaf:0, LV:75, face_width:0, widthThreshod:34, trackingModeEnable:1, aiFocusDisable =0, needReportMoving:0
+09-16 09:41:56.840  1060 12118 I hiai_hcs: HCSService::HCSService Create HCSService instance.
+09-16 09:41:56.840  1060 12118 I         : CreateTimer(207)::"leave createTimer success. fd=[15]"
+09-16 09:41:56.840  1060 12118 I         : HcsSetTaskPriority(31)::"HCSService::HcsSetTaskPriority Set task priority [2] success."
+09-16 09:41:56.840  1060 12118 I         : ParseDeviceType(329)::"Load model \"HiAiObjectDetectionModel\" ,model file head is \"MEF\"!"
+09-16 09:41:56.841  1060 12118 I hcs     : HIAI MLU manager acquire wake lock
+09-16 09:41:56.841  1060 12118 I         : [ipu_manage_open], [1014]
+09-16 09:41:56.841  1060 12118 I         : [ipu_manage_close], [1043] fd = 16
+09-16 09:41:56.841  1060 12118 I cambricon: cnrtInit success
+09-16 09:41:56.841  1060 12118 I         : [ipu_manage_open], [1014]
+09-16 09:41:56.841  1060 12118 I hcs     : MLU Open success
+09-16 09:41:56.844  1034 12057 V Camera3-Device: isCustomizedMode: expo time 0, pro mode 0, exposure mode 0
+09-16 09:41:56.853  1052 12078 I HwaStatInfo: [e89d7bf_64I] algotype is 0, videoRatio is 1.000000, ratio is 1.875000, faceNum is 0

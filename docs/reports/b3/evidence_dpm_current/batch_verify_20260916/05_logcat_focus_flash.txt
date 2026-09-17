@@ -1,0 +1,301 @@
+--------- beginning of main
+09-16 09:41:30.192  1034  9203 I Camera3-Stream: returnBuffer: begin(1402)
+09-16 09:41:30.192  1052 11799 I IppAlgoPortOut: [HWA_CAM3]this=0x73e01562f0, ipptype=256, enter deliver(), pBuf=0x7457486150
+09-16 09:41:30.192  1034  9203 I Camera3-Stream: returnBuffer: end(1402)
+09-16 09:41:30.194  1052 11789 I cie     : Enter SceneRecognition::process
+09-16 09:41:30.194  1052 11789 I AIClientHIDL: Process(341)::"client[AIEngineSceneRecognitionV2] AIClientHIDL Process"
+09-16 09:41:30.194  1060  1495 I AIServiceHIDL: Process(194)::"AIServiceHIDL Process"
+09-16 09:41:30.194  1060  1495 I AIServiceHIDL: Process(245)::"Process context: imageFormat$11$imageHeight$224$imageStride$224$imageWidth$224$"
+09-16 09:41:30.194  1060  1495 I SceneRecognition: [HIAI][SceneRecognition]Process: "Enter Process"
+09-16 09:41:30.194  1060  1495 W         : GetPara(51)::"Do not find param.key is loadModel!\n"
+09-16 09:41:30.194  1060  1495 I SceneRecognition: [HIAI][SceneRecognition]AISceneRecognitionV2Task: "Create AISceneRecognitionV2Task 0x7492431fc0"
+09-16 09:41:30.194  1060  1495 I         : CreateTimer(207)::"leave createTimer success. fd=[60]"
+09-16 09:41:30.195  1060  1495 I         : ScheduleTask(267)::"async task ! \n"
+09-16 09:41:30.195  1060 11821 I SceneRecognition: [HIAI][SceneRecognition]~AISceneRecognitionV2Task: "Destroy ~AISceneRecognitionV2Task 0x7492432500"
+09-16 09:41:30.195  1060 11821 I AIDefaultTaskHandle: [HIAI][AIDefaultTaskHandle]DoAsync: "Task :0x7492431fc0 begin to running"
+09-16 09:41:30.195  1060 11821 I         : CloseTimer(255)::"close timer fd=[60] finish."
+09-16 09:41:30.195  1052 11789 I cie     : Tracking_status =0 Tracking_FSM_curr_last=[0 0] Tracking_TYPE = 0, Tracking_OD_TYPE=0, Tracking Result_rect=[0 0 0 0] frame=0 mApce= 0.000000, confidence=0.000000,
+09-16 09:41:30.195  1060 11821 I         : DestroyTimer(233)::"leave destroyTimer success. fd=[-1]"
+09-16 09:41:30.195  1060 11821 I AIDefaultTaskHandle: [HIAI][AIDefaultTaskHandle]DoAsync: "Notify client"
+09-16 09:41:30.195  1060 11821 I SceneRecognition: [HIAI][SceneRecognition]Run: "Run AISceneRecognitionV2Task 0x7492431fc0 "
+09-16 09:41:30.195  1060 11821 I SceneRecognition: [HIAI][SceneRecognition]preprocess: "Enter preprocess"
+09-16 09:41:30.195  1052 11789 I CIEProxy: reportAIFocusingStatus, zoomRatio:1.000000, mVcmCode:460,  mAfmodeNormal:3, mfTafToCaf:0, LV:70, face_width:0, widthThreshod:34, trackingModeEnable:1, aiFocusDisable =0, needReportMoving:0
+09-16 09:41:30.195  1052 11794 I afstatAlgo: do_afstat_num:1,flow =0, aftype:1, focus_stage = 2,focus_scene:43 fv[code:460 normalFV:1437246, peakHoldFV:0],frame_rect[664, 664], focus_rect[0 0 0 0]
+09-16 09:41:30.195  1052 11794 I CPreProcAFStat: flow:0 index:0 fvstat_pos[460 1437246] peakhold_pos[0 0] fvstat_win_be_calc:1
+09-16 09:41:30.195  1052 11794 I CPreProcAFStat: flow:0 index:1 fvstat_pos[460 2556298] peakhold_pos[0 0] fvstat_win_be_calc:1
+09-16 09:41:30.195  1052 11794 I CPreProcAFStat: flow:0 index:2 fvstat_pos[460 2316578] peakhold_pos[0 0] fvstat_win_be_calc:1
+09-16 09:41:30.195  1052 11794 I CPreProcAFStat: flow:0 index:3 fvstat_pos[460 1911884] peakhold_pos[0 0] fvstat_win_be_calc:1
+09-16 09:41:30.195  1052 11794 I CPreProcAFStat: flow:0 index:4 fvstat_pos[460 2315625] peakhold_pos[0 0] fvstat_win_be_calc:1
+09-16 09:41:30.195  1052 11794 I CPreProcAFStat: flow:0 index:5 fvstat_pos[460 2782042] peakhold_pos[0 0] fvstat_win_be_calc:1
+09-16 09:41:30.195  1060 11821 I         : ForwardOffline(870)::"forward"
+09-16 09:41:30.195  1060 11821 I hcs     : MLUExecutor::ForwardCompute model[0] insert MLUProcessModelTask success.
+09-16 09:41:30.206  1034 11761 V Camera3-Device: isCustomizedMode: expo time 0, pro mode 0, exposure mode 0
+09-16 09:41:30.207  1052 11794 I afstatAlgo: do_afstat_num:1,flow =0, aftype:1, focus_stage = 2,focus_scene:44 fv[code:467 normalFV:0, peakHoldFV:0],frame_rect[664, 664], focus_rect[0 0 0 0]
+09-16 09:41:30.209  1052 11782 I HwaStatInfo: [e89d7bf_64I] algotype is 0, videoRatio is 1.000000, ratio is 1.875000, faceNum is 0
+09-16 09:41:30.209  1060 19904 I cambricon: hardware time: 12847.000000 us
+09-16 09:41:30.209  1060 19904 I         : OnProcessDone(1119)::"notify_one: task id[1] and model id[0], result[0]!"
+09-16 09:41:30.209  1060 11821 I         : ForwardOffline(914)::"forward complete"
+09-16 09:41:30.209  1060 11821 I SceneRecognition: [HIAI][SceneRecognition]Run: "SceneRecognition process time success."
+09-16 09:41:30.209  1060 11821 I SceneRecognition: [HIAI][SceneRecognition]Run: "SceneRecognition process time. TimeCost: 14 ms"
+09-16 09:41:30.209  1060 11821 I SceneRecognition: [HIAI][SceneRecognition]postprocess: "Enter postprocess"
+09-16 09:41:30.209  1060 11821 I SceneRecognition: [HIAI][SceneRecognition]Run: "Leave AISceneRecognitionV2Task run."
+09-16 09:41:30.210  1060 11821 I AIServiceHIDL: OnProcessDone(283)::"AIServiceHIDL OnProcessDone 1052:348 call the listener"
+09-16 09:41:30.210  1052  8491 I AIClientHIDL: OnProcessDone(87)::"AIHIDLListener OnProcessDone 0"
+09-16 09:41:30.210  1052  8491 I cie     : Enter SceneRecognitionListener::OnProcessDone
+09-16 09:41:30.210  1052  8491 I cie     : SceneRecognitionListener::convertResultToVec Result1:BAR Conf:31.202824.
+09-16 09:41:30.210  1052  8491 I cie     : SceneRecognitionListener::convertResultToVec Result1:SWIMMINGPOOL Conf:25.323063.
+09-16 09:41:30.210  1052  8491 I cie     : SceneRecognitionListener::convertResultToVec Result1:TEXT Conf:9.898067.
+09-16 09:41:30.210  1052  8491 I cie     : SceneRecognitionListener::convertResultToVec Result1:BILLIARDROOM Conf:6.363571.
+09-16 09:41:30.210  1052  8491 I cie     : SceneRecognitionListener::convertResultToVec Result1:INCAR Conf:5.576551.
+09-16 09:41:30.210  1052  8491 D cie     : SceneStabilization::CalculateSceneState mOutThresholdConfidenceAverage(50), mOutThresholdConfidenceMulti(1)
+09-16 09:41:30.210  1052  8491 D EventCallbackImpl: [HWA_CAM3]enter notifySDResult() 
+09-16 09:41:30.210  1052  8491 D EventCallbackImpl: [HWA_CAM3]enter notifyICSDResult() 
+09-16 09:41:30.210  1060 11821 I AIServiceHIDL: OnProcessDone(293)::"AIServiceHIDL OnProcessDone Complete 1052:348 call the listener"
+09-16 09:41:30.210  1060 11821 I AIDefaultTaskHandle: [HIAI][AIDefaultTaskHandle]DoAsync: "Notify client complete"
+09-16 09:41:30.227  1052  1903 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x100, ret=0
+09-16 09:41:30.227  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:30.227  1052  1903 I HwaUtils: [e89d7bf_64I] getProductExtendName() path=YAL/YAL-Professional
+09-16 09:41:30.227  1052  1903 I HwaUtils: [e89d7bf_64I] getOneCfgFile() path=nullptr
+09-16 09:41:30.227  1052  1903 I HwaDMapIpp: [e89d7bf_64I] checkNeedSwapCalibrationData() ConfigFile NULL
+09-16 09:41:30.227  1052  1903 D Misc____: [e89d7bf_64D] enter loadRequest
+09-16 09:41:30.227  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:30.227  1052 11799 I IppAlgoPortIn: [HWA_CAM3]this=0x73e0156088, ipptype=256, enter receive(), pBuf=0x7457484710
+09-16 09:41:30.227  1052 11803 I IppAlgoPortIn: [HWA_CAM3]this=0x73e014a088, ipptype=0, enter receive(), pBuf=0x7457485350
+09-16 09:41:30.227  1052  1903 D IppAlgoFilter: [HWA_CAM3]loadPreviewRequest() REQUEST_DMAP_SWAP, status:0
+09-16 09:41:30.227  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:30.227  1052  1903 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x10000, ret=0
+09-16 09:41:30.227  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:30.227  1052  1903 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x20000, ret=0
+09-16 09:41:30.227  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:30.227  1052  1893 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x100, ret=0
+09-16 09:41:30.227  1052 11799 I IppAlgoPortOut: [HWA_CAM3]this=0x73e01562f0, ipptype=256, enter deliver(), pBuf=0x7457484710
+09-16 09:41:30.228  1052 11803 E IppAlgoSmartAE: [e89d7bf_64E] doSmartAEAlgo() failed to getSceneMode
+09-16 09:41:30.228  1052 11782 I HwaStatInfo: [e89d7bf_64I] algotype is 0, videoRatio is 1.000000, ratio is 1.875000, faceNum is 0
+09-16 09:41:30.228  1052 11786 I YuvCalculate: mono_mode: 0, ae_stable: [0, 0], colorDis: 0, buf_cnt:1
+09-16 09:41:30.228  1052 11803 I IppAlgoPortOut: [HWA_CAM3]this=0x73e014a2f0, ipptype=0, enter deliver(), pBuf=0x7457485350
+09-16 09:41:30.228  1052 11789 I EnvImpl : [HWA_CAM3]getArCalorieMode mArCalorieMode 0
+09-16 09:41:30.228  1052 11789 D cie     : Enter CIE::onProcess
+09-16 09:41:30.228  1052 11789 I cie     : Tracking_status =0 Tracking_FSM_curr_last=[0 0] Tracking_TYPE = 0, Tracking_OD_TYPE=0, Tracking Result_rect=[0 0 0 0] frame=0 mApce= 0.000000, confidence=0.000000,
+09-16 09:41:30.228  1052 11789 I CIEProxy: reportAIFocusingStatus, zoomRatio:1.000000, mVcmCode:467,  mAfmodeNormal:3, mfTafToCaf:0, LV:70, face_width:0, widthThreshod:34, trackingModeEnable:1, aiFocusDisable =0, needReportMoving:0
+09-16 09:41:30.228  1034  9203 I Camera3-Stream: returnBuffer: begin(1403)
+09-16 09:41:30.228  1052 11786 I YuvCalculate: onSubAlgoProcess() yuv lum calc, main_lum:0, aux_lum:0, sat:0, green:2, blue:82, expo0:[0, 0x0, 0], expo1:[0, 0x0, 0]
+09-16 09:41:30.228  1052 11783 D Misc____: [e89d7bf_64D] onProcessFrame(673), afDistance(195.500000)
+09-16 09:41:30.229  1052 11786 I AntiBanding: onSubAlgoProcess() mAlgoCtx.continue_detect_cnt :0, mAlgoCtx.succ_detect_cnt : 0, mAlgoCtx.motion_flag = 0, detect_result:0, frequency_detected = 0,cur_expo = 10000
+09-16 09:41:30.229  1034  9203 I Camera3-Stream: returnBuffer: end(1403)
+09-16 09:41:30.229  1034  9203 I Camera3-Stream: returnBuffer: begin(1403)
+09-16 09:41:30.229  1034  9203 I Camera3-Stream: returnBuffer: end(1403)
+09-16 09:41:30.233 10962 11819 D DpmFrameAnalyzer: analyze: bitmap converted, size=1080x1440, scanRoi=Rect(189, 369 - 891, 1071)
+09-16 09:41:30.234 10962 11819 D DpmFrameAnalyzer: analyze: frame received, format=35, size=1440x1080, rotation=90
+09-16 09:41:30.238 10962 10962 D DpmAnalyzer: analyze: frame=1080x1440, roi=Rect(189, 369 - 891, 1071), focus=FOCUSED, mode=SCAN
+09-16 09:41:30.238 10962 10962 D DpmAnalyzer: analyze: THROTTLED by timing gate
+09-16 09:41:30.238 10962 10962 D DpmFrameAnalyzer: analyze: result status=THROTTLED, codeLength=0, source=null, frameToken=857
+09-16 09:41:30.238  1034 11761 V Camera3-Device: isCustomizedMode: expo time 0, pro mode 0, exposure mode 0
+09-16 09:41:30.249 10962 11819 D skia    : onFlyCompress
+09-16 09:41:30.267  1057  1094 E Sensors@1.2-impl: rgb color sensor data not ready
+09-16 09:41:30.267  1052 11799 I IppAlgoPortIn: [HWA_CAM3]this=0x73e0156088, ipptype=256, enter receive(), pBuf=0x74574848d0
+09-16 09:41:30.267  1052  1903 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x100, ret=0
+09-16 09:41:30.268  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:30.268  1052  1903 I HwaUtils: [e89d7bf_64I] getProductExtendName() path=YAL/YAL-Professional
+09-16 09:41:30.268  1052  1903 I HwaUtils: [e89d7bf_64I] getOneCfgFile() path=nullptr
+09-16 09:41:30.268  1052  1903 I HwaDMapIpp: [e89d7bf_64I] checkNeedSwapCalibrationData() ConfigFile NULL
+09-16 09:41:30.268  1052 11799 I IppAlgoPortOut: [HWA_CAM3]this=0x73e01562f0, ipptype=256, enter deliver(), pBuf=0x74574848d0
+09-16 09:41:30.268  1034  9203 I Camera3-Stream: returnBuffer: begin(1404)
+09-16 09:41:30.269  1052  1903 D Misc____: [e89d7bf_64D] enter loadRequest
+09-16 09:41:30.269  1034  9203 I Camera3-Stream: returnBuffer: end(1404)
+09-16 09:41:30.269  1034  9203 I Camera3-Stream: returnBuffer: begin(1404)
+09-16 09:41:30.269  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:30.269  1052  1903 D IppAlgoFilter: [HWA_CAM3]loadPreviewRequest() REQUEST_DMAP_SWAP, status:0
+09-16 09:41:30.269  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:30.269  1052  1903 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x10000, ret=0
+09-16 09:41:30.269  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:30.269  1052  1903 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x20000, ret=0
+09-16 09:41:30.269  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:30.269  1034  9203 I Camera3-Stream: returnBuffer: end(1404)
+09-16 09:41:30.270  1052  1893 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x100, ret=0
+09-16 09:41:30.271  1052 11803 I IppAlgoPortIn: [HWA_CAM3]this=0x73e014a088, ipptype=0, enter receive(), pBuf=0x7457485510
+09-16 09:41:30.272  1052 11803 E IppAlgoSmartAE: [e89d7bf_64E] doSmartAEAlgo() failed to getSceneMode
+09-16 09:41:30.272  1052 11789 I EnvImpl : [HWA_CAM3]getArCalorieMode mArCalorieMode 0
+09-16 09:41:30.272  1052 11789 D cie     : Enter CIE::onProcess
+09-16 09:41:30.272  1052 11789 I cie     : Tracking_status =0 Tracking_FSM_curr_last=[0 0] Tracking_TYPE = 0, Tracking_OD_TYPE=0, Tracking Result_rect=[0 0 0 0] frame=0 mApce= 0.000000, confidence=0.000000,
+09-16 09:41:30.272  1052 11789 I CIEProxy: reportAIFocusingStatus, zoomRatio:1.000000, mVcmCode:467,  mAfmodeNormal:3, mfTafToCaf:0, LV:70, face_width:0, widthThreshod:34, trackingModeEnable:1, aiFocusDisable =0, needReportMoving:0
+09-16 09:41:30.272  1052 11786 I YuvCalculate: mono_mode: 0, ae_stable: [0, 0], colorDis: 0, buf_cnt:1
+09-16 09:41:30.272  1052 11803 I IppAlgoPortOut: [HWA_CAM3]this=0x73e014a2f0, ipptype=0, enter deliver(), pBuf=0x7457485510
+09-16 09:41:30.273  1052 11786 I YuvCalculate: onSubAlgoProcess() yuv lum calc, main_lum:0, aux_lum:0, sat:0, green:1, blue:82, expo0:[0, 0x0, 0], expo1:[0, 0x0, 0]
+09-16 09:41:30.273  1052 11786 I AntiBanding: onSubAlgoProcess() mAlgoCtx.continue_detect_cnt :1, mAlgoCtx.succ_detect_cnt : 0, mAlgoCtx.motion_flag = 0, detect_result:0, frequency_detected = 49,cur_expo = 10000
+09-16 09:41:30.273  1052 11783 D Misc____: [e89d7bf_64D] onProcessFrame(673), afDistance(195.500000)
+09-16 09:41:30.274  1052 11794 I afstatAlgo: do_afstat_num:2,flow =0, aftype:1, focus_stage = 2,focus_scene:45 fv[code:467 normalFV:1346168, peakHoldFV:0],frame_rect[664, 664], focus_rect[0 0 0 0]
+09-16 09:41:30.274  1052 11794 I CPreProcAFStat: flow:0 index:0 fvstat_pos[467 1346168] peakhold_pos[0 0] fvstat_win_be_calc:1
+09-16 09:41:30.274  1052 11794 I CPreProcAFStat: flow:0 index:1 fvstat_pos[467 2495540] peakhold_pos[0 0] fvstat_win_be_calc:1
+09-16 09:41:30.274  1052 11794 I CPreProcAFStat: flow:0 index:2 fvstat_pos[467 2333380] peakhold_pos[0 0] fvstat_win_be_calc:1
+09-16 09:41:30.274  1052 11794 I CPreProcAFStat: flow:0 index:3 fvstat_pos[467 1853865] peakhold_pos[0 0] fvstat_win_be_calc:1
+09-16 09:41:30.274  1052 11794 I CPreProcAFStat: flow:0 index:4 fvstat_pos[467 2101860] peakhold_pos[0 0] fvstat_win_be_calc:1
+09-16 09:41:30.274  1052 11794 I CPreProcAFStat: flow:0 index:5 fvstat_pos[467 2667871] peakhold_pos[0 0] fvstat_win_be_calc:1
+09-16 09:41:30.282  1060  9337 I         : epoll_proc(297)::"event on timer fd=[13]"
+09-16 09:41:30.284  1060  9337 I         : epoll_proc(297)::"event on timer fd=[14]"
+09-16 09:41:30.288  1052 11782 I HwaStatInfo: [e89d7bf_64I] algotype is 0, videoRatio is 1.000000, ratio is 1.875000, faceNum is 0
+09-16 09:41:30.290  1034 11761 V Camera3-Device: isCustomizedMode: expo time 0, pro mode 0, exposure mode 0
+09-16 09:41:30.291  1052 11794 I afstatAlgo: do_afstat_num:3,flow =0, aftype:1, focus_stage = 2,focus_scene:46 fv[code:467 normalFV:1346716, peakHoldFV:0],frame_rect[664, 664], focus_rect[0 0 0 0]
+09-16 09:41:30.291  1052 11794 I CPreProcAFStat: flow:0 index:0 fvstat_pos[467 1346716] peakhold_pos[0 0] fvstat_win_be_calc:1
+09-16 09:41:30.292  1052 11794 I CPreProcAFStat: flow:0 index:1 fvstat_pos[467 2477640] peakhold_pos[0 0] fvstat_win_be_calc:1
+09-16 09:41:30.292  1052 11794 I CPreProcAFStat: flow:0 index:2 fvstat_pos[467 2295566] peakhold_pos[0 0] fvstat_win_be_calc:1
+09-16 09:41:30.292  1052 11794 I CPreProcAFStat: flow:0 index:3 fvstat_pos[467 1868122] peakhold_pos[0 0] fvstat_win_be_calc:1
+09-16 09:41:30.292  1052 11794 I CPreProcAFStat: flow:0 index:4 fvstat_pos[467 2081298] peakhold_pos[0 0] fvstat_win_be_calc:1
+09-16 09:41:30.292  1052 11794 I CPreProcAFStat: flow:0 index:5 fvstat_pos[467 2668559] peakhold_pos[0 0] fvstat_win_be_calc:1
+09-16 09:41:30.308  1052 11799 I IppAlgoPortIn: [HWA_CAM3]this=0x73e0156088, ipptype=256, enter receive(), pBuf=0x7458912b10
+09-16 09:41:30.308  1052  1903 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x100, ret=0
+09-16 09:41:30.308  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:30.308  1052  1903 I HwaUtils: [e89d7bf_64I] getProductExtendName() path=YAL/YAL-Professional
+09-16 09:41:30.308  1052  1903 I HwaUtils: [e89d7bf_64I] getOneCfgFile() path=nullptr
+09-16 09:41:30.308  1052  1903 I HwaDMapIpp: [e89d7bf_64I] checkNeedSwapCalibrationData() ConfigFile NULL
+09-16 09:41:30.308  1052 11799 I IppAlgoPortOut: [HWA_CAM3]this=0x73e01562f0, ipptype=256, enter deliver(), pBuf=0x7458912b10
+09-16 09:41:30.309  1052  1903 D Misc____: [e89d7bf_64D] enter loadRequest
+09-16 09:41:30.309  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:30.309  1052  1903 D IppAlgoFilter: [HWA_CAM3]loadPreviewRequest() REQUEST_DMAP_SWAP, status:0
+09-16 09:41:30.309  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:30.309  1034  9203 I Camera3-Stream: returnBuffer: begin(1405)
+09-16 09:41:30.309  1052  1903 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x10000, ret=0
+09-16 09:41:30.309  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:30.309  1052  1903 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x20000, ret=0
+09-16 09:41:30.309  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:30.309  1052 11803 I IppAlgoPortIn: [HWA_CAM3]this=0x73e014a088, ipptype=0, enter receive(), pBuf=0x7457484a90
+09-16 09:41:30.309  1052 11782 I HwaStatInfo: [e89d7bf_64I] algotype is 0, videoRatio is 1.000000, ratio is 1.875000, faceNum is 0
+09-16 09:41:30.309  1052 11803 E IppAlgoSmartAE: [e89d7bf_64E] doSmartAEAlgo() failed to getSceneMode
+09-16 09:41:30.309  1052 11803 I IppAlgoPortOut: [HWA_CAM3]this=0x73e014a2f0, ipptype=0, enter deliver(), pBuf=0x7457484a90
+09-16 09:41:30.310  1052 11789 I EnvImpl : [HWA_CAM3]getArCalorieMode mArCalorieMode 0
+09-16 09:41:30.310  1052  1893 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x100, ret=0
+09-16 09:41:30.310  1034  9203 I Camera3-Stream: returnBuffer: end(1405)
+09-16 09:41:30.310  1034  9203 I Camera3-Stream: returnBuffer: begin(1405)
+09-16 09:41:30.310  1052 11789 D cie     : Enter CIE::onProcess
+09-16 09:41:30.310  1052 11786 I YuvCalculate: mono_mode: 0, ae_stable: [0, 0], colorDis: 0, buf_cnt:1
+09-16 09:41:30.310  1052 11789 I cie     : Tracking_status =0 Tracking_FSM_curr_last=[0 0] Tracking_TYPE = 0, Tracking_OD_TYPE=0, Tracking Result_rect=[0 0 0 0] frame=0 mApce= 0.000000, confidence=0.000000,
+09-16 09:41:30.310  1052 11789 I CIEProxy: reportAIFocusingStatus, zoomRatio:1.000000, mVcmCode:467,  mAfmodeNormal:3, mfTafToCaf:0, LV:69, face_width:0, widthThreshod:34, trackingModeEnable:1, aiFocusDisable =0, needReportMoving:0
+09-16 09:41:30.310  1052 11783 D Misc____: [e89d7bf_64D] onProcessFrame(673), afDistance(195.500000)
+09-16 09:41:30.310  1052 11786 I YuvCalculate: onSubAlgoProcess() yuv lum calc, main_lum:0, aux_lum:0, sat:0, green:1, blue:84, expo0:[0, 0x0, 0], expo1:[0, 0x0, 0]
+09-16 09:41:30.310  1052 11786 I AntiBanding: onSubAlgoProcess() mAlgoCtx.continue_detect_cnt :2, mAlgoCtx.succ_detect_cnt : 0, mAlgoCtx.motion_flag = 0, detect_result:0, frequency_detected = 0,cur_expo = 10000
+09-16 09:41:30.310  1034  9203 I Camera3-Stream: returnBuffer: end(1405)
+09-16 09:41:30.316 10962 11819 D DpmFrameAnalyzer: analyze: bitmap converted, size=1080x1440, scanRoi=Rect(189, 369 - 891, 1071)
+09-16 09:41:30.317 10962 11819 D DpmFrameAnalyzer: analyze: frame received, format=35, size=1440x1080, rotation=90
+09-16 09:41:30.322  1034 11761 V Camera3-Device: isCustomizedMode: expo time 0, pro mode 0, exposure mode 0
+09-16 09:41:30.324 10962 10962 D DpmAnalyzer: analyze: frame=1080x1440, roi=Rect(189, 369 - 891, 1071), focus=FOCUSED, mode=SCAN
+09-16 09:41:30.324 10962 10962 D DpmAnalyzer: analyze: THROTTLED by timing gate
+09-16 09:41:30.324 10962 10962 D DpmFrameAnalyzer: analyze: result status=THROTTLED, codeLength=0, source=null, frameToken=858
+09-16 09:41:30.325  1052 11794 I afstatAlgo: do_afstat_num:3,flow =0, aftype:1, focus_stage = 2,focus_scene:47 fv[code:471 normalFV:0, peakHoldFV:0],frame_rect[664, 664], focus_rect[0 0 0 0]
+09-16 09:41:30.333 10962 11819 D skia    : onFlyCompress
+09-16 09:41:30.346  1052 11803 I IppAlgoPortIn: [HWA_CAM3]this=0x73e014a088, ipptype=0, enter receive(), pBuf=0x7457484c50
+09-16 09:41:30.347  1052 11803 E IppAlgoSmartAE: [e89d7bf_64E] doSmartAEAlgo() failed to getSceneMode
+09-16 09:41:30.347  1052 11799 I IppAlgoPortIn: [HWA_CAM3]this=0x73e0156088, ipptype=256, enter receive(), pBuf=0x74589117d0
+09-16 09:41:30.347  1052 11803 I IppAlgoPortOut: [HWA_CAM3]this=0x73e014a2f0, ipptype=0, enter deliver(), pBuf=0x7457484c50
+09-16 09:41:30.347  1052 11786 I YuvCalculate: mono_mode: 0, ae_stable: [0, 0], colorDis: 0, buf_cnt:1
+09-16 09:41:30.347  1052 11789 I EnvImpl : [HWA_CAM3]getArCalorieMode mArCalorieMode 0
+09-16 09:41:30.347  1052 11789 D cie     : Enter CIE::onProcess
+09-16 09:41:30.347  1052 11789 I cie     : Tracking_status =0 Tracking_FSM_curr_last=[0 0] Tracking_TYPE = 0, Tracking_OD_TYPE=0, Tracking Result_rect=[0 0 0 0] frame=0 mApce= 0.000000, confidence=0.000000,
+09-16 09:41:30.347  1052 11789 I CIEProxy: reportAIFocusingStatus, zoomRatio:1.000000, mVcmCode:471,  mAfmodeNormal:3, mfTafToCaf:0, LV:69, face_width:0, widthThreshod:34, trackingModeEnable:1, aiFocusDisable =0, needReportMoving:0
+09-16 09:41:30.347  1052  1903 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x100, ret=0
+09-16 09:41:30.347  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:30.347  1052  1903 I HwaUtils: [e89d7bf_64I] getProductExtendName() path=YAL/YAL-Professional
+09-16 09:41:30.347  1052  1903 I HwaUtils: [e89d7bf_64I] getOneCfgFile() path=nullptr
+09-16 09:41:30.347  1052  1903 I HwaDMapIpp: [e89d7bf_64I] checkNeedSwapCalibrationData() ConfigFile NULL
+09-16 09:41:30.347  1052 11799 I IppAlgoPortOut: [HWA_CAM3]this=0x73e01562f0, ipptype=256, enter deliver(), pBuf=0x74589117d0
+09-16 09:41:30.347  1052 11786 I YuvCalculate: onSubAlgoProcess() yuv lum calc, main_lum:0, aux_lum:0, sat:0, green:1, blue:84, expo0:[0, 0x0, 0], expo1:[0, 0x0, 0]
+09-16 09:41:30.347  1052  1903 D Misc____: [e89d7bf_64D] enter loadRequest
+09-16 09:41:30.347  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:30.347  1052 11783 D Misc____: [e89d7bf_64D] onProcessFrame(673), afDistance(174.895798)
+09-16 09:41:30.347  1052  1903 D IppAlgoFilter: [HWA_CAM3]loadPreviewRequest() REQUEST_DMAP_SWAP, status:0
+09-16 09:41:30.347  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:30.347  1052  1903 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x10000, ret=0
+09-16 09:41:30.347  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:30.348  1052  1903 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x20000, ret=0
+09-16 09:41:30.348  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:30.348  1034  9203 I Camera3-Stream: returnBuffer: begin(1406)
+09-16 09:41:30.349  1052  1893 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x100, ret=0
+09-16 09:41:30.349  1034  9203 I Camera3-Stream: returnBuffer: end(1406)
+09-16 09:41:30.349  1034  9203 I Camera3-Stream: returnBuffer: begin(1406)
+09-16 09:41:30.350  1034  9203 I Camera3-Stream: returnBuffer: end(1406)
+09-16 09:41:30.364  1052 11794 I afstatAlgo: afstat_antishaking_main,check rect[2][0 0 0 0],special win[664,664] error!
+09-16 09:41:30.366  1052 11794 I afstatAlgo: frame_cnt=1,rect[281 282 100 100],crorr_XY=[0.999900 0.999900],shift_XY=[0 0],absolute_shift_XY=[0 0],calc_focus_win[0 0 99 99], gauss_win[15 15 114 114]
+09-16 09:41:30.366  1052 11782 I HwaStatInfo: [e89d7bf_64I] algotype is 0, videoRatio is 1.000000, ratio is 1.875000, faceNum is 0
+09-16 09:41:30.374  1034 11761 V Camera3-Device: isCustomizedMode: expo time 0, pro mode 0, exposure mode 0
+09-16 09:41:30.378  1052 11794 I afstatAlgo: frame_cnt=1,rect[181 182 300 299],crorr_XY=[0.999900 0.999900],shift_XY=[0 0],absolute_shift_XY=[0 0],calc_focus_win[0 0 299 298], gauss_win[45 44 344 342]
+09-16 09:41:30.382  1060  9337 I         : epoll_proc(297)::"event on timer fd=[13]"
+09-16 09:41:30.383  1052 11794 I afstatAlgo: do_afstat_num:1,flow =0, aftype:1, focus_stage = 3,focus_scene:0 fv[code:471 normalFV:134105, peakHoldFV:9669],frame_rect[664, 664], focus_rect[281 282 100 100]
+09-16 09:41:30.383  1052 11794 I CPreProcAFStat: flow:0 index:0 fvstat_pos[471 134105] peakhold_pos[471 9669] fvstat_win_be_calc:1
+09-16 09:41:30.383  1052 11794 I CPreProcAFStat: flow:0 index:1 fvstat_pos[471 790057] peakhold_pos[471 34891] fvstat_win_be_calc:1
+09-16 09:41:30.383  1052 11794 I CPreProcAFStat: flow:0 index:2 fvstat_pos[0 0] peakhold_pos[0 0] fvstat_win_be_calc:0
+09-16 09:41:30.383  1052 11794 I CPreProcAFStat: flow:0 index:3 fvstat_pos[0 0] peakhold_pos[0 0] fvstat_win_be_calc:0
+09-16 09:41:30.383  1052 11794 I CPreProcAFStat: flow:0 index:4 fvstat_pos[0 0] peakhold_pos[0 0] fvstat_win_be_calc:0
+09-16 09:41:30.383  1052 11794 I CPreProcAFStat: flow:0 index:5 fvstat_pos[0 0] peakhold_pos[0 0] fvstat_win_be_calc:0
+09-16 09:41:30.383  1060  9337 I         : epoll_proc(297)::"event on timer fd=[14]"
+09-16 09:41:30.386  1057  1057 E Sensors@1.2-impl: rgb color sensor data not ready
+09-16 09:41:30.386  1052 11799 I IppAlgoPortIn: [HWA_CAM3]this=0x73e0156088, ipptype=256, enter receive(), pBuf=0x7457484e10
+09-16 09:41:30.386  1052  1903 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x100, ret=0
+09-16 09:41:30.386  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:30.386  1052 11803 I IppAlgoPortIn: [HWA_CAM3]this=0x73e014a088, ipptype=0, enter receive(), pBuf=0x7457484fd0
+09-16 09:41:30.386  1052  1903 I HwaUtils: [e89d7bf_64I] getProductExtendName() path=YAL/YAL-Professional
+09-16 09:41:30.386  1052  1903 I HwaUtils: [e89d7bf_64I] getOneCfgFile() path=nullptr
+09-16 09:41:30.386  1052  1903 I HwaDMapIpp: [e89d7bf_64I] checkNeedSwapCalibrationData() ConfigFile NULL
+09-16 09:41:30.386  1052  1903 D Misc____: [e89d7bf_64D] enter loadRequest
+09-16 09:41:30.387  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:30.387  1052  1903 D IppAlgoFilter: [HWA_CAM3]loadPreviewRequest() REQUEST_DMAP_SWAP, status:0
+09-16 09:41:30.387  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:30.387  1052  1903 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x10000, ret=0
+09-16 09:41:30.387  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:30.387  1052  1903 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x20000, ret=0
+09-16 09:41:30.387  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:30.387  1052 11803 E IppAlgoSmartAE: [e89d7bf_64E] doSmartAEAlgo() failed to getSceneMode
+09-16 09:41:30.387  1052 11799 I IppAlgoPortOut: [HWA_CAM3]this=0x73e01562f0, ipptype=256, enter deliver(), pBuf=0x7457484e10
+09-16 09:41:30.387  1052 11803 I IppAlgoPortOut: [HWA_CAM3]this=0x73e014a2f0, ipptype=0, enter deliver(), pBuf=0x7457484fd0
+09-16 09:41:30.387  1052 11782 I HwaStatInfo: [e89d7bf_64I] algotype is 0, videoRatio is 1.000000, ratio is 1.875000, faceNum is 0
+09-16 09:41:30.387  1052 11786 I YuvCalculate: mono_mode: 0, ae_stable: [0, 0], colorDis: 0, buf_cnt:1
+09-16 09:41:30.387  1052  1893 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x100, ret=0
+09-16 09:41:30.387  1052 11789 I EnvImpl : [HWA_CAM3]getArCalorieMode mArCalorieMode 0
+09-16 09:41:30.388  1052 11789 D cie     : Enter CIE::onProcess
+09-16 09:41:30.388  1034  9203 I Camera3-Stream: returnBuffer: begin(1407)
+09-16 09:41:30.388  1052 11789 I cie     : Tracking_status =0 Tracking_FSM_curr_last=[0 0] Tracking_TYPE = 0, Tracking_OD_TYPE=0, Tracking Result_rect=[0 0 0 0] frame=0 mApce= 0.000000, confidence=0.000000,
+09-16 09:41:30.388  1052 11789 I CIEProxy: reportAIFocusingStatus, zoomRatio:1.000000, mVcmCode:471,  mAfmodeNormal:3, mfTafToCaf:0, LV:69, face_width:0, widthThreshod:34, trackingModeEnable:1, aiFocusDisable =0, needReportMoving:0
+09-16 09:41:30.388  1034  9203 I Camera3-Stream: returnBuffer: end(1407)
+09-16 09:41:30.388  1034  9203 I Camera3-Stream: returnBuffer: begin(1407)
+09-16 09:41:30.388  1052 11786 I YuvCalculate: onSubAlgoProcess() yuv lum calc, main_lum:0, aux_lum:0, sat:0, green:3, blue:85, expo0:[0, 0x0, 0], expo1:[0, 0x0, 0]
+09-16 09:41:30.389  1052 11783 D Misc____: [e89d7bf_64D] onProcessFrame(673), afDistance(174.895798)
+09-16 09:41:30.389  1052 11786 I AntiBanding: onSubAlgoProcess() mAlgoCtx.continue_detect_cnt :0, mAlgoCtx.succ_detect_cnt : 0, mAlgoCtx.motion_flag = 0, detect_result:0, frequency_detected = 0,cur_expo = 10000
+09-16 09:41:30.389  1034  9203 I Camera3-Stream: returnBuffer: end(1407)
+09-16 09:41:30.399 10962 11819 D DpmFrameAnalyzer: analyze: bitmap converted, size=1080x1440, scanRoi=Rect(189, 369 - 891, 1071)
+09-16 09:41:30.400 10962 11819 D DpmFrameAnalyzer: analyze: frame received, format=35, size=1440x1080, rotation=90
+09-16 09:41:30.404  1052 11794 I afstatAlgo: do_afstat_num:0,flow =0, aftype:1, focus_stage = 1,focus_scene:1 fv[code:471 normalFV:0, peakHoldFV:0],frame_rect[664, 664], focus_rect[0 0 0 0]
+09-16 09:41:30.406  1034 11761 V Camera3-Device: isCustomizedMode: expo time 0, pro mode 0, exposure mode 0
+09-16 09:41:30.407 10962 10962 D DpmAnalyzer: analyze: frame=1080x1440, roi=Rect(189, 369 - 891, 1071), focus=FOCUSED, mode=SCAN
+09-16 09:41:30.407 10962 10962 D DpmAnalyzer: analyze: starting performMultiStrategyDecode
+09-16 09:41:30.407 10962 10962 D DpmAnalyzer: performMultiStrategyDecode: frame=1080x1440, roi=Rect(189, 369 - 891, 1071), strategies=1
+09-16 09:41:30.418 10962 11819 D skia    : onFlyCompress
+09-16 09:41:30.418 10962 10962 D DpmAnalyzer: Stage1: ROI 702x702 → scaled 400x400
+09-16 09:41:30.426  1052 11803 I IppAlgoPortIn: [HWA_CAM3]this=0x73e014a088, ipptype=0, enter receive(), pBuf=0x7457485190
+09-16 09:41:30.426  1052 11803 E IppAlgoSmartAE: [e89d7bf_64E] doSmartAEAlgo() failed to getSceneMode
+09-16 09:41:30.426  1052 11803 I IppAlgoPortOut: [HWA_CAM3]this=0x73e014a2f0, ipptype=0, enter deliver(), pBuf=0x7457485190
+09-16 09:41:30.426  1052 11799 I IppAlgoPortIn: [HWA_CAM3]this=0x73e0156088, ipptype=256, enter receive(), pBuf=0x7457486150
+09-16 09:41:30.427  1052 11786 I YuvCalculate: mono_mode: 0, ae_stable: [0, 0], colorDis: 0, buf_cnt:1
+09-16 09:41:30.427  1052  1903 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x100, ret=0
+09-16 09:41:30.427  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:30.427  1052  1903 I HwaUtils: [e89d7bf_64I] getProductExtendName() path=YAL/YAL-Professional
+09-16 09:41:30.427  1052  1903 I HwaUtils: [e89d7bf_64I] getOneCfgFile() path=nullptr
+09-16 09:41:30.427  1052  1903 I HwaDMapIpp: [e89d7bf_64I] checkNeedSwapCalibrationData() ConfigFile NULL
+09-16 09:41:30.427  1052  1903 D Misc____: [e89d7bf_64D] enter loadRequest
+09-16 09:41:30.427  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:30.427  1052  1903 D IppAlgoFilter: [HWA_CAM3]loadPreviewRequest() REQUEST_DMAP_SWAP, status:0
+09-16 09:41:30.427  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:30.427  1034  2063 I Camera3-Stream: returnBuffer: begin(1408)
+09-16 09:41:30.427  1052  1903 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x10000, ret=0
+09-16 09:41:30.427  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:30.427  1052 11786 I YuvCalculate: onSubAlgoProcess() yuv lum calc, main_lum:0, aux_lum:0, sat:0, green:2, blue:83, expo0:[0, 0x0, 0], expo1:[0, 0x0, 0]
+09-16 09:41:30.427  1052  1903 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x20000, ret=0
+09-16 09:41:30.427  1052  1903 D EnvImpl : [HWA_CAM3]getPackageName :  com.wearable.inspection.mobile
+09-16 09:41:30.428  1052 11799 I IppAlgoPortOut: [HWA_CAM3]this=0x73e01562f0, ipptype=256, enter deliver(), pBuf=0x7457486150
+09-16 09:41:30.428  1052 11786 I AntiBanding: onSubAlgoProcess() mAlgoCtx.continue_detect_cnt :1, mAlgoCtx.succ_detect_cnt : 0, mAlgoCtx.motion_flag = 0, detect_result:0, frequency_detected = 0,cur_expo = 10000
+09-16 09:41:30.428  1052 11783 D Misc____: [e89d7bf_64D] onProcessFrame(673), afDistance(174.895798)
+09-16 09:41:30.428  1034  2063 I Camera3-Stream: returnBuffer: end(1408)
+09-16 09:41:30.428  1034  2063 I Camera3-Stream: returnBuffer: begin(1408)
+09-16 09:41:30.429  1034  2063 I Camera3-Stream: returnBuffer: end(1408)
+09-16 09:41:30.429  1052 11789 I EnvImpl : [HWA_CAM3]getArCalorieMode mArCalorieMode 0
+09-16 09:41:30.429  1052 11789 D cie     : Enter CIE::onProcess
+09-16 09:41:30.429  1052 11789 I cie     : Tracking_status =0 Tracking_FSM_curr_last=[0 0] Tracking_TYPE = 0, Tracking_OD_TYPE=0, Tracking Result_rect=[0 0 0 0] frame=0 mApce= 0.000000, confidence=0.000000,
+09-16 09:41:30.429  1052 11789 I CIEProxy: reportAIFocusingStatus, zoomRatio:1.000000, mVcmCode:471,  mAfmodeNormal:3, mfTafToCaf:0, LV:69, face_width:0, widthThreshod:34, trackingModeEnable:1, aiFocusDisable =0, needReportMoving:0
+09-16 09:41:30.429  1052  1893 I HwVideoStabGPU: [e89d7bf_64I] checkConfig(), isThirdAppCam=1, mType=0x100, ret=0
+09-16 09:41:30.430  1052  1892 I MRMain  : [e89d7bf_64I] onConfig ret: 0,mLastEnableStatus: 0, mirrorMode(0->0)

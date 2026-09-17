@@ -1,0 +1,76 @@
+APK path: D:\study\Textile_defects\Wearable Inspection\MobileInspectionApp\app\build\outputs\apk\debug\app-debug.apk
+APK time: 2026-09-15 17:56:29 +08:00
+APK size: 232676681
+APK SHA-256: 3AE7821D627AC21AF8C82D962D4D568CAEE23BDEB7083822539A6631D9ADEC3D
+device: ERLDU20429005890
+packages:
+package:com.wearable.inspection
+package:com.wearable.inspection.mobile
+old PID: 
+new PID: 16456
+foreground:
+    mResumedActivity: ActivityRecord{1e060c6 u0 com.wearable.inspection.mobile/.MainActivity t760}
+ ResumedActivity:ActivityRecord{1e060c6 u0 com.wearable.inspection.mobile/.MainActivity t760}
+  ResumedActivity: ActivityRecord{1e060c6 u0 com.wearable.inspection.mobile/.MainActivity t760}
+DPM evidence files:
+.
+./cache
+./cache/inspection_01_batch_17_20260915_140412.zip
+./cache/inspection_01_batch_17_20260915_140908.zip
+./cache/inspection_01_batch_17_20260915_141052.zip
+./cache/inspection_01_batch_17_20260915_162813.zip
+./cache/mobile_inspection_db.lck
+./code_cache
+./databases
+./databases/com.google.android.datatransport.events
+./databases/com.google.android.datatransport.events-journal
+./databases/mobile_inspection_db
+./databases/mobile_inspection_db-journal
+./files
+./files/captures
+./files/captures/capture_20260915_140828_003_389a7dec.jpg
+./files/captures/capture_20260915_140835_201_58c74a59.jpg
+./files/captures/capture_20260915_140844_175_ad1db328.jpg
+./files/captures/capture_20260915_140849_130_5c20102f.jpg
+./files/captures/capture_20260915_140856_493_72790577.jpg
+./files/captures/capture_20260915_140904_673_20639054.jpg
+./files/captures/capture_20260915_141017_582_349bef06.jpg
+./files/captures/capture_20260915_141022_831_ff37eef8.jpg
+./files/captures/capture_20260915_141030_427_342368b1.jpg
+./files/captures/capture_20260915_141036_443_af449d81.jpg
+./files/captures/capture_20260915_141042_601_d8e416cb.jpg
+./files/captures/capture_20260915_141048_866_fe36d6bf.jpg
+./files/captures/capture_20260915_162737_684_ebcec9e4.jpg
+./files/captures/capture_20260915_162743_332_f8f875cf.jpg
+./files/captures/capture_20260915_162752_296_ad3a35a5.jpg
+./files/captures/capture_20260915_162758_920_60a24dde.jpg
+./files/captures/capture_20260915_162804_107_c9d4faf1.jpg
+./files/captures/capture_20260915_162810_521_5d30f4ea.jpg
+./files/dpm_evidence
+./files/dpm_evidence/dpm_0cac0869_ok_1789467083791_frame.jpg
+./files/dpm_evidence/dpm_0cac0869_ok_1789467083791_roi.jpg
+./files/dpm_evidence/dpm_906050ea_ok_1789467091101_frame.jpg
+./files/dpm_evidence/dpm_906050ea_ok_1789467091101_roi.jpg
+./files/dpm_evidence/dpm_c0c779cf_ok_1789467110136_frame.jpg
+./files/dpm_evidence/dpm_c0c779cf_ok_1789467110136_roi.jpg
+./files/profileInstalled
+./files/template_images
+./files/template_images/00c14426-f603-46cf-b610-5dde522d0cb1_view_06.jpg
+./files/template_images/1e1f038d-7451-47bf-81b7-b9a99506bd48_view_01.jpg
+./files/template_images/23a2e2e2-044f-4636-b618-7ca55ac1aef1_view_03.jpg
+./files/template_images/2777f5f8-04b0-48f6-b090-f5481aafc144_view_01.jpg
+./files/template_images/56ce48ed-422a-45fe-8536-b96435aa70b7_view_04.jpg
+./files/template_images/596f1e92-14ff-44b2-b995-6e2d2a99c521_view_06.jpg
+./files/template_images/5dfe7b53-950d-4023-b339-edb0626e9647_view_02.jpg
+./files/template_images/6c8396fa-3b04-4c0f-aab7-5d0a60bf2e68_view_03.jpg
+./files/template_images/85ce27ac-a51d-49b1-b36c-457fbfa7d859_view_02.jpg
+./files/template_images/c9908f27-c660-4073-a04b-abb82a5e6052_view_05.jpg
+./files/template_images/e1449aa0-0ff9-4fa3-b2ea-67d48cebe056_view_05.jpg
+./files/template_images/e994ff9d-0669-4147-be5e-d8dd6641a336_view_04.jpg
+./shared_prefs
+./shared_prefs/com.google.mlkit.internal.xml
+./shared_prefs/mobile_inspection_settings.xml
+counts:
+DECODED=0
+NO_CODE=10
+persisted_rowId=0
