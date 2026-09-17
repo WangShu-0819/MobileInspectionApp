@@ -439,3 +439,22 @@ class InspectionRepository(
     }
 
 }
+
+/**
+ * 批次完全删除结果
+ *
+ * @property success 删除是否成功
+ * @property deletedPhotos 实际删除的现场照片文件数
+ * @property deletedRoiEvidence 实际删除的 ROI 证据图文件数
+ * @property missingFiles 文件不存在（幂等）的数量
+ * @property deletedZips 删除的 ZIP 文件数（本轮始终为 0，无受管理 ZIP）
+ * @property error 失败原因（成功时为 null）
+ */
+data class BatchDeletionResult(
+    val success: Boolean,
+    val deletedPhotos: Int,
+    val deletedRoiEvidence: Int,
+    val missingFiles: Int,
+    val deletedZips: Int,
+    val error: String?
+)
