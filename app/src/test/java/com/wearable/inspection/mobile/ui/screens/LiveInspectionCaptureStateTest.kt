@@ -19,7 +19,7 @@ class LiveInspectionCaptureStateTest {
 
     private fun readSource(): String {
         val path = File("src/main/java/com/wearable/inspection/mobile/ui/screens/LiveInspectionScreen.kt")
-        return path.readText()
+        return path.readText().replace("\r\n", "\n")
     }
 
     @Test
@@ -244,10 +244,12 @@ class LiveInspectionCaptureStateTest {
     fun `capture failure cannot reach view completion`() {
         val source = readSource()
         val completion = source.indexOf("viewModel.completeView(capturedViewIndex)")
-        val failure = source.indexOf("onFailure = {")
-        assertTrue("应存在拍照失败分支", failure > 0)
+        val success = source.indexOf("if (result.isSuccess)")
+        val nullFile = source.indexOf("if (file == null)", success)
+        assertTrue("应存在拍照成功/失败分支", success > 0)
+        assertTrue("空照片文件应进入失败分支", nullFile > success)
         assertTrue("推进应位于成功保存分支之后", completion > source.indexOf("if (storeResult != null)"))
-        assertFalse("拍照失败处理不应调用推进", source.substring(failure).contains("completeView"))
+        assertFalse("拍照失败处理不应调用推进", source.substring(nullFile, completion).contains("completeView"))
     }
 
     @Test
