@@ -1,3 +1,26 @@
+# 当前唯一任务：采集批次/零件 ZIP 清理
+
+状态：**IN_PROGRESS**（2026-09-17；ROI 最终结果/改判/证据图任务已由用户验收并提交 `5f512001`）。本轮只处理追溯记录中的采集批次/零件清理，不扩展批量多选导出、ROI、DPM、CameraX 或其他待办。
+
+执行边界：
+
+- 先审计 `TraceRecordsScreen`、`CaptureBatchEntity`、`CapturedPhotoEntity`、批次/照片/ROI DAO、`InspectionRepository`、`InspectionZipExportService` 及受管理文件路径/SAF URI 的真实语义，再列出最小修改文件。
+- 点击批次卡片或复选框按稳定 `batchId` 选中；选中后“采集批次”标题栏最右侧启用垃圾桶，未选中时保持禁用或隐藏但不得误触发删除。
+- 删除前显示确认框，包含零件名称、批次信息和照片数量；确认后只删除选中的稳定 `batchId`，不得按列表位置、零件名、全局目录或模糊路径删除。
+- 若批次有真实受管理 ZIP 文件路径/URI，按该路径删除并校验结果；没有真实 ZIP 文件时，明确只删除批次记录及关联数据的实际语义，不伪造“ZIP 已删除”成功。
+- 删除成功后刷新列表、清除已成功删除的选中项并提示；部分失败或失败时保留未删除项的选中状态并提示具体错误。
+- 只清理当前批次关联的 `captured_photos`、确认记录和照片文件；其他批次、零件、模板图片、模板 ROI、独立 DPM 证据和正在进行的导出必须保持不变。导出中的批次必须阻止删除并给出明确状态。
+- 不新增第二套批次/照片模型，不实现左滑手势、批量多选导出、人工确认、Excel、Detector、DPM 算法或新的 CameraX；优先复用现有 DAO、Repository 和导出服务。
+
+要求 mimo：
+
+1. 先只回报审计结论、拟改文件、删除顺序、文件/URI 处理方案和测试矩阵，得到该指令后再执行源码修改。
+2. 添加覆盖稳定 `batchId` 隔离、选中/取消、确认框数据、成功删除、部分失败保留选择、照片文件清理、无 ZIP 路径语义、导出冲突、模板/其他批次/DPM 证据不受影响的自动化测试。
+3. 运行定向测试、`compileDebugKotlin`、`assembleDebug`；如运行 `connectedDebugAndroidTest`，严格执行 AGENTS.md 的新包恢复门禁并报告 `pm list packages`、两个 PID 和前台 Activity。
+4. 回报实际 diff、命令和输出、数据库行/文件路径删除证据、APK 路径/时间/大小/SHA-256、真机证据、未完成项和 Git 状态。mimo 不提交 Git。
+
+---
+
 # 已验收任务：DPM 扫码证据绑定采集批次并进入批次 ZIP
 
 状态：**USER_ACCEPTED**（2026-09-16；用户确认人机验收通过）。扫码会话到后续新建批次的绑定、批次 ZIP 内 DPM 帧/ROI 文件和 CSV 记录均已完成真机验证；此前 `PHYSICAL_ACCEPTANCE_PENDING` 状态由本次用户验收取代。提交：批次绑定闭环 `2e2c5943`；DPM 空 ZIP/SAF 收口 `b7ac09c8`；DPM 退出与 ZIP 写入可靠性补充 `62976e60`。证据见本节及 [`docs/reports/b3/DPM_EVIDENCE_EXPORT_REPORT.md`](../docs/reports/b3/DPM_EVIDENCE_EXPORT_REPORT.md)。
