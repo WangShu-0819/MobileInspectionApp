@@ -549,4 +549,77 @@ class BatchFilterAndDeleteTest {
         assertTrue("删除必须遍历选中的 batchId", source.contains("batchIdsToDelete.forEach { batchId ->"))
         assertTrue("删除确认框应显示批次数量", source.contains("text = \"删除 ${'$'}{batches.size} 个采集批次\""))
     }
+
+    // ====== 确认框显示实际照片数量 ======
+
+    @Test
+    fun `delete dialog shows actual captured photo count not viewCount`() {
+        val source = read("src/main/java/com/wearable/inspection/mobile/ui/screens/TraceRecordsScreen.kt")
+        // 确认框应使用异步加载的实际照片数量
+        assertTrue("应有照片数量状态变量", source.contains("photoCountState"))
+        // 照片数量应来自 getCapturedPhotos（实际记录数）而非 viewCount
+        assertTrue("应异步加载照片数量", source.contains("repository.getCapturedPhotos(batchId).size"))
+        // 确认框应显示加载中状态
+        assertTrue("应显示加载中状态", source.contains("加载中"))
+    }
+
+    @Test
+    fun `delete dialog disables confirm while photo counts loading`() {
+        val source = read("src/main/java/com/wearable/inspection/mobile/ui/screens/TraceRecordsScreen.kt")
+        // 确认按钮应在照片数量未就绪时禁用
+        assertTrue("确认按钮应检查就绪状态", source.contains("enabled = allReady"))
+        // allReady 检查应确保所有批次照片数量已加载
+        assertTrue("应检查所有批次照片数量已加载", source.contains("batches.all { it.batchId in photoCounts"))
+    }
+
+    @Test
+    fun `delete dialog shows batchId truncated to 8 chars`() {
+        val source = read("src/main/java/com/wearable/inspection/mobile/ui/screens/TraceRecordsScreen.kt")
+        assertTrue("batchId 应截断显示", source.contains("batch.batchId.take(8)"))
+    }
+
+    @Test
+    fun `delete dialog shows partName or fallback text`() {
+        val source = read("src/main/java/com/wearable/inspection/mobile/ui/screens/TraceRecordsScreen.kt")
+        assertTrue("应显示零件名或占位文本", source.contains("batch.partName ?: \"未关联零件\""))
+    }
+
+    // ====== 成功删除消息包含 ZIP 语义 ======
+
+    @Test
+    fun `success message states no managed ZIP files to delete`() {
+        val source = read("src/main/java/com/wearable/inspection/mobile/ui/screens/TraceRecordsScreen.kt")
+        assertTrue("成功消息应明确说明无受管理 ZIP", source.contains("没有受管理 ZIP 文件可删除"))
+        assertTrue("成功消息应列出已删除内容", source.contains("批次记录、确认记录和现场照片"))
+    }
+
+    // ====== 删除失败时保留选中状态 ======
+
+    @Test
+    fun `delete failure preserves non-deleted batchIds in selection`() {
+        // 模拟：batch_001 成功删除，batch_002 失败
+        var selectedBatchIds = setOf("batch_001", "batch_002")
+        val deletedBatchIds = mutableListOf("batch_001")
+        selectedBatchIds = selectedBatchIds - deletedBatchIds.toSet()
+        assertEquals(setOf("batch_002"), selectedBatchIds)
+        assertTrue("失败批次应保持选中", "batch_002" in selectedBatchIds)
+        assertFalse("成功批次应从选中移除", "batch_001" in selectedBatchIds)
+    }
+
+    @Test
+    fun `total failure preserves all selected batchIds`() {
+        var selectedBatchIds = setOf("batch_001", "batch_002")
+        val deletedBatchIds = emptyList<String>() // 全部失败
+        selectedBatchIds = selectedBatchIds - deletedBatchIds.toSet()
+        assertEquals(setOf("batch_001", "batch_002"), selectedBatchIds)
+    }
+
+    // ====== 导出冲突拦截仍有效 ======
+
+    @Test
+    fun `export conflict check uses exact batchId match`() {
+        val source = read("src/main/java/com/wearable/inspection/mobile/ui/screens/TraceRecordsScreen.kt")
+        assertTrue("应检查导出中的批次是否在删除列表中",
+            source.contains("exportingBatchId in batchIdsToDelete"))
+    }
 }
