@@ -1,19 +1,41 @@
-# 当前任务：DPM 独立 ZIP/包删除
+# 当前任务：DPM 原始证据清理
 
-状态：**SOFTWARE_COMPLETE / PHYSICAL_ACCEPTANCE_PENDING**（2026-09-18）
+状态：**REQUIREMENT_RECORDED / NOT_IMPLEMENTED**（2026-09-18）
 
-主协调复核（2026-09-18）：发现并修正导出包删除失败路径。SAF URI 删除返回 `false`、权限失效或异常时，现在保留本地导出包记录；仅在 SAF 文件删除成功（或记录无 URI）后删除本地记录。`DocumentsContract.deleteDocument()` 返回 `false` 时会继续尝试 `contentResolver.delete()`。
+需求纠偏：用户确认“导出全部扫码证据 ZIP”只是导出能力，不需要新增 DPM 扫码证据记录或独立 ZIP 导入/管理流程。当前真正需要解决的是 App 私有目录 `filesDir/dpm_evidence`、数据库中的 DPM 原始证据行、原始帧和 ROI 图长期累积导致的存储占用。
 
-本轮复核结果：
-- `:app:compileDebugKotlin`：通过。
-- DPM/导出定向 JVM 测试：通过。
-- `:app:connectedDebugAndroidTest`：80/80 通过。
-- 真机门禁恢复：新包 `com.wearable.inspection.mobile` 已重新安装并以前台组件 `com.wearable.inspection.mobile/.MainActivity` 启动；旧包 PID 为空。
-- 当前 APK：`app/build/outputs/apk/debug/app-debug.apk`，2026-09-18 11:04:38，232,724,756 bytes，SHA-256 `8BC73CC542BE271EE151AB527BF08A1652DFA6F388717D305956F188896FF4FE`。
+## 当前任务边界
 
-当前仍待用户人工验收 SAF 文件选择器、独立包列表、成功删除、删除失败保留记录和重启后的 URI 生命周期；本轮不读取或视觉分析 PNG/JPG。
+- 保留现有 DPM 扫码、证据落库、独立 ZIP 导出、批次 ZIP 关联、DPM 解码和 CameraX 行为。
+- 复用现有 `DpmScanEvidenceEntity`、DAO、Repository 和 `MobileImageStore`，不创建第二套 DPM 证据记录模型。
+- 清理对象是 App 私有的原始证据及其数据库记录；已导出的独立 ZIP 是归档副本，不因原始证据清理自动删除。
+- 清理必须按稳定 evidenceId/scanSessionId 和受管理文件路径执行，不能按列表位置、文件名模糊匹配或全局目录误删。
+- 清理前阻止正在扫码、保存或导出的会话；文件删除失败时保留对应数据库行并提示。
+- 不修改此前已验收的 DPM 扫码证据闭环、批次 ZIP、ROI、批次清理、模板和 CameraX 功能。
+- 本任务不读取或视觉分析 PNG/JPG。
 
-## 实现摘要
+## 实施拆解（待确认后开发）
+
+1. **生命周期审计与存储统计**：核对成功证据、未绑定证据、共享会话、原图/ROI 图路径、孤立文件和正在导出的状态，统计数量与字节数。
+2. **清理策略确认**：确定是“全部清理”还是按会话/时间选择；明确清理后独立 ZIP 保留，且是否允许清理未绑定证据。未确认前不删除任何证据。
+3. **Repository 安全清理**：复用现有实体和路径校验，按精确 ID 删除 DB 行及受管理文件；处理共享路径、文件缺失、DB 删除失败和部分失败回滚/保留。
+4. **最小 UI 入口**：在现有追溯记录/导出区域增加原始证据占用统计和明确的清理确认入口，不新增 DPM 证据记录列表或 ZIP 导入入口。
+5. **回归与验收**：补充 JVM/Instrumented 测试，验证清理前后记录、文件、ZIP 副本和既有 DPM/批次能力互不误伤。
+
+## 接受标准
+
+- [ ] 能显示当前 DPM 原始证据数量和占用空间。
+- [ ] 用户确认后只清理 App 私有原始证据及对应数据库行，不删除独立 ZIP。
+- [ ] 正在扫码、保存或导出时禁止清理。
+- [ ] 未绑定、共享、路径越界、文件缺失和部分失败均有明确安全处理。
+- [ ] 清理后 DB、原图、ROI 图状态一致；失败项可追踪且不会伪造成功。
+- [ ] DPM 扫码、独立 ZIP 导出、批次 ZIP、批次清理和前序已验收功能回归通过。
+
+## 已纠正的需求：独立 DPM ZIP/包删除
+
+独立 DPM ZIP/包的 URI 持久化、独立包列表、历史 ZIP 导入和精确删除不再作为当前需求推进。`3624ffdb` 保留为历史提交，不回滚、不改动前序已验收功能；后续以“原始证据清理”作为唯一 DPM 存储治理任务。
+
+## 历史实现摘要：独立 DPM ZIP/包删除（不再作为当前需求）
 
 新增导出包持久化记录，支持 SAF URI 持久化权限、精确删除 SAF 文档和本地记录。
 
