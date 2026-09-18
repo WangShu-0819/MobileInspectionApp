@@ -1,6 +1,6 @@
 # B2 采集批次删除功能报告
 
-**状态**：SOFTWARE_COMPLETE / PHYSICAL_ACCEPTANCE_PENDING（2026-09-04，待用户验收）
+**状态**：**USER_ACCEPTED**（2026-09-18；用户完成人工验收并确认通过）
 
 ## 目标
 
@@ -10,10 +10,10 @@
 
 | 文件 | 改动说明 |
 |---|---|
-| `data/repository/InspectionRepository.kt` | 新增 `deleteCaptureBatchCompletely(batchId)` 方法 |
-| `ui/screens/TraceRecordsScreen.kt` | 多选状态、复选框、批量删除确认对话框、选中高亮、标题栏垃圾桶、导出冲突保护 |
-| `ui/screens/BatchFilterAndDeleteTest.kt` | 47 项 JVM 测试，覆盖筛选、多选与批量删除契约 |
-| `data/entity/CaptureBatchDeleteTest.kt` | 既有 22 项数据删除隔离测试 |
+| `app/src/main/java/com/wearable/inspection/mobile/data/repository/InspectionRepository.kt` | 批次精确删除、路径安全和 `BatchDeletionResult`（已在前序工作区提交） |
+| `app/src/main/java/com/wearable/inspection/mobile/ui/screens/TraceRecordsScreen.kt` | 多选状态、确认删除、结果成功/失败处理和导出冲突保护；本次收口保留未提交改动 |
+| `app/src/test/java/com/wearable/inspection/mobile/ui/screens/BatchFilterAndDeleteTest.kt` | 筛选、多选与批量删除契约；本次收口保留未提交改动 |
+| `app/src/androidTest/java/com/wearable/inspection/mobile/data/repository/BatchDeleteInstrumentedTest.kt` | 真实 Room CASCADE、文件隔离、路径安全和 DPM/模板保留；本次收口新增未跟踪文件 |
 
 ## 删除范围
 
@@ -51,7 +51,7 @@
 
 ## 测试覆盖
 
-`CaptureBatchDeleteTest.kt` — 22 项数据删除隔离 JVM 测试；`BatchFilterAndDeleteTest.kt` — 47 项筛选与批量删除 JVM 测试：
+`CaptureBatchDeleteTest.kt` — 27/27 项数据删除隔离 JVM 测试；`BatchFilterAndDeleteTest.kt` — 61 项筛选与批量删除 JVM 测试，其中 60 项通过，1 项为既有“导出结果提示应使用固定高度”契约失败，未通过修改本任务源码规避：
 
 | 类别 | 测试项 |
 |---|---|
@@ -67,9 +67,8 @@
 
 ### 需 Instrumented 测试覆盖
 
-- Room CASCADE 删除真实验证（captured_photos、view_roi_confirms 级联删除）
-- Repository.deleteCaptureBatchCompletely 真实 DB + 文件删除
-- TraceRecordsScreen UI 交互（多选、确认、取消、错误和批量删除）
+- `BatchDeleteInstrumentedTest`：13/13 通过，覆盖 Room CASCADE 删除、真实 DB/文件删除、路径越界保护、其他批次隔离、模板/ROI 保留和 DPM 证据保留。
+- TraceRecordsScreen 的多选、确认、取消、错误提示和批量删除交互已由用户在最终 APK 上人工验收通过。
 
 ## 前序能力回归矩阵
 
@@ -83,13 +82,27 @@
 
 ## 未完成项
 
-- 拍照后人工确认 + 持久化（仍为 IN_PROGRESS，与本功能独立）
-- Room CASCADE 删除需 instrumented 测试验证
-- TraceRecordsScreen 多选和批量删除 UI 需 Compose UI 测试或真机验证
-- Excel、Detector、ROI 检测或新的 CameraX（不在本任务范围）
+- 本任务无未完成项。
+- Compose 专项布局测试未新增；本次依赖现有契约测试、instrumented 数据/文件测试和用户人工验收。
+- Excel、Detector、ROI 检测、新 CameraX 和独立 DPM 包删除均不在本任务范围。
+
+## 最终 APK 与人工验收
+
+- 路径：`app/build/outputs/apk/debug/app-debug.apk`
+- 生成时间：2026-09-17 17:41:43（工作区文件时间）
+- 大小：232,058,130 bytes
+- SHA-256：`08a510d9907f00b908871b44424621b1a6cd76d5bb123b2c9932e3958a0e7444`
+- 用户已确认追溯记录中的批次筛选、稳定 batchId 多选、确认删除、删除结果提示、导出冲突保护和数据隔离行为通过。
+- 人工验收对象为新包 `com.wearable.inspection.mobile`；本报告不读取或视觉分析 PNG/JPG。
 
 ## Git 状态
 
-`NOT_COMMITTED`（本轮不提交）
+本次收口提交仅包含以下明确路径：
 
-本轮未运行 Gradle、ADB、APK 构建/安装和真机测试，等待人工验收。
+- `app/src/main/java/com/wearable/inspection/mobile/ui/screens/TraceRecordsScreen.kt`
+- `app/src/test/java/com/wearable/inspection/mobile/ui/screens/BatchFilterAndDeleteTest.kt`
+- `app/src/androidTest/java/com/wearable/inspection/mobile/data/repository/BatchDeleteInstrumentedTest.kt`
+- `tasks/todo.md`
+- `docs/reports/b2/BATCH_DELETE_REPORT.md`
+
+其他工作区改动不纳入本次提交。

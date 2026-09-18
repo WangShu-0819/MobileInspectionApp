@@ -622,4 +622,46 @@ class BatchFilterAndDeleteTest {
         assertTrue("应检查导出中的批次是否在删除列表中",
             source.contains("exportingBatchId in batchIdsToDelete"))
     }
+
+    // ====== 删除流程源码契约断言 ======
+
+    @Test
+    fun `delete flow calls deleteCaptureBatchCompletely with batchId`() {
+        val source = read("src/main/java/com/wearable/inspection/mobile/ui/screens/TraceRecordsScreen.kt")
+        assertTrue("应调用 deleteCaptureBatchCompletely(batchId)",
+            source.contains("deleteCaptureBatchCompletely(batchId)"))
+    }
+
+    @Test
+    fun `delete flow checks result dot success`() {
+        val source = read("src/main/java/com/wearable/inspection/mobile/ui/screens/TraceRecordsScreen.kt")
+        assertTrue("应检查 result.success",
+            source.contains("result.success"))
+    }
+
+    @Test
+    fun `delete flow uses result dot error on failure`() {
+        val source = read("src/main/java/com/wearable/inspection/mobile/ui/screens/TraceRecordsScreen.kt")
+        assertTrue("失败时应使用 result.error",
+            source.contains("result.error"))
+    }
+
+    @Test
+    fun `delete flow only adds to deletedBatchIds after success`() {
+        val source = read("src/main/java/com/wearable/inspection/mobile/ui/screens/TraceRecordsScreen.kt")
+        // result.success 检查必须在 deletedBatchIds += batchId 之前
+        val successCheck = source.indexOf("result.success")
+        val addToDeleted = source.indexOf("deletedBatchIds += batchId")
+        assertTrue("result.success 检查应存在", successCheck > 0)
+        assertTrue("deletedBatchIds += batchId 应存在", addToDeleted > 0)
+        assertTrue("result.success 检查应在添加之前",
+            successCheck < addToDeleted)
+    }
+
+    @Test
+    fun `delete flow preserves un-deleted batchIds on partial failure`() {
+        val source = read("src/main/java/com/wearable/inspection/mobile/ui/screens/TraceRecordsScreen.kt")
+        assertTrue("部分失败时应从选中集合移除已删除项",
+            source.contains("selectedBatchIds = selectedBatchIds - deletedBatchIds.toSet()"))
+    }
 }

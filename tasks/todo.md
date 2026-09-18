@@ -1,6 +1,6 @@
-# 当前唯一任务：采集批次/零件 ZIP 清理
+# 已验收任务：采集批次/零件 ZIP 清理
 
-状态：**IN_PROGRESS**（2026-09-17；ROI 最终结果/改判/证据图任务已由用户验收并提交 `5f512001`）。本轮只处理追溯记录中的采集批次/零件清理，不扩展批量多选导出、ROI、DPM、CameraX 或其他待办。
+状态：**USER_ACCEPTED**（2026-09-18；用户完成人工验收并确认通过）。本任务已完成开发、自动化验证、最终 APK 构建和人工验收；不扩展批量多选导出、ROI、DPM、CameraX 或其他待办。
 
 执行边界：
 
@@ -12,12 +12,14 @@
 - 只清理当前批次关联的 `captured_photos`、确认记录和照片文件；其他批次、零件、模板图片、模板 ROI、独立 DPM 证据和正在进行的导出必须保持不变。导出中的批次必须阻止删除并给出明确状态。
 - 不新增第二套批次/照片模型，不实现左滑手势、批量多选导出、人工确认、Excel、Detector、DPM 算法或新的 CameraX；优先复用现有 DAO、Repository 和导出服务。
 
-要求 mimo：
+验收与收口记录：
 
-1. 先只回报审计结论、拟改文件、删除顺序、文件/URI 处理方案和测试矩阵，得到该指令后再执行源码修改。
-2. 添加覆盖稳定 `batchId` 隔离、选中/取消、确认框数据、成功删除、部分失败保留选择、照片文件清理、无 ZIP 路径语义、导出冲突、模板/其他批次/DPM 证据不受影响的自动化测试。
-3. 运行定向测试、`compileDebugKotlin`、`assembleDebug`；如运行 `connectedDebugAndroidTest`，严格执行 AGENTS.md 的新包恢复门禁并报告 `pm list packages`、两个 PID 和前台 Activity。
-4. 回报实际 diff、命令和输出、数据库行/文件路径删除证据、APK 路径/时间/大小/SHA-256、真机证据、未完成项和 Git 状态。mimo 不提交 Git。
+- 稳定 `batchId` 多选、确认框、成功删除、部分失败保留选择、照片/ROI 文件清理和导出冲突保护均已完成。
+- Room CASCADE、路径安全、其他批次/模板/ROI/DPM 证据保留已由 instrumented 测试覆盖；用户已完成人工 UI 验收。
+- JVM 产物：`BatchFilterAndDeleteTest` 61 项（60 passed / 1 项既有导出提示固定高度契约失败），`CaptureBatchDeleteTest` 27/27 通过；该既有失败未通过修改本任务源码规避。
+- Instrumented 产物：`BatchDeleteInstrumentedTest` 13/13 通过。
+- 最终 APK：`app/build/outputs/apk/debug/app-debug.apk`，2026-09-17 17:41:43，232,058,130 bytes，SHA-256 `08a510d9907f00b908871b44424621b1a6cd76d5bb123b2c9932e3958a0e7444`。
+- 本任务待提交路径：3 个源码/测试路径及本任务清单、B2 报告；其他工作区改动不纳入。
 
 ---
 

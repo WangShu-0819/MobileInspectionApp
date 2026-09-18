@@ -580,11 +580,13 @@ fun TraceRecordsScreen() {
                     val deletedBatchIds = mutableListOf<String>()
                     try {
                         batchIdsToDelete.forEach { batchId ->
-                            repository.deleteCaptureBatchCompletely(batchId)
+                            val result = repository.deleteCaptureBatchCompletely(batchId)
+                            if (!result.success) {
+                                throw IllegalStateException(result.error ?: "删除失败")
+                            }
                             deletedBatchIds += batchId
                         }
                         selectedBatchIds = emptySet()
-                        val totalPhotos = deletedBatchIds.size
                         snackbarHostState.showSnackbar(
                             message = "已删除 ${deletedBatchIds.size} 个采集批次的批次记录、确认记录和现场照片；当前没有受管理 ZIP 文件可删除",
                             duration = SnackbarDuration.Short
