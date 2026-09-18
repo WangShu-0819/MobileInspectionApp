@@ -117,10 +117,10 @@ fun DpmScanScreen(
         }
     }
 
-    // 解码结果回调
+    // 解码结果回调：仅保存证据，不清理相机（清理由 DpmScanExitEffect 负责，避免紫色圈）
     LaunchedEffect(lastResult) {
         lastResult?.let { result ->
-            val evidenceSaved = viewModel.saveCurrentEvidenceAndAwait()
+            val evidenceSaved = viewModel.saveCurrentEvidence()
             Log.i(
                 DPM_SCAN_SCREEN_TAG,
                 "onDecoded: codeLength=${result.rawValue.length}, evidenceSaved=$evidenceSaved",
@@ -144,6 +144,7 @@ fun DpmScanScreen(
 
     // 退出时清理（先保存证据，再停止分析器，最后断开相机）。
     // 该 effect 的 key 固定为 Unit，避免连接成功时提前清理会话；内部读取最新 session。
+    // disconnect 使用 ViewModel 的 applicationScope，不受 Compose 生命周期取消影响。
     DpmScanExitEffect(connectedSessionId) { sid ->
         runDpmScanExit(
             sessionId = sid,
@@ -161,8 +162,9 @@ fun DpmScanScreen(
                 viewModel.saveEvidenceInScope(sessionId, frames, afterSave)
             },
             stopScan = viewModel::stopScan,
-            clearFrameAnalyzer = cameraController::clearFrameAnalyzer,
-            disconnect = cameraController::disconnect,
+            cleanupAndDisconnect = { sessionId ->
+                viewModel.cleanupAndDisconnect(cameraController, sessionId)
+            },
         )
     }
 
@@ -237,8 +239,7 @@ internal fun runDpmScanExit(
     getEvidenceFrames: () -> DpmFrameAnalyzer.EvidenceFrames?,
     saveEvidenceInScope: (String, DpmFrameAnalyzer.EvidenceFrames?, suspend () -> Unit) -> Unit,
     stopScan: () -> Unit,
-    clearFrameAnalyzer: suspend () -> Unit,
-    disconnect: suspend (String) -> Boolean,
+    cleanupAndDisconnect: (String) -> Unit,
 ) {
     val evidenceFrames = getEvidenceFrames()
     if (sessionId == null) {
@@ -250,11 +251,16 @@ internal fun runDpmScanExit(
         return
     }
 
-    saveEvidenceInScope(sessionId, evidenceFrames) {
-        // 保存完成后执行清理，避免 CameraPreview 抢先清掉唯一成功源帧。
+    if (evidenceFrames != null) {
+        // 尚未保存的证据：先保存，再清理
+        saveEvidenceInScope(sessionId, evidenceFrames) {
+            stopScan()
+            cleanupAndDisconnect(sessionId)
+        }
+    } else {
+        // 证据已由 saveCurrentEvidence 保存，直接清理相机资源
         stopScan()
-        clearFrameAnalyzer()
-        disconnect(sessionId)
+        cleanupAndDisconnect(sessionId)
     }
 }
 

@@ -2,7 +2,7 @@
 
 ## 当前计划：DPM 原始证据清理（2026-09-18）
 
-状态：**REQUIREMENT_RECORDED / NOT_IMPLEMENTED**。用户已纠正需求：独立 DPM ZIP 只负责导出归档，不需要新增 DPM 扫码证据记录，也不再推进独立 ZIP/包删除、历史 ZIP 导入或 SAF 包管理。当前只规划 App 私有 DPM 原始证据的安全清理。
+状态：**USER_ACCEPTED**（2026-09-18 v3.1）。用户已确认 DPM 真机扫码不卡顿且不再出现紫色加载圈。独立 DPM ZIP 只负责导出归档，不需要新增 DPM 扫码证据记录，也不再推进独立 ZIP/包删除、历史 ZIP 导入或 SAF 包管理。审计已完成，v2 实现已完成（DpmOperationGuard + 逐 evidenceId 清理 + 绑定 TTL）。v3.1 修复已完成（OperationLease 令牌 + applicationScope 退出清理 + 诊断日志 + UI 精简）。
 
 ### 目标与边界
 
@@ -18,46 +18,65 @@
 
 **验收标准：**
 
-- [ ] 列出成功、未绑定、共享会话、活动会话和导出中的证据状态。
-- [ ] 核对原图/ROI 图路径校验、缺失文件、孤立文件和重复路径。
-- [ ] 统计当前证据行数、文件数量和总字节数。
-- [ ] 输出“全部清理”或“按会话/时间清理”的建议，不修改源码和数据。
+- [x] 列出成功、未绑定、共享会话、活动会话和导出中的证据状态。
+- [x] 核对原图/ROI 图路径校验、缺失文件、孤立文件和重复路径。
+- [x] 统计当前证据行数、文件数量和总字节数。
+- [x] 输出”全部清理”或”按会话/时间清理”的建议，不修改源码和数据。
 
 #### Task 2：确定清理策略
 
 **验收标准：**
 
-- [ ] 明确用户清理范围：全部、按扫码会话或按时间范围。
-- [ ] 明确未绑定证据是否允许在显式确认后清理。
-- [ ] 明确正在扫码、保存、导出时的阻塞规则。
-- [ ] 明确独立 ZIP 始终保留，不与原始证据清理联动删除。
+- [x] 明确用户清理范围：全部、按扫码会话或按时间范围。
+- [x] 明确未绑定证据是否允许在显式确认后清理。
+- [x] 明确正在扫码、保存、导出时的阻塞规则。
+- [x] 明确独立 ZIP 始终保留，不与原始证据清理联动删除。
 
 #### Task 3：实现安全清理路径
 
-**预计范围：** 3–5 个源码/测试文件，必要时不改数据库 schema。
+**预计范围：** 7 个源码/测试文件，不改数据库 schema。
 
 **验收标准：**
 
-- [ ] 使用稳定 evidenceId/scanSessionId 精确定位证据。
-- [ ] 只删除 `dpm_evidence` 受管理目录下的对应文件。
-- [ ] 文件删除失败时保留数据库行并报告具体错误。
-- [ ] DB 删除失败、文件缺失、共享路径和越界路径均有安全处理。
-- [ ] 不影响已导出的 ZIP、批次 ZIP 和其他业务数据。
+- [x] 使用稳定 evidenceId/scanSessionId 精确定位证据。
+- [x] 逐 evidenceId 处理，只删除 `dpm_evidence` 受管理目录下的对应文件。
+- [x] 文件删除失败时保留数据库行并报告具体错误。
+- [x] 文件缺失视为幂等成功，不报错。
+- [x] 仅所有文件成功删除后才删 DB 行。
+- [x] 孤立文件清理基于剩余 DB 行，不误删仍被引用的文件。
+- [x] DB 删除失败、文件缺失、共享路径和越界路径均有安全处理。
+- [x] 不影响已导出的 ZIP、批次 ZIP 和其他业务数据。
+- [x] DpmOperationGuard 为应用级并发门禁，cleanup/scan/save/binding/export 共享。
+- [x] 延迟绑定有 5 分钟 TTL，超时自动释放门禁。
 
 #### Task 4：现有追溯界面增加最小清理入口
 
 **验收标准：**
 
-- [ ] 保持现有追溯记录布局，不新增 DPM 证据记录列表或 ZIP 导入入口。
-- [ ] 显示原始证据数量/空间占用，并提供清晰的清理确认。
-- [ ] 清理进行中禁用重复操作，成功/部分失败/失败状态可追踪。
+- [x] 保持现有追溯记录布局，不新增 DPM 证据记录列表或 ZIP 导入入口。
+- [x] 显示原始证据数量/空间占用，并提供清晰的清理确认。
+- [x] 清理进行中禁用重复操作，成功/部分失败/失败状态可追踪。
 
 #### Checkpoint：清理功能验收
 
-- [ ] JVM/Instrumented 定向测试通过。
-- [ ] APK 构建成功。
-- [ ] 真机验证清理前后数据库、文件数量和空间变化。
-- [ ] DPM 扫码、独立 ZIP 导出、批次 ZIP 和前序已验收能力回归通过。
+- [x] JVM/Instrumented 定向测试通过（JVM 53 项 + Instrumented 13 项）。
+- [x] `DpmOperationGuard` 替换 `DpmScanViewModel` 静态门禁，cleanup/scan/save/binding/export 共享并发锁。
+- [x] cleanup 逐 evidenceId 处理，文件缺失幂等，孤立清理基于剩余行。
+- [x] APK 构建成功。
+- [x] 真机验证清理前后数据库、文件数量和空间变化。
+- [x] DPM 扫码、独立 ZIP 导出、批次 ZIP 和前序已验收能力回归通过（真机/用户验收）。
+
+#### Task 7：v3 竞态修复与 UI 精简
+
+**验收标准：**
+
+- [x] `DpmScanViewModel.startScan` 中 `DpmOperationGuard.begin()` 同步等待；guard 拒绝时清理资源并中止，不设置 analyzer。
+- [x] `WorkbenchViewModel.setPendingDpmBatchBinding` 中 `DpmOperationGuard.begin()` 同步等待；guard 拒绝时清除 pending binding。
+- [x] DPM 解码成功后使用 `saveCurrentEvidence()`（仅保存，不清理相机），页面导航后 `DpmScanExitEffect` 负责清理，避免紫色加载圈。
+- [x] `runDpmScanExit` 增加 `cleanupScope` 参数；evidenceFrames 为 null 时直接清理。
+- [x] TraceRecordsScreen DPM 统计行精简为一行（"N 条 · M 张（原图+ROI） · X MB"）；确认对话框精简为一句话；成功/失败消息精简。
+- [x] `DpmOperationGuard.resetForTesting()` 新增测试专用重置方法。
+- [x] 编译通过、DPM 定向 JVM 测试通过、Instrumented 20/20 通过、APK 构建成功，用户真机验收通过。
 
 ### 已取消的方向
 

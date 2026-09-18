@@ -67,4 +67,47 @@ interface DpmScanEvidenceDao {
         """
     )
     suspend fun bindSessionToBatch(scanSessionId: String, batchId: String): Int
+
+    // ---- 清理支持 ----
+
+    /** 统计 DPM 证据总行数 */
+    @Query("SELECT COUNT(*) FROM dpm_scan_evidence")
+    suspend fun count(): Int
+
+    /** 获取所有证据行的文件路径投影，用于统计字节和清理 */
+    @Query("SELECT id, originalImagePath, roiImagePath FROM dpm_scan_evidence")
+    suspend fun getAllPathProjections(): List<DpmEvidencePathProjection>
+
+    /**
+     * 按精确 evidenceId 查询单条证据行。
+     * 清理流程不得依赖 getAll() 后内存筛选。
+     */
+    @Query("SELECT * FROM dpm_scan_evidence WHERE id = :evidenceId")
+    suspend fun getByEvidenceId(evidenceId: Long): DpmScanEvidenceEntity?
+
+    /**
+     * 按精确 evidenceId 删除单条证据行。
+     * 清理流程仅在该行所有文件删除成功或已缺失后调用。
+     * @return 受影响行数（0 或 1）
+     */
+    @Query("DELETE FROM dpm_scan_evidence WHERE id = :evidenceId")
+    suspend fun deleteByEvidenceId(evidenceId: Long): Int
+
+    /**
+     * 获取所有证据行的 evidenceId 快照，按 id ASC 排序。
+     * 用于清理流程的稳定遍历，不使用 getAll() 后内存筛选。
+     */
+    @Query("SELECT id FROM dpm_scan_evidence ORDER BY id ASC")
+    suspend fun getAllEvidenceIds(): List<Long>
+
+    /** 获取所有证据行（含文件路径），用于精确清理快照 */
+    @Query("SELECT * FROM dpm_scan_evidence ORDER BY id ASC")
+    suspend fun getAllForCleanup(): List<DpmScanEvidenceEntity>
 }
+
+/** DPM 证据文件路径投影，仅用于统计和清理 */
+data class DpmEvidencePathProjection(
+    val id: Long,
+    val originalImagePath: String,
+    val roiImagePath: String?
+)

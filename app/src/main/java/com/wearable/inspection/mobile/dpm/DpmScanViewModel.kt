@@ -26,6 +26,7 @@ import kotlinx.coroutines.launch
  * - 不再自行 connect/switchMode，由 DpmScanScreen 的 CameraPreview 以 DPM_SCAN 模式连接
  * - startScan 接收已连接的 CameraController 和 sessionId
  * - stopScan 按 sessionId 清理
+ * - 并发门禁由 DpmOperationGuard 管理，不再使用 ViewModel 静态标志作为 Repository 门禁
  */
 class DpmScanViewModel(private val app: Application) : AndroidViewModel(app) {
 
@@ -52,6 +53,16 @@ class DpmScanViewModel(private val app: Application) : AndroidViewModel(app) {
     private var boundSessionId: String? = null
     // 由扫描入口在启动时显式快照；不从历史照片、名称或时间反推关联。
     private var scanAssociation = DpmScanAssociation()
+
+    // ─── UI 状态 ───
+
+    /** 扫码是否正在进行中（UI 观测用，不作为 Repository 门禁）。 */
+    var isDpmScanActive: Boolean = false
+        private set
+
+    /** 当前扫码持有的操作租约。startScan 获取，stopScan 或 saveEvidenceInScope finally 释放。 */
+    @Volatile
+    private var scanLease: DpmOperationGuard.OperationLease? = null
 
     // ─── 证据保存去重 ───
     @Volatile
@@ -96,6 +107,9 @@ class DpmScanViewModel(private val app: Application) : AndroidViewModel(app) {
             photoId = photoId,
         )
         Log.d(TAG, "startScan: sessionId=$sessionId, controller=$controller, batchId=${scanAssociation.batchId}")
+        scanLease?.let { Log.w(TAG, "startScan: previous scanLease=${it.leaseId} still held, releasing") }
+        scanLease = null
+        isDpmScanActive = true
         val scope = viewModelScope
         evidenceSaved = false
         evidenceSavedSessionId = sessionId
@@ -103,7 +117,7 @@ class DpmScanViewModel(private val app: Application) : AndroidViewModel(app) {
         _lastResult.value = null
 
         val rg = DpmRespondGate()
-        val gg = DpmGridGate(missThreshold = 8, cooldownMs = 1500L)  // 旧版基线：MISS_STREAK_TO_GRID=8, GRID_COOLDOWN_MS=1500
+        val gg = DpmGridGate(missThreshold = 8, cooldownMs = 1500L)
         respondGate = rg
         gridGate = gg
 
@@ -128,19 +142,27 @@ class DpmScanViewModel(private val app: Application) : AndroidViewModel(app) {
         boundController = controller
         boundSessionId = sessionId
 
-        // 绑定到已连接的 CameraController
-        scope.launch {
-            controller.setFrameAnalyzer(frameAnalyzer)
-        }
+        _scanState.value = DpmScanState(scanning = true)
 
-        // 收集结果
+        // 同步获取操作租约：guard 拒绝则清理资源并中止，不会设置 analyzer
         scope.launch {
+            val lease = DpmOperationGuard.acquireLease()
+            if (lease == null) {
+                Log.w(TAG, "startScan: guard rejected (cleanup in progress)")
+                isDpmScanActive = false
+                releaseScanResources()
+                return@launch
+            }
+            scanLease = lease
+            Log.d(TAG, "startScan: lease acquired, id=${lease.leaseId}")
+            // 租约获取成功后才绑定 analyzer
+            controller.setFrameAnalyzer(frameAnalyzer)
+
+            // 收集结果
             frameAnalyzer.results.collect { result ->
                 handleResult(result)
             }
         }
-
-        _scanState.value = DpmScanState(scanning = true)
     }
 
     /**
@@ -161,8 +183,33 @@ class DpmScanViewModel(private val app: Application) : AndroidViewModel(app) {
      * 不负责 disconnect（由 DpmScanScreen 按 sessionId 处理）。
      */
     fun stopScan() {
+        releaseScanResources()
+
+        // 释放操作租约：若有待完成的 saveEvidenceInScope，将 lease 所有权转移给保存流程
+        val lease = scanLease
+        scanLease = null
+        if (synchronized(evidenceSaveLock) {
+                scheduledEvidenceSessions.isNotEmpty() || evidenceSaveCompletions.isNotEmpty()
+            }) {
+            // 保存流程的 finally 块会释放 lease；此处不释放
+            if (lease != null) {
+                Log.d(TAG, "stopScan: lease ${lease.leaseId} transferred to pending save")
+            }
+        } else {
+            // 无待保存任务，立即释放 lease
+            if (lease != null) {
+                applicationScope.launch {
+                    lease.release()
+                    Log.d(TAG, "stopScan: lease released")
+                }
+            }
+        }
+        isDpmScanActive = false
+    }
+
+    /** 清理 Analyzer、FrameAnalyzer 和会话状态，不涉及 guard 释放。 */
+    private fun releaseScanResources() {
         val controller = boundController
-        val sessionId = boundSessionId
 
         // 关闭闪光灯（异步尽力而为）
         if (controller != null) {
@@ -185,6 +232,21 @@ class DpmScanViewModel(private val app: Application) : AndroidViewModel(app) {
         boundSessionId = null
         scanAssociation = DpmScanAssociation()
         _scanState.value = DpmScanState()
+    }
+
+    /**
+     * 停止扫描后清理相机连接。使用 ViewModel 自有的 applicationScope 执行，
+     * 不受 Compose 页面生命周期影响，确保 clearFrameAnalyzer + disconnect 完成。
+     *
+     * @param controller 当前绑定的 CameraController
+     * @param sessionId 当前扫描会话 ID
+     */
+    fun cleanupAndDisconnect(controller: CameraController, sessionId: String) {
+        applicationScope.launch {
+            controller.clearFrameAnalyzer()
+            controller.disconnect(sessionId)
+            Log.d(TAG, "cleanupAndDisconnect: sessionId=$sessionId completed")
+        }
     }
 
     /**
@@ -211,7 +273,7 @@ class DpmScanViewModel(private val app: Application) : AndroidViewModel(app) {
         evidenceFrames: DpmFrameAnalyzer.EvidenceFrames?,
     ): Boolean {
         val association = synchronized(evidenceSaveLock) { scanAssociation }
-        return saveEvidenceInternal(sessionId, evidenceFrames, association)
+        return saveEvidenceInternal(sessionId, evidenceFrames, association, guardHeld = false)
     }
 
     private suspend fun saveEvidenceInternal(
@@ -219,7 +281,11 @@ class DpmScanViewModel(private val app: Application) : AndroidViewModel(app) {
         evidenceFrames: DpmFrameAnalyzer.EvidenceFrames?,
         association: DpmScanAssociation,
         alreadyScheduled: Boolean = false,
+        guardHeld: Boolean = false,
     ): Boolean {
+        // 仅当 guard 未被外部持有时才自行获取
+        val myGuard = !guardHeld
+        if (myGuard) DpmOperationGuard.begin()
         if (!alreadyScheduled) {
             synchronized(evidenceSaveLock) {
                 if (sessionId in savedEvidenceSessions ||
@@ -326,6 +392,7 @@ class DpmScanViewModel(private val app: Application) : AndroidViewModel(app) {
             if (!alreadyScheduled) {
                 synchronized(evidenceSaveLock) { scheduledEvidenceSessions.remove(sessionId) }
             }
+            if (myGuard) DpmOperationGuard.end()
         }
     }
 
@@ -338,6 +405,8 @@ class DpmScanViewModel(private val app: Application) : AndroidViewModel(app) {
     /**
      * Persist evidence from a screen disposal and then release the camera session.
      * The callback is suspend because CameraController cleanup suspends.
+     *
+     * 如果 stopScan 已将 scanLease 转移给本流程，finally 块会释放该 lease。
      */
     fun saveEvidenceInScope(
         sessionId: String,
@@ -369,6 +438,13 @@ class DpmScanViewModel(private val app: Application) : AndroidViewModel(app) {
 
         if (!shouldStart) return completion
 
+        // 获取 stopScan 转移的 lease 所有权（stopScan 已将 scanLease 设为 null）
+        val lease = scanLease
+        scanLease = null
+        if (lease != null) {
+            Log.d(TAG, "saveEvidenceInScope: acquired lease ${lease.leaseId} from scan")
+        }
+
         Log.i(TAG, "saveEvidenceInScope: scheduled sessionId=$sessionId")
         applicationScope.launch {
             var saved = false
@@ -378,6 +454,7 @@ class DpmScanViewModel(private val app: Application) : AndroidViewModel(app) {
                     evidenceFrames = evidenceFrames,
                     association = association,
                     alreadyScheduled = true,
+                    guardHeld = true,
                 )
                 Log.i(TAG, "saveEvidenceInScope: sessionId=$sessionId completed saved=$saved")
                 if (boundSessionId == sessionId) afterSave()
@@ -390,14 +467,36 @@ class DpmScanViewModel(private val app: Application) : AndroidViewModel(app) {
                     scheduledEvidenceSessions.remove(sessionId)
                     evidenceSaveCompletions.remove(sessionId)
                 }
+                // 保存完成，释放 scan lease（幂等，多次调用安全）
+                lease?.release()
+                Log.d(TAG, "saveEvidenceInScope: lease released for sessionId=$sessionId")
             }
         }
         return completion
     }
 
     /**
+     * 成功解码后仅保存证据（不清理相机、不停止扫描）。
+     * 由 DpmScanScreen LaunchedEffect(lastResult) 调用；页面导航后
+     * DpmScanExitEffect 的 onDispose 负责清理相机资源，避免保存期间出现紫色加载圈。
+     */
+    suspend fun saveCurrentEvidence(): Boolean {
+        val sessionId = boundSessionId ?: return false
+        val frames = getEvidenceFrames()
+        if (frames == null) {
+            val pending = synchronized(evidenceSaveLock) {
+                evidenceSaveCompletions[sessionId]
+            }
+            return pending?.await() ?: synchronized(evidenceSaveLock) {
+                sessionId in savedEvidenceSessions
+            }
+        }
+        return saveEvidenceInScope(sessionId, frames) {}.await()
+    }
+
+    /**
      * 成功解码回调进入导航前，等待当前会话的证据行和文件完成。
-     * 这样导航后的导出页不会在后台保存协程完成前读取数据库。
+     * 保留用于向后兼容（DpmScanExitEffect 中兜底保存后清理）。
      */
     suspend fun saveCurrentEvidenceAndAwait(): Boolean {
         val sessionId = boundSessionId ?: return false
@@ -469,10 +568,11 @@ class DpmScanViewModel(private val app: Application) : AndroidViewModel(app) {
         val frames = dpmFrameAnalyzer?.getAndClearEvidenceFrames()
         if (sid != null && frames != null) {
             saveEvidenceInScope(sid, frames) {
-                stopScan()
+                releaseScanResources()
                 controller?.clearFrameAnalyzer()
                 controller?.disconnect(sid)
             }
+            // guard 由 saveEvidenceInScope 的 finally 块释放
         } else if (sid == null || synchronized(evidenceSaveLock) { sid !in scheduledEvidenceSessions }) {
             stopScan()
             if (sid != null && controller != null) {

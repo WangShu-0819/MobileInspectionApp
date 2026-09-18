@@ -28,6 +28,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito.mock
+import com.wearable.inspection.mobile.dpm.DpmOperationGuard
 import org.mockito.Mockito.`when`
 
 /**
@@ -66,6 +67,7 @@ class WorkbenchViewModelAdvanceTest {
     @After
     fun tearDown() {
         Dispatchers.resetMain()
+        DpmOperationGuard.resetForTesting()
     }
 
     private fun createTemplate(id: String, partId: String = "p1", order: Int = 0) =
@@ -326,6 +328,7 @@ class WorkbenchViewModelAdvanceTest {
         advanceUntilIdle()
 
         vm.setPendingDpmBatchBinding("session-1", "p1")
+        advanceUntilIdle()
         runBlocking {
             `when`(mockRepository.getCaptureBatch("batch-missing")).thenReturn(null)
         }
@@ -342,6 +345,7 @@ class WorkbenchViewModelAdvanceTest {
 
         // pending partId = "p1"，但 batch partId = "p2"
         vm.setPendingDpmBatchBinding("session-1", "p1")
+        advanceUntilIdle()
         runBlocking {
             `when`(mockRepository.getCaptureBatch("batch-1")).thenReturn(
                 CaptureBatchEntity("batch-1", "p2", "另一零件", 0L, null, 0)
@@ -359,6 +363,7 @@ class WorkbenchViewModelAdvanceTest {
         advanceUntilIdle()
 
         vm.setPendingDpmBatchBinding("session-1", "p1")
+        advanceUntilIdle()
         runBlocking {
             `when`(mockRepository.getCaptureBatch("batch-1")).thenReturn(
                 CaptureBatchEntity("batch-1", "p1", "零件A", 0L, null, 0)
@@ -390,6 +395,7 @@ class WorkbenchViewModelAdvanceTest {
         advanceUntilIdle()
 
         vm.setPendingDpmBatchBinding("session-no-evidence", "p1")
+        advanceUntilIdle()
         runBlocking {
             `when`(mockRepository.getCaptureBatch("batch-1")).thenReturn(
                 CaptureBatchEntity("batch-1", "p1", "零件A", 0L, null, 0)
@@ -419,5 +425,35 @@ class WorkbenchViewModelAdvanceTest {
         }
         val secondResult = vm.applyPendingDpmBinding("batch-1", mockRepository)
         assertTrue("重试成功时必须返回 true", secondResult)
+    }
+
+    @Test
+    fun `setPendingDpmBatchBinding never sets pending when guard rejects`() = runTest {
+        setupMocks("p1", emptyList())
+        val vm = WorkbenchViewModel(mockRepository, mockSettings)
+        advanceUntilIdle()
+
+        // 模拟清理正在进行，使 guard 拒绝新操作
+        DpmOperationGuard.resetForTesting()
+        runBlocking {
+            val (acquired, release) = DpmOperationGuard.cleanupExclusive()
+            assertTrue("必须成功获取清理锁", acquired)
+            // cleanupInProgress = true，此时 acquireLease() 应返回 null
+
+            vm.setPendingDpmBatchBinding("session-1", "p1")
+            advanceUntilIdle()
+
+            // guard 拒绝后 pending 从未设置，applyPendingDpmBinding 应返回 false（无 pending）
+            runBlocking {
+                `when`(mockRepository.getCaptureBatch("batch-1")).thenReturn(
+                    CaptureBatchEntity("batch-1", "p1", "零件A", 0L, null, 0)
+                )
+            }
+            val result = vm.applyPendingDpmBinding("batch-1", mockRepository)
+            assertFalse("guard 拒绝后无 pending，apply 应返回 false", result)
+
+            // 释放清理锁
+            release()
+        }
     }
 }

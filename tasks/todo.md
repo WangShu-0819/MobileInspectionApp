@@ -1,8 +1,12 @@
 # 当前任务：DPM 原始证据清理
 
-状态：**REQUIREMENT_RECORDED / NOT_IMPLEMENTED**（2026-09-18）
+状态：**USER_ACCEPTED**（2026-09-18 v3.1；用户已确认真机扫码不卡顿且不再出现紫色加载圈）
 
-需求纠偏：用户确认“导出全部扫码证据 ZIP”只是导出能力，不需要新增 DPM 扫码证据记录或独立 ZIP 导入/管理流程。当前真正需要解决的是 App 私有目录 `filesDir/dpm_evidence`、数据库中的 DPM 原始证据行、原始帧和 ROI 图长期累积导致的存储占用。
+需求纠偏：用户确认”导出全部扫码证据 ZIP”只是导出能力，不需要新增 DPM 扫码证据记录或独立 ZIP 导入/管理流程。当前真正需要解决的是 App 私有目录 `filesDir/dpm_evidence`、数据库中的 DPM 原始证据行、原始帧和 ROI 图长期累积导致的存储占用。
+
+v2 改进：将 `DpmScanViewModel` 静态门禁标志替换为应用级共享 `DpmOperationGuard`；cleanup 从 `deleteAll()` 改为逐 evidenceId 处理；延迟绑定增加 TTL；DAO 新增精确查询方法；测试从 42 项扩展到 53 项。
+
+v3.1 修复：OperationLease 令牌机制（幂等 release 防止重复 end）；startScan/绑定/导出使用 acquireLease；待绑定在 begin 成功后才发布 pending；退出清理使用 ViewModel applicationScope（不受 Compose 生命周期取消）；CameraPreview 诊断日志；TraceRecordsScreen UI 精简。
 
 ## 当前任务边界
 
@@ -14,22 +18,75 @@
 - 不修改此前已验收的 DPM 扫码证据闭环、批次 ZIP、ROI、批次清理、模板和 CameraX 功能。
 - 本任务不读取或视觉分析 PNG/JPG。
 
-## 实施拆解（待确认后开发）
+## 实施拆解（已实现）
 
-1. **生命周期审计与存储统计**：核对成功证据、未绑定证据、共享会话、原图/ROI 图路径、孤立文件和正在导出的状态，统计数量与字节数。
-2. **清理策略确认**：确定是“全部清理”还是按会话/时间选择；明确清理后独立 ZIP 保留，且是否允许清理未绑定证据。未确认前不删除任何证据。
-3. **Repository 安全清理**：复用现有实体和路径校验，按精确 ID 删除 DB 行及受管理文件；处理共享路径、文件缺失、DB 删除失败和部分失败回滚/保留。
-4. **最小 UI 入口**：在现有追溯记录/导出区域增加原始证据占用统计和明确的清理确认入口，不新增 DPM 证据记录列表或 ZIP 导入入口。
-5. **回归与验收**：补充 JVM/Instrumented 测试，验证清理前后记录、文件、ZIP 副本和既有 DPM/批次能力互不误伤。
+1. ✅ **生命周期审计与存储统计**：由 3 个并行 agent 完成只读审计，覆盖 Entity/DAO/Repository/文件路径/清理/导出/会话管理全链路。
+2. ✅ **清理策略确认**：默认”全部清理”，用户显式确认后执行。允许清理未绑定证据。独立 ZIP 永不触碰。
+3. ✅ **应用级 DPM 操作协调**：新增 `DpmOperationGuard`，`DpmScanViewModel` 静态标志替换为共享并发门禁，cleanup/scan/save/binding/export 共享同一 mutex。
+4. ✅ **Repository 逐证据清理**：`cleanupAllDpmEvidence()` 逐 evidenceId 处理，validate 路径，文件缺失幂等成功，文件删除失败保留 DB 行，仅全部文件成功后才删 DB 行，孤立清理基于剩余行。
+5. ✅ **延迟绑定 TTL**：`PendingDpmBatchBinding` 增加 `createdAtMs` 和 5 分钟 TTL，`applyPendingDpmBinding()` 超时自动清理。
+6. ✅ **DAO 精确查询**：新增 `getByEvidenceId()`、`deleteByEvidenceId()`、`getAllEvidenceIds()`。
+7. ✅ **最小 UI 入口**：在 TraceRecordsScreen DPM 导出卡片内增加统计行和清理按钮+确认对话框。
+8. ✅ **回归与验收**：DPM 定向 JVM 测试全部通过 + Instrumented 20/20（YAL-AL10）+ 用户真机验收通过。
 
 ## 接受标准
 
-- [ ] 能显示当前 DPM 原始证据数量和占用空间。
-- [ ] 用户确认后只清理 App 私有原始证据及对应数据库行，不删除独立 ZIP。
-- [ ] 正在扫码、保存或导出时禁止清理。
-- [ ] 未绑定、共享、路径越界、文件缺失和部分失败均有明确安全处理。
-- [ ] 清理后 DB、原图、ROI 图状态一致；失败项可追踪且不会伪造成功。
-- [ ] DPM 扫码、独立 ZIP 导出、批次 ZIP、批次清理和前序已验收功能回归通过。
+- [x] 能显示当前 DPM 原始证据数量和占用空间。
+- [x] 用户确认后只清理 App 私有原始证据及对应数据库行，不删除独立 ZIP。
+- [x] 正在扫码、保存或导出时禁止清理。
+- [x] 清理为应用级 exclusive 操作，与 scan/save/binding/export 共享并发门禁。
+- [x] 逐 evidenceId 处理，路径越界保留 DB 行，文件缺失幂等成功。
+- [x] 仅所有文件成功删除后才删 DB 行；孤立清理基于剩余行。
+- [x] 延迟绑定有 5 分钟 TTL，超时自动清理并释放门禁。
+- [x] 未绑定、共享、路径越界、文件缺失和部分失败均有明确安全处理。
+- [x] 清理后 DB、原图、ROI 图状态一致；失败项可追踪且不会伪造成功。
+- [x] DPM 扫码、独立 ZIP 导出、批次 ZIP、批次清理和前序已验收功能回归通过（JVM 定向测试）。
+
+## 实际修改文件
+
+### 新增文件
+- `dpm/DpmOperationGuard.kt` — 应用级 DPM 操作并发协调器（volatile counter + cleanupInProgress + 双 mutex）；新增 `resetForTesting()`
+
+### 修改文件（v2 + v3）
+- `data/dao/DpmScanEvidenceDao.kt` — 新增 `getByEvidenceId()`、`deleteByEvidenceId()`、`getAllEvidenceIds()`；保留 `count()`、`getAllPathProjections()`、`deleteAll()`、`getAllForCleanup()`
+- `data/repository/InspectionRepository.kt` — 替换 `DpmScanViewModel` 静态门禁为 `DpmOperationGuard`；`cleanupAllDpmEvidence()` 改为逐 evidenceId 处理 + 路径验证 + 文件缺失幂等 + 孤立清理基于剩余行；`getDpmEvidenceStats()` 增加 `outOfBoundsFiles` 和 `sharedPathCount`
+- `dpm/DpmScanViewModel.kt` — 移除静态 `isDpmScanActive`/`isPendingDpmBinding`/`setPendingBindingActive()`；使用 `DpmOperationGuard`；**v3**: `startScan` 中 `DpmOperationGuard.begin()` 改为同步（guard 拒绝时清理资源并中止，不设置 analyzer）；新增 `saveCurrentEvidence()`（仅保存，不清理相机）；`stopScan` 增加日志
+- `ui/screens/workbench/WorkbenchViewModel.kt` — `PendingDpmBatchBinding` 增加 `createdAtMs` + 5 分钟 TTL；使用 `DpmOperationGuard`；新增 `releasePendingBinding()` 和 `onCleared()`；**v3**: `setPendingDpmBatchBinding` guard 拒绝时清除 pending binding
+- `ui/screens/TraceRecordsScreen.kt` — 清理/导出使用 `DpmOperationGuard`；`canClean` 检查 `isAnyActive`；**v3**: DPM 统计行精简为一行（"原图+ROI"）；确认对话框精简为一句话；成功/失败消息精简
+- `ui/screens/DpmScanScreen.kt` — **v3**: `LaunchedEffect(lastResult)` 改用 `saveCurrentEvidence()`（不清理相机）；`runDpmScanExit` 增加 `cleanupScope` 参数，evidenceFrames 为 null 时直接清理（不经过 `saveEvidenceInScope`）；新增 `import kotlinx.coroutines.CoroutineScope`
+
+### 修改测试文件（v3）
+- `test/.../dpm/DpmEvidenceCleanupTest.kt` — UI 契约断言更新（"张（原图+ROI）"、"已导出的 ZIP 不受影响"）
+- `test/.../dpm/DpmScanEvidenceContractTest.kt` — `runDpmScanExit` 调用增加 `cleanupScope`；`decoded result` 测试更新为检查 `saveCurrentEvidence()`（不检查 `saveCurrentEvidenceAndAwait`）
+- `test/.../ui/screens/DpmScanExitFlowTest.kt` — 新增 `cleanupScope` 参数；新增 "exit with evidence frames saves then cleans" 测试；更新 "null frames" 测试预期
+- `test/.../workbench/WorkbenchViewModelAdvanceTest.kt` — 新增 guard 拒绝清除 pending 测试；tearDown 增加 `DpmOperationGuard.resetForTesting()`
+
+### 新增测试文件
+- `test/.../dpm/DpmEvidenceCleanupTest.kt` — 53 项 JVM 契约测试（统计语义、清理结果语义、路径投影语义、DAO 新增方法存在性、Repository 清理流程关键节点、MobileImageStore 路径安全、TraceRecordsScreen 清理 UI、独立 ZIP 不受影响、原有 deleteDpmEvidenceSafely 保留、DpmOperationGuard 反射验证）
+- `androidTest/.../data/repository/DpmEvidenceCleanupInstrumentedTest.kt` — 13 项 Instrumented 测试（统计正确性、全部清理成功、文件缺失幂等、孤立文件检测/清理、路径越界保护、共享路径、带 ROI 清理、guard 阻塞、逐 evidenceId 处理、孤立清理正确性）
+
+### 未新增
+- 数据库 Migration（不需要，复用现有 v11 schema）
+- Entity 变更（不需要，复用现有字段）
+- 新的 DPM 证据记录模型或列表
+
+## 验证命令与结果
+
+1. `:app:compileDebugKotlin --no-daemon` — BUILD SUCCESSFUL
+2. `:app:compileDebugAndroidTestKotlin --no-daemon` — BUILD SUCCESSFUL
+3. DPM 定向 JVM 测试（`--tests “com.wearable.inspection.mobile.dpm.*”`）— BUILD SUCCESSFUL，53/53 通过
+4. 全量 JVM 测试：16 项既有预存失败（与本次修改无关），0 项新增失败
+5. `:app:assembleDebug --no-daemon` — BUILD SUCCESSFUL
+
+### APK 信息
+- 路径：`app/build/outputs/apk/debug/app-debug.apk`
+- 时间：2026-09-18 14:39:47
+- 大小：232,107,282 bytes
+- SHA-256：`dd9c7f9c3bd342002af7115da254b482a11dbe57ebe276db507d8f7269e0a8dd`
+
+### 未完成项
+- 现场采集标题字号与 OCR 入口隐藏属于独立 UI 改动，不纳入本次 DPM 收口。
+- 本次 DPM 收口已由主协调选择性提交：`67cc68a6`。
 
 ## 已纠正的需求：独立 DPM ZIP/包删除
 

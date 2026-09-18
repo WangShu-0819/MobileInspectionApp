@@ -10,7 +10,9 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import com.wearable.inspection.mobile.data.settings.PartSelectionBus
+import com.wearable.inspection.mobile.dpm.DpmOperationGuard
 import android.util.Log
+import kotlinx.coroutines.launch
 
 data class TodayStats(
     val templateCount: Int = 0,
@@ -130,22 +132,40 @@ class WorkbenchViewModel(
     private data class PendingDpmBatchBinding(
         val scanSessionId: String,
         val partId: String,
+        val createdAtMs: Long = System.currentTimeMillis(),
     )
+
+    /** 延迟绑定 TTL：超过此时间未消费则自动过期释放。 */
+    private val pendingBindingTtlMs: Long = 300_000L // 5 分钟
 
     private val _pendingDpmBatchBinding = MutableStateFlow<PendingDpmBatchBinding?>(null)
 
+    /** 当前待绑定持有的操作租约。begin 成功后才发布 pending 状态。 */
+    private var bindingLease: DpmOperationGuard.OperationLease? = null
+
     /**
      * 暂存扫码会话绑定信息。在 DPM 扫码页 onResult 中调用，位于 PartSelectionBus.emit 之前。
+     *
+     * 必须在 begin 成功后才发布 pending 状态，防止 guard 拒绝时出现孤立 pending。
      */
     fun setPendingDpmBatchBinding(scanSessionId: String, partId: String) {
-        _pendingDpmBatchBinding.value = PendingDpmBatchBinding(scanSessionId, partId)
-        Log.i("DpmBinding", "setPendingDpmBatchBinding: sid=$scanSessionId, part=$partId")
+        viewModelScope.launch {
+            val lease = DpmOperationGuard.acquireLease()
+            if (lease == null) {
+                Log.w("DpmBinding", "setPendingDpmBatchBinding: guard rejected")
+                return@launch
+            }
+            bindingLease = lease
+            _pendingDpmBatchBinding.value = PendingDpmBatchBinding(scanSessionId, partId)
+            Log.i("DpmBinding", "setPendingDpmBatchBinding: guard acquired (lease=${lease.leaseId}), sid=$scanSessionId, part=$partId")
+        }
     }
 
     /**
      * 消费待绑定的扫码会话，将已有的成功证据关联到新创建的批次。
      * 零件不匹配时跳过并清除待绑定状态，防止跨零件误关联。
      * DAO 返回 0 行时保留 pending binding，允许后续重试（证据可能尚未落库）。
+     * 超过 TTL 的待绑定自动过期释放。
      *
      * @return true 如果成功绑定至少一行证据
      */
@@ -153,6 +173,12 @@ class WorkbenchViewModel(
         val binding = _pendingDpmBatchBinding.value
         if (binding == null) {
             Log.w("DpmBinding", "[DIAG-4] applyPendingDpmBinding: no pending binding, batchId=$batchId")
+            return false
+        }
+        // TTL 过期检查
+        if (System.currentTimeMillis() - binding.createdAtMs > pendingBindingTtlMs) {
+            Log.w("DpmBinding", "[DIAG-4] pending binding expired (TTL), releasing")
+            releasePendingBinding()
             return false
         }
         Log.w(
@@ -169,7 +195,7 @@ class WorkbenchViewModel(
                 "DpmBinding",
                 "[DIAG-4] ABORT: part mismatch or batch missing. pendingPart=${binding.partId}, batchPartId=${batch?.partId}"
             )
-            _pendingDpmBatchBinding.value = null
+            releasePendingBinding()
             return false
         }
         // 先检查 evidence 是否已落库
@@ -185,7 +211,7 @@ class WorkbenchViewModel(
             "[DIAG-4] DAO bindSessionToBatch: updated=$updated rows, batchId=$batchId"
         )
         if (updated > 0) {
-            _pendingDpmBatchBinding.value = null
+            releasePendingBinding()
             Log.i("DpmBinding", "[DIAG-4] SUCCESS: binding consumed, $updated rows updated")
         } else {
             // 保留 pending binding，允许后续重试
@@ -196,6 +222,30 @@ class WorkbenchViewModel(
             )
         }
         return updated > 0
+    }
+
+    /**
+     * 释放待绑定状态并归还 guard 计数。
+     * 在零件不匹配、取消、返回、超时、ViewModel 清理时调用。
+     */
+    private fun releasePendingBinding() {
+        _pendingDpmBatchBinding.value = null
+        val lease = bindingLease
+        bindingLease = null
+        if (lease != null) {
+            viewModelScope.launch {
+                lease.release()
+                Log.d("DpmBinding", "releasePendingBinding: lease released (id=${lease.leaseId})")
+            }
+        }
+    }
+
+    override fun onCleared() {
+        // ViewModel 销毁时释放待绑定状态，防止永久阻塞清理
+        if (_pendingDpmBatchBinding.value != null) {
+            releasePendingBinding()
+        }
+        super.onCleared()
     }
 
     // 选中的模板（由 viewIndex 或手动选择驱动）

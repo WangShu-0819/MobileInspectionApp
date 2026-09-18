@@ -172,6 +172,14 @@ fun CameraPreview(
     // CameraState 观察
     val cameraState by cameraController.cameraStateFlow.collectAsState()
 
+    // 诊断日志：记录 CameraState 变化，辅助定位紫色圈根因
+    LaunchedEffect(cameraState) {
+        if (cameraState != CameraStateType.OPEN) {
+            android.util.Log.d("CameraPreview", "[DIAG-CAM] cameraState=$cameraState, mode=$cameraMode, " +
+                "error=$cameraError, sessionId=$currentSessionId")
+        }
+    }
+
     // PreviewView；显示模式变化时只调整缩放，不重新绑定 CameraX
     val previewView = remember {
         PreviewView(context).apply {

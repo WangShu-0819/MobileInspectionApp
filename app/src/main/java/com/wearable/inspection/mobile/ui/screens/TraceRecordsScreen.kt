@@ -37,6 +37,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -68,10 +69,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.wearable.inspection.mobile.MobileInspectionApp
+import com.wearable.inspection.mobile.dpm.DpmOperationGuard
 import com.wearable.inspection.mobile.data.entity.CaptureBatchEntity
 import com.wearable.inspection.mobile.data.entity.ExportedPackageEntity
 import com.wearable.inspection.mobile.data.entity.InspectionSessionEntity
 import com.wearable.inspection.mobile.data.export.DpmEvidenceExportResult
+import com.wearable.inspection.mobile.data.repository.DpmEvidenceStats
 import com.wearable.inspection.mobile.data.export.DpmEvidenceExportService
 import com.wearable.inspection.mobile.data.export.InspectionExportResult
 import com.wearable.inspection.mobile.data.export.InspectionZipExportService
@@ -226,6 +229,19 @@ fun TraceRecordsScreen() {
     // 当前导出中的包 ID（在 CreateDocument 回调中使用）
     var pendingDpmPackageId by remember { mutableStateOf<Long?>(null) }
 
+    // DPM 原始证据统计与清理状态
+    var dpmStats by remember { mutableStateOf<DpmEvidenceStats?>(null) }
+    var dpmCleaning by remember { mutableStateOf(false) }
+    var showCleanupDialog by remember { mutableStateOf(false) }
+    var dpmCleanupMessage by remember { mutableStateOf<String?>(null) }
+
+    // 加载 DPM 证据统计
+    LaunchedEffect(Unit) {
+        dpmStats = withContext(Dispatchers.IO) {
+            repository.getDpmEvidenceStats()
+        }
+    }
+
     // SAF 文件创建器（DPM 证据导出）
     val createDpmZipLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/zip")
@@ -266,52 +282,58 @@ fun TraceRecordsScreen() {
                 }
             }
             val result = withContext(Dispatchers.IO) {
-                val tempFile = File(context.cacheDir, "dpm_evidence_export.zip")
-                val exportResult = dpmExportService.exportEvidenceZip(tempFile)
-                if (exportResult is DpmEvidenceExportResult.Success) {
-                    try {
-                        val byteSize = copyZipToSafUri(context, uri, tempFile)
-                        tempFile.delete()
-                        // 更新包状态为成功
+                val lease = DpmOperationGuard.acquireLease()
+                    ?: return@withContext DpmEvidenceExportResult.Failure("有其他 DPM 操作正在进行中")
+                try {
+                    val tempFile = File(context.cacheDir, "dpm_evidence_export.zip")
+                    val exportResult = dpmExportService.exportEvidenceZip(tempFile)
+                    if (exportResult is DpmEvidenceExportResult.Success) {
+                        try {
+                            val byteSize = copyZipToSafUri(context, uri, tempFile)
+                            tempFile.delete()
+                            // 更新包状态为成功
+                            if (pkgId != null) {
+                                repository.getExportedPackage(pkgId)?.let { pkg ->
+                                    repository.updateExportedPackage(pkg.copy(
+                                        status = ExportedPackageEntity.STATUS_SUCCESS,
+                                        byteSize = byteSize
+                                    ))
+                                }
+                            }
+                            exportResult
+                        } catch (e: Exception) {
+                            cleanupSafExportFailure(context, uri, tempFile)
+                            // 更新包状态为失败
+                            if (pkgId != null) {
+                                repository.getExportedPackage(pkgId)?.let { pkg ->
+                                    repository.updateExportedPackage(pkg.copy(
+                                        status = ExportedPackageEntity.STATUS_FAILED,
+                                        errorMessage = "写入文件失败：${e.localizedMessage ?: "未知错误"}"
+                                    ))
+                                }
+                            }
+                            DpmEvidenceExportResult.Failure("写入文件失败：${e.localizedMessage ?: "未知错误"}")
+                        }
+                    } else {
+                        cleanupSafExportFailure(context, uri, tempFile)
+                        // 更新包状态为失败
                         if (pkgId != null) {
+                            val errorMsg = when (exportResult) {
+                                is DpmEvidenceExportResult.Empty -> "暂无 DPM 扫码证据"
+                                is DpmEvidenceExportResult.Failure -> exportResult.message
+                                else -> "导出失败"
+                            }
                             repository.getExportedPackage(pkgId)?.let { pkg ->
                                 repository.updateExportedPackage(pkg.copy(
-                                    status = ExportedPackageEntity.STATUS_SUCCESS,
-                                    byteSize = byteSize
+                                    status = ExportedPackageEntity.STATUS_FAILED,
+                                    errorMessage = errorMsg
                                 ))
                             }
                         }
                         exportResult
-                    } catch (e: Exception) {
-                        cleanupSafExportFailure(context, uri, tempFile)
-                        // 更新包状态为失败
-                        if (pkgId != null) {
-                            repository.getExportedPackage(pkgId)?.let { pkg ->
-                                repository.updateExportedPackage(pkg.copy(
-                                    status = ExportedPackageEntity.STATUS_FAILED,
-                                    errorMessage = "写入文件失败：${e.localizedMessage ?: "未知错误"}"
-                                ))
-                            }
-                        }
-                        DpmEvidenceExportResult.Failure("写入文件失败：${e.localizedMessage ?: "未知错误"}")
                     }
-                } else {
-                    cleanupSafExportFailure(context, uri, tempFile)
-                    // 更新包状态为失败
-                    if (pkgId != null) {
-                        val errorMsg = when (exportResult) {
-                            is DpmEvidenceExportResult.Empty -> "暂无 DPM 扫码证据"
-                            is DpmEvidenceExportResult.Failure -> exportResult.message
-                            else -> "导出失败"
-                        }
-                        repository.getExportedPackage(pkgId)?.let { pkg ->
-                            repository.updateExportedPackage(pkg.copy(
-                                status = ExportedPackageEntity.STATUS_FAILED,
-                                errorMessage = errorMsg
-                            ))
-                        }
-                    }
-                    exportResult
+                } finally {
+                    lease.release()
                 }
             }
             dpmExporting = false
@@ -373,57 +395,63 @@ fun TraceRecordsScreen() {
                 }
             }
             val result = withContext(Dispatchers.IO) {
-                val tempFile = File(context.cacheDir, "batch_${batchId.take(8)}.zip")
-                val batch = repository.getCaptureBatch(batchId)
-                val exportResult = if (batch == null) {
-                    InspectionExportResult.Failure("采集批次不存在")
-                } else {
-                    exportService.exportInspectionZip(
-                        batchId = batchId,
-                        partId = batch.partId.orEmpty(),
-                        outputFile = tempFile,
-                    )
-                }
-                if (exportResult is InspectionExportResult.Success) {
-                    try {
-                        val byteSize = copyZipToSafUri(context, uri, tempFile)
-                        tempFile.delete()
-                        // 更新包状态为成功
+                val lease = DpmOperationGuard.acquireLease()
+                    ?: return@withContext InspectionExportResult.Failure("有其他 DPM 操作正在进行中")
+                try {
+                    val tempFile = File(context.cacheDir, "batch_${batchId.take(8)}.zip")
+                    val batch = repository.getCaptureBatch(batchId)
+                    val exportResult = if (batch == null) {
+                        InspectionExportResult.Failure("采集批次不存在")
+                    } else {
+                        exportService.exportInspectionZip(
+                            batchId = batchId,
+                            partId = batch.partId.orEmpty(),
+                            outputFile = tempFile,
+                        )
+                    }
+                    if (exportResult is InspectionExportResult.Success) {
+                        try {
+                            val byteSize = copyZipToSafUri(context, uri, tempFile)
+                            tempFile.delete()
+                            // 更新包状态为成功
+                            if (pkgId != null) {
+                                repository.getExportedPackage(pkgId)?.let { pkg ->
+                                    repository.updateExportedPackage(pkg.copy(
+                                        status = ExportedPackageEntity.STATUS_SUCCESS,
+                                        byteSize = byteSize
+                                    ))
+                                }
+                            }
+                            exportResult
+                        } catch (e: Exception) {
+                            cleanupSafExportFailure(context, uri, tempFile)
+                            // 更新包状态为失败
+                            if (pkgId != null) {
+                                repository.getExportedPackage(pkgId)?.let { pkg ->
+                                    repository.updateExportedPackage(pkg.copy(
+                                        status = ExportedPackageEntity.STATUS_FAILED,
+                                        errorMessage = "写入文件失败：${e.localizedMessage}"
+                                    ))
+                                }
+                            }
+                            InspectionExportResult.Failure("写入文件失败：${e.localizedMessage}")
+                        }
+                    } else {
+                        cleanupSafExportFailure(context, uri, tempFile)
+                        // 更新包状态为失败
                         if (pkgId != null) {
+                            val errorMsg = (exportResult as? InspectionExportResult.Failure)?.message ?: "导出失败"
                             repository.getExportedPackage(pkgId)?.let { pkg ->
                                 repository.updateExportedPackage(pkg.copy(
-                                    status = ExportedPackageEntity.STATUS_SUCCESS,
-                                    byteSize = byteSize
+                                    status = ExportedPackageEntity.STATUS_FAILED,
+                                    errorMessage = errorMsg
                                 ))
                             }
                         }
                         exportResult
-                    } catch (e: Exception) {
-                        cleanupSafExportFailure(context, uri, tempFile)
-                        // 更新包状态为失败
-                        if (pkgId != null) {
-                            repository.getExportedPackage(pkgId)?.let { pkg ->
-                                repository.updateExportedPackage(pkg.copy(
-                                    status = ExportedPackageEntity.STATUS_FAILED,
-                                    errorMessage = "写入文件失败：${e.localizedMessage}"
-                                ))
-                            }
-                        }
-                        InspectionExportResult.Failure("写入文件失败：${e.localizedMessage}")
                     }
-                } else {
-                    cleanupSafExportFailure(context, uri, tempFile)
-                    // 更新包状态为失败
-                    if (pkgId != null) {
-                        val errorMsg = (exportResult as? InspectionExportResult.Failure)?.message ?: "导出失败"
-                        repository.getExportedPackage(pkgId)?.let { pkg ->
-                            repository.updateExportedPackage(pkg.copy(
-                                status = ExportedPackageEntity.STATUS_FAILED,
-                                errorMessage = errorMsg
-                            ))
-                        }
-                    }
-                    exportResult
+                } finally {
+                    lease.release()
                 }
             }
             exportingBatchId = null
@@ -654,6 +682,82 @@ fun TraceRecordsScreen() {
                                 color = if (dpmExportMessage!!.startsWith("DPM 证据导出成功") || dpmExportMessage!!.startsWith("暂无"))
                                     PassColor else FailColor,
                                 maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+
+                        // ---- 原始证据统计与清理 ----
+                        Spacer(modifier = Modifier.height(8.dp))
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // 统计行
+                        val stats = dpmStats
+                        if (stats != null) {
+                            val sizeDisplay = formatBytes(stats.displayTotalBytes)
+                            Text(
+                                text = "原始证据: ${stats.rowCount} 条 · ${stats.fileCount} 张（原图+ROI） · $sizeDisplay",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSecondary
+                            )
+                        } else {
+                            Text(
+                                text = "原始证据: 加载中…",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = PlaceholderColor
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // 清理按钮
+                        val isAnyExportActive = dpmExporting || exportingBatchId != null ||
+                            exportedPackages.any { it.status == ExportedPackageEntity.STATUS_EXPORTING }
+                        val canClean = stats != null && stats.hasData && !dpmCleaning &&
+                            !isAnyExportActive && !DpmOperationGuard.isAnyActive
+
+                        Button(
+                            onClick = { showCleanupDialog = true },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(36.dp),
+                            enabled = canClean,
+                            colors = ButtonDefaults.buttonColors(containerColor = FailColor),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            if (dpmCleaning) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(16.dp),
+                                    color = SurfaceWhite,
+                                    strokeWidth = 2.dp
+                                )
+                                Text(
+                                    text = "清理中…",
+                                    modifier = Modifier.padding(start = 8.dp),
+                                    fontSize = 13.sp
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Text(
+                                    text = "清理原始证据",
+                                    modifier = Modifier.padding(start = 4.dp),
+                                    fontSize = 13.sp
+                                )
+                            }
+                        }
+
+                        // 清理结果消息
+                        if (dpmCleanupMessage != null) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = dpmCleanupMessage!!,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (dpmCleanupMessage!!.startsWith("清理完成")) PassColor else FailColor,
+                                maxLines = 3,
                                 overflow = TextOverflow.Ellipsis
                             )
                         }
@@ -949,6 +1053,73 @@ fun TraceRecordsScreen() {
                 }
             }
         )
+    }
+
+    // ---- DPM 原始证据清理确认对话框 ----
+    if (showCleanupDialog) {
+        val currentStats = dpmStats
+        AlertDialog(
+            onDismissRequest = { if (!dpmCleaning) showCleanupDialog = false },
+            title = {
+                Text(text = "清理 DPM 原始证据", fontWeight = FontWeight.SemiBold)
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        text = "将删除 App 内原始证据，已导出的 ZIP 不受影响。",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showCleanupDialog = false
+                        dpmCleaning = true
+                        dpmCleanupMessage = null
+                        scope.launch {
+                            val result = withContext(Dispatchers.IO) {
+                                repository.cleanupAllDpmEvidence()
+                            }
+                            dpmCleaning = false
+                            dpmCleanupMessage = if (result.success) {
+                                val sizeDisplay = formatBytes(result.releasedBytes)
+                                "已清理 ${result.deletedDbRows} 条，释放 $sizeDisplay"
+                            } else if (result.deletedDbRows > 0) {
+                                "已清理 ${result.deletedDbRows} 条，${result.failedFiles} 个文件删除失败"
+                            } else {
+                                "清理失败"
+                            }
+                            // 刷新统计
+                            dpmStats = withContext(Dispatchers.IO) {
+                                repository.getDpmEvidenceStats()
+                            }
+                        }
+                    },
+                    enabled = !dpmCleaning
+                ) {
+                    Text("确认清理", color = if (dpmCleaning) PlaceholderColor else FailColor)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showCleanupDialog = false },
+                    enabled = !dpmCleaning
+                ) {
+                    Text("取消")
+                }
+            }
+        )
+    }
+}
+
+/** 格式化字节数为人类可读格式 */
+private fun formatBytes(bytes: Long): String {
+    return when {
+        bytes < 1024 -> "$bytes B"
+        bytes < 1024 * 1024 -> "${bytes / 1024} KB"
+        bytes < 1024 * 1024 * 1024 -> String.format("%.1f MB", bytes / (1024.0 * 1024.0))
+        else -> String.format("%.2f GB", bytes / (1024.0 * 1024.0 * 1024.0))
     }
 }
 

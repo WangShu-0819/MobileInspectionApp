@@ -8,6 +8,7 @@ import com.wearable.inspection.mobile.data.dao.*
 import com.wearable.inspection.mobile.data.entity.*
 import com.wearable.inspection.mobile.data.image.MobileImageStore
 import com.wearable.inspection.mobile.data.image.StoredImageResult
+import com.wearable.inspection.mobile.dpm.DpmOperationGuard
 import kotlinx.coroutines.flow.Flow
 import java.io.File
 import java.util.UUID
@@ -286,6 +287,211 @@ class InspectionRepository(
         private const val TAG = "InspectionRepository"
     }
 
+    // ---- DPM 证据清理 ----
+
+    /**
+     * 获取 DPM 原始证据统计信息。
+     * 校验受管理路径，不统计越界路径的字节；处理重复/共享路径并在结果中给出可解释状态。
+     */
+    suspend fun getDpmEvidenceStats(): DpmEvidenceStats {
+        val rowCount = dpmScanEvidenceDao.count()
+        val projections = dpmScanEvidenceDao.getAllPathProjections()
+        var fileCount = 0
+        var totalBytes = 0L
+        var missingFiles = 0
+        var outOfBoundsFiles = 0
+        var sharedPathCount = 0
+        val seenPaths = mutableSetOf<String>()
+        for (p in projections) {
+            for (path in listOf(p.originalImagePath) + listOfNotNull(p.roiImagePath)) {
+                if (!imageStore.isDpmEvidencePath(path)) {
+                    outOfBoundsFiles++
+                    continue
+                }
+                val file = File(path)
+                if (file.exists()) {
+                    fileCount++
+                    if (path in seenPaths) {
+                        sharedPathCount++
+                    } else {
+                        totalBytes += file.length()
+                        seenPaths += path
+                    }
+                } else {
+                    missingFiles++
+                }
+            }
+        }
+        // 检查孤立文件（在目录中但不在 DB 中）
+        val diskFiles = imageStore.listDpmEvidenceFiles()
+        val orphanFiles = diskFiles.count { it.absolutePath !in seenPaths }
+        val orphanBytes = diskFiles.filter { it.absolutePath !in seenPaths }.sumOf { it.length() }
+
+        return DpmEvidenceStats(
+            rowCount = rowCount,
+            fileCount = fileCount,
+            totalBytes = totalBytes,
+            missingFiles = missingFiles,
+            orphanFiles = orphanFiles,
+            orphanBytes = orphanBytes,
+            outOfBoundsFiles = outOfBoundsFiles,
+            sharedPathCount = sharedPathCount
+        )
+    }
+
+    /**
+     * 安全清理全部 DPM 原始证据。
+     *
+     * 安全规则：
+     * 1. 逐条按稳定 evidenceId 快照处理，不使用 deleteAll()
+     * 2. 先校验 originalImagePath/roiImagePath 必须位于 filesDir/dpm_evidence 直接子文件
+     * 3. 文件缺失视为可重试的幂等成功
+     * 4. 任一文件删除失败、路径越界或共享路径无法安全判断时，保留对应数据库行
+     * 5. 只有该证据行所有文件删除成功或已缺失后，才按精确 evidenceId 删除数据库行
+     * 6. 数据库删除失败时保留记录
+     * 7. 孤立文件只能删除受管理目录内、且不再被保留数据库行引用的文件
+     * 8. 不得让孤立清理误删失败证据仍需重试的文件
+     *
+     * 门禁由 DpmOperationGuard 管理。
+     *
+     * @return 清理结果
+     */
+    suspend fun cleanupAllDpmEvidence(): DpmCleanupResult {
+        // 获取清理独占锁
+        val (acquired, releaseFn) = DpmOperationGuard.cleanupExclusive()
+        if (!acquired) {
+            return DpmCleanupResult(
+                success = false,
+                error = "有其他 DPM 操作正在进行中，无法清理"
+            )
+        }
+        try {
+            return cleanupAllDpmEvidenceInternal()
+        } finally {
+            releaseFn()
+        }
+    }
+
+    private suspend fun cleanupAllDpmEvidenceInternal(): DpmCleanupResult {
+        // 获取所有 evidenceId 快照
+        val evidenceIds = dpmScanEvidenceDao.getAllEvidenceIds()
+        if (evidenceIds.isEmpty()) {
+            return DpmCleanupResult(
+                success = true,
+                deletedDbRows = 0,
+                deletedFiles = 0,
+                missingFiles = 0,
+                failedFiles = 0,
+                releasedBytes = 0L
+            )
+        }
+
+        var deletedDbRows = 0
+        var deletedFiles = 0
+        var missingFiles = 0
+        var failedFiles = 0
+        var releasedBytes = 0L
+        val failedPaths = mutableListOf<String>()
+        // 所有已删除或缺失的路径，用于后续孤立文件检测
+        val processedPaths = mutableSetOf<String>()
+
+        // 逐条按 evidenceId 处理
+        for (evidenceId in evidenceIds) {
+            val row = dpmScanEvidenceDao.getByEvidenceId(evidenceId)
+            if (row == null) {
+                // 并发已删除，视为幂等成功
+                Log.d(TAG, "DPM 证据清理：evidenceId=$evidenceId 已不存在，跳过")
+                continue
+            }
+
+            val paths = listOf(row.originalImagePath) + listOfNotNull(row.roiImagePath)
+            var allFilesOk = true
+            val rowPaths = mutableListOf<String>()
+
+            for (path in paths) {
+                // 校验路径必须位于受管理 dpm_evidence 目录
+                if (!imageStore.isDpmEvidencePath(path)) {
+                    Log.w(TAG, "DPM 证据清理：路径越界，保留证据行 evidenceId=$evidenceId: $path")
+                    failedFiles++
+                    failedPaths += "越界: $path"
+                    allFilesOk = false
+                    break
+                }
+                val file = File(path)
+                if (!file.exists()) {
+                    // 文件缺失视为可重试的幂等成功
+                    missingFiles++
+                    rowPaths += path
+                    continue
+                }
+                val fileSize = file.length()
+                if (file.delete()) {
+                    deletedFiles++
+                    releasedBytes += fileSize
+                    rowPaths += path
+                } else {
+                    // 文件删除失败，保留对应数据库行
+                    failedFiles++
+                    failedPaths += path
+                    Log.w(TAG, "DPM 证据清理：文件删除失败，保留证据行 evidenceId=$evidenceId: $path")
+                    allFilesOk = false
+                    break
+                }
+            }
+
+            if (allFilesOk) {
+                // 所有文件已清理，按精确 evidenceId 删除数据库行
+                val dbDeleted = dpmScanEvidenceDao.deleteByEvidenceId(evidenceId)
+                if (dbDeleted > 0) {
+                    deletedDbRows++
+                    processedPaths += rowPaths
+                } else {
+                    // 数据库删除失败时保留记录
+                    Log.w(TAG, "DPM 证据清理：DB 行删除失败，保留 evidenceId=$evidenceId")
+                    failedPaths += "DB删除失败: evidenceId=$evidenceId"
+                    failedFiles++
+                }
+            }
+            // allFilesOk=false 时不做 DB 删除，失败文件不计入 processedPaths
+        }
+
+        // 孤立文件清理：只删除受管理目录内、且不再被保留数据库行引用的文件
+        val remainingPaths = dpmScanEvidenceDao.getAllPathProjections().flatMap { p ->
+            listOf(p.originalImagePath) + listOfNotNull(p.roiImagePath)
+        }.toSet()
+        val diskFiles = imageStore.listDpmEvidenceFiles()
+        for (file in diskFiles) {
+            if (file.absolutePath !in remainingPaths) {
+                val fileSize = file.length()
+                if (file.delete()) {
+                    deletedFiles++
+                    releasedBytes += fileSize
+                    Log.i(TAG, "DPM 证据清理：孤立文件已删除: ${file.name}")
+                } else {
+                    failedFiles++
+                    failedPaths += "孤立: ${file.absolutePath}"
+                }
+            }
+        }
+
+        val success = failedFiles == 0
+        Log.i(
+            TAG,
+            "DPM 证据清理完成: success=$success, dbRows=$deletedDbRows, files=$deletedFiles, " +
+                "missing=$missingFiles, failed=$failedFiles, bytes=$releasedBytes"
+        )
+        return DpmCleanupResult(
+            success = success,
+            deletedDbRows = deletedDbRows,
+            deletedFiles = deletedFiles,
+            missingFiles = missingFiles,
+            failedFiles = failedFiles,
+            releasedBytes = releasedBytes,
+            failedPaths = failedPaths.takeIf { it.isNotEmpty() },
+            error = if (!success) "部分文件删除失败: ${failedPaths.joinToString("; ")}" else null
+        )
+    }
+
     // ---- 已采集照片 ----
 
     fun observeCapturedPhotos(batchId: String): Flow<List<CapturedPhotoEntity>> =
@@ -537,4 +743,54 @@ data class BatchDeletionResult(
 data class DpmEvidenceDeletionResult(
     val success: Boolean,
     val error: String?
+)
+
+/**
+ * DPM 原始证据统计信息
+ *
+ * @property rowCount 数据库中的证据行数
+ * @property fileCount 实际存在的证据文件数
+ * @property totalBytes 证据文件总字节数
+ * @property missingFiles DB 中记录但文件不存在的数量
+ * @property orphanFiles 磁盘上存在但无 DB 记录的孤立文件数
+ * @property orphanBytes 孤立文件总字节数
+ */
+data class DpmEvidenceStats(
+    val rowCount: Int,
+    val fileCount: Int,
+    val totalBytes: Long,
+    val missingFiles: Int = 0,
+    val orphanFiles: Int = 0,
+    val orphanBytes: Long = 0L,
+    val outOfBoundsFiles: Int = 0,
+    val sharedPathCount: Int = 0
+) {
+    /** 是否有需要清理的数据 */
+    val hasData: Boolean get() = rowCount > 0 || orphanFiles > 0
+
+    /** 可读的总占用（包括孤立文件） */
+    val displayTotalBytes: Long get() = totalBytes + orphanBytes
+}
+
+/**
+ * DPM 原始证据全部清理结果
+ *
+ * @property success 是否完全成功（无文件删除失败）
+ * @property deletedDbRows 删除的数据库行数
+ * @property deletedFiles 删除的文件数（包括孤立文件）
+ * @property missingFiles 文件不存在（幂等成功）的数量
+ * @property failedFiles 删除失败的文件数
+ * @property releasedBytes 释放的字节数
+ * @property failedPaths 删除失败的文件路径列表
+ * @property error 错误消息（完全成功时为 null）
+ */
+data class DpmCleanupResult(
+    val success: Boolean,
+    val deletedDbRows: Int = 0,
+    val deletedFiles: Int = 0,
+    val missingFiles: Int = 0,
+    val failedFiles: Int = 0,
+    val releasedBytes: Long = 0L,
+    val failedPaths: List<String>? = null,
+    val error: String? = null
 )

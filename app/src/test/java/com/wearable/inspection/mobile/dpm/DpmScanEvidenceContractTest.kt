@@ -133,28 +133,36 @@ class DpmScanEvidenceContractTest {
     fun `exit flow saves evidence before disconnect`() {
         val source = read("src/main/java/com/wearable/inspection/mobile/ui/screens/DpmScanScreen.kt")
         val saveIdx = source.indexOf("saveEvidenceInScope(")
-        val disconnectIdx = source.indexOf("disconnect(")
+        val cleanupIdx = source.indexOf("cleanupAndDisconnect(")
         assertTrue("必须在 ViewModel scope 中请求保存证据", saveIdx > 0)
-        assertTrue("必须调用 disconnect", disconnectIdx > 0)
-        assertTrue("证据保存必须在 disconnect 之前", saveIdx < disconnectIdx)
+        assertTrue("必须调用 cleanupAndDisconnect", cleanupIdx > 0)
+        assertTrue("证据保存必须在 cleanupAndDisconnect 之前", saveIdx < cleanupIdx)
 
         val viewModelSource = read("src/main/java/com/wearable/inspection/mobile/dpm/DpmScanViewModel.kt")
-        val persistIdx = viewModelSource.indexOf("alreadyScheduled = true")
-        val cleanupIdx = viewModelSource.indexOf("afterSave()")
-        assertTrue("回调必须先持久化证据", persistIdx > 0 && persistIdx < cleanupIdx)
+        assertTrue("ViewModel 必须定义 cleanupAndDisconnect",
+            viewModelSource.contains("fun cleanupAndDisconnect("))
+        assertTrue("cleanupAndDisconnect 使用 applicationScope",
+            viewModelSource.contains("applicationScope.launch"))
     }
 
     @Test
-    fun `decoded result waits for current evidence persistence before navigation`() {
+    fun `decoded result saves evidence before navigation without stopping scan`() {
         val screenSource = read("src/main/java/com/wearable/inspection/mobile/ui/screens/DpmScanScreen.kt")
-        assertTrue(screenSource.contains("saveCurrentEvidenceAndAwait()"))
-        assertTrue(
-            screenSource.indexOf("saveCurrentEvidenceAndAwait()") <
-                screenSource.indexOf("onResult(result.rawValue, connectedSessionId)")
+        assertTrue("LaunchedEffect(lastResult) 必须调用 saveCurrentEvidence()",
+            screenSource.contains("saveCurrentEvidence()"))
+        assertTrue("saveCurrentEvidence 必须在 onResult 之前",
+            screenSource.indexOf("saveCurrentEvidence()") <
+                screenSource.indexOf("onResult(result.rawValue, connectedSessionId)"))
+        // 解码成功后不应在 LaunchedEffect 中调用 stopScan（避免紫色圈）
+        val launchedEffectBlock = screenSource.substring(
+            screenSource.indexOf("LaunchedEffect(lastResult)"),
+            screenSource.indexOf("onResult(result.rawValue, connectedSessionId)")
         )
+        assertFalse("LaunchedEffect 中不应调用 stopScan", launchedEffectBlock.contains("stopScan()"))
 
         val viewModelSource = read("src/main/java/com/wearable/inspection/mobile/dpm/DpmScanViewModel.kt")
-        assertTrue(viewModelSource.contains("suspend fun saveCurrentEvidenceAndAwait(): Boolean"))
+        assertTrue("必须定义 saveCurrentEvidence（无清理）",
+            viewModelSource.contains("suspend fun saveCurrentEvidence(): Boolean"))
         assertTrue(viewModelSource.contains("evidenceSaveCompletions"))
         assertTrue(viewModelSource.contains(".await()"))
     }
@@ -171,21 +179,20 @@ class DpmScanEvidenceContractTest {
         )
         var stopScanCalls = 0
         var saveCalls = 0
-        var disconnectCalls = 0
+        var cleanupCalls = 0
 
         runDpmScanExit(
             sessionId = null,
             getEvidenceFrames = { evidenceFrames },
             saveEvidenceInScope = { _, _, _ -> saveCalls++ },
             stopScan = { stopScanCalls++ },
-            clearFrameAnalyzer = { error("无 sessionId 时不应清理 CameraController analyzer") },
-            disconnect = { disconnectCalls++; true },
+            cleanupAndDisconnect = { cleanupCalls++ },
         )
 
         assertEquals("无 sessionId 时必须执行 stopScan", 1, stopScanCalls)
         assertTrue("无 sessionId 时必须回收 Bitmap", bitmap.isRecycled)
         assertEquals("无 sessionId 时不得保存证据", 0, saveCalls)
-        assertEquals("无 sessionId 时不得 disconnect", 0, disconnectCalls)
+        assertEquals("无 sessionId 时不得 disconnect", 0, cleanupCalls)
     }
 
     // ─── Room Migration 契约 ───

@@ -448,6 +448,32 @@ class MobileImageStore(private val context: Context) {
         }
     }
 
+    /**
+     * 列出 dpm_evidence 目录下所有实际存在的文件路径。
+     * 用于孤立文件检测和清理前的统计。
+     * 不创建目录（不存在时返回空列表）。
+     */
+    fun listDpmEvidenceFiles(): List<File> {
+        val dir = File(context.filesDir, DPM_EVIDENCE_DIR)
+        return dir.listFiles()?.filter { it.isFile } ?: emptyList()
+    }
+
+    /**
+     * 验证文件路径是否在受管理的 dpm_evidence 目录内。
+     * 使用 canonical path 防止路径穿越。
+     *
+     * @return true 如果路径安全（在 dpm_evidence 内）
+     */
+    fun isDpmEvidencePath(path: String): Boolean {
+        return try {
+            val base = getDpmEvidenceDir().canonicalFile
+            val target = File(path).canonicalFile
+            target.parentFile == base
+        } catch (_: Exception) {
+            false
+        }
+    }
+
     private fun clampRect(rect: Rect, w: Int, h: Int): Rect {
         val l = rect.left.coerceIn(0, w - 1)
         val t = rect.top.coerceIn(0, h - 1)
