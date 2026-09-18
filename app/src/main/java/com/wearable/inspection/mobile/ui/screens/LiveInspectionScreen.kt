@@ -25,7 +25,6 @@ import androidx.compose.material.icons.filled.AspectRatio
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Photo
-import androidx.compose.material.icons.filled.TextFields
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -401,8 +400,9 @@ fun LiveInspectionScreen(
                     ) {
                         Text(
                             text = "现场采集",
-                            style = MaterialTheme.typography.titleMedium,
+                            style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.SemiBold,
+                            fontSize = 20.sp,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
@@ -447,14 +447,7 @@ fun LiveInspectionScreen(
                             tint = Primary
                         )
                     }
-                    // OCR 钢印：钢印识别入口
-                    androidx.compose.material3.IconButton(onClick = onStampOcr) {
-                        androidx.compose.material3.Icon(
-                            imageVector = Icons.Default.TextFields,
-                            contentDescription = "OCR 钢印",
-                            tint = Primary
-                        )
-                    }
+                    // OCR 钢印入口暂时隐藏，保留 onStampOcr 接口和 OCR 页面导航
                 }
             )
         },
