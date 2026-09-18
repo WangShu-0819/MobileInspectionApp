@@ -1,7 +1,18 @@
 # 检测结果与 DPM 证据追溯计划
 
 **日期**：2026-09-14
-**当前状态（2026-09-16）**：DPM 成功证据批次关联 **USER_ACCEPTED**；ROI 最终结果语义、改判图片及 CSV 回链 **IN_PROGRESS**。具体唯一任务指针以 `tasks/todo.md` 为准。
+**当前状态（2026-09-18）**：DPM 成功证据批次关联 **USER_ACCEPTED**；ROI 最终结果语义、改判图片及 CSV 回链 **软件验证完成，等待用户验收**（单 Gradle 命令10类99项全通过，0失败；APK 构建成功）。具体唯一任务指针以 `tasks/todo.md` 为准。
+
+> **历史审计说明**：此前记录的 "AUDIT_REOPENED" 和 "98/99 失败（ViewModelSaveLifecycleTest）" 已被2026-09-18 的 99/99 全通过证据 supersede。
+
+### 验证证据（2026-09-18 17:56 +08:00）
+
+- ViewModelSaveLifecycleTest：4/4 通过
+- ROI 9 类：95/95 通过
+- 总计：10 类 99/99 通过，0 失败
+- 10 份 JUnit XML 均存在于 `app/build/test-results/testDebugUnitTest/`
+- APK：`app/build/outputs/apk/debug/app-debug.apk`，232,123,666 bytes
+- SHA-256：`2736b661fde7a170b7cdadb0e84d89c5fc45f182c608726b316577d5028d44fb`
 **范围**：现有采集结果 ZIP 的 NanoDet/人工终审/DPM 成功证据追溯实现与验证；DPM 独立证据 ZIP 保持独立。
 
 **当前边界**：结果包工作已拆分为“DPM ECC 成功照片合并”和“ROI 检测/人工结果及 ROI 证据图导出”两个交付项。前者已完成人机验收；DPM 独立 ZIP 保持独立。后者当前进行中：按最新口径每个 ROI 只有一个最终 `result`；改判时保留原模型结果、人工结果、改判标记及时间，并将对应 ROI 照片与 CSV 路径回链；未改判不要求额外图片。总体结果由人工独立确认。当前没有准确、独立的 DPM 码真值，因此 DPM 人工码值复核不排期。实施任务必须保留现有基础框架，只做当前任务必要的局部修改。
@@ -115,3 +126,11 @@ ONNX 已导出；转换工具与 Android NCNN 运行库仍然缺失。下一工�
 本轮实际修改：`InspectionZipExportService.kt`（严格 DPM 过滤）、`InspectionExcelExporter.kt`（照片行列位和总体人工字段）、`InspectionZipExportArchiveTest.kt`（跨批次/缺失源帧/列位及真实 ZIP 回读断言）。工作区已有的实体、v8→v9 migration、DAO、Repository、DPM 独立导出和 NanoDet 确认链路均保留。
 
 验证：结果相关 JVM 104/104 通过；真实 `ZipInputStream` 归档测试通过；`:app:compileDebugKotlin`、`:app:assembleDebug` 通过。全量 JVM 为 792 项完成、779 通过、13 失败、5 跳过；失败来自工作区已有并行改动/基线断言，未归因本任务。归档样例为 `C:\Users\ws\AppData\Local\Temp\inspection-export7435539282332082454`，批次/独立 ZIP 的成功 DPM 原图和 ROI 均为 4 bytes 且 SHA-256 分别为 `952B50FD4FE30AEE9420F479FF3F4C6268F2865EE65A82E1F8E157ABC1455272`、`EE10DA4AEFE61A37DF1DEE937CA3221AFA3B2351F9EA34EDBBB769573C6785F7`，字节完全相等。APK 为 `app/build/outputs/apk/debug/app-debug.apk`，2026-09-15 13:12:25 +08:00，276579040 bytes，SHA-256 `D2D7B57FF523EA82D48E7F1EEDCE4ED1FCAB7D32EC5CC192CAD2DEED06B6B35B`。未运行 ADB、connectedDebugAndroidTest 或真机；未提交 Git。
+
+## 2026-09-18 主协调审计更新（历史记录）
+
+> ⚠️ 本节为历史审计记录，保留供追溯。2026-09-18 当前状态以本文件顶部状态行及 `tasks/todo.md` 为准，已由 99/99 全通过证据 supersede。
+
+~~当前 ROI 交付状态保持 **IN_PROGRESS / AUDIT_REOPENED**~~。源码中已经存在人工最终结果、双向改判、独立总体结果、受管理 ROI 证据图和 CSV/ZIP 真实路径回链；但本轮定向复跑 99 项中 98 项通过、1 项失败。失败用例为 `ViewModelSaveLifecycleTest.dbSaveFailureCleansUpNewEvidenceFiles`，测试 JPEG 夹具在 Robolectric 加载阶段无法解码（`Quantization table 0x00 was not defined`），没有进入数据库写入失败后的新证据清理分支，因此该收口条件仍未验证。
+
+当前需要执行 Agent 修复有效 JPEG 夹具并重新跑生命周期测试、ROI 定向集合和构建；必要时补 instrumented/真机确认页证据，再由用户验收。当前没有新 APK、真机验收或 Git 提交可记录。本次主协调只更新文档，未修改生产代码。钢印 OCR 真机/真实样本验证按用户指示暂不列入本任务清单。

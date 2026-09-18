@@ -89,42 +89,21 @@ class ViewModelSaveLifecycleTest {
     /**
      * 在临时目录中创建一个有效的 JPEG 文件供 BitmapFactory 解码，
      * 使 ViewModel 初始化时 RoiCoordinateMapper.getImageGeometry() 返回非 null。
+     *
+     * 使用 Android Bitmap API 生成标准 JPEG（含 DQT 量化表），
+     * 确保 Robolectric 的真实 BitmapFactory 能正常解码。
      */
     private fun createTestPhoto(dir: File): String {
         val photoFile = File(dir, "test_photo.jpg")
-        // 最小合法 JPEG: SOI + APP0 + SOF0 (1×1 白色像素) + EOI
-        photoFile.writeBytes(byteArrayOf(
-            0xFF.toByte(), 0xD8.toByte(),                         // SOI
-            0xFF.toByte(), 0xE0.toByte(),                         // APP0
-            0x00.toByte(), 0x10.toByte(),                         // length = 16
-            0x4A, 0x46, 0x49, 0x46, 0x00,                        // "JFIF\0"
-            0x01, 0x01,                                           // version 1.1
-            0x00,                                                 // aspect ratio units = none
-            0x00.toByte(), 0x01.toByte(),                         // X density = 1
-            0x00.toByte(), 0x01.toByte(),                         // Y density = 1
-            0x00, 0x00,                                           // no thumbnail
-            0xFF.toByte(), 0xC0.toByte(),                         // SOF0
-            0x00.toByte(), 0x0B.toByte(),                         // length = 11
-            0x08,                                                 // precision = 8
-            0x00.toByte(), 0x01.toByte(),                         // height = 1
-            0x00.toByte(), 0x01.toByte(),                         // width = 1
-            0x01,                                                 // 1 component (grayscale)
-            0x01, 0x11, 0x00,                                     // component spec
-            0xFF.toByte(), 0xC4.toByte(),                         // DHT
-            0x00.toByte(), 0x1F.toByte(),                         // length = 31
-            0x00,                                                 // DC table 0
-            0x00, 0x01, 0x05, 0x01, 0x01, 0x01, 0x01, 0x01,     // counts
-            0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,     // symbols
-            0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-            0x08, 0x09, 0x0A, 0x0B,
-            0xFF.toByte(), 0xDA.toByte(),                         // SOS
-            0x00.toByte(), 0x08.toByte(),                         // length = 8
-            0x01,                                                 // 1 component
-            0x01, 0x00,                                           // component + DC/AC table
-            0x00, 0x3F, 0x00,                                     // spectral selection
-            0x79.toByte(), 0x18.toByte(), 0xE3.toByte(), 0x00.toByte(), // compressed data (1×1 px)
-            0xFF.toByte(), 0xD9.toByte()                          // EOI
-        ))
+        val bitmap = android.graphics.Bitmap.createBitmap(1, 1, android.graphics.Bitmap.Config.ARGB_8888)
+        try {
+            java.io.FileOutputStream(photoFile).use { fos ->
+                bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 90, fos)
+                fos.flush()
+            }
+        } finally {
+            bitmap.recycle()
+        }
         return photoFile.absolutePath
     }
 
@@ -456,6 +435,15 @@ class ViewModelSaveLifecycleTest {
             val filesBefore = evidenceDir.listFiles()?.map { it.absolutePath }?.toSet() ?: emptySet()
 
             vm.saveConfirmation()
+
+            // saveConfirmation 内部使用 Dispatchers.IO 写入证据文件，
+            // advanceUntilIdle 仅推进测试调度器，无法等待 IO 线程完成。
+            // 轮询等待协程执行完毕（errorMessage 被设置或 saveCompleted 变 true）。
+            repeat(50) {
+                if (vm.errorMessage != null || vm.saveCompleted) return@repeat
+                advanceUntilIdle()
+                Thread.sleep(50)
+            }
             advanceUntilIdle()
 
             assertFalse("saveCompleted 应为 false", vm.saveCompleted)

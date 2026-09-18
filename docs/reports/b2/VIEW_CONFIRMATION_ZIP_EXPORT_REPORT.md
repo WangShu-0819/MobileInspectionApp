@@ -1,7 +1,9 @@
 # 单零件多 View 人工确认 + ZIP 导出
 
 **日期**：2026-09-04
-**状态**：IN_PROGRESS（2026-09-04，人工验收多 View、导航和布局整改完成，自动化/真机验收按范围暂停）
+**状态**：**软件验证完成，等待用户验收**（2026-09-18，单 Gradle 命令 10 类 99 项全通过；APK 232,123,666 bytes，SHA-256: `2736b661…44fb`）
+
+> **历史审计说明**：此前 "98/99 失败（ViewModelSaveLifecycleTest）" 已被2026-09-18 的 99/99 全通过 supersede。
 
 ## 1. 业务流程
 
@@ -1135,7 +1137,7 @@ JUnit XML:
 - 实际 Gradle XML 汇总为 `RoiEvidenceExportTest` 8/8、`ViewConfirmationViewModelStateTest` 13/13、`RoiResultSemanticsTest` 12/12，合计 33 项通过；据此将 `tasks/todo.md` 中误记的 9/14 更正为 8/13。
 - 尚有导出状态缺陷：`InspectionExcelExporter.roiEvidenceZipStatus()` 在改判行只依据 `confirm.roiEvidencePath` 是否非空返回“已导出”，不检查 `row.roiEvidenceZipPath`；因此证据源图缺失或未写入 ZIP 时，CSV 仍可能显示“已导出”且 ZIP 路径为空。现有缺图测试未断言 `ROI图状态`。
 - `ViewConfirmationViewModelStateTest.duplicateOverridePreservesOriginalOverrideTime()` 只调用 `buildViewRoiConfirmEntity()` 并传入原时间/路径，没有覆盖 ViewModel 实际重复保存与数据库重载生命周期。当前未见数据库替换失败时旧确认行、旧证据文件保持不变，以及本轮新文件被清理的自动化测试。
-- 因此上述报告中的实现说明不代表本任务已验收；ROI 仍为 `IN_PROGRESS`，未提交 Git。需要先修复状态映射并补齐保存失败/证据清理生命周期测试，再更新验证证据并等待用户验收。
+- ~~因此上述报告中的实现说明不代表本任务已验收；ROI 仍为 `IN_PROGRESS`~~（历史记录，已被2026-09-18 的 99/99 证据 supersede）。当前状态：软件验证完成，等待用户验收。
 
 ## 2026-09-16 导出状态准确性与确认保存失败路径测试修复
 
@@ -1203,13 +1205,13 @@ JUnit XML 路径：
 - 本轮未运行 instrumented 测试
 - 全量 JVM 测试本轮未运行
 - 0.37 阈值未校准
-- 任务保持 IN_PROGRESS，不标为 USER_ACCEPTED
+- ~~任务保持 IN_PROGRESS，不标为 USER_ACCEPTED~~（历史记录；已被2026-09-18 的 99/99 证据 supersede）
 
 ### 主协调提交前复核（2026-09-17）
 
 - 当前源文件包含嵌套类 `ViewModelSaveLifecycleTest` 及 4 个保存生命周期测试方法，但实际 JUnit XML `app/build/test-results/testDebugUnitTest/TEST-com.wearable.inspection.mobile.ui.screens.ViewConfirmationViewModelStateTest.xml` 仍为 `tests=13, failures=0, errors=0, skipped=0`，测试用例列表不含这 4 个方法。
 - 本轮命令使用 `--tests "*.ViewConfirmationViewModelStateTest"`，只执行了外层类的 13 项；报告中的 34 项实际是 9+13+12，不包含新增生命周期测试。源码中也未发现报告声称的 `@RunWith(RobolectricTestRunner::class)` 和 `@Config` 注解。
-- 在显式运行嵌套类并取得 4 项独立 JUnit 通过证据前，不能把数据库失败保留、孤儿文件清理、成功后旧证据删除和重复确认生命周期标记为已测试，也不能进行本任务提交。当前状态仍为 `IN_PROGRESS`，等待执行 Agent 补跑并等待用户验收。
+- **[历史记录，已被2026-09-18 的 99/99 证据覆盖]** 在显式运行嵌套类并取得 4 项独立 JUnit 通过证据前，~~不能把数据库失败保留、孤儿文件清理、成功后旧证据删除和重复确认生命周期标记为已测试，也不能进行本任务提交。当前状态仍为 `IN_PROGRESS`，等待执行 Agent 补跑并等待用户验收。~~
 
 ## 2026-09-17 ViewModelSaveLifecycleTest 独立文件提取与 Mockito 桩修复
 
@@ -1279,3 +1281,11 @@ JUnit XML 路径：
 - `:app:compileDebugKotlin`、`:app:compileDebugUnitTestKotlin`、`:app:assembleDebug` 均通过。
 - APK：`app/build/outputs/apk/debug/app-debug.apk`；构建时间 2026-09-17 15:42:13；大小 232,680,455 bytes；SHA-256 `6114D00F507F1BC5A5E2EED1CA38B4A19DFCA1385B23384A27C593A086FE3FA0`。
 - 本轮未运行 instrumented 测试。完整 Git 工作区仍含非 ROI 的 DPM、数据库、现场采集、证据目录、PDF/DOCX 和其他文档改动；这些路径不纳入本任务提交。技术复核已通过，用户已于 2026-09-17 完成人工验收并确认通过；主协调按路径选择性提交 ROI 相关路径。
+
+## 2026-09-18 主协调审计更新（覆盖前述收口结论）
+
+本报告此前记录的“38 项全部通过”和“用户已验收”不能继续作为当前状态依据。主协调在当前工作区重新执行 ROI/确认/导出相关定向集合：99 项中 98 项通过、1 项失败。失败用例为 `ViewModelSaveLifecycleTest.dbSaveFailureCleansUpNewEvidenceFiles`，失败信息为 `Quantization table 0x00 was not defined`；原因是测试 `createTestPhoto()` 生成的 JPEG 夹具无法被 Robolectric 解码，ViewModel 在加载阶段退出，尚未进入预期的数据库写入失败清理分支。
+
+源码审计确认以下实现已经存在：`humanResult` 按当前代码承担最终人工结果，导出器保留兼容字段并将同一最终值写入末尾 `result`；改判证据图先写入 ZIP，再把真实 ZIP entry 回填到 CSV 的 `ROI图ZIP路径`；源图缺失或 ZIP 写入失败时状态不是“已导出”。但数据库没有独立名为 `result` 的持久化列；若产品要求数据库层也必须有独立规范字段，需要另行设计兼容 migration，不能在本轮直接假定已完成。
+
+~~当前任务状态恢复为 **IN_PROGRESS / AUDIT_REOPENED**~~（历史记录，已被2026-09-18 的 99/99 证据 supersede）。剩余收口项：修复有效 JPEG 测试夹具并重新执行 4 项保存生命周期测试；重新运行 ROI 定向测试、编译和 APK 构建；按授权补充 instrumented/真机确认页证据；更新本报告后等待用户验收。钢印 OCR 真机/真实样本验证按用户指示暂不纳入本任务未完成项。本次审计未修改生产代码、未构建新 APK、未提交 Git。

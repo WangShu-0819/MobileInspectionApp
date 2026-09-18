@@ -1,6 +1,30 @@
 # Implementation Plan: MobileInspectionApp 当前阶段
 
-## 当前计划：DPM 原始证据清理（2026-09-18）
+## 当前唯一任务：ROI 检测结果、人工改判与 ROI 证据图导出收口（2026-09-18）
+
+状态：**软件验证完成，等待用户验收**
+
+### 目标
+ROI 检测结果语义、人工改判图片导出、CSV 回链到 ZIP 中真实文件；DB 保存失败时新证据文件清理。
+
+### 本轮修复
+- `ViewModelSaveLifecycleTest.createTestPhoto()` 从手写字节改为 `Bitmap.compress(JPEG)` 生成标准 JPEG
+- 测试增加 `Dispatchers.IO` 协程完成等待（轮询 `isLoaded` 和 `errorMessage`/`saveCompleted`）
+- 字段注入移到 `loadData()` 完成后，防止 `applyDefaultSelections()` 覆盖测试数据
+- 仅修改测试文件，未修改生产代码
+
+### 验证结果（2026-09-18 单 Gradle 命令 10 类 99 项）
+
+- ViewModelSaveLifecycleTest：4/4 通过
+- ROI 9 类：95/95 通过
+- 总计：10 类 99/99 通过，0 失败
+- 编译：`compileDebugKotlin` ✅、`compileDebugUnitTestKotlin` ✅、`assembleDebug` ✅
+- APK：`app/build/outputs/apk/debug/app-debug.apk`，232,123,666 bytes，2026-09-18 17:56:08 +08:00
+- SHA-256：`2736b661fde7a170b7cdadb0e84d89c5fc45f182c608726b316577d5028d44fb`
+
+---
+
+## 已验收计划：DPM 原始证据清理（2026-09-18）
 
 状态：**USER_ACCEPTED**（2026-09-18 v3.1）。用户已确认 DPM 真机扫码不卡顿且不再出现紫色加载圈。独立 DPM ZIP 只负责导出归档，不需要新增 DPM 扫码证据记录，也不再推进独立 ZIP/包删除、历史 ZIP 导入或 SAF 包管理。审计已完成，v2 实现已完成（DpmOperationGuard + 逐 evidenceId 清理 + 绑定 TTL）。v3.1 修复已完成（OperationLease 令牌 + applicationScope 退出清理 + 诊断日志 + UI 精简）。
 
@@ -710,3 +734,13 @@ DEFERRED / POST-MVP（不阻塞 V1 交付）：
 ### Git 收口规则
 
 用户已明确：阶段任务完成后必须提交 Git，避免工作区长期堆积。执行 Agent `mimo` 不提交；主协调在阶段验收完成后按路径审计 `status`/`diff`，只选择当前任务相关文件提交，保留其他工作区改动，不使用 `git add .`、reset、clean、stash 或回滚。
+
+## 2026-09-18 ROI 任务主协调审计更新
+
+~~当前状态：**IN_PROGRESS / AUDIT_REOPENED**~~（历史记录，已被2026-09-18 的 99/99 证据 supersede）。文档中 2026-09-17 的 `USER_ACCEPTED` 记录与最新可复现证据冲突，已降级为历史记录；本节为历史状态依据。当前状态以 `tasks/todo.md` 顶部为准：**软件验证完成，等待用户验收**。
+
+只读源码审计确认核心结果语义和导出回链已经存在：`humanResult` 实际作为最终人工结果写入，导出器同时保留兼容字段并把同一最终值写入 `result`；改判证据图写入 ZIP 后，CSV 的 `ROI图ZIP路径` 使用真实 ZIP entry。当前实体没有独立持久化字段名为 `result` 的列；若产品要求数据库层也必须有规范 `result` 字段，仍需另行设计兼容 migration。若“result”仅指结果包最终列，则现有映射符合当前行为，但应在报告中明确，避免把 `humanResult` 和 `result` 误写成两个不同结论。
+
+**[历史记录，已被2026-09-18 的 99/99 证据覆盖]** 2026-09-18 定向复跑 99 项，98 项通过、1 项失败：`ViewModelSaveLifecycleTest.dbSaveFailureCleansUpNewEvidenceFiles`。失败原因是测试 JPEG 夹具无法被 Robolectric 解码（`Quantization table 0x00 was not defined`），测试在 ViewModel 加载阶段失败，没有实际验证 DB 写入失败后的新证据清理。~~因此生命周期失败路径仍未闭环，不能提交或标记验收完成。~~
+
+~~下一步仅处理：修复该测试夹具、重新跑生命周期测试和 ROI 定向集合，必要时补编译/APK/instrumented 证据；然后更新对应报告并等待用户验收。~~ 钢印 OCR 真机/真实样本验证按用户指示暂不纳入本任务清单。当前状态以 `tasks/todo.md` 顶部为准：**软件验证完成，等待用户验收**。

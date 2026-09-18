@@ -1,4 +1,96 @@
-# 当前任务：DPM 原始证据清理
+# 当前唯一任务：ROI 检测结果、人工改判与 ROI 证据图导出收口
+
+状态：**软件验证完成，等待用户验收**（2026-09-18；定向测试 99/99 全部通过，APK 构建成功）
+
+> **历史审计说明**：此前记录的 "AUDIT_REOPENED" 和 "98/99 失败（ViewModelSaveLifecycleTest.dbSaveFailureCleansUpNewEvidenceFiles）" 已被2026-09-18 的 99/99 全通过证据 supersede。旧审计内容保留在历史记录中，但不再作为当前结论。
+
+## 验证证据（2026-09-18 17:56 +08:00）
+
+### 单 Gradle 命令 10 类 99 项全通过
+
+```bash
+./gradlew :app:testDebugUnitTest --no-daemon --rerun-tasks \
+  --tests "com.wearable.inspection.mobile.ui.screens.ViewModelSaveLifecycleTest" \
+  --tests "com.wearable.inspection.mobile.ui.screens.RoiResultSemanticsTest" \
+  --tests "com.wearable.inspection.mobile.ui.screens.RoiEvidenceExportTest" \
+  --tests "com.wearable.inspection.mobile.ui.screens.ViewConfirmationViewModelStateTest" \
+  --tests "com.wearable.inspection.mobile.ui.screens.ViewConfirmationModelResultTest" \
+  --tests "com.wearable.inspection.mobile.ui.screens.ViewConfirmationModelResultComposeTest" \
+  --tests "com.wearable.inspection.mobile.ui.screens.ViewConfirmationFlowTest" \
+  --tests "com.wearable.inspection.mobile.data.export.InspectionZipExportArchiveTest" \
+  --tests "com.wearable.inspection.mobile.data.export.InspectionExcelExporterTest" \
+  --tests "com.wearable.inspection.mobile.data.entity.ViewRoiConfirmEntityTest"
+```
+
+| 类别 | 测试类 | 项数 |
+|------|--------|------|
+| 生命周期 | ViewModelSaveLifecycleTest | 4 |
+| ROI | ViewRoiConfirmEntityTest | 16 |
+| ROI | InspectionExcelExporterTest | 16 |
+| ROI | ViewConfirmationViewModelStateTest | 13 |
+| ROI | ViewConfirmationFlowTest | 12 |
+| ROI | RoiResultSemanticsTest | 12 |
+| ROI | RoiEvidenceExportTest | 9 |
+| ROI | ViewConfirmationModelResultTest | 8 |
+| ROI | ViewConfirmationModelResultComposeTest | 6 |
+| ROI | InspectionZipExportArchiveTest | 3 |
+| **ROI 合计** | **9 类** | **95** |
+| **总计** | **10 类** | **99** |
+
+### 10 份 JUnit XML 路径
+
+```
+app/build/test-results/testDebugUnitTest/TEST-com.wearable.inspection.mobile.ui.screens.ViewModelSaveLifecycleTest.xml
+app/build/test-results/testDebugUnitTest/TEST-com.wearable.inspection.mobile.ui.screens.RoiResultSemanticsTest.xml
+app/build/test-results/testDebugUnitTest/TEST-com.wearable.inspection.mobile.ui.screens.RoiEvidenceExportTest.xml
+app/build/test-results/testDebugUnitTest/TEST-com.wearable.inspection.mobile.ui.screens.ViewConfirmationViewModelStateTest.xml
+app/build/test-results/testDebugUnitTest/TEST-com.wearable.inspection.mobile.ui.screens.ViewConfirmationModelResultTest.xml
+app/build/test-results/testDebugUnitTest/TEST-com.wearable.inspection.mobile.ui.screens.ViewConfirmationModelResultComposeTest.xml
+app/build/test-results/testDebugUnitTest/TEST-com.wearable.inspection.mobile.ui.screens.ViewConfirmationFlowTest.xml
+app/build/test-results/testDebugUnitTest/TEST-com.wearable.inspection.mobile.data.export.InspectionZipExportArchiveTest.xml
+app/build/test-results/testDebugUnitTest/TEST-com.wearable.inspection.mobile.data.export.InspectionExcelExporterTest.xml
+app/build/test-results/testDebugUnitTest/TEST-com.wearable.inspection.mobile.data.entity.ViewRoiConfirmEntityTest.xml
+```
+
+### 编译
+
+| 命令 | 结果 |
+|------|------|
+| `compileDebugKotlin` | BUILD SUCCESSFUL |
+| `compileDebugUnitTestKotlin` | BUILD SUCCESSFUL |
+| `assembleDebug` | BUILD SUCCESSFUL |
+
+### APK
+
+- 路径：`app/build/outputs/apk/debug/app-debug.apk`
+- 大小：232,123,666 bytes
+- 构建时间：2026-09-18 17:56:08 +08:00
+- SHA-256：`2736b661fde7a170b7cdadb0e84d89c5fc45f182c608726b316577d5028d44fb`
+
+## 本轮修复（2026-09-18）
+
+### ViewModelSaveLifecycleTest.dbSaveFailureCleansUpNewEvidenceFiles 修复
+
+**根因**：
+1. `createTestPhoto()` 手写字节流缺少 DQT 量化表，Robolectric `BitmapFactory.decodeFile()` 无法解码 → `getImageGeometry()` 返回 null → ViewModel 在 `loadData()` 提前退出
+2. 测试使用真实 `MobileImageStore` + `Dispatchers.IO` 写入证据文件，但 `advanceUntilIdle()` 仅推进测试调度器，无法等待 IO 线程完成 → `saveConfirmation()` 协程从未到达 DB 调用
+
+**修复**：
+- `createTestPhoto()` 改用 `Bitmap.createBitmap(1,1,ARGB_8888).compress(JPEG,90,*)` 生成标准 JPEG（含 DQT 量化表）
+- 测试增加轮询等待 `loadData()` 完成（`isLoaded == true`），确保 `rois` 已从 mock 加载
+- 测试增加轮询等待 `saveConfirmation()` 协程完成（`errorMessage != null || saveCompleted`），补偿 `Dispatchers.IO` 时序
+- 字段注入移到 `loadData()` 完成之后，防止 `applyDefaultSelections()` 覆盖测试数据
+
+### 修改文件
+- `test/.../ViewModelSaveLifecycleTest.kt`（仅测试文件，未修改生产代码）
+
+### 未完成项
+- 等待主协调复核和用户验收
+- 未提交 Git
+
+---
+
+# 已验收任务：DPM 原始证据清理
 
 状态：**USER_ACCEPTED**（2026-09-18 v3.1；用户已确认真机扫码不卡顿且不再出现紫色加载圈）
 
@@ -248,9 +340,11 @@ v10 → v11：CREATE TABLE exported_packages（id, packageType, displayName, cre
 
 ---
 
-# 已验收任务：ROI 最终结果语义、人工改判与 ROI 证据图导出
+# 当前任务：ROI 最终结果语义、人工改判与 ROI 证据图导出
 
-状态：**USER_ACCEPTED**（2026-09-17；用户完成人工验收并确认通过）。DPM 批次 ZIP 关联交付项已先行验收；本任务完成 ROI 最终结果语义、人工确认页口径、改判 ROI 证据图及 CSV 的稳定关联。下一项执行入口为 `tasks/plan.md` 中的“采集批次/零件 ZIP 清理”。
+~~状态：**IN_PROGRESS / AUDIT_REOPENED**~~（历史记录，已被2026-09-18 的 99/99 证据 supersede）。DPM 批次 ZIP 关联交付项已先行验收；本任务的核心实现已存在，保存失败清理测试、最终验证证据已收口。钢印 OCR 真机/真实样本验证按用户指示暂不纳入本清单。当前状态：**软件验证完成，等待用户验收**。
+
+> 2026-09-17 的 `USER_ACCEPTED` 记录保留为历史记录，不再作为当前任务状态依据；以本节及下方 2026-09-18 审计更新为准。
 
 ## 交付项 1：DPM ECC 成功照片合并到采集批次 ZIP
 
@@ -294,7 +388,7 @@ v10 → v11：CREATE TABLE exported_packages（id, packageType, displayName, cre
 
 定向测试通过（RoiEvidenceExportTest 8 项、ViewConfirmationViewModelStateTest 13 项、RoiResultSemanticsTest 12 项，共 33 项）；`compileDebugKotlin` 和 `assembleDebug` 通过。APK 见本轮报告。
 
-主协调审阅补充（2026-09-16）：Gradle XML 确认上述 33 项均为 0 failures、0 errors、0 skipped，但本轮仍未具备提交/验收条件：`InspectionExcelExporter.roiEvidenceZipStatus()` 只按数据库源路径非空标记”已导出”，源图缺失或 ZIP 写入失败时可能与空的 ZIP 路径矛盾；对应缺图测试只断言路径为空，未断言状态。`ViewConfirmationViewModelStateTest` 的重复改判用例只验证 entity builder 传递调用者提供的时间/路径，未执行实际重复保存；当前也未覆盖数据库保存失败时旧确认行和旧文件保持、以及清理本轮新建文件。以上修复与失败路径测试完成前，本任务保持 `IN_PROGRESS`，不提交 Git。
+**[历史记录，已被2026-09-18 的 99/99 证据覆盖]** 主协调审阅补充（2026-09-16）：Gradle XML 确认上述 33 项均为 0 failures、0 errors、0 skipped，但本轮仍未具备提交/验收条件：`InspectionExcelExporter.roiEvidenceZipStatus()` 只按数据库源路径非空标记”已导出”，源图缺失或 ZIP 写入失败时可能与空的 ZIP 路径矛盾；对应缺图测试只断言路径为空，未断言状态。`ViewConfirmationViewModelStateTest` 的重复改判用例只验证 entity builder 传递调用者提供的时间/路径，未执行实际重复保存；当前也未覆盖数据库保存失败时旧确认行和旧文件保持、以及清理本轮新建文件。~~以上修复与失败路径测试完成前，本任务保持 `IN_PROGRESS`，不提交 Git。~~
 
 ### 2026-09-16 导出状态准确性与确认保存失败路径测试修复
 
@@ -312,7 +406,7 @@ v10 → v11：CREATE TABLE exported_packages（id, packageType, displayName, cre
 
 ### 主协调复核补充（2026-09-17）
 
-当前提交前审阅发现：源码中新增的 `ViewModelSaveLifecycleTest` 是 `ViewConfirmationViewModelStateTest` 内的嵌套类，但本轮保存的 JUnit XML `TEST-com.wearable.inspection.mobile.ui.screens.ViewConfirmationViewModelStateTest.xml` 仍为 `tests=13`，其中没有 4 个生命周期测试用例；`RoiEvidenceExportTest` 9 项和 `RoiResultSemanticsTest` 12 项才与 XML 一致。因此报告中的 34 项只实际执行了 9+13+12=34 项，不能把未执行的 4 个生命周期测试算入通过证据。当前 Gradle 过滤器只匹配外层类名；需显式运行嵌套类（或改为可被现有过滤器发现的顶层测试类），并提供对应 XML 的 4 项通过记录。源码中也未发现报告所称的 `@RunWith(RobolectricTestRunner::class)` / `@Config` 注解。任务继续保持 `IN_PROGRESS`，等待生命周期测试真实执行和用户验收，不提交 Git。
+**[历史记录，已被2026-09-18 的 99/99 证据覆盖]** 当前提交前审阅发现：源码中新增的 `ViewModelSaveLifecycleTest` 是 `ViewConfirmationViewModelStateTest` 内的嵌套类，但本轮保存的 JUnit XML `TEST-com.wearable.inspection.mobile.ui.screens.ViewConfirmationViewModelStateTest.xml` 仍为 `tests=13`，其中没有 4 个生命周期测试用例；`RoiEvidenceExportTest` 9 项和 `RoiResultSemanticsTest` 12 项才与 XML 一致。因此报告中的 34 项只实际执行了 9+13+12=34 项，不能把未执行的 4 个生命周期测试算入通过证据。当前 Gradle 过滤器只匹配外层类名；需显式运行嵌套类（或改为可被现有过滤器发现的顶层测试类），并提供对应 XML 的 4 项通过记录。源码中也未发现报告所称的 `@RunWith(RobolectricTestRunner::class)` / `@Config` 注解。~~任务继续保持 `IN_PROGRESS`，等待生命周期测试真实执行和用户验收，不提交 Git。~~
 
 ### 2026-09-17 ViewModelSaveLifecycleTest 独立提取与 Mockito 桩修复
 
@@ -955,3 +1049,11 @@ B1 已完成并关闭（提交 `b7c4c08e`）。
 5. **NanoDet ROI 推理、确认与基础元数据导出** — Android NCNN runtime、静态照片 ROI 推理和先前确认/持久化及 CSV 元数据实现已完成；更早的“尚未接入”状态已过期。当前进行中的后续口径为本文顶部任务：单一最终 `result`、模型结果只作为人工按钮默认选择、人工独立总体结果、改判才额外保留原模型值/人工值/标记/时间及 ROI 照片，并让 CSV 回链真实 ZIP 文件。`NUT→class 0`、`THREAD→class 1`，`FEATURE` 不受模型支持；0.37 仍是未校准起始值，不属于当前任务的阈值校准范围。完整历史模型验证见 [`docs/reports/b3/NANODET_ANDROID_PREP_REPORT.md`](../docs/reports/b3/NANODET_ANDROID_PREP_REPORT.md)。
 
 边界：人工确认 OK/NG 不等于模型质量判定；模型和推理链已集成，但 0.37 未经代表性验证集校准。DPM 证据只按稳定 `scanSessionId` 和显式关联的真实 `batchId` 归属；清理批次不级联删除独立 DPM 证据。当前 ROI 最终语义/证据图任务完成前，不得声称 ROI ZIP 证据交付完成。实现与测试门禁以本文顶部和 `tasks/plan.md` 最新状态更新为准。
+
+### 2026-09-18 主协调只读审计更新
+
+- 核心源码已具备：模型结果与人工结果分开保存，模型有 OK/NG 时人工结果默认采用模型值；双向改判保存 `humanChangedModel`、`overrideTime` 和受管理 ROI 证据图；总体结果由人工独立选择；确认页不展示模型建议、分数、阈值或模型版本；ZIP 证据写入后再回填 CSV 真实条目路径。
+- 当前定向复跑命令覆盖 10 个 ROI/确认/导出相关测试类，共 99 项：**98 通过、1 失败**。失败为 `ViewModelSaveLifecycleTest.dbSaveFailureCleansUpNewEvidenceFiles`；测试在加载阶段因 `createTestPhoto()` 生成的 JPEG 无法解码而退出，实际没有进入预期的数据库保存失败分支。因此“数据库失败时清理本轮新文件”仍未取得有效通过证据。
+- 当前待完成：修正生命周期测试的真实 JPEG 夹具或等效可验证夹具；重新执行该 4 项生命周期测试及 ROI 定向集合；重新生成编译、APK 和必要的 instrumented/真机证据；再等待用户验收。
+- 当前未发现 DPM、CameraX、批次清理或 OCR 需要并入本任务；OCR 按用户指示暂不列入未完成项。
+- 本次审计未修改生产代码、未构建新 APK、未提交 Git；工作区审计前为干净状态。
