@@ -23,7 +23,8 @@ class InspectionRepository(
     private val captureBatchDao: CaptureBatchDao,
     private val capturedPhotoDao: CapturedPhotoDao,
     private val viewRoiConfirmDao: ViewRoiConfirmDao,
-    private val dpmScanEvidenceDao: DpmScanEvidenceDao
+    private val dpmScanEvidenceDao: DpmScanEvidenceDao,
+    private val exportedPackageDao: ExportedPackageDao
 ) {
     private val imageStore: MobileImageStore by lazy { MobileImageStore(context) }
     private val filesDir: java.io.File get() = context.filesDir
@@ -438,6 +439,74 @@ class InspectionRepository(
         return updated
     }
 
+    // ---- DPM 证据安全删除 ----
+
+    /**
+     * 安全删除单条 DPM 证据行及其文件。
+     *
+     * 安全规则：
+     * 1. 只删除 id 精确匹配的单行；
+     * 2. 未绑定批次（batchId IS NULL）的证据不得删除；
+     * 3. 同一 scanSessionId 被多个不同 batchId 引用时（共享引用），不得删除；
+     * 4. 删除成功后同步删除 dpm_evidence/ 下的原图和 ROI 图文件。
+     *
+     * @return 删除结果
+     */
+    suspend fun deleteDpmEvidenceSafely(id: Long): DpmEvidenceDeletionResult {
+        // 1. 查询单行
+        val all = dpmScanEvidenceDao.getAll()
+        val evidence = all.find { it.id == id }
+            ?: return DpmEvidenceDeletionResult(false, "证据行不存在: id=$id")
+
+        // 2. 未绑定批次的证据不得删除
+        if (evidence.batchId.isNullOrBlank()) {
+            return DpmEvidenceDeletionResult(false, "证据未绑定批次，不允许删除: id=$id")
+        }
+
+        // 3. 共享引用检查：同一 scanSessionId 是否被多个不同 batchId 引用
+        val distinctBatchCount = dpmScanEvidenceDao.countDistinctBatchIdsForSession(evidence.scanSessionId)
+        if (distinctBatchCount > 1) {
+            return DpmEvidenceDeletionResult(false, "证据属于共享会话（${distinctBatchCount} 个批次引用），不允许单独删除: id=$id sessionId=${evidence.scanSessionId}")
+        }
+
+        // 4. 删除文件
+        imageStore.deleteDpmEvidenceFile(evidence.originalImagePath)
+        if (!evidence.roiImagePath.isNullOrBlank()) {
+            imageStore.deleteDpmEvidenceFile(evidence.roiImagePath)
+        }
+
+        // 5. 删除 DB 行
+        val deleted = dpmScanEvidenceDao.deleteById(id)
+        if (deleted == 0) {
+            return DpmEvidenceDeletionResult(false, "删除失败：数据库行未受影响: id=$id")
+        }
+
+        Log.i(TAG, "DPM 证据已安全删除: id=$id sessionId=${evidence.scanSessionId} batchId=${evidence.batchId}")
+        return DpmEvidenceDeletionResult(true, null)
+    }
+
+    // ---- 导出包记录 ----
+
+    suspend fun insertExportedPackage(pkg: ExportedPackageEntity): Long =
+        exportedPackageDao.insert(pkg)
+
+    suspend fun updateExportedPackage(pkg: ExportedPackageEntity) =
+        exportedPackageDao.update(pkg)
+
+    fun observeExportedPackages(): Flow<List<ExportedPackageEntity>> =
+        exportedPackageDao.observeAll()
+
+    suspend fun getExportedPackage(id: Long): ExportedPackageEntity? =
+        exportedPackageDao.getById(id)
+
+    suspend fun getExportedPackagesByBatch(batchId: String): List<ExportedPackageEntity> =
+        exportedPackageDao.getByBatchId(batchId)
+
+    suspend fun deleteExportedPackage(id: Long): Int =
+        exportedPackageDao.deleteById(id)
+
+    suspend fun countExporting(): Int =
+        exportedPackageDao.countExporting()
 }
 
 /**
@@ -456,5 +525,16 @@ data class BatchDeletionResult(
     val deletedRoiEvidence: Int,
     val missingFiles: Int,
     val deletedZips: Int,
+    val error: String?
+)
+
+/**
+ * DPM 证据安全删除结果
+ *
+ * @property success 删除是否成功
+ * @property error 失败原因（成功时为 null）
+ */
+data class DpmEvidenceDeletionResult(
+    val success: Boolean,
     val error: String?
 )

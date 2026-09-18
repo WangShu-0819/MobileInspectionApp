@@ -46,7 +46,8 @@ class PartDpmDaoTest {
             captureBatchDao = db.captureBatchDao(),
             capturedPhotoDao = db.capturedPhotoDao(),
             viewRoiConfirmDao = db.viewRoiConfirmDao(),
-            dpmScanEvidenceDao = db.dpmScanEvidenceDao()
+            dpmScanEvidenceDao = db.dpmScanEvidenceDao(),
+            exportedPackageDao = db.exportedPackageDao()
         )
     }
 

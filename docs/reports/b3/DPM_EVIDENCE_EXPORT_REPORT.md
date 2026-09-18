@@ -204,3 +204,63 @@ APK：
 - DPM 空 ZIP / SAF 写入失败清理及应用级保存作用域：`b7ac09c8`。
 - DPM 扫码退出顺序、SAF 完整写入和 ZIP 条目回归补充：`62976e60`。
 - 其他未能明确归入上述验收交付的工作区修改均未纳入提交，原样保留。
+
+---
+
+## 2026-09-18 DPM 独立 ZIP/包删除实现
+
+状态：**SOFTWARE_COMPLETE / PHYSICAL_ACCEPTANCE_PENDING**
+
+### 新增能力
+
+1. **导出包持久化记录**（`exported_packages` 表）：记录每次 SAF 导出的包类型、文件名、创建时间、导出状态、SAF URI、持久化权限状态、关联 batchId/sessionId、字节数和错误信息。
+
+2. **SAF URI 持久化权限**：导出成功后调用 `takePersistableUriPermission`，部分 SAF provider 不支持时降级（仅记录文件名，删除时提示手动清理）。
+
+3. **精确删除**：用户选择指定 packageId → 使用保存的 SAF URI 删除文档（优先 `DocumentsContract.deleteDocument`，降级 `contentResolver.delete`）→ 成功后删除本地记录 → URI 无效/权限失效/文件不存在时保留记录并提示。
+
+4. **DPM 证据安全删除**（`deleteDpmEvidenceSafely`）：未绑定批次的证据不可删；同一 scanSessionId 被多个不同 batchId 引用时（共享引用）不可删；删除后同步清理 dpm_evidence/ 文件。
+
+### 数据库变更
+
+v10 → v11 migration：CREATE TABLE exported_packages + INDEX on batchId + INDEX on packageType。
+
+### 安全边界
+
+- 导出中的包在 UI 层禁止删除（DB 层允许，由 UI 控制）
+- 批次删除后导出包记录保留（独立管理，无外键依赖）
+- DPM 证据删除严格按单条 ID + 共享检查，不按全局 batchId 批量删除
+- 未建立明确包归属的原始 DPM 证据必须保留
+
+### 测试
+
+`ExportedPackageInstrumentedTest` 15 项：migration、URI 持久化、取消/失败状态、包列表、精确删除、导出中禁止删除、按 batchId 查询、DPM 证据未绑定/共享/正常删除、不存在 ID、批次删除回归。
+
+### APK
+
+`app/build/outputs/apk/debug/app-debug.apk`，2026-09-18 10:33，232,724,623 bytes，SHA-256 `16131aaa3bb135971e315740faacbd1fe6d209db069a218e00eb6be8e572dd35`。
+
+### 主协调复核与删除失败路径修正（2026-09-18）
+
+审阅发现初版删除逻辑在 SAF 删除失败、权限失效或 `DocumentsContract.deleteDocument()` 返回 `false` 时仍会删除本地包记录，不符合失败保留记录的安全要求。已做最小修正：
+
+- SAF 删除返回 `false` 时继续尝试 `contentResolver.delete()`；两者均失败则保留本地导出包记录并提示错误。
+- SAF 删除抛出异常或 URI 权限失效时保留本地记录。
+- 仅在 SAF 文件删除成功，或记录没有 SAF URI 时，才删除本地导出包记录。
+- 没有顺手处理 `ExportResultScreen`、`StampOcrViewModel` 的 cacheDir 临时文件债务。
+
+复核验证：
+
+1. `:app:compileDebugKotlin`：`BUILD SUCCESSFUL`。
+2. DPM/导出定向 JVM 测试：`BUILD SUCCESSFUL`。
+3. `:app:connectedDebugAndroidTest`：`80/80` 通过。
+4. 测试结束后已重新安装主 APK，并用完整组件启动 `com.wearable.inspection.mobile/.MainActivity`；新包 PID `19234`，旧包 PID 为空，前台为新包。
+
+当前 APK：
+
+- 路径：`D:\study\Textile_defects\Wearable Inspection\MobileInspectionApp\app\build\outputs\apk\debug\app-debug.apk`
+- 时间：2026-09-18 11:04:38 +08:00
+- 大小：232,724,756 bytes
+- SHA-256：`8BC73CC542BE271EE151AB527BF08A1652DFA6F388717D305956F188896FF4FE`
+
+当前仍待用户人工验收 SAF 文件选择器、独立包列表、成功删除、删除失败保留记录和重启后的 URI 生命周期。本轮不读取或视觉分析 PNG/JPG。

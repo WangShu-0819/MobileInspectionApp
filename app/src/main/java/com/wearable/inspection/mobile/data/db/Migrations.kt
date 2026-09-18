@@ -225,6 +225,42 @@ val MIGRATION_9_10 = object : Migration(9, 10) {
 }
 
 /**
+ * 数据库 Migration v10 → v11
+ *
+ * 新增 exported_packages 表，记录 SAF 导出包元数据和 URI，
+ * 支持后续按 packageId 精确删除 SAF 文档和本地记录。
+ */
+val MIGRATION_10_11 = object : Migration(10, 11) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS exported_packages (
+                id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                packageType TEXT NOT NULL,
+                displayName TEXT NOT NULL,
+                createdAt INTEGER NOT NULL,
+                status TEXT NOT NULL,
+                safUri TEXT,
+                persistedPermission INTEGER NOT NULL DEFAULT 0,
+                batchId TEXT,
+                sessionId TEXT,
+                byteSize INTEGER NOT NULL DEFAULT 0,
+                errorMessage TEXT
+            )
+            """.trimIndent()
+        )
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS index_exported_packages_batchId " +
+                "ON exported_packages (batchId)"
+        )
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS index_exported_packages_packageType " +
+                "ON exported_packages (packageType)"
+        )
+    }
+}
+
+/**
  * 所有 Migration 列表
  * 新增 Migration 时必须在此添加
  */
@@ -238,5 +274,6 @@ val ALL_MIGRATIONS = arrayOf<Migration>(
     MIGRATION_6_7,
     MIGRATION_7_8,
     MIGRATION_8_9,
-    MIGRATION_9_10
+    MIGRATION_9_10,
+    MIGRATION_10_11
 )

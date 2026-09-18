@@ -21,6 +21,37 @@ interface DpmScanEvidenceDao {
     suspend fun getByBatchId(batchId: String): List<DpmScanEvidenceEntity>
 
     /**
+     * 查询未绑定任何批次的证据（batchId IS NULL）。
+     * 独立扫码产生的证据无归属，不得被包删除操作清理。
+     */
+    @Query("SELECT * FROM dpm_scan_evidence WHERE batchId IS NULL ORDER BY createdAt DESC")
+    suspend fun getUnbound(): List<DpmScanEvidenceEntity>
+
+    /**
+     * 查询某 scanSessionId 下是否有多个不同 batchId 的证据。
+     * 用于判断证据行是否为共享引用场景（同一会话被多个批次引用）。
+     *
+     * @return 该 session 下出现的不同 batchId 数量（排除 NULL）
+     */
+    @Query(
+        """
+        SELECT COUNT(DISTINCT batchId)
+        FROM dpm_scan_evidence
+        WHERE scanSessionId = :scanSessionId
+          AND batchId IS NOT NULL
+        """
+    )
+    suspend fun countDistinctBatchIdsForSession(scanSessionId: String): Int
+
+    /**
+     * 精确删除单条证据行。
+     * 调用方必须先确认该行不被其他批次引用（非共享场景）。
+     * 不按全局 batchId 批量删除。
+     */
+    @Query("DELETE FROM dpm_scan_evidence WHERE id = :id")
+    suspend fun deleteById(id: Long): Int
+
+    /**
      * 将 scanSessionId 下所有成功且未绑定批次的证据批量关联到指定 batchId。
      * 条件 batchId IS NULL 保证幂等；条件 status='SUCCESS' 只绑定成功帧。
      *

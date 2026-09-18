@@ -1,6 +1,7 @@
 package com.wearable.inspection.mobile.ui.screens
 
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -68,6 +69,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.wearable.inspection.mobile.MobileInspectionApp
 import com.wearable.inspection.mobile.data.entity.CaptureBatchEntity
+import com.wearable.inspection.mobile.data.entity.ExportedPackageEntity
 import com.wearable.inspection.mobile.data.entity.InspectionSessionEntity
 import com.wearable.inspection.mobile.data.export.DpmEvidenceExportResult
 import com.wearable.inspection.mobile.data.export.DpmEvidenceExportService
@@ -87,6 +89,7 @@ import com.wearable.inspection.mobile.ui.theme.TextSecondary
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import android.provider.DocumentsContract
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -190,6 +193,12 @@ fun TraceRecordsScreen() {
         selectedBatchIds = emptySet()
     }
 
+    // ---- 导出包管理状态 ----
+    val exportedPackages by repository.observeExportedPackages().collectAsState(initial = emptyList())
+    var selectedPackageIds by remember { mutableStateOf<Set<Long>>(emptySet()) }
+    var showDeletePackageDialog by remember { mutableStateOf(false) }
+    var deletingPackage by remember { mutableStateOf(false) }
+
     val snackbarHostState = remember { SnackbarHostState() }
 
     // 删除确认框打开时异步加载每个选中批次的实际照片数量
@@ -214,35 +223,99 @@ fun TraceRecordsScreen() {
     // DPM 证据导出状态
     var dpmExporting by remember { mutableStateOf(false) }
     var dpmExportMessage by remember { mutableStateOf<String?>(null) }
+    // 当前导出中的包 ID（在 CreateDocument 回调中使用）
+    var pendingDpmPackageId by remember { mutableStateOf<Long?>(null) }
 
     // SAF 文件创建器（DPM 证据导出）
     val createDpmZipLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/zip")
     ) { uri ->
+        val pkgId = pendingDpmPackageId
         if (uri == null) {
             dpmExporting = false
+            // 用户取消：更新包状态为 CANCELLED
+            if (pkgId != null) {
+                scope.launch {
+                    repository.getExportedPackage(pkgId)?.let { pkg ->
+                        repository.updateExportedPackage(pkg.copy(status = ExportedPackageEntity.STATUS_CANCELLED))
+                    }
+                }
+            }
+            pendingDpmPackageId = null
             return@rememberLauncherForActivityResult
         }
         scope.launch {
             dpmExporting = true
+            // 尝试持久化 SAF URI 权限
+            var persisted = false
+            try {
+                context.contentResolver.takePersistableUriPermission(
+                    uri, Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                )
+                persisted = true
+            } catch (_: Exception) {
+                // 部分 SAF provider 不支持持久化，降级处理
+            }
+            // 更新包记录的 SAF URI
+            if (pkgId != null) {
+                repository.getExportedPackage(pkgId)?.let { pkg ->
+                    repository.updateExportedPackage(pkg.copy(
+                        safUri = uri.toString(),
+                        persistedPermission = persisted
+                    ))
+                }
+            }
             val result = withContext(Dispatchers.IO) {
                 val tempFile = File(context.cacheDir, "dpm_evidence_export.zip")
                 val exportResult = dpmExportService.exportEvidenceZip(tempFile)
                 if (exportResult is DpmEvidenceExportResult.Success) {
                     try {
-                        copyZipToSafUri(context, uri, tempFile)
+                        val byteSize = copyZipToSafUri(context, uri, tempFile)
                         tempFile.delete()
+                        // 更新包状态为成功
+                        if (pkgId != null) {
+                            repository.getExportedPackage(pkgId)?.let { pkg ->
+                                repository.updateExportedPackage(pkg.copy(
+                                    status = ExportedPackageEntity.STATUS_SUCCESS,
+                                    byteSize = byteSize
+                                ))
+                            }
+                        }
                         exportResult
                     } catch (e: Exception) {
                         cleanupSafExportFailure(context, uri, tempFile)
+                        // 更新包状态为失败
+                        if (pkgId != null) {
+                            repository.getExportedPackage(pkgId)?.let { pkg ->
+                                repository.updateExportedPackage(pkg.copy(
+                                    status = ExportedPackageEntity.STATUS_FAILED,
+                                    errorMessage = "写入文件失败：${e.localizedMessage ?: "未知错误"}"
+                                ))
+                            }
+                        }
                         DpmEvidenceExportResult.Failure("写入文件失败：${e.localizedMessage ?: "未知错误"}")
                     }
                 } else {
                     cleanupSafExportFailure(context, uri, tempFile)
+                    // 更新包状态为失败
+                    if (pkgId != null) {
+                        val errorMsg = when (exportResult) {
+                            is DpmEvidenceExportResult.Empty -> "暂无 DPM 扫码证据"
+                            is DpmEvidenceExportResult.Failure -> exportResult.message
+                            else -> "导出失败"
+                        }
+                        repository.getExportedPackage(pkgId)?.let { pkg ->
+                            repository.updateExportedPackage(pkg.copy(
+                                status = ExportedPackageEntity.STATUS_FAILED,
+                                errorMessage = errorMsg
+                            ))
+                        }
+                    }
                     exportResult
                 }
             }
             dpmExporting = false
+            pendingDpmPackageId = null
             dpmExportMessage = when (result) {
                 is DpmEvidenceExportResult.Success -> {
                     val msg = buildString {
@@ -258,17 +331,47 @@ fun TraceRecordsScreen() {
         }
     }
 
+    // 当前按批次导出中的包 ID
+    var pendingBatchPackageId by remember { mutableStateOf<Long?>(null) }
+
     // SAF 文件创建器（按批次导出）
     val createZipLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/zip")
     ) { uri ->
         val batchId = exportingBatchId ?: return@rememberLauncherForActivityResult
+        val pkgId = pendingBatchPackageId
         if (uri == null) {
             exportingBatchId = null
+            // 用户取消：更新包状态为 CANCELLED
+            if (pkgId != null) {
+                scope.launch {
+                    repository.getExportedPackage(pkgId)?.let { pkg ->
+                        repository.updateExportedPackage(pkg.copy(status = ExportedPackageEntity.STATUS_CANCELLED))
+                    }
+                }
+            }
+            pendingBatchPackageId = null
             return@rememberLauncherForActivityResult
         }
         scope.launch {
             exportingBatchId = batchId
+            // 尝试持久化 SAF URI 权限
+            var persisted = false
+            try {
+                context.contentResolver.takePersistableUriPermission(
+                    uri, Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                )
+                persisted = true
+            } catch (_: Exception) {}
+            // 更新包记录的 SAF URI
+            if (pkgId != null) {
+                repository.getExportedPackage(pkgId)?.let { pkg ->
+                    repository.updateExportedPackage(pkg.copy(
+                        safUri = uri.toString(),
+                        persistedPermission = persisted
+                    ))
+                }
+            }
             val result = withContext(Dispatchers.IO) {
                 val tempFile = File(context.cacheDir, "batch_${batchId.take(8)}.zip")
                 val batch = repository.getCaptureBatch(batchId)
@@ -283,19 +386,48 @@ fun TraceRecordsScreen() {
                 }
                 if (exportResult is InspectionExportResult.Success) {
                     try {
-                        copyZipToSafUri(context, uri, tempFile)
+                        val byteSize = copyZipToSafUri(context, uri, tempFile)
                         tempFile.delete()
+                        // 更新包状态为成功
+                        if (pkgId != null) {
+                            repository.getExportedPackage(pkgId)?.let { pkg ->
+                                repository.updateExportedPackage(pkg.copy(
+                                    status = ExportedPackageEntity.STATUS_SUCCESS,
+                                    byteSize = byteSize
+                                ))
+                            }
+                        }
                         exportResult
                     } catch (e: Exception) {
                         cleanupSafExportFailure(context, uri, tempFile)
+                        // 更新包状态为失败
+                        if (pkgId != null) {
+                            repository.getExportedPackage(pkgId)?.let { pkg ->
+                                repository.updateExportedPackage(pkg.copy(
+                                    status = ExportedPackageEntity.STATUS_FAILED,
+                                    errorMessage = "写入文件失败：${e.localizedMessage}"
+                                ))
+                            }
+                        }
                         InspectionExportResult.Failure("写入文件失败：${e.localizedMessage}")
                     }
                 } else {
                     cleanupSafExportFailure(context, uri, tempFile)
+                    // 更新包状态为失败
+                    if (pkgId != null) {
+                        val errorMsg = (exportResult as? InspectionExportResult.Failure)?.message ?: "导出失败"
+                        repository.getExportedPackage(pkgId)?.let { pkg ->
+                            repository.updateExportedPackage(pkg.copy(
+                                status = ExportedPackageEntity.STATUS_FAILED,
+                                errorMessage = errorMsg
+                            ))
+                        }
+                    }
                     exportResult
                 }
             }
             exportingBatchId = null
+            pendingBatchPackageId = null
             exportMessages = exportMessages + (batchId to when (result) {
                 is InspectionExportResult.Success -> {
                     val msg = "导出成功：${result.photoCount} 张照片，${result.csvRowCount} 条检测记录"
@@ -478,7 +610,18 @@ fun TraceRecordsScreen() {
                             onClick = {
                                 dpmExporting = true
                                 dpmExportMessage = null
-                                createDpmZipLauncher.launch(dpmExportService.generateZipFileName())
+                                scope.launch {
+                                    val fileName = dpmExportService.generateZipFileName()
+                                    val pkgId = repository.insertExportedPackage(
+                                        ExportedPackageEntity(
+                                            packageType = ExportedPackageEntity.TYPE_DPM_EVIDENCE,
+                                            displayName = fileName,
+                                            status = ExportedPackageEntity.STATUS_EXPORTING
+                                        )
+                                    )
+                                    pendingDpmPackageId = pkgId
+                                    createDpmZipLauncher.launch(fileName)
+                                }
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -532,7 +675,19 @@ fun TraceRecordsScreen() {
                         exportMessage = exportMessages[batch.batchId],
                         onExport = {
                             exportingBatchId = batch.batchId
-                            createZipLauncher.launch("batch_${batch.batchId.take(8)}.zip")
+                            scope.launch {
+                                val fileName = "batch_${batch.batchId.take(8)}.zip"
+                                val pkgId = repository.insertExportedPackage(
+                                    ExportedPackageEntity(
+                                        packageType = ExportedPackageEntity.TYPE_BATCH_INSPECTION,
+                                        displayName = fileName,
+                                        batchId = batch.batchId,
+                                        status = ExportedPackageEntity.STATUS_EXPORTING
+                                    )
+                                )
+                                pendingBatchPackageId = pkgId
+                                createZipLauncher.launch(fileName)
+                            }
                         },
                         onSelect = {
                             selectedBatchIds = if (batch.batchId in selectedBatchIds) {
@@ -549,6 +704,80 @@ fun TraceRecordsScreen() {
                         filter = activeFilter,
                         onViewAll = { activeFilter = BatchTimeFilter.ALL }
                     )
+                }
+            }
+
+            // ---- 已导出包列表 ----
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "已导出包",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = TextPrimary,
+                        modifier = Modifier.weight(1f),
+                    )
+                    IconButton(
+                        onClick = { showDeletePackageDialog = true },
+                        enabled = selectedPackageIds.isNotEmpty() && !deletingPackage
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "删除选中包",
+                            tint = if (selectedPackageIds.isNotEmpty() && !deletingPackage) FailColor else PlaceholderColor,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+            }
+
+            if (exportedPackages.isNotEmpty()) {
+                items(
+                    count = exportedPackages.size,
+                    key = { index -> exportedPackages[index].id },
+                ) { index ->
+                    val pkg = exportedPackages[index]
+                    val isSelected = pkg.id in selectedPackageIds
+                    val isExporting = pkg.status == ExportedPackageEntity.STATUS_EXPORTING
+                    ExportedPackageCard(
+                        pkg = pkg,
+                        selected = isSelected,
+                        onSelect = {
+                            if (!isExporting) {
+                                selectedPackageIds = if (pkg.id in selectedPackageIds) {
+                                    selectedPackageIds - pkg.id
+                                } else {
+                                    selectedPackageIds + pkg.id
+                                }
+                            }
+                        }
+                    )
+                }
+            } else {
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 32.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = "暂无导出包",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = TextSecondary
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -605,6 +834,118 @@ fun TraceRecordsScreen() {
                     } finally {
                         deletingBatch = false
                     }
+                }
+            }
+        )
+    }
+
+    // ---- 导出包删除确认对话框 ----
+    val selectedPackages = exportedPackages.filter { it.id in selectedPackageIds }
+    if (showDeletePackageDialog && selectedPackages.isNotEmpty()) {
+        val hasExporting = selectedPackages.any { it.status == ExportedPackageEntity.STATUS_EXPORTING }
+        AlertDialog(
+            onDismissRequest = { showDeletePackageDialog = false },
+            title = {
+                Text(
+                    text = "删除 ${selectedPackages.size} 个导出包",
+                    fontWeight = FontWeight.SemiBold
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    selectedPackages.take(3).forEach { pkg ->
+                        val statusLabel = when (pkg.status) {
+                            ExportedPackageEntity.STATUS_EXPORTING -> "导出中"
+                            ExportedPackageEntity.STATUS_SUCCESS -> "成功"
+                            ExportedPackageEntity.STATUS_FAILED -> "失败"
+                            ExportedPackageEntity.STATUS_CANCELLED -> "已取消"
+                            else -> pkg.status
+                        }
+                        Text(
+                            text = "${pkg.displayName} · $statusLabel",
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                    if (selectedPackages.size > 3) {
+                        Text(text = "及其他 ${selectedPackages.size - 3} 个包")
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    if (hasExporting) {
+                        Text(
+                            text = "导出中的包无法删除，请等待导出完成。",
+                            color = PendingColor,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    } else {
+                        Text(
+                            text = "将删除所选导出包的 SAF 文件和本地记录。URI 权限失效时需手动清理。此操作无法恢复。",
+                            color = FailColor,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDeletePackageDialog = false
+                        if (hasExporting) return@TextButton
+                        deletingPackage = true
+                        scope.launch {
+                            val deletedIds = mutableListOf<Long>()
+                            val errors = mutableListOf<String>()
+                            selectedPackages.forEach { pkg ->
+                                try {
+                                    // 1. 删除 SAF 文件（如果有 URI）
+                                    if (!pkg.safUri.isNullOrBlank()) {
+                                        val uri = Uri.parse(pkg.safUri)
+                                        // 优先 DocumentsContract.deleteDocument；返回 false 也必须尝试兼容删除。
+                                        val safDeleted = try {
+                                            DocumentsContract.deleteDocument(context.contentResolver, uri)
+                                        } catch (_: Exception) {
+                                            false
+                                        } || runCatching {
+                                            context.contentResolver.delete(uri, null, null) > 0
+                                        }.getOrDefault(false)
+                                        if (!safDeleted) {
+                                            errors.add("${pkg.displayName}: SAF 文件删除失败或权限已失效，请手动清理文件")
+                                            return@forEach
+                                        }
+                                    }
+                                    // 2. 只有 SAF 文件删除成功（或没有 URI）后才删除本地记录。
+                                    if (repository.deleteExportedPackage(pkg.id) == 1) {
+                                        deletedIds += pkg.id
+                                    } else {
+                                        errors.add("${pkg.displayName}: 本地包记录删除失败")
+                                    }
+                                } catch (e: Exception) {
+                                    errors.add("${pkg.displayName}: 记录删除失败: ${e.localizedMessage}")
+                                }
+                            }
+                            selectedPackageIds = selectedPackageIds - deletedIds.toSet()
+                            deletingPackage = false
+                            if (errors.isEmpty()) {
+                                snackbarHostState.showSnackbar(
+                                    message = "已删除 ${deletedIds.size} 个导出包",
+                                    duration = SnackbarDuration.Short
+                                )
+                            } else {
+                                snackbarHostState.showSnackbar(
+                                    message = errors.joinToString("; "),
+                                    duration = SnackbarDuration.Long
+                                )
+                            }
+                        }
+                    },
+                    enabled = !hasExporting
+                ) {
+                    Text("确认删除", color = if (hasExporting) PlaceholderColor else FailColor)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeletePackageDialog = false }) {
+                    Text("取消")
                 }
             }
         )
@@ -959,4 +1300,106 @@ private fun DeleteBatchDialog(
             }
         }
     )
+}
+
+@Composable
+private fun ExportedPackageCard(
+    pkg: ExportedPackageEntity,
+    selected: Boolean,
+    onSelect: () -> Unit
+) {
+    val dateFormat = remember { SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()) }
+    val isExporting = pkg.status == ExportedPackageEntity.STATUS_EXPORTING
+    Card(
+        onClick = onSelect,
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(
+                if (selected) Modifier.border(
+                    width = 2.dp,
+                    color = Primary,
+                    shape = RoundedCornerShape(8.dp)
+                ) else Modifier
+            ),
+        colors = CardDefaults.cardColors(
+            containerColor = if (selected) BackgroundVariant1 else SurfaceWhite
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = pkg.displayName,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = TextPrimary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    val typeLabel = when (pkg.packageType) {
+                        ExportedPackageEntity.TYPE_DPM_EVIDENCE -> "DPM 证据"
+                        ExportedPackageEntity.TYPE_BATCH_INSPECTION -> "批次检测"
+                        else -> pkg.packageType
+                    }
+                    Text(
+                        text = typeLabel,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Primary,
+                    )
+                    Text(
+                        text = dateFormat.format(Date(pkg.createdAt)),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary,
+                    )
+                }
+                // 状态和错误信息
+                val statusColor = when (pkg.status) {
+                    ExportedPackageEntity.STATUS_SUCCESS -> PassColor
+                    ExportedPackageEntity.STATUS_FAILED -> FailColor
+                    ExportedPackageEntity.STATUS_EXPORTING -> PendingColor
+                    else -> PlaceholderColor
+                }
+                val statusText = when (pkg.status) {
+                    ExportedPackageEntity.STATUS_EXPORTING -> "导出中…"
+                    ExportedPackageEntity.STATUS_SUCCESS -> {
+                        val sizeKb = pkg.byteSize / 1024
+                        if (sizeKb > 1024) "成功 · ${sizeKb / 1024} MB" else "成功 · ${sizeKb} KB"
+                    }
+                    ExportedPackageEntity.STATUS_FAILED -> "失败：${pkg.errorMessage ?: "未知错误"}"
+                    ExportedPackageEntity.STATUS_CANCELLED -> "已取消"
+                    else -> pkg.status
+                }
+                Text(
+                    text = statusText,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = statusColor,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            if (!isExporting) {
+                Checkbox(
+                    checked = selected,
+                    onCheckedChange = { onSelect() },
+                    modifier = Modifier.size(48.dp),
+                )
+            } else {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    strokeWidth = 2.dp,
+                    color = PendingColor
+                )
+            }
+        }
+    }
 }

@@ -1,3 +1,69 @@
+# 当前任务：DPM 独立 ZIP/包删除
+
+状态：**SOFTWARE_COMPLETE / PHYSICAL_ACCEPTANCE_PENDING**（2026-09-18）
+
+主协调复核（2026-09-18）：发现并修正导出包删除失败路径。SAF URI 删除返回 `false`、权限失效或异常时，现在保留本地导出包记录；仅在 SAF 文件删除成功（或记录无 URI）后删除本地记录。`DocumentsContract.deleteDocument()` 返回 `false` 时会继续尝试 `contentResolver.delete()`。
+
+本轮复核结果：
+- `:app:compileDebugKotlin`：通过。
+- DPM/导出定向 JVM 测试：通过。
+- `:app:connectedDebugAndroidTest`：80/80 通过。
+- 真机门禁恢复：新包 `com.wearable.inspection.mobile` 已重新安装并以前台组件 `com.wearable.inspection.mobile/.MainActivity` 启动；旧包 PID 为空。
+- 当前 APK：`app/build/outputs/apk/debug/app-debug.apk`，2026-09-18 11:04:38，232,724,756 bytes，SHA-256 `8BC73CC542BE271EE151AB527BF08A1652DFA6F388717D305956F188896FF4FE`。
+
+当前仍待用户人工验收 SAF 文件选择器、独立包列表、成功删除、删除失败保留记录和重启后的 URI 生命周期；本轮不读取或视觉分析 PNG/JPG。
+
+## 实现摘要
+
+新增导出包持久化记录，支持 SAF URI 持久化权限、精确删除 SAF 文档和本地记录。
+
+### 新增文件
+- `data/entity/ExportedPackageEntity.kt` — 导出包记录实体（id/packageType/displayName/createdAt/status/safUri/persistedPermission/batchId/sessionId/byteSize/errorMessage）
+- `data/dao/ExportedPackageDao.kt` — CRUD + observeAll + getByBatchId + countExporting
+
+### 修改文件
+- `data/db/Migrations.kt` — 新增 MIGRATION_10_11（CREATE TABLE exported_packages + 2 indices）
+- `data/db/AppDatabase.kt` — version=11，注册 ExportedPackageEntity + ExportedPackageDao
+- `data/dao/DpmScanEvidenceDao.kt` — 新增 getUnbound()、countDistinctBatchIdsForSession()、deleteById()
+- `data/repository/InspectionRepository.kt` — 新增 exportedPackageDao 参数、导出包 CRUD 方法、deleteDpmEvidenceSafely()（安全删除：未绑定批次拒绝、共享引用拒绝）
+- `ui/screens/TraceRecordsScreen.kt` — 导出开始时创建 EXPORTING 记录、SAF URI 持久化、takePersistableUriPermission、成功/失败/取消状态更新、已导出包列表 UI、精确删除（DocumentsContract.deleteDocument + contentResolver.delete 降级）
+- `MobileInspectionApp.kt` — Repository 构造传入 exportedPackageDao
+- `dpm/DpmScanEvidenceContractTest.kt` — 更新版本断言为 v11、新增 ExportedPackageEntity 断言
+- `data/repository/BatchDeleteInstrumentedTest.kt` — 传入 exportedPackageDao
+- `data/dao/PartDpmDaoTest.kt` — 传入 exportedPackageDao
+
+### 新增测试
+- `data/repository/ExportedPackageInstrumentedTest.kt` — 15 项测试：migration v10→v11、URI 持久化、取消/失败状态、包列表、精确删除不影响其他包、导出中禁止删除（DB 层允许/UI 层禁止）、按 batchId 查询、DPM 证据未绑定拒绝删除、DPM 证据共享引用拒绝删除、DPM 证据正常删除、不存在 ID 删除、批次删除后导出包记录保留
+
+### 数据库 Migration
+v10 → v11：CREATE TABLE exported_packages（id, packageType, displayName, createdAt, status, safUri, persistedPermission, batchId, sessionId, byteSize, errorMessage）+ INDEX on batchId + INDEX on packageType
+
+### 验证命令与结果
+1. `:app:compileDebugKotlin` — BUILD SUCCESSFUL
+2. DPM + 导出定向 JVM 测试 — 全部通过
+3. `:app:assembleDebug` — BUILD SUCCESSFUL
+
+### APK 信息
+- 路径：`app/build/outputs/apk/debug/app-debug.apk`
+- 时间：2026-09-18 10:33
+- 大小：232,724,623 bytes
+- SHA-256：`16131aaa3bb135971e315740faacbd1fe6d209db069a218e00eb6be8e572dd35`
+
+### 未完成项
+- DPM 证据安全删除测试需要设备运行（instrumented test）
+- 全量 JVM 测试有16项失败，其中15项为既有预存失败（与本次修改无关），1项 DPM 版本断言已修复
+- 未运行 connectedDebugAndroidTest 或真机验证
+- 未提交 Git
+
+### DPM 证据删除安全边界
+- `deleteDpmEvidenceSafely()` 仅允许删除已绑定批次且非共享引用的证据行
+- 未绑定批次（batchId IS NULL）的证据不得删除
+- 同一 scanSessionId 被多个不同 batchId 引用时（共享引用）不得删除
+- 删除后同步清理 dpm_evidence/ 下的原图和 ROI 图文件
+- 当前数据模型无法安全判断"证据归属被删除包"时，保留证据不删除
+
+---
+
 # 已验收任务：采集批次/零件 ZIP 清理
 
 状态：**USER_ACCEPTED**（2026-09-18；用户完成人工验收并确认通过）。本任务已完成开发、自动化验证、最终 APK 构建和人工验收；不扩展批量多选导出、ROI、DPM、CameraX 或其他待办。

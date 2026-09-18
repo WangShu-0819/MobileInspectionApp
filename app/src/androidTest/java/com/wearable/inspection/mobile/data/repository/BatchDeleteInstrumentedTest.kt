@@ -50,6 +50,7 @@ class BatchDeleteInstrumentedTest {
             capturedPhotoDao = db.capturedPhotoDao(),
             viewRoiConfirmDao = db.viewRoiConfirmDao(),
             dpmScanEvidenceDao = db.dpmScanEvidenceDao(),
+            exportedPackageDao = db.exportedPackageDao()
         )
         capturesDir = File(context.filesDir, "captures").apply { mkdirs() }
         roiEvidenceDir = File(context.filesDir, "roi_evidence").apply { mkdirs() }
