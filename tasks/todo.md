@@ -1,6 +1,6 @@
 # 当前唯一任务：NanoDet exp09 四分类 Android 协议、BOLT/NUTSERT 检测路由与阈值校准
 
-状态：**TASK_2B_PROTOCOL_PASS / ANDROID_PARITY_PASS / TASK_3_PENDING**（2026-09-20）
+状态：**TASK_2B_PROTOCOL_PASS / ANDROID_PARITY_PASS / TASK_3_SOFTWARE_COMPLETE**（2026-09-20）
 
 - 桌面 parity（yolov12 环境）：✅ 通过（PT vs ONNX max=1.22e-05, NCNN vs ONNX max=5.80e-06, IoU≥0.999）
 - Task 2A NCNN 转换（ncnn_py311 环境）：✅ 已完成（用户授权环境例外）
@@ -10,6 +10,7 @@
 - B2（NCNN 转换）：✅ 已完成
 - B3（桌面 parity）：✅ 已通过
 - B4（Android parity）：✅ 通过（2026-09-20；NcnnRuntimeSmoke 1/1 + NanoDetRoiRuntime 4/4；设备 YAL-AL10）
+- Task 3（BOLT/NUTSERT 路由）：✅ 软件完成（2026-09-20）
 
 本任务以 NanoDet 报告 `D:\study\Textile_defects\nanodet-main\nanodet-main\workspace\key_nut_thread_experiments\exp09_retrain_nutsert_4class_baseline\experiment_report_4class.md` 为事实证据，不把报告中的历史建议直接当作执行结论。exp09 固定四分类协议为 `0=nut`、`1=thread`、`2=bolt`、`3=nutsert`；当前 Android 二分类输出宽度 `34` 必须同步审计为四分类输出宽度 `36`，预期 ONNX 为 `[1,3598,36]`、NCNN 为 `[3598,36]`，实际形状以转换产物和运行时证据为准。
 
@@ -28,9 +29,10 @@
    - ✅ 对四个类别分别核对输出列含义、DFL 维度、坐标映射和阈值前候选保留，形成可复核的 parity JSON/日志证据。（Task 2A 2026-09-20 完成）
 
 3. **ROI 属性和检测路由扩展**
-   - 审计 `RoiTargetType`、实体/DAO/Repository、编辑 UI、模板导入导出和历史 ROI 兼容路径；按现有模型增加稳定枚举 `BOLT`、`NUTSERT`，并提供中文展示名“螺栓/铆螺母”。
-   - 建立 `NUT → nut`、`THREAD → thread`、`BOLT → bolt`、`NUTSERT → nutsert` 的显式路由；`FEATURE` 明确返回“不支持检测/模型未执行”，不得套用其他类别、默认判 NG 或伪造检测结果。
-   - 保证属性按 `templateId`、View、图片和 ROI 独立持久化；如审计确认需要 schema 变化，才提供真实 migration 和旧数据回归，不预先新增无授权字段。
+   - ✅ 审计 `RoiTargetType`、实体/DAO/Repository、编辑 UI、模板导入导出和历史 ROI 兼容路径；按现有模型增加稳定枚举 `BOLT`、`NUTSERT`，并提供中文展示名”螺栓/铆螺母”。
+   - ✅ 建立 `NUT → nut`、`THREAD → thread`、`BOLT → bolt`、`NUTSERT → nutsert` 的显式路由；`FEATURE` 明确返回”不支持检测/模型未执行”，不得套用其他类别、默认判 NG 或伪造检测结果。
+   - ✅ 保证属性按 `templateId`、View、图片和 ROI 独立持久化；审计确认 TEXT 列兼容新枚举，无需新增 migration。
+   - **状态**：✅ SOFTWARE_COMPLETE（2026-09-20）。详见下方 Task 3 完成报告。
 
 4. **阈值校准与数据证据**
    - 以 `0.20` 作为阶段性基线，至少比较 `0.10/0.15/0.20/0.25/0.30` 等候选阈值，按类别统计 TP、FP、FN、precision、recall、漏检和误检。
@@ -42,6 +44,76 @@
    - 运行 JVM/Repository/UI 相关回归、compile、assemble；按新包名门禁执行 Android 推理一致性和必要的 instrumented/设备日志验证。
    - 收集 XML、日志、模型/APK 路径、构建时间、大小、SHA-256、数据库和 ZIP（若本任务触及归档）的结构化证据；视觉结论仍由用户人工完成。
    - 执行 Agent 不提交 Git；完成后更新本清单、`tasks/plan.md` 和 B3 报告，等待主协调审计及用户验收。
+
+## Task 3 完成报告：BOLT/NUTSERT ROI 属性与检测路由（2026-09-20）
+
+状态：**SOFTWARE_COMPLETE**，等待主协调审计和用户验收。
+
+### 实际修改文件（9 个）
+
+**生产代码（4 个）：**
+- `app/src/main/java/com/wearable/inspection/mobile/data/entity/RoiTargetType.kt` — 新增 `BOLT("螺栓")`、`NUTSERT("铆螺母")` 枚举值，更新文档注释
+- `app/src/main/java/com/wearable/inspection/mobile/detection/NanoDetInferenceModels.kt` — `NanoDetDecisionPolicy.classIndex()` 新增 `BOLT→2`、`NUTSERT→3` 显式映射
+- `app/src/main/java/com/wearable/inspection/mobile/ui/screens/ViewConfirmationScreen.kt` — `modelClassLabel()` 新增 `2→"螺栓（类别 2）"`、`3→"铆螺母（类别 3）"`
+- `app/src/main/java/com/wearable/inspection/mobile/ui/screens/ViewConfirmationViewModel.kt` — `softwareTargetClass` 映射新增 `2→"BOLT"`、`3→"NUTSERT"`
+
+**测试代码（5 个）：**
+- `app/src/test/java/com/wearable/inspection/mobile/data/entity/RoiTargetTypeTest.kt` — 枚举数量 3→5，新增 BOLT/NUTSERT 值/fromName/displayName 测试，更新映射表
+- `app/src/test/java/com/wearable/inspection/mobile/detection/NanoDetInferenceContractTest.kt` — classIndex 映射新增 BOLT→2/NUTSERT→3，新增 BOLT/NUTSERT 路由测试（阈值通过/不通过/无候选）
+- `app/src/test/java/com/wearable/inspection/mobile/ui/screens/ViewConfirmationModelResultTest.kt` — 新增 BOLT/NUTSERT `softwareTargetClass` 映射测试
+- `app/src/test/java/com/wearable/inspection/mobile/ui/screens/ViewConfirmationViewModelStateTest.kt` — 新增 BOLT/NUTSERT ROI 定义、默认选中、targetClass 持久化测试
+- `app/src/test/java/com/wearable/inspection/mobile/ui/screens/RoiEditorViewModelTest.kt` — 枚举数量 3→5，新增 BOLT/NUTSERT fromName/displayName 测试
+
+### Migration 审计结论
+
+**不需要 migration**。`RoiDefinitionEntity.targetType` 和 `view_roi_confirms.roiTargetType` 均为 SQLite TEXT 列，nullable。枚举新增值通过 `RoiTargetType.name` 字符串存储，`fromName()` 对未识别值返回 null（优雅降级）。现有 THREAD/NUT/FEATURE 行不受影响。
+
+### 检测路由
+
+| RoiTargetType | classIndex | 类名 | 决策 |
+|---|---|---|---|
+| NUT | 0 | nut | 筛选 class 0 候选，阈值判定 OK/NG |
+| THREAD | 1 | thread | 筛选 class 1 候选，阈值判定 OK/NG |
+| BOLT | 2 | bolt | 筛选 class 2 候选，阈值判定 OK/NG |
+| NUTSERT | 3 | nutsert | 筛选 class 3 候选，阈值判定 OK/NG |
+| FEATURE | null | — | `FEATURE_UNSUPPORTED`，不执行检测，不默认 NG |
+| null | null | — | `ROI_NOT_CONFIGURED`，不执行检测 |
+
+### 测试结果
+
+**定向 JVM 测试（5 类）：全部通过**
+- RoiTargetTypeTest: 12/12 通过（枚举数量 5、BOLT/NUTSERT 值、fromName、displayName）
+- NanoDetInferenceContractTest: 19/19 通过（四类 classIndex、BOLT/NUTSERT 路由、FEATURE/unset）
+- ViewConfirmationModelResultTest: 10/10 通过（BOLT/NUTSERT targetClass 映射、状态标签）
+- ViewConfirmationViewModelStateTest: 17/17 通过（BOLT/NUTSERT 默认选中、targetClass 持久化、FEATURE/无推理不选中）
+- RoiEditorViewModelTest: 65/65 通过（枚举数量 5、BOLT/NUTSERT 属性选择/保存/隔离）
+
+**编译：**
+- `compileDebugKotlin` ✅ BUILD SUCCESSFUL
+- `compileDebugAndroidTestKotlin` ✅ BUILD SUCCESSFUL
+- `assembleDebug` ✅ BUILD SUCCESSFUL
+
+**全量回归：** 959 tests completed, 14 failed, 5 skipped。失败均位于本轮未修改的既有功能范围；Task 3 定向测试未失败（MultiViewPhotoPersistenceTest×3、TemplatePackageExporterTest、TemplatePackageImporterTest、ViewConfirmationNavigationTest×2、BatchFilterAndDeleteTest、CameraPreviewTest、NoRoiViewAdvancementTest×3、ViewConfirmationPerformanceTest、WorkbenchViewModelAdvanceTest）。
+
+**本轮 APK：** `app/build/outputs/apk/debug/app-debug.apk`，2026-09-20 19:23:23，232,126,458 bytes，SHA-256 `B3C6E2BA45C058362BCA2205883425F471912ADE1C9004EB31130611E0D260FF`。未执行 ADB、connectedDebugAndroidTest 或真机视觉验收。
+
+### 模板兼容性
+
+- **编辑 UI**：`RoiEditorScreen` 使用 `RoiTargetType.entries.forEach` 动态构建下拉菜单，新增 BOLT/NUTSERT 自动出现
+- **导入/导出**：`TemplatePackageExporter`/`TemplatePackageImporter` 使用 `RoiTargetType.name` 原始字符串序列化/反序列化，无需修改
+- **历史数据**：旧模板的 THREAD/NUT/FEATURE 值保持不变，`fromName()` 正确解析
+- **确认页**：`ViewConfirmationScreen` 使用 `RoiTargetType.fromName()?.displayName` 显示，BOLT/NUTSERT 自动显示中文名
+- **同一 View 不同 ROI**：每个 ROI 独立存储 `targetType` 字符串，可独立使用不同属性
+
+### 不修改的组件
+
+CameraX、DPM、OCR、NanoDet decoder/DFL/NMS、模型资产、阈值策略和阈值校准、批次清理、ZIP 结构、人工改判逻辑、旧 Wearable Inspection 工程 — 全部未触及。
+
+### 未完成项
+
+- Task 4（阈值校准）：待执行，以 0.20 为候选基线
+- Task 5（Android 回归）：需先完成 Task 3 + 4
+- 未提交 Git，等待主协调审计
 
 ## 当前验收门槛
 

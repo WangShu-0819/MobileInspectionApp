@@ -529,6 +529,8 @@ internal fun buildViewRoiConfirmEntity(
         when (index) {
             0 -> "NUT"
             1 -> "THREAD"
+            2 -> "BOLT"
+            3 -> "NUTSERT"
             else -> "CLASS_$index"
         }
     }

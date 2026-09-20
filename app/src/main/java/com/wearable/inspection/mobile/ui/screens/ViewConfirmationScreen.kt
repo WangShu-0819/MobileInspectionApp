@@ -381,6 +381,8 @@ internal fun inferenceStatusLabel(status: NanoDetInferenceStatus): String = when
 internal fun modelClassLabel(classIndex: Int): String = when (classIndex) {
     0 -> "螺母（类别 0）"
     1 -> "螺纹（类别 1）"
+    2 -> "螺栓（类别 2）"
+    3 -> "铆螺母（类别 3）"
     else -> "类别 $classIndex"
 }
 

@@ -14,7 +14,7 @@ class RoiTargetTypeTest {
 
     @Test
     fun `枚举值数量正确`() {
-        assertEquals(3, RoiTargetType.entries.size)
+        assertEquals(5, RoiTargetType.entries.size)
     }
 
     @Test
@@ -32,6 +32,20 @@ class RoiTargetTypeTest {
     }
 
     @Test
+    fun `BOLT 枚举值`() {
+        val type = RoiTargetType.BOLT
+        assertEquals("BOLT", type.name)
+        assertEquals("螺栓", type.displayName)
+    }
+
+    @Test
+    fun `NUTSERT 枚举值`() {
+        val type = RoiTargetType.NUTSERT
+        assertEquals("NUTSERT", type.name)
+        assertEquals("铆螺母", type.displayName)
+    }
+
+    @Test
     fun `FEATURE 枚举值`() {
         val type = RoiTargetType.FEATURE
         assertEquals("FEATURE", type.name)
@@ -42,6 +56,8 @@ class RoiTargetTypeTest {
     fun `fromName 解析有效值`() {
         assertEquals(RoiTargetType.THREAD, RoiTargetType.fromName("THREAD"))
         assertEquals(RoiTargetType.NUT, RoiTargetType.fromName("NUT"))
+        assertEquals(RoiTargetType.BOLT, RoiTargetType.fromName("BOLT"))
+        assertEquals(RoiTargetType.NUTSERT, RoiTargetType.fromName("NUTSERT"))
         assertEquals(RoiTargetType.FEATURE, RoiTargetType.fromName("FEATURE"))
     }
 
@@ -72,6 +88,8 @@ class RoiTargetTypeTest {
         val nameToDisplayName = mapOf(
             "THREAD" to "螺纹",
             "NUT" to "螺母",
+            "BOLT" to "螺栓",
+            "NUTSERT" to "铆螺母",
             "FEATURE" to "部件"
         )
         RoiTargetType.entries.forEach { type ->

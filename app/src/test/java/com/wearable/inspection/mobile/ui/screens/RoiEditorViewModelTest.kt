@@ -773,9 +773,11 @@ class RoiEditorViewModelTest {
 
     @Test
     fun `RoiTargetType 枚举值正确`() {
-        assertEquals(3, RoiTargetType.entries.size)
+        assertEquals(5, RoiTargetType.entries.size)
         assertEquals("螺纹", RoiTargetType.THREAD.displayName)
         assertEquals("螺母", RoiTargetType.NUT.displayName)
+        assertEquals("螺栓", RoiTargetType.BOLT.displayName)
+        assertEquals("铆螺母", RoiTargetType.NUTSERT.displayName)
         assertEquals("部件", RoiTargetType.FEATURE.displayName)
     }
 
@@ -783,6 +785,8 @@ class RoiEditorViewModelTest {
     fun `RoiTargetType fromName 解析有效值`() {
         assertEquals(RoiTargetType.THREAD, RoiTargetType.fromName("THREAD"))
         assertEquals(RoiTargetType.NUT, RoiTargetType.fromName("NUT"))
+        assertEquals(RoiTargetType.BOLT, RoiTargetType.fromName("BOLT"))
+        assertEquals(RoiTargetType.NUTSERT, RoiTargetType.fromName("NUTSERT"))
         assertEquals(RoiTargetType.FEATURE, RoiTargetType.fromName("FEATURE"))
     }
 

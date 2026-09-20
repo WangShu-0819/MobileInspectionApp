@@ -212,6 +212,20 @@ class ViewConfirmationModelResultTest {
     }
 
     @Test
+    fun `bolt target class maps to BOLT string`() {
+        val boltResult = result(classIndex = 2)
+        val row = saveRow(boltResult, human = "OK", overall = "OK")
+        assertEquals("BOLT", row.softwareTargetClass)
+    }
+
+    @Test
+    fun `nutsert target class maps to NUTSERT string`() {
+        val nutsertResult = result(classIndex = 3)
+        val row = saveRow(nutsertResult, human = "OK", overall = "OK")
+        assertEquals("NUTSERT", row.softwareTargetClass)
+    }
+
+    @Test
     fun `every inference status has a distinct visible label`() {
         assertEquals("未检出", inferenceStatusLabel(NanoDetInferenceStatus.NO_DETECTION))
         assertEquals("ROI 属性未配置", inferenceStatusLabel(NanoDetInferenceStatus.ROI_NOT_CONFIGURED))

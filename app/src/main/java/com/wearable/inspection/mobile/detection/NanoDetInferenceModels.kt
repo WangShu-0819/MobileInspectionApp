@@ -102,6 +102,8 @@ object NanoDetDecisionPolicy {
     fun classIndex(targetType: RoiTargetType?): Int? = when (targetType) {
         RoiTargetType.NUT -> 0
         RoiTargetType.THREAD -> 1
+        RoiTargetType.BOLT -> 2
+        RoiTargetType.NUTSERT -> 3
         RoiTargetType.FEATURE, null -> null
     }
 

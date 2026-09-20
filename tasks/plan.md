@@ -746,11 +746,11 @@ DEFERRED / POST-MVP（不阻塞 V1 交付）：
 ~~下一步仅处理：修复该测试夹具、重新跑生命周期测试和 ROI 定向集合，必要时补编译/APK/instrumented 证据；然后更新对应报告并等待用户验收。~~ 钢印 OCR 真机/真实样本验证按用户指示暂不纳入本任务清单。当前状态以 `tasks/todo.md` 顶部为准：**软件验证完成，等待用户验收**。
 ## 2026-09-20 当前任务指针：exp09 四分类 Android 检测协议、BOLT/NUTSERT 路由与阈值校准
 
-状态：**TASK_2B_PROTOCOL_PASS / ANDROID_PARITY_PASS / TASK_3_PENDING**（2026-09-20）。本节是当前执行入口，优先于本文更早的 NanoDet 二分类和 ROI 检测历史计划；历史内容保留用于追溯，不覆盖当前产品决定。
+状态：**TASK_2B_PROTOCOL_PASS / ANDROID_PARITY_PASS / TASK_3_SOFTWARE_COMPLETE**（2026-09-20）。本节是当前执行入口，优先于本文更早的 NanoDet 二分类和 ROI 检测历史计划；历史内容保留用于追溯，不覆盖当前产品决定。
 
 - Task 2A（桌面 parity）：✅ 已完成（yolov12 环境，用户授权环境例外）
 - Task 2B（Android 34→36 协议升级）：✅ 已完成（2026-09-20）
-- Task 3（BOLT/NUTSERT 路由）：❌ 待执行
+- Task 3（BOLT/NUTSERT 路由）：✅ 软件完成（2026-09-20）
 - Android parity：✅ 通过（2026-09-20；NcnnRuntimeSmoke 1/1 + NanoDetRoiRuntime 4/4；设备 YAL-AL10）
 
 ### 事实证据与产品决定
@@ -768,9 +768,9 @@ DEFERRED / POST-MVP（不阻塞 V1 交付）：
 3. **属性与路由**：在现有 `RoiTargetType` 和读写链路上增加 `BOLT/NUTSERT` 稳定值和中文名称，显式映射四个可检测类别；`FEATURE` 返回不支持/未执行，不默认判 NG。先审计 schema，只有必要时才做真实 migration。
 4. **阈值校准**：以 `0.20` 为阶段性基线，对多个候选阈值按四类别分别统计 TP/FP/FN、precision/recall、漏检和误检，并补充独立真实外部数据。
 5. ✅ **Android 34→36 协议升级**（2026-09-20 Task 2B）：JNI `kOutputWidth`→36、decoder 4类 argmax + DFL 偏移、contract 常量更新、模型资产替换（SHA-256 已验证）、新增4类 decoder 测试。JVM 定向测试通过、compileDebugKotlin ✅、compileDebugAndroidTestKotlin ✅、assembleDebug ✅。Android parity 2026-09-20 通过（NcnnRuntimeSmoke 1/1 + NanoDetRoiRuntime 4/4，设备 YAL-AL10）。
-6. **属性与路由**：在现有 `RoiTargetType` 和读写链路上增加 `BOLT/NUTSERT` 稳定值和中文名称，显式映射四个可检测类别；`FEATURE` 返回不支持/未执行，不默认判 NG。先审计 schema，只有必要时才做真实 migration。
+6. ✅ **BOLT/NUTSERT 属性与检测路由**（2026-09-20 Task 3）：RoiTargetType 新增 BOLT("螺栓")/NUTSERT("铆螺母")、NanoDetDecisionPolicy.classIndex BOLT→2/NUTSERT→3、ViewConfirmationScreen/ViewModel 类别展示映射更新。TEXT 列兼容，无需 migration。定向 JVM 5 类 123/123 通过，compileDebugKotlin ✅、compileDebugAndroidTestKotlin ✅、assembleDebug ✅；全量 JVM 959 项中 14 项失败、5 项跳过，失败不在本轮修改文件。
 7. **阈值校准**：以 `0.20` 为阶段性基线，对多个候选阈值按四类别分别统计 TP/FP/FN、precision/recall、漏检和误检，并补充独立真实外部数据。
-8. **Android 回归**：补齐 parity/路由/兼容性测试，完成 Android 推理一致性和结构化设备证据；对前序已验收能力执行相关回归矩阵。**当前阻塞**：需先完成 Task 6 BOLT/NUTSERT 路由。
+8. **Android 回归**：补齐 parity/路由/兼容性测试，完成 Android 推理一致性和结构化设备证据；对前序已验收能力执行相关回归矩阵。Task 3 软件验证已完成，后续按 Task 4 阈值校准与用户验收节奏推进。
 
 ### 必须保留的行为
 

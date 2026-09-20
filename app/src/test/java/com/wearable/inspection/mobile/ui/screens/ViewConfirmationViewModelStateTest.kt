@@ -35,6 +35,18 @@ class ViewConfirmationViewModelStateTest {
         inspectionType = "NONE", targetType = "FEATURE"
     )
 
+    private val boltRoi = RoiDefinitionEntity(
+        id = "roi-bolt", templateId = "tpl-1", name = "螺栓",
+        order = 2, normalizedRect = """{"left":0.2,"top":0.2,"right":0.7,"bottom":0.7}""",
+        inspectionType = "NONE", targetType = "BOLT"
+    )
+
+    private val nutsertRoi = RoiDefinitionEntity(
+        id = "roi-nutsert", templateId = "tpl-1", name = "铆螺母",
+        order = 3, normalizedRect = """{"left":0.3,"top":0.3,"right":0.8,"bottom":0.8}""",
+        inspectionType = "NONE", targetType = "NUTSERT"
+    )
+
     private fun modelOk(roiId: String = "roi-thread") = NanoDetRoiInferenceResult(
         roiId = roiId, status = NanoDetInferenceStatus.DETECTED,
         modelSuggestion = NanoDetSuggestion.OK, matchingScore = 0.91f,
@@ -183,6 +195,66 @@ class ViewConfirmationViewModelStateTest {
         assertFalse(entity.humanChangedModel)
         assertNull(entity.softwareResult)
         assertNull(entity.overrideTime)
+    }
+
+    @Test
+    fun boltModelOkDefaultsToOk() {
+        val boltResult = NanoDetRoiInferenceResult(
+            roiId = "roi-bolt", status = NanoDetInferenceStatus.DETECTED,
+            modelSuggestion = NanoDetSuggestion.OK, matchingScore = 0.85f,
+            targetClassIndex = 2, threshold = 0.37f
+        )
+        val roiResults = mutableMapOf<String, String>()
+        val inferenceResults = mapOf("roi-bolt" to boltResult)
+        applyDefaultSelections(listOf(boltRoi), roiResults, inferenceResults)
+        assertEquals("OK", roiResults["roi-bolt"])
+    }
+
+    @Test
+    fun nutsertModelNgDefaultsToNg() {
+        val nutsertResult = NanoDetRoiInferenceResult(
+            roiId = "roi-nutsert", status = NanoDetInferenceStatus.NO_DETECTION,
+            modelSuggestion = NanoDetSuggestion.NG, matchingScore = null,
+            targetClassIndex = 3, threshold = 0.37f
+        )
+        val roiResults = mutableMapOf<String, String>()
+        val inferenceResults = mapOf("roi-nutsert" to nutsertResult)
+        applyDefaultSelections(listOf(nutsertRoi), roiResults, inferenceResults)
+        assertEquals("NG", roiResults["roi-nutsert"])
+    }
+
+    @Test
+    fun boltTargetClassPreservedInEntity() {
+        val boltResult = NanoDetRoiInferenceResult(
+            roiId = "roi-bolt", status = NanoDetInferenceStatus.DETECTED,
+            modelSuggestion = NanoDetSuggestion.OK, matchingScore = 0.85f,
+            targetClassIndex = 2, threshold = 0.37f
+        )
+        val entity = buildViewRoiConfirmEntity(
+            batchId = "b1", photoId = 1, photoPath = "/p.jpg", viewIndex = 0,
+            templateId = "tpl-1", templateName = "V1", roi = boltRoi,
+            roiPixelRect = "{}", inference = boltResult, humanResult = "OK",
+            overallResult = "OK", confirmedAt = 1000L
+        )
+        assertEquals("BOLT", entity.softwareTargetClass)
+        assertFalse(entity.humanChangedModel)
+    }
+
+    @Test
+    fun nutsertTargetClassPreservedInEntity() {
+        val nutsertResult = NanoDetRoiInferenceResult(
+            roiId = "roi-nutsert", status = NanoDetInferenceStatus.DETECTED,
+            modelSuggestion = NanoDetSuggestion.OK, matchingScore = 0.77f,
+            targetClassIndex = 3, threshold = 0.37f
+        )
+        val entity = buildViewRoiConfirmEntity(
+            batchId = "b1", photoId = 1, photoPath = "/p.jpg", viewIndex = 0,
+            templateId = "tpl-1", templateName = "V1", roi = nutsertRoi,
+            roiPixelRect = "{}", inference = nutsertResult, humanResult = "OK",
+            overallResult = "OK", confirmedAt = 1000L
+        )
+        assertEquals("NUTSERT", entity.softwareTargetClass)
+        assertFalse(entity.humanChangedModel)
     }
 
     @Test

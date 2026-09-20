@@ -3,14 +3,18 @@ package com.wearable.inspection.mobile.data.entity
 /**
  * ROI 目标属性类型
  *
- * 用于后续选择一致的 ROI 检测算法：
- * - THREAD → Thread 检测
- * - NUT → Nut 检测
- * - FEATURE → Feature 检测
+ * 检测路由映射（NanoDetDecisionPolicy.classIndex）：
+ * - NUT → class 0 / nut
+ * - THREAD → class 1 / thread
+ * - BOLT → class 2 / bolt
+ * - NUTSERT → class 3 / nutsert
+ * - FEATURE → 不支持检测 / 模型未执行
  */
 enum class RoiTargetType(val displayName: String) {
     THREAD("螺纹"),
     NUT("螺母"),
+    BOLT("螺栓"),
+    NUTSERT("铆螺母"),
     FEATURE("部件");
 
     companion object {

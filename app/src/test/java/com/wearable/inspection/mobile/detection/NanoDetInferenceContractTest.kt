@@ -13,6 +13,8 @@ class NanoDetInferenceContractTest {
     fun `target types map only to their trained classes`() {
         assertEquals(0, NanoDetDecisionPolicy.classIndex(RoiTargetType.NUT))
         assertEquals(1, NanoDetDecisionPolicy.classIndex(RoiTargetType.THREAD))
+        assertEquals(2, NanoDetDecisionPolicy.classIndex(RoiTargetType.BOLT))
+        assertEquals(3, NanoDetDecisionPolicy.classIndex(RoiTargetType.NUTSERT))
         assertNull(NanoDetDecisionPolicy.classIndex(RoiTargetType.FEATURE))
         assertNull(NanoDetDecisionPolicy.classIndex(null))
     }
@@ -60,6 +62,49 @@ class NanoDetInferenceContractTest {
         assertEquals(NanoDetInferenceStatus.NO_DETECTION, decision.status)
         assertEquals(NanoDetSuggestion.NG, decision.suggestion)
         assertNull(decision.matchingScore)
+    }
+
+    @Test
+    fun `bolt routing selects class 2 and decides correctly`() {
+        val decision = NanoDetDecisionPolicy.decide(
+            RoiTargetType.BOLT,
+            listOf(
+                candidate(classIndex = 0, score = 0.95f),
+                candidate(classIndex = 2, score = 0.80f)
+            ),
+            threshold = 0.37f
+        )
+        assertEquals(NanoDetInferenceStatus.DETECTED, decision.status)
+        assertEquals(NanoDetSuggestion.OK, decision.suggestion)
+        assertEquals(0.80f, decision.matchingScore)
+        assertEquals(2, decision.targetClassIndex)
+    }
+
+    @Test
+    fun `nutsert routing selects class 3 and decides correctly`() {
+        val decision = NanoDetDecisionPolicy.decide(
+            RoiTargetType.NUTSERT,
+            listOf(
+                candidate(classIndex = 0, score = 0.95f),
+                candidate(classIndex = 3, score = 0.30f)
+            ),
+            threshold = 0.37f
+        )
+        assertEquals(NanoDetInferenceStatus.DETECTED_BELOW_THRESHOLD, decision.status)
+        assertEquals(NanoDetSuggestion.NG, decision.suggestion)
+        assertEquals(0.30f, decision.matchingScore)
+        assertEquals(3, decision.targetClassIndex)
+    }
+
+    @Test
+    fun `bolt with no bolt candidate returns NO_DETECTION`() {
+        val decision = NanoDetDecisionPolicy.decide(
+            RoiTargetType.BOLT,
+            listOf(candidate(classIndex = 0, score = 0.95f))
+        )
+        assertEquals(NanoDetInferenceStatus.NO_DETECTION, decision.status)
+        assertEquals(NanoDetSuggestion.NG, decision.suggestion)
+        assertEquals(2, decision.targetClassIndex)
     }
 
     @Test
