@@ -1,6 +1,6 @@
 # 当前唯一任务：NanoDet exp09 四分类 Android 协议、BOLT/NUTSERT 检测路由与阈值校准
 
-状态：**TASK_2B_PROTOCOL_PASS / ANDROID_PARITY_PASS / TASK_3_SOFTWARE_COMPLETE**（2026-09-20）
+状态：**TASK_2B_PROTOCOL_PASS / ANDROID_PARITY_PASS / TASK_3_SOFTWARE_COMPLETE / TASK_4_ANALYSIS_COMPLETE**（2026-09-20）
 
 - 桌面 parity（yolov12 环境）：✅ 通过（PT vs ONNX max=1.22e-05, NCNN vs ONNX max=5.80e-06, IoU≥0.999）
 - Task 2A NCNN 转换（ncnn_py311 环境）：✅ 已完成（用户授权环境例外）
@@ -111,9 +111,81 @@ CameraX、DPM、OCR、NanoDet decoder/DFL/NMS、模型资产、阈值策略和�
 
 ### 未完成项
 
-- Task 4（阈值校准）：待执行，以 0.20 为候选基线
+- Task 4（阈值校准）：✅ 离线分析完成并经主协调审计（2026-09-20）
 - Task 5（Android 回归）：需先完成 Task 3 + 4
-- 未提交 Git，等待主协调审计
+- Task 4 Git 收口范围：仅本报告、`tasks/todo.md`、`tasks/plan.md`；不纳入其他工作区改动
+
+## Task 4 完成报告：NanoDet exp09 阈值校准与数据证据（2026-09-20）
+
+状态：**ANALYSIS_COMPLETE**（离线分析，非生产代码变更）
+
+### 概要
+
+对 exp09 四分类模型在冻结外部测试集（6 张图、8 个 GT 对象）上，按 5 个候选阈值（0.10/0.15/0.20/0.25/0.30）统计 nut/thread/bolt/nutsert 的 TP/FP/FN/precision/recall。**0.20 是能实现零 FP + 零 FN 的最低阈值**（对有 GT 的三类），确认为阶段性候选基线。
+
+### 外部测试集 GT 统计
+
+| 类别 | GT 数 | 图片 |
+|---|---|---|
+| nut | 2 | nut_26.jpg, nut_29.jpg |
+| thread | 3 | thread_21.jpg, thread_26.jpg, thread_34.jpg |
+| bolt | **0** | **无真实标注** |
+| nutsert | 3 | Nutsert_6.jpg（3 个对象） |
+
+### 多阈值指标对比（nut/thread/nutsert）
+
+| 阈值 | nut P/R | thread P/R | nutsert P/R | 总 FP |
+|---|---|---|---|---|
+| 0.10 | 0.667/1.000 | 0.750/1.000 | 0.750/1.000 | 3 |
+| 0.15 | 1.000/1.000 | 0.750/1.000 | 1.000/1.000 | 1 |
+| **0.20** | **1.000/1.000** | **1.000/1.000** | **1.000/1.000** | **0** |
+| 0.25 | 1.000/1.000 | 1.000/1.000 | 1.000/1.000 | 0 |
+| 0.30 | 1.000/1.000 | 1.000/1.000 | 1.000/1.000 | 0 |
+
+**bolt 在外部集无 GT，precision/recall 不可评估。**
+
+### 误检来源（阈值 <0.20）
+
+- **0.10 FP×3**：nut on thread_21.jpg (0.129)、thread on nut_26.jpg (0.177)、nutsert on Nutsert_6.jpg (0.108)
+- **0.05 FP×26**：大量低分跨类别噪声（score 0.05-0.18）
+- 所有 FP 的 IoU=0（不与 GT 重叠），为纯噪声
+
+### Android NCNN Parity
+
+- PyTorch vs ONNX max_abs=1.07e-05、NCNN vs ONNX max_abs=5.14e-06
+- 2 张回归图在所有阈值下 PyTorch/ONNX/NCNN 检测数量完全一致
+
+### 关键限制
+
+1. **样本量极小**：6 张图、8 个 GT，统计置信度极低
+2. **bolt 零 GT**：无法评估 bolt recall
+3. **固定验证集 source group 泄漏**：16 个增强组跨 train/val 边界
+4. **未覆盖现场条件变化**
+
+### 结论
+
+**0.20 作为阶段性候选基线**：是实现零 FP + 零 FN 的最低阈值。不能宣称最终现场阈值、泛化完成或 bolt 检测可靠性。
+
+### 报告
+
+详见 `docs/reports/b3/NANODET_EXP09_THRESHOLD_CALIBRATION_REPORT.md`
+
+### 数据路径
+
+- 诊断数据：`exp09_retrain_nutsert_4class_baseline/external_test_eval_4class/diagnostics.json`
+- 逐阈值报告：`external_test_eval_4class/score_01/` ~ `score_025/threshold_report.json`
+- 阈值 0.30：从 diagnostics.json 原始分数计算（Python: `D:\ProgramData\anaconda3\envs\dinov2\python.exe`）
+- Source mapping：`source_mapping_4class.json`
+- 固定验证集：`fixed_val_eval_4class/score_02/threshold_report.json`
+- Android parity：`android_export/exp09_parity_results.json`
+
+### 未完成项
+
+- bolt 独立外部测试集标注与评估
+- 更大规模外部测试集（≥50 张/类）
+- Source group 泄漏修复后重跑验证集
+- 现场条件鲁棒性测试
+- Git 收口范围已由主协调确认：仅本报告、`tasks/todo.md`、`tasks/plan.md`；最终提交状态以 Git 历史为准
 
 ## 当前验收门槛
 

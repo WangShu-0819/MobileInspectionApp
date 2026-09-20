@@ -746,7 +746,7 @@ DEFERRED / POST-MVP（不阻塞 V1 交付）：
 ~~下一步仅处理：修复该测试夹具、重新跑生命周期测试和 ROI 定向集合，必要时补编译/APK/instrumented 证据；然后更新对应报告并等待用户验收。~~ 钢印 OCR 真机/真实样本验证按用户指示暂不纳入本任务清单。当前状态以 `tasks/todo.md` 顶部为准：**软件验证完成，等待用户验收**。
 ## 2026-09-20 当前任务指针：exp09 四分类 Android 检测协议、BOLT/NUTSERT 路由与阈值校准
 
-状态：**TASK_2B_PROTOCOL_PASS / ANDROID_PARITY_PASS / TASK_3_SOFTWARE_COMPLETE**（2026-09-20）。本节是当前执行入口，优先于本文更早的 NanoDet 二分类和 ROI 检测历史计划；历史内容保留用于追溯，不覆盖当前产品决定。
+状态：**TASK_2B_PROTOCOL_PASS / ANDROID_PARITY_PASS / TASK_3_SOFTWARE_COMPLETE / TASK_4_ANALYSIS_COMPLETE**（2026-09-20）。本节是当前执行入口，优先于本文更早的 NanoDet 二分类和 ROI 检测历史计划；历史内容保留用于追溯，不覆盖当前产品决定。
 
 - Task 2A（桌面 parity）：✅ 已完成（yolov12 环境，用户授权环境例外）
 - Task 2B（Android 34→36 协议升级）：✅ 已完成（2026-09-20）
@@ -765,12 +765,12 @@ DEFERRED / POST-MVP（不阻塞 V1 交付）：
 
 1. ✅ **协议审计**（2026-09-20）：逐项审计 `NanoDetModelContract`、输出读取、decoder/DFL/NMS、JNI/NCNN、类别索引、模型资产和二分类测试，冻结四分类 shape、列布局和类别顺序。产出：`docs/reports/b3/NANODET_EXP09_4CLASS_ANDROID_PLAN.md`。
 2. ✅ **转换与 parity**（2026-09-20 Task 2A）：生成 exp09 ONNX/NCNN，记录 shape、blob、版本、文件大小和 SHA-256；用相同输入对 PyTorch、ONNX、桌面 NCNN 的原始输出与解码结果做逐级比较。**parity 通过**：PT vs ONNX max=1.22e-05, NCNN vs ONNX max=5.80e-06, IoU≥0.999。Android parity 已解除 JNI 门禁，2026-09-20 通过（NcnnRuntimeSmoke 1/1 + NanoDetRoiRuntime 4/4，YAL-AL10）。产出：`android_export/exp09_parity_results.json`、`exp09_model_metadata.json`。
-3. **属性与路由**：在现有 `RoiTargetType` 和读写链路上增加 `BOLT/NUTSERT` 稳定值和中文名称，显式映射四个可检测类别；`FEATURE` 返回不支持/未执行，不默认判 NG。先审计 schema，只有必要时才做真实 migration。
-4. **阈值校准**：以 `0.20` 为阶段性基线，对多个候选阈值按四类别分别统计 TP/FP/FN、precision/recall、漏检和误检，并补充独立真实外部数据。
+3. ✅ **属性与路由**（2026-09-20）：在现有 `RoiTargetType` 和读写链路上增加 `BOLT/NUTSERT` 稳定值和中文名称，显式映射四个可检测类别；`FEATURE` 返回不支持/未执行，不默认判 NG。TEXT 列兼容新枚举，无需 migration。
+4. ✅ **阈值校准**（2026-09-20）：以 `0.20` 为阶段性基线，对 0.10/0.15/0.20/0.25/0.30 按四类别统计 TP/FP/FN、precision/recall、漏检和误检；0.20 是有 GT 三类实现零 FP+零 FN 的最低阈值。bolt 外部集无 GT，仍不可评估；详见 `docs/reports/b3/NANODET_EXP09_THRESHOLD_CALIBRATION_REPORT.md`。
 5. ✅ **Android 34→36 协议升级**（2026-09-20 Task 2B）：JNI `kOutputWidth`→36、decoder 4类 argmax + DFL 偏移、contract 常量更新、模型资产替换（SHA-256 已验证）、新增4类 decoder 测试。JVM 定向测试通过、compileDebugKotlin ✅、compileDebugAndroidTestKotlin ✅、assembleDebug ✅。Android parity 2026-09-20 通过（NcnnRuntimeSmoke 1/1 + NanoDetRoiRuntime 4/4，设备 YAL-AL10）。
 6. ✅ **BOLT/NUTSERT 属性与检测路由**（2026-09-20 Task 3）：RoiTargetType 新增 BOLT("螺栓")/NUTSERT("铆螺母")、NanoDetDecisionPolicy.classIndex BOLT→2/NUTSERT→3、ViewConfirmationScreen/ViewModel 类别展示映射更新。TEXT 列兼容，无需 migration。定向 JVM 5 类 123/123 通过，compileDebugKotlin ✅、compileDebugAndroidTestKotlin ✅、assembleDebug ✅；全量 JVM 959 项中 14 项失败、5 项跳过，失败不在本轮修改文件。
-7. **阈值校准**：以 `0.20` 为阶段性基线，对多个候选阈值按四类别分别统计 TP/FP/FN、precision/recall、漏检和误检，并补充独立真实外部数据。
-8. **Android 回归**：补齐 parity/路由/兼容性测试，完成 Android 推理一致性和结构化设备证据；对前序已验收能力执行相关回归矩阵。Task 3 软件验证已完成，后续按 Task 4 阈值校准与用户验收节奏推进。
+7. **阈值校准**（2026-09-20 ✅ 离线分析完成）：以 `0.20` 为阶段性基线，在冻结外部集（6 图/8 GT）上按 5 阈值（0.10/0.15/0.20/0.25/0.30）统计四类 TP/FP/FN/P/R。**0.20 为零 FP+零 FN 最低阈值**。bolt 零外部 GT 不可评估。详见 `docs/reports/b3/NANODET_EXP09_THRESHOLD_CALIBRATION_REPORT.md`。更大规模数据和现场验证仍待补充。
+8. **Android 回归**：补齐 parity/路由/兼容性测试，完成 Android 推理一致性和结构化设备证据；对前序已验收能力执行相关回归矩阵。Task 3 软件验证已完成，Task 4 离线分析已完成（0.20 候选基线确认），后续按用户验收节奏推进。
 
 ### 必须保留的行为
 
