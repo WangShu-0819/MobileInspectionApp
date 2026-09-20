@@ -56,13 +56,13 @@ class ViewConfirmationModelResultTest {
         targetClassIndex = classIndex,
         threshold = 0.37f,
         candidateThreshold = 0.05f,
-        modelVersion = "nanodet-ncnn-20260526-opt2",
+        modelVersion = "nanodet-ncnn-exp09-4class",
         modelParamSha256 = "param-sha",
         modelSha256 = "model-sha",
         elapsedMs = 33,
         inputShape = "[1,3,416,416]",
         outputBlob = "out0",
-        outputShape = "[3598,34]",
+        outputShape = "[3598,36]",
         imageWidth = 1920,
         imageHeight = 1080,
         exifOrientation = 6,
@@ -198,7 +198,7 @@ class ViewConfirmationModelResultTest {
         assertEquals("THREAD", row.softwareTargetClass)
         assertEquals(0.91f, row.softwareScore!!, 0.0001f)
         assertEquals(0.37f, row.softwareThreshold!!, 0.0001f)
-        assertEquals("nanodet-ncnn-20260526-opt2", row.softwareModelVersion)
+        assertEquals("nanodet-ncnn-exp09-4class", row.softwareModelVersion)
         assertEquals(33L, row.softwareElapsedMs)
         val detections = JSONArray(row.softwareDetectionsJson)
         assertEquals(2, detections.length())
@@ -208,7 +208,7 @@ class ViewConfirmationModelResultTest {
         assertEquals("param-sha", summary.getString("modelParamSha256"))
         assertEquals("model-sha", summary.getString("modelSha256"))
         assertEquals("out0", summary.getString("outputBlob"))
-        assertEquals("[3598,34]", summary.getString("outputShape"))
+        assertEquals("[3598,36]", summary.getString("outputShape"))
     }
 
     @Test

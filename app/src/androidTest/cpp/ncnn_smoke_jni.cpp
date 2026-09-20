@@ -8,7 +8,7 @@ namespace {
 constexpr int kInputWidth = 416;
 constexpr int kInputHeight = 416;
 constexpr int kChannels = 3;
-constexpr int kOutputWidth = 34;
+constexpr int kOutputWidth = 36;
 constexpr int kOutputHeight = 3598;
 
 void throw_illegal_state(JNIEnv* env, const std::string& message) {

@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<testsuite name="com.wearable.inspection.mobile.ncnn.NcnnRuntimeSmokeInstrumentedTest" tests="1" failures="0" errors="0" skipped="0" time="1.831" timestamp="2026-09-20T10:56:45" hostname="localhost">
+  <properties>
+    <property name="device" value="YAL-AL10 - 10" />
+    <property name="flavor" value="" />
+    <property name="project" value=":app" />
+  </properties>
+  <testcase name="loadsModelRunsBothImagesAndMatchesDesktopNcnnDetections" classname="com.wearable.inspection.mobile.ncnn.NcnnRuntimeSmokeInstrumentedTest" time="0.311" />
+</testsuite>

@@ -7,7 +7,7 @@ import kotlin.math.min
 
 object NanoDetOutputDecoder {
     private val strides = intArrayOf(8, 16, 32, 64)
-    private val classNames = arrayOf("nut", "thread")
+    private val classNames = arrayOf("nut", "thread", "bolt", "nutsert")
     private const val REG_MAX = 7
     private const val NMS_THRESHOLD = 0.6
     private const val MAX_DETECTIONS_PER_CLASS = 100
@@ -23,7 +23,7 @@ object NanoDetOutputDecoder {
         require(output.all(Float::isFinite)) { "NCNN output contains non-finite values" }
         require(scoreThreshold.isFinite() && scoreThreshold in 0f..1f)
 
-        val byClass = Array(2) { mutableListOf<NanoDetCandidate>() }
+        val byClass = Array(classNames.size) { mutableListOf<NanoDetCandidate>() }
         var offset = 0
         for (stride in strides) {
             val featureSize = ceil(NanoDetModelContract.INPUT_SIZE.toDouble() / stride).toInt()
@@ -35,13 +35,20 @@ object NanoDetOutputDecoder {
                     if (centerX >= transform.resizedWidth || centerY >= transform.resizedHeight) continue
 
                     val row = point * NanoDetModelContract.OUTPUT_WIDTH
-                    val classIndex = if (output[row + 1] > output[row]) 1 else 0
-                    val score = output[row + classIndex]
+                    var classIndex = 0
+                    var maxClassScore = output[row]
+                    for (c in 1 until classNames.size) {
+                        if (output[row + c] > maxClassScore) {
+                            maxClassScore = output[row + c]
+                            classIndex = c
+                        }
+                    }
+                    val score = maxClassScore
                     if (score < scoreThreshold) continue
 
                     val distances = DoubleArray(4)
                     for (side in 0 until 4) {
-                        val base = row + 2 + side * (REG_MAX + 1)
+                        val base = row + classNames.size + side * (REG_MAX + 1)
                         var maxLogit = Float.NEGATIVE_INFINITY
                         for (bin in 0..REG_MAX) maxLogit = max(maxLogit, output[base + bin])
                         var sum = 0.0

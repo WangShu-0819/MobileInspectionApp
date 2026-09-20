@@ -50,16 +50,16 @@ class NcnnRuntimeSmokeInstrumentedTest {
         val targetContext = instrumentation.targetContext
         val workspace = File(targetContext.cacheDir, "ncnn_runtime_smoke").apply { mkdirs() }
         val modelDir = File(workspace, "model").apply { mkdirs() }
-        copyAsset(testContext, "ncnn_smoke/model/nanodet.ncnn.param", File(modelDir, "nanodet.ncnn.param"))
-        copyAsset(testContext, "ncnn_smoke/model/nanodet.ncnn.bin", File(modelDir, "nanodet.ncnn.bin"))
-        val parity = JSONObject(testContext.assets.open("ncnn_smoke/parity_results.json").bufferedReader().use { it.readText() })
+        copyAsset(targetContext, "nanodet/nanodet.ncnn.param", File(modelDir, "nanodet.ncnn.param"))
+        copyAsset(targetContext, "nanodet/nanodet.ncnn.bin", File(modelDir, "nanodet.ncnn.bin"))
+        val parity = JSONObject(testContext.assets.open("ncnn_smoke/exp09_parity_results.json").bufferedReader().use { it.readText() })
 
         val runReport = JSONObject()
             .put("abi", android.os.Build.SUPPORTED_ABIS.firstOrNull())
             .put("inputBlob", "in0")
             .put("inputShape", "[1,3,416,416]")
             .put("outputBlob", "out0")
-            .put("outputShape", "[3598,34]")
+            .put("outputShape", "[3598,36]")
             .put("ncnnLibrary", "libncnn.so (androidTest arm64-v8a)")
         val images = JSONObject()
 
@@ -72,7 +72,7 @@ class NcnnRuntimeSmokeInstrumentedTest {
                 File(modelDir, "nanodet.ncnn.bin").absolutePath,
                 input
             )
-            assertEquals("NCNN output float count for $filename", 3598 * 34, output.size)
+            assertEquals("NCNN output float count for $filename", 3598 * 36, output.size)
             assertTrue("NCNN output contains non-finite values for $filename", output.all(Float::isFinite))
 
             val expectedImage = parity.getJSONObject("images").getJSONObject(filename)
@@ -84,7 +84,7 @@ class NcnnRuntimeSmokeInstrumentedTest {
                 .put("padding", "top-left; right=${416 - transform.resizedWidth}, bottom=${416 - transform.resizedHeight}")
                 .put("inputShape", "[1,3,416,416]")
                 .put("outputBlob", "out0")
-                .put("outputShape", "[3598,34]")
+                .put("outputShape", "[3598,36]")
             val detectionsJson = JSONObject()
             val differences = JSONObject()
             val thresholdCounts = JSONObject()
@@ -143,12 +143,16 @@ class NcnnRuntimeSmokeInstrumentedTest {
             for (threshold in THRESHOLDS) {
                 val atThreshold = decode(output, transform, threshold)
                 val expectedAtThreshold = expectedThresholds.getJSONObject(threshold.toString()).getJSONObject("ncnn")
-                assertEquals("$filename $threshold nut count", expectedAtThreshold.getInt("nut"), atThreshold.getValue("nut").size)
-                assertEquals("$filename $threshold thread count", expectedAtThreshold.getInt("thread"), atThreshold.getValue("thread").size)
+                for (className in CLASS_NAMES) {
+                    val expectedCount = if (expectedAtThreshold.has(className)) expectedAtThreshold.getInt(className) else 0
+                    assertEquals("$filename $threshold $className count", expectedCount, atThreshold.getValue(className).size)
+                }
+                val androidCounts = JSONObject()
+                for (className in CLASS_NAMES) androidCounts.put(className, atThreshold.getValue(className).size)
                 thresholdCounts.put(
                     threshold.toString(),
                     JSONObject()
-                        .put("android", JSONObject().put("nut", atThreshold.getValue("nut").size).put("thread", atThreshold.getValue("thread").size))
+                        .put("android", androidCounts)
                         .put("desktopNcnn", expectedThresholds.getJSONObject(threshold.toString()).getJSONObject("ncnn"))
                 )
             }
@@ -223,12 +227,19 @@ class NcnnRuntimeSmokeInstrumentedTest {
                 val cy = y * stride
                 if (cx >= transform.resizedWidth || cy >= transform.resizedHeight) continue
                 val row = point * OUTPUT_WIDTH
-                val classIndex = if (output[row + 1] > output[row]) 1 else 0
-                val score = output[row + classIndex]
+                var classIndex = 0
+                var maxClassScore = output[row]
+                for (c in 1 until CLASS_NAMES.size) {
+                    if (output[row + c] > maxClassScore) {
+                        maxClassScore = output[row + c]
+                        classIndex = c
+                    }
+                }
+                val score = maxClassScore
                 if (score < scoreThreshold) continue
                 val distances = DoubleArray(4)
                 for (side in 0 until 4) {
-                    val base = row + 2 + side * 8
+                    val base = row + CLASS_NAMES.size + side * 8
                     var maxLogit = Float.NEGATIVE_INFINITY
                     for (i in 0 until 8) maxLogit = max(maxLogit, output[base + i])
                     val probabilities = FloatArray(8)
@@ -279,14 +290,14 @@ class NcnnRuntimeSmokeInstrumentedTest {
 
     private companion object {
         const val LOG_TAG = "NCNN_SMOKE"
-        const val OUTPUT_WIDTH = 34
+        const val OUTPUT_WIDTH = 36
         const val NMS_THRESHOLD = 0.6
         const val MAX_DETECTIONS = 100
         const val MAX_SCORE_DIFF = 1e-5
         const val MAX_BOX_DIFF_PX = 0.01
         val IMAGE_NAMES = listOf("frame_00106_f1060.jpg", "frame_00045_f450.jpg")
-        val CLASS_NAMES = listOf("nut", "thread")
+        val CLASS_NAMES = listOf("nut", "thread", "bolt", "nutsert")
         val STRIDES = listOf(8, 16, 32, 64)
-        val THRESHOLDS = listOf(0.05f, 0.25f, 0.37f, 0.50f)
+        val THRESHOLDS = listOf(0.05f, 0.10f, 0.15f, 0.20f, 0.25f, 0.30f, 0.37f, 0.50f)
     }
 }

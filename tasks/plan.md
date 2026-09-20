@@ -1,8 +1,8 @@
 # Implementation Plan: MobileInspectionApp 当前阶段
 
-## 当前唯一任务：ROI 检测结果、人工改判与 ROI 证据图导出收口（2026-09-18）
+## 历史任务：ROI 检测结果、人工改判与 ROI 证据图导出收口（2026-09-18）
 
-状态：**软件验证完成，等待用户验收**
+状态：**已完成并提交**（提交 `57003b44`）。本文末尾的 2026-09-20 当前任务指针覆盖本历史任务的执行入口。
 
 ### 目标
 ROI 检测结果语义、人工改判图片导出、CSV 回链到 ZIP 中真实文件；DB 保存失败时新证据文件清理。
@@ -744,3 +744,48 @@ DEFERRED / POST-MVP（不阻塞 V1 交付）：
 **[历史记录，已被2026-09-18 的 99/99 证据覆盖]** 2026-09-18 定向复跑 99 项，98 项通过、1 项失败：`ViewModelSaveLifecycleTest.dbSaveFailureCleansUpNewEvidenceFiles`。失败原因是测试 JPEG 夹具无法被 Robolectric 解码（`Quantization table 0x00 was not defined`），测试在 ViewModel 加载阶段失败，没有实际验证 DB 写入失败后的新证据清理。~~因此生命周期失败路径仍未闭环，不能提交或标记验收完成。~~
 
 ~~下一步仅处理：修复该测试夹具、重新跑生命周期测试和 ROI 定向集合，必要时补编译/APK/instrumented 证据；然后更新对应报告并等待用户验收。~~ 钢印 OCR 真机/真实样本验证按用户指示暂不纳入本任务清单。当前状态以 `tasks/todo.md` 顶部为准：**软件验证完成，等待用户验收**。
+## 2026-09-20 当前任务指针：exp09 四分类 Android 检测协议、BOLT/NUTSERT 路由与阈值校准
+
+状态：**TASK_2B_PROTOCOL_PASS / ANDROID_PARITY_PASS / TASK_3_PENDING**（2026-09-20）。本节是当前执行入口，优先于本文更早的 NanoDet 二分类和 ROI 检测历史计划；历史内容保留用于追溯，不覆盖当前产品决定。
+
+- Task 2A（桌面 parity）：✅ 已完成（yolov12 环境，用户授权环境例外）
+- Task 2B（Android 34→36 协议升级）：✅ 已完成（2026-09-20）
+- Task 3（BOLT/NUTSERT 路由）：❌ 待执行
+- Android parity：✅ 通过（2026-09-20；NcnnRuntimeSmoke 1/1 + NanoDetRoiRuntime 4/4；设备 YAL-AL10）
+
+### 事实证据与产品决定
+
+- 事实报告：`D:\study\Textile_defects\nanodet-main\nanodet-main\workspace\key_nut_thread_experiments\exp09_retrain_nutsert_4class_baseline\experiment_report_4class.md`。
+- exp09 四分类稳定顺序：`0=nut`、`1=thread`、`2=bolt`、`3=nutsert`。
+- 当前 Android 二分类协议输出宽度为 `34`；四分类目标协议预期为 ONNX `[1,3598,36]`、NCNN `[3598,36]`。这是待转换和运行时验证的目标契约，不是已完成的 Android 证据。
+- exp09 报告在阈值 `0.20` 的冻结外部集上给出阶段性结果；外部集只有 6 张图，bolt 没有真实标注，且固定验证集存在 source group 泄漏风险。因此 `0.20` 只能作为候选基线，不能作为最终现场阈值或完整泛化结论。
+- 产品决定：`BOLT`、`NUTSERT` 扩展到 ROI 属性、持久化和检测路由；`FEATURE` 仍保留为属性，但本任务不执行检测。
+
+### 有序执行计划
+
+1. ✅ **协议审计**（2026-09-20）：逐项审计 `NanoDetModelContract`、输出读取、decoder/DFL/NMS、JNI/NCNN、类别索引、模型资产和二分类测试，冻结四分类 shape、列布局和类别顺序。产出：`docs/reports/b3/NANODET_EXP09_4CLASS_ANDROID_PLAN.md`。
+2. ✅ **转换与 parity**（2026-09-20 Task 2A）：生成 exp09 ONNX/NCNN，记录 shape、blob、版本、文件大小和 SHA-256；用相同输入对 PyTorch、ONNX、桌面 NCNN 的原始输出与解码结果做逐级比较。**parity 通过**：PT vs ONNX max=1.22e-05, NCNN vs ONNX max=5.80e-06, IoU≥0.999。Android parity 已解除 JNI 门禁，2026-09-20 通过（NcnnRuntimeSmoke 1/1 + NanoDetRoiRuntime 4/4，YAL-AL10）。产出：`android_export/exp09_parity_results.json`、`exp09_model_metadata.json`。
+3. **属性与路由**：在现有 `RoiTargetType` 和读写链路上增加 `BOLT/NUTSERT` 稳定值和中文名称，显式映射四个可检测类别；`FEATURE` 返回不支持/未执行，不默认判 NG。先审计 schema，只有必要时才做真实 migration。
+4. **阈值校准**：以 `0.20` 为阶段性基线，对多个候选阈值按四类别分别统计 TP/FP/FN、precision/recall、漏检和误检，并补充独立真实外部数据。
+5. ✅ **Android 34→36 协议升级**（2026-09-20 Task 2B）：JNI `kOutputWidth`→36、decoder 4类 argmax + DFL 偏移、contract 常量更新、模型资产替换（SHA-256 已验证）、新增4类 decoder 测试。JVM 定向测试通过、compileDebugKotlin ✅、compileDebugAndroidTestKotlin ✅、assembleDebug ✅。Android parity 2026-09-20 通过（NcnnRuntimeSmoke 1/1 + NanoDetRoiRuntime 4/4，设备 YAL-AL10）。
+6. **属性与路由**：在现有 `RoiTargetType` 和读写链路上增加 `BOLT/NUTSERT` 稳定值和中文名称，显式映射四个可检测类别；`FEATURE` 返回不支持/未执行，不默认判 NG。先审计 schema，只有必要时才做真实 migration。
+7. **阈值校准**：以 `0.20` 为阶段性基线，对多个候选阈值按四类别分别统计 TP/FP/FN、precision/recall、漏检和误检，并补充独立真实外部数据。
+8. **Android 回归**：补齐 parity/路由/兼容性测试，完成 Android 推理一致性和结构化设备证据；对前序已验收能力执行相关回归矩阵。**当前阻塞**：需先完成 Task 6 BOLT/NUTSERT 路由。
+
+### 必须保留的行为
+
+- 模型文件、输出契约、decoder、类别路由和测试必须同步；不能以替换 `.param/.bin` 代替协议升级。
+- `FEATURE` 不调用四分类 detector，不复用其他类别结果，不伪造 OK/NG。
+- ROI 属性按 `templateId`、View、图片和 ROI 隔离；历史未选择属性继续保持未选择语义，不能自动猜测。
+- 前序 CameraX、DPM、模板、ROI 人工确认、总体结果独立确认、ZIP/CSV 路径回链能力不得回归。
+
+### 证据与收口要求
+
+- 执行 Agent 只修改 MobileInspectionApp 范围内的源码、测试和文档，不修改旧工程、不提交 Git、不运行视觉图片分析。
+- 报告必须列出实际修改文件、真实测试命令和结果、APK 路径/时间/大小/SHA-256、模型/NCNN parity、XML/日志/数据库/ZIP 证据和未完成项。
+- `0.20` 在更多数据和独立评估完成前保持“阶段性候选”；本任务不能标记为完整完成。
+- 用户人工视觉验收与主协调 Git 收口在结构化证据完成后进行；主协调只按路径审计并选择性提交当前任务文件。
+
+### 明确不做
+
+本任务不实现 `FEATURE` 检测、自动轮廓、姿态匹配、单应性对齐、ROI 自动跟踪、新 CameraX、DPM/OCR 变更、多选批量导出或批次删除；不处理 `BatchFilterAndDeleteTest`，也不重新打开已验收的 ROI 最终结果与证据图任务。

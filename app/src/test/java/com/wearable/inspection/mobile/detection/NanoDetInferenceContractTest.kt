@@ -121,6 +121,142 @@ class NanoDetInferenceContractTest {
     }
 
     @Test
+    fun `output width is 36 for 4-class protocol`() {
+        assertEquals(36, NanoDetModelContract.OUTPUT_WIDTH)
+        assertEquals(3598, NanoDetModelContract.OUTPUT_HEIGHT)
+    }
+
+    @Test
+    fun `34-column output is rejected by decoder`() {
+        val wrongSize = FloatArray(3598 * 34)
+        val transform = NanoDetImagePreprocessor.letterboxTransform(416, 416)
+        try {
+            NanoDetOutputDecoder.decode(wrongSize, transform)
+            throw AssertionError("expected 34-column output to be rejected")
+        } catch (_: IllegalArgumentException) {
+            // Expected: decoder rejects old 34-column protocol
+        }
+    }
+
+    @Test
+    fun `4-class argmax selects correct class`() {
+        val width = NanoDetModelContract.OUTPUT_WIDTH
+        val output = FloatArray(width * NanoDetModelContract.OUTPUT_HEIGHT)
+        // Row 0: class 3 (nutsert) has highest score
+        output[0 * width + 3] = 0.8f
+        output[0 * width + 0] = 0.1f
+        output[0 * width + 1] = 0.1f
+        output[0 * width + 2] = 0.1f
+        // Row 1: class 2 (bolt) has highest score
+        output[1 * width + 2] = 0.7f
+        output[1 * width + 0] = 0.1f
+        output[1 * width + 1] = 0.1f
+        output[1 * width + 3] = 0.1f
+        val transform = NanoDetImagePreprocessor.letterboxTransform(416, 416)
+        val detections = NanoDetOutputDecoder.decode(output, transform, scoreThreshold = 0.01f)
+
+        val nutsert = detections.filter { it.classIndex == 3 }
+        val bolt = detections.filter { it.classIndex == 2 }
+        assertEquals("nutsert detection count", 1, nutsert.size)
+        assertEquals("bolt detection count", 1, bolt.size)
+        assertEquals("nutsert score", 0.8f, nutsert.single().score)
+        assertEquals("bolt score", 0.7f, bolt.single().score)
+        assertEquals("nutsert className", "nutsert", nutsert.single().className)
+        assertEquals("bolt className", "bolt", bolt.single().className)
+    }
+
+    @Test
+    fun `DFL starts at column 4 not column 2 with numeric box verification`() {
+        // Place detection at stride-8 grid point (10, 5) — a non-boundary interior point.
+        // Decoder uses centerX = x * stride (no half-stride offset).
+        // Point index = 5 * 52 + 10 = 270. Row base = 270 * 36 = 9720.
+        // Center = (10*8, 5*8) = (80, 40) in input space.
+        val width = NanoDetModelContract.OUTPUT_WIDTH
+        val output = FloatArray(width * NanoDetModelContract.OUTPUT_HEIGHT)
+        val row = (5 * 52 + 10) * width  // 9720
+
+        // Class 1 (thread) wins
+        output[row + 1] = 0.9f
+        // DFL starts at column 4. Peak at bins [2, 3, 1, 4]:
+        //   left  dist = 2*8 = 16 → box.left  = 80 - 16 = 64
+        //   top   dist = 3*8 = 24 → box.top   = 40 - 24 = 16
+        //   right dist = 1*8 =  8 → box.right = 80 +  8 = 88
+        //   bottomdist = 4*8 = 32 → box.bottom= 40 + 32 = 72
+        val peakBins = intArrayOf(2, 3, 1, 4)
+        for (side in 0 until 4) {
+            for (i in 0 until 8) {
+                output[row + 4 + side * 8 + i] = if (i == peakBins[side]) 10.0f else 0.0f
+            }
+        }
+
+        val transform = NanoDetImagePreprocessor.letterboxTransform(416, 416)
+        val detections = NanoDetOutputDecoder.decode(output, transform, scoreThreshold = 0.01f)
+        assertEquals("exactly one detection", 1, detections.size)
+        val det = detections.single()
+        assertEquals("thread", det.className)
+        // If DFL were offset at row+2 (old 2-col protocol), columns 2..3 would be
+        // read as DFL left/top logits, producing entirely wrong box coordinates.
+        // With correct offset at row+4, the box matches the expected geometry.
+        val tol = 1.0
+        assertEquals("box.left",  64.0, det.box.left,   tol)
+        assertEquals("box.top",   16.0, det.box.top,    tol)
+        assertEquals("box.right", 88.0, det.box.right,  tol)
+        assertEquals("box.bottom",72.0, det.box.bottom, tol)
+    }
+
+    @Test
+    fun `4-class NMS groups detections by class independently`() {
+        // NanoDet argmax: one grid point → one class. Place bolt and nutsert
+        // at ADJACENT stride-8 points with identical DFL → high IoU overlap.
+        // NMS groups by class: both must survive despite the overlap.
+        //
+        // stride-8 layout: point = y*52+x. (x,y)=(10,5) → 270, (x,y)=(11,5) → 271.
+        // center(10,5) = (80,40). center(11,5) = (88,40). DFL peak bin3 → distance=24.
+        // box1 = (56, 16, 104, 64). box2 = (64, 16, 112, 64).
+        // Overlap horizontally: [64, 104] = 40px. Vertically full: 48px.
+        // IoU = 40*48 / (48*48 + 48*48 - 40*48) = 1920/2688 ≈ 0.71 > NMS_THRESHOLD(0.6).
+        // Same-class would suppress. Different classes → both survive.
+        val width = NanoDetModelContract.OUTPUT_WIDTH
+        val output = FloatArray(width * NanoDetModelContract.OUTPUT_HEIGHT)
+
+        // Point (10,5): bolt wins argmax
+        val row1 = (5 * 52 + 10) * width  // 270*36
+        output[row1 + 2] = 0.8f   // bolt
+        output[row1 + 3] = 0.5f   // nutsert
+        for (side in 0 until 4) for (i in 0 until 8)
+            output[row1 + 4 + side * 8 + i] = if (i == 3) 10.0f else 0.0f
+
+        // Point (11,5): nutsert wins argmax
+        val row2 = (5 * 52 + 11) * width  // 271*36
+        output[row2 + 2] = 0.3f   // bolt
+        output[row2 + 3] = 0.7f   // nutsert
+        for (side in 0 until 4) for (i in 0 until 8)
+            output[row2 + 4 + side * 8 + i] = if (i == 3) 10.0f else 0.0f
+
+        val transform = NanoDetImagePreprocessor.letterboxTransform(416, 416)
+        val detections = NanoDetOutputDecoder.decode(output, transform, scoreThreshold = 0.01f)
+
+        val boltDetections = detections.filter { it.classIndex == 2 }
+        val nutsertDetections = detections.filter { it.classIndex == 3 }
+        // NMS is per-class: both survive despite IoU ≈ 0.71 > 0.6 threshold.
+        assertEquals("bolt count", 1, boltDetections.size)
+        assertEquals("nutsert count", 1, nutsertDetections.size)
+        assertEquals("bolt score", 0.8f, boltDetections.single().score)
+        assertEquals("nutsert score", 0.7f, nutsertDetections.single().score)
+        assertEquals("bolt className", "bolt", boltDetections.single().className)
+        assertEquals("nutsert className", "nutsert", nutsertDetections.single().className)
+    }
+
+    @Test
+    fun `empty output for new classes produces no bolt or nutsert detections`() {
+        val output = FloatArray(NanoDetModelContract.OUTPUT_WIDTH * NanoDetModelContract.OUTPUT_HEIGHT)
+        val transform = NanoDetImagePreprocessor.letterboxTransform(720, 1280)
+        val detections = NanoDetOutputDecoder.decode(output, transform)
+        assertTrue("no bolt detections", detections.none { it.classIndex == 2 })
+        assertTrue("no nutsert detections", detections.none { it.classIndex == 3 })
+    }
+
+    @Test
     fun `ROI box is clipped then offset to full photo coordinates`() {
         val mapped = NanoDetCoordinateMapper.mapRoiBoxToPhoto(
             NanoDetBox(-5.0, 2.0, 150.0, 200.0),
@@ -140,9 +276,11 @@ class NanoDetInferenceContractTest {
         )
     }
 
+    private val classNames = arrayOf("nut", "thread", "bolt", "nutsert")
+
     private fun candidate(classIndex: Int, score: Float) = NanoDetCandidate(
         classIndex = classIndex,
-        className = if (classIndex == 0) "nut" else "thread",
+        className = classNames[classIndex],
         score = score,
         box = NanoDetBox(0.0, 0.0, 20.0, 20.0),
         point = 0

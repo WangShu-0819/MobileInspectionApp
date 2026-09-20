@@ -27,7 +27,7 @@ class NanoDetRoiRuntimeInstrumentedTest {
         val targetContext = instrumentation.targetContext
         val workspace = File(targetContext.cacheDir, "nanodet_roi_parity").apply { mkdirs() }
         val parity = JSONObject(
-            testContext.assets.open("ncnn_smoke/parity_results.json").bufferedReader().use { it.readText() }
+            testContext.assets.open("ncnn_smoke/exp09_parity_results.json").bufferedReader().use { it.readText() }
         )
         val service = NanoDetRoiInferenceService(targetContext)
         val comparisons = JSONObject()
@@ -56,7 +56,8 @@ class NanoDetRoiRuntimeInstrumentedTest {
                 assertEquals("[0,0,${result.imageWidth},${result.imageHeight}]", result.roiBounds.toString().replace(" ", ""))
                 assertEquals(0.37f, result.threshold)
                 assertEquals(0.05f, result.candidateThreshold)
-                assertEquals(expected.getJSONArray("nut").length() + expected.getJSONArray("thread").length(), result.detections.size)
+                val expectedTotalCount = CLASS_NAMES.sumOf { expected.getJSONArray(it).length() }
+                assertEquals(expectedTotalCount, result.detections.size)
 
                 for (className in CLASS_NAMES) {
                     val expectedItems = expected.getJSONArray(className)
@@ -103,12 +104,17 @@ class NanoDetRoiRuntimeInstrumentedTest {
                 val thresholdCounts = JSONObject()
                 for (threshold in THRESHOLDS) {
                     val actualAtThreshold = result.detections.filter { it.score >= threshold }
-                    val actualNut = actualAtThreshold.count { it.classIndex == 0 }
-                    val actualThread = actualAtThreshold.count { it.classIndex == 1 }
+                    val actualCounts = CLASS_NAMES.associateWith { className ->
+                        actualAtThreshold.count { it.className == className }
+                    }
                     val expectedCounts = expectedThresholds.getJSONObject(threshold.toString()).getJSONObject("ncnn")
-                    assertEquals("$filename $threshold nut", expectedCounts.getInt("nut"), actualNut)
-                    assertEquals("$filename $threshold thread", expectedCounts.getInt("thread"), actualThread)
-                    thresholdCounts.put(threshold.toString(), JSONObject().put("nut", actualNut).put("thread", actualThread))
+                    for (className in CLASS_NAMES) {
+                        val expectedCount = if (expectedCounts.has(className)) expectedCounts.getInt(className) else 0
+                        assertEquals("$filename $threshold $className", expectedCount, actualCounts.getValue(className))
+                    }
+                    val thresholdJson = JSONObject()
+                    for (className in CLASS_NAMES) thresholdJson.put(className, actualCounts.getValue(className))
+                    thresholdCounts.put(threshold.toString(), thresholdJson)
                 }
 
                 val expectedThread = expected.getJSONArray("thread")
@@ -127,7 +133,7 @@ class NanoDetRoiRuntimeInstrumentedTest {
                     JSONObject()
                         .put("imageSize", "${result.imageWidth}x${result.imageHeight}")
                         .put("exifOrientation", result.exifOrientation)
-                        .put("outputShape", "[3598,34]")
+                        .put("outputShape", "[3598,36]")
                         .put("status", result.status.name)
                         .put("suggestion", result.modelSuggestion?.name)
                         .put("matchingScore", result.matchingScore?.toDouble())
@@ -279,8 +285,8 @@ class NanoDetRoiRuntimeInstrumentedTest {
 
     private companion object {
         val IMAGE_NAMES = listOf("frame_00106_f1060.jpg", "frame_00045_f450.jpg")
-        val CLASS_NAMES = listOf("nut", "thread")
-        val THRESHOLDS = listOf(0.05f, 0.25f, 0.37f, 0.50f)
+        val CLASS_NAMES = listOf("nut", "thread", "bolt", "nutsert")
+        val THRESHOLDS = listOf(0.05f, 0.10f, 0.15f, 0.20f, 0.25f, 0.30f, 0.37f, 0.50f)
         const val MAX_SCORE_DIFF = 1e-5
         const val MAX_BOX_DIFF_PX = 0.01
     }

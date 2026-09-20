@@ -3,16 +3,16 @@ package com.wearable.inspection.mobile.detection
 import com.wearable.inspection.mobile.data.entity.RoiTargetType
 
 object NanoDetModelContract {
-    const val VERSION = "nanodet-ncnn-20260526-opt2"
+    const val VERSION = "nanodet-ncnn-exp09-4class"
     const val INPUT_BLOB = "in0"
     const val OUTPUT_BLOB = "out0"
     const val INPUT_SIZE = 416
-    const val OUTPUT_WIDTH = 34
+    const val OUTPUT_WIDTH = 36
     const val OUTPUT_HEIGHT = 3598
     const val CANDIDATE_THRESHOLD = 0.05f
     const val STARTING_BUSINESS_THRESHOLD = 0.37f
-    const val PARAM_SHA256 = "AD45E2F3FCB6777A5E924AA9A3095C23B2C5F900632720C389D7816A1A390BDD"
-    const val MODEL_SHA256 = "38F67190D669C9F047546F1B34DF541704E9A20429C4921182DDA8085E8F54E3"
+    const val PARAM_SHA256 = "B81B824FEA9FF949F72F3715A8F20C6EBE96C2792370DD80B7A7A69A65335960"
+    const val MODEL_SHA256 = "A9C6792BC13B926BF1BAA4F73C001E6EB7E08A3668682B9755E6796D8556C137"
 }
 
 data class NanoDetBox(
@@ -74,7 +74,7 @@ data class NanoDetRoiInferenceResult(
     val elapsedMs: Long = 0,
     val inputShape: String = "[1,3,416,416]",
     val outputBlob: String = NanoDetModelContract.OUTPUT_BLOB,
-    val outputShape: String = "[3598,34]",
+    val outputShape: String = "[3598,36]",
     val imageWidth: Int? = null,
     val imageHeight: Int? = null,
     val exifOrientation: Int? = null,

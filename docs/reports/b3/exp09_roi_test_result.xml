@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<testsuite name="com.wearable.inspection.mobile.detection.NanoDetRoiRuntimeInstrumentedTest" tests="4" failures="0" errors="0" skipped="0" time="1.976" timestamp="2026-09-20T10:53:42" hostname="localhost">
+  <properties>
+    <property name="device" value="YAL-AL10 - 10" />
+    <property name="flavor" value="" />
+    <property name="project" value=":app" />
+  </properties>
+  <testcase name="jpegExifIsReadFromRawRasterBeforeManualOrientation" classname="com.wearable.inspection.mobile.detection.NanoDetRoiRuntimeInstrumentedTest" time="0.035" />
+  <testcase name="runtimeAndInferenceFailuresRemainNonSuccessStates" classname="com.wearable.inspection.mobile.detection.NanoDetRoiRuntimeInstrumentedTest" time="0.129" />
+  <testcase name="exifRotationMatchesUprightPixelCoordinates" classname="com.wearable.inspection.mobile.detection.NanoDetRoiRuntimeInstrumentedTest" time="0.006" />
+  <testcase name="savedFullImageRoiMatchesDesktopNcnnForBothRegressionPhotos" classname="com.wearable.inspection.mobile.detection.NanoDetRoiRuntimeInstrumentedTest" time="0.234" />
+</testsuite>
