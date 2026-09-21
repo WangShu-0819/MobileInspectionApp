@@ -104,9 +104,9 @@
 ## 未完成项
 
 - **Task 4（阈值校准）**：以 0.20 为阶段性候选基线，需更多独立数据和分类型指标
-- **Task 5（Android 回归）**：需先完成 Task 3 + 4
-- **真机验证**：未执行（NOT_RUN_BY_SCOPE），等待主协调安排
-- **Git**：等待主协调选择性提交；本报告不把全量回归写成全部通过
+- **Task 5（Android 回归）**：✅ 已完成（2026-09-20）；`NcnnRuntimeSmoke 1/1 + NanoDetRoiRuntime 4/4`，设备 YAL-AL10
+- **阈值状态**：`0.20` 仍是阶段性候选，不是最终现场阈值
+- **Git**：本报告与当前任务文档由主协调按路径选择性收口；本报告不把全量回归写成全部通过
 
 ## 不修改的组件
 
@@ -118,4 +118,5 @@ CameraX、DPM、OCR、NanoDet decoder/DFL/NMS、模型资产、阈值策略和�
 - 构建时间：2026-09-20 19:23:23（Asia/Shanghai）
 - 大小：232,126,458 bytes
 - SHA-256：`B3C6E2BA45C058362BCA2205883425F471912ADE1C9004EB31130611E0D260FF`
-- 本轮未执行 ADB、connectedDebugAndroidTest 或真机视觉验收。
+- 2026-09-20 Android 结构化回归：`NcnnRuntimeSmokeInstrumentedTest` 1/1、`NanoDetRoiRuntimeInstrumentedTest` 4/4 通过；对应 XML 见 `docs/reports/b3/exp09_smoke_test_result.xml` 和 `docs/reports/b3/exp09_roi_test_result.xml`。
+- 真机设备：YAL-AL10（ERLDU20429005890）；新包 PID `18855`，前台 Activity 为 `com.wearable.inspection.mobile/.MainActivity`。

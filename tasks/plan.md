@@ -746,7 +746,7 @@ DEFERRED / POST-MVP（不阻塞 V1 交付）：
 ~~下一步仅处理：修复该测试夹具、重新跑生命周期测试和 ROI 定向集合，必要时补编译/APK/instrumented 证据；然后更新对应报告并等待用户验收。~~ 钢印 OCR 真机/真实样本验证按用户指示暂不纳入本任务清单。当前状态以 `tasks/todo.md` 顶部为准：**软件验证完成，等待用户验收**。
 ## 2026-09-20 当前任务指针：exp09 四分类 Android 检测协议、BOLT/NUTSERT 路由与阈值校准
 
-状态：**TASK_2B_PROTOCOL_PASS / ANDROID_PARITY_PASS / TASK_3_SOFTWARE_COMPLETE / TASK_4_ANALYSIS_COMPLETE**（2026-09-20）。本节是当前执行入口，优先于本文更早的 NanoDet 二分类和 ROI 检测历史计划；历史内容保留用于追溯，不覆盖当前产品决定。
+状态：**TASK_2B_PROTOCOL_PASS / ANDROID_PARITY_PASS / TASK_3_SOFTWARE_COMPLETE / TASK_4_ANALYSIS_COMPLETE / TASK_5_REGRESSION_PASS**（2026-09-20）。本节是当前执行入口，优先于本文更早的 NanoDet 二分类和 ROI 检测历史计划；历史内容保留用于追溯，不覆盖当前产品决定。
 
 - Task 2A（桌面 parity）：✅ 已完成（yolov12 环境，用户授权环境例外）
 - Task 2B（Android 34→36 协议升级）：✅ 已完成（2026-09-20）
@@ -757,7 +757,7 @@ DEFERRED / POST-MVP（不阻塞 V1 交付）：
 
 - 事实报告：`D:\study\Textile_defects\nanodet-main\nanodet-main\workspace\key_nut_thread_experiments\exp09_retrain_nutsert_4class_baseline\experiment_report_4class.md`。
 - exp09 四分类稳定顺序：`0=nut`、`1=thread`、`2=bolt`、`3=nutsert`。
-- 当前 Android 二分类协议输出宽度为 `34`；四分类目标协议预期为 ONNX `[1,3598,36]`、NCNN `[3598,36]`。这是待转换和运行时验证的目标契约，不是已完成的 Android 证据。
+- 当前 Android 已切换到 exp09 四分类协议：ONNX `[1,3598,36]`、NCNN `[3598,36]`；Android parity 已通过，证据为 `NcnnRuntimeSmoke 1/1 + NanoDetRoiRuntime 4/4`（YAL-AL10）。
 - exp09 报告在阈值 `0.20` 的冻结外部集上给出阶段性结果；外部集只有 6 张图，bolt 没有真实标注，且固定验证集存在 source group 泄漏风险。因此 `0.20` 只能作为候选基线，不能作为最终现场阈值或完整泛化结论。
 - 产品决定：`BOLT`、`NUTSERT` 扩展到 ROI 属性、持久化和检测路由；`FEATURE` 仍保留为属性，但本任务不执行检测。
 
@@ -770,7 +770,7 @@ DEFERRED / POST-MVP（不阻塞 V1 交付）：
 5. ✅ **Android 34→36 协议升级**（2026-09-20 Task 2B）：JNI `kOutputWidth`→36、decoder 4类 argmax + DFL 偏移、contract 常量更新、模型资产替换（SHA-256 已验证）、新增4类 decoder 测试。JVM 定向测试通过、compileDebugKotlin ✅、compileDebugAndroidTestKotlin ✅、assembleDebug ✅。Android parity 2026-09-20 通过（NcnnRuntimeSmoke 1/1 + NanoDetRoiRuntime 4/4，设备 YAL-AL10）。
 6. ✅ **BOLT/NUTSERT 属性与检测路由**（2026-09-20 Task 3）：RoiTargetType 新增 BOLT("螺栓")/NUTSERT("铆螺母")、NanoDetDecisionPolicy.classIndex BOLT→2/NUTSERT→3、ViewConfirmationScreen/ViewModel 类别展示映射更新。TEXT 列兼容，无需 migration。定向 JVM 5 类 123/123 通过，compileDebugKotlin ✅、compileDebugAndroidTestKotlin ✅、assembleDebug ✅；全量 JVM 959 项中 14 项失败、5 项跳过，失败不在本轮修改文件。
 7. **阈值校准**（2026-09-20 ✅ 离线分析完成）：以 `0.20` 为阶段性基线，在冻结外部集（6 图/8 GT）上按 5 阈值（0.10/0.15/0.20/0.25/0.30）统计四类 TP/FP/FN/P/R。**0.20 为零 FP+零 FN 最低阈值**。bolt 零外部 GT 不可评估。详见 `docs/reports/b3/NANODET_EXP09_THRESHOLD_CALIBRATION_REPORT.md`。更大规模数据和现场验证仍待补充。
-8. **Android 回归**：补齐 parity/路由/兼容性测试，完成 Android 推理一致性和结构化设备证据；对前序已验收能力执行相关回归矩阵。Task 3 软件验证已完成，Task 4 离线分析已完成（0.20 候选基线确认），后续按用户验收节奏推进。
+8. ✅ **Android 回归**（2026-09-20）：完成 parity、四分类路由、ROI 静态推理、兼容性测试和结构化设备证据；`NcnnRuntimeSmoke 1/1 + NanoDetRoiRuntime 4/4` 通过。Task 3 软件验证、Task 4 离线分析和 Task 5 回归均已完成，主协调审计已完成，等待用户验收。
 
 ### 必须保留的行为
 
@@ -783,7 +783,7 @@ DEFERRED / POST-MVP（不阻塞 V1 交付）：
 
 - 执行 Agent 只修改 MobileInspectionApp 范围内的源码、测试和文档，不修改旧工程、不提交 Git、不运行视觉图片分析。
 - 报告必须列出实际修改文件、真实测试命令和结果、APK 路径/时间/大小/SHA-256、模型/NCNN parity、XML/日志/数据库/ZIP 证据和未完成项。
-- `0.20` 在更多数据和独立评估完成前保持“阶段性候选”；本任务不能标记为完整完成。
+- `0.20` 在更多数据和独立评估完成前保持“阶段性候选”，不能写成最终现场阈值；当前软件回归已通过，仍需主协调审计、用户验收和 Git 收口。
 - 用户人工视觉验收与主协调 Git 收口在结构化证据完成后进行；主协调只按路径审计并选择性提交当前任务文件。
 
 ### 明确不做

@@ -1,6 +1,6 @@
 # 当前唯一任务：NanoDet exp09 四分类 Android 协议、BOLT/NUTSERT 检测路由与阈值校准
 
-状态：**TASK_2B_PROTOCOL_PASS / ANDROID_PARITY_PASS / TASK_3_SOFTWARE_COMPLETE / TASK_4_ANALYSIS_COMPLETE**（2026-09-20）
+状态：**TASK_2B_PROTOCOL_PASS / ANDROID_PARITY_PASS / TASK_3_SOFTWARE_COMPLETE / TASK_4_ANALYSIS_COMPLETE / TASK_5_REGRESSION_PASS**（2026-09-20）
 
 - 桌面 parity（yolov12 环境）：✅ 通过（PT vs ONNX max=1.22e-05, NCNN vs ONNX max=5.80e-06, IoU≥0.999）
 - Task 2A NCNN 转换（ncnn_py311 环境）：✅ 已完成（用户授权环境例外）
@@ -40,10 +40,11 @@
    - 补充更多独立真实外部数据，控制 source group 泄漏；在样本规模和现场代表性不足前，阈值状态保持“阶段性候选”，不得宣称最终校准或现场泛化完成。
 
 5. **Android 回归与收口验收**
-   - 更新 decoder、输出契约、类别路由和测试，覆盖 `[3598,36]` shape 门禁、四分类解码、空检测、低分候选、FEATURE 不执行、ROI 属性隔离、模型加载失败和旧数据兼容。
-   - 运行 JVM/Repository/UI 相关回归、compile、assemble；按新包名门禁执行 Android 推理一致性和必要的 instrumented/设备日志验证。
-   - 收集 XML、日志、模型/APK 路径、构建时间、大小、SHA-256、数据库和 ZIP（若本任务触及归档）的结构化证据；视觉结论仍由用户人工完成。
+   - ✅ 更新 decoder、输出契约、类别路由和测试，覆盖 `[3598,36]` shape 门禁、四分类解码、空检测、低分候选、FEATURE 不执行、ROI 属性隔离、模型加载失败和旧数据兼容。
+   - ✅ 运行 JVM/Repository/UI 相关回归、compile、assemble；按新包名门禁执行 Android 推理一致性和必要的 instrumented/设备日志验证。
+   - ✅ 收集 XML、日志、模型/APK 路径、构建时间、大小、SHA-256、数据库和 ZIP（若本任务触及归档）的结构化证据；视觉结论仍由用户人工完成。
    - 执行 Agent 不提交 Git；完成后更新本清单、`tasks/plan.md` 和 B3 报告，等待主协调审计及用户验收。
+   - **状态**：✅ REGRESSION_PASS（2026-09-20）。详见下方 Task 5 回归报告。
 
 ## Task 3 完成报告：BOLT/NUTSERT ROI 属性与检测路由（2026-09-20）
 
@@ -112,7 +113,7 @@ CameraX、DPM、OCR、NanoDet decoder/DFL/NMS、模型资产、阈值策略和�
 ### 未完成项
 
 - Task 4（阈值校准）：✅ 离线分析完成并经主协调审计（2026-09-20）
-- Task 5（Android 回归）：需先完成 Task 3 + 4
+- Task 5（Android 回归）：✅ 已完成，详见下方 Task 5 回归报告
 - Task 4 Git 收口范围：仅本报告、`tasks/todo.md`、`tasks/plan.md`；不纳入其他工作区改动
 
 ## Task 4 完成报告：NanoDet exp09 阈值校准与数据证据（2026-09-20）
@@ -186,6 +187,33 @@ CameraX、DPM、OCR、NanoDet decoder/DFL/NMS、模型资产、阈值策略和�
 - Source group 泄漏修复后重跑验证集
 - 现场条件鲁棒性测试
 - Git 收口范围已由主协调确认：仅本报告、`tasks/todo.md`、`tasks/plan.md`；最终提交状态以 Git 历史为准
+
+## Task 5 完成报告：Android 回归与收口验收（2026-09-20）
+
+状态：**REGRESSION_PASS**。exp09 四分类输出契约、BOLT/NUTSERT 路由和静态 ROI 推理已完成 Android 结构化回归；阈值 `0.20` 仍仅为阶段性候选基线。
+
+### 回归证据
+
+- `NcnnRuntimeSmokeInstrumentedTest`：1/1 通过，1.831s。
+- `NanoDetRoiRuntimeInstrumentedTest`：4/4 通过，1.976s。
+- 设备：YAL-AL10（ERLDU20429005890）。
+- Android 输出 shape：`[3598,36]`；四类 `nut/thread/bolt/nutsert` 均参与解码、argmax 和阈值计数。
+- Android 与桌面 parity：分数差异 ≤ `1e-5`，框坐标差异 ≤ `0.01 px`。
+- 结构化 XML：`docs/reports/b3/exp09_smoke_test_result.xml`、`docs/reports/b3/exp09_roi_test_result.xml`。
+
+### 构建产物
+
+- APK：`app/build/outputs/apk/debug/app-debug.apk`
+- 构建时间：2026-09-20 19:23:23（+08:00）
+- 大小：232,126,458 bytes
+- SHA-256：`B3C6E2BA45C058362BCA2205883425F471912ADE1C9004EB31130611E0D260FF`
+- 真机启动核对：新包 PID `18855`，前台为 `com.wearable.inspection.mobile/.MainActivity`。
+
+### 当前未完成项
+
+- 用更大规模、更多现场条件的独立数据继续校准阈值。
+- 补充 bolt 独立外部标注；当前冻结外部集无 bolt GT，不能据此评价 bolt 召回率/精度。
+- 主协调文档审计已完成并准备选择性 Git 收口；仍等待用户验收。
 
 ## 当前验收门槛
 
