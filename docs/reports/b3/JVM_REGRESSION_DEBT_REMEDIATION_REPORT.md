@@ -64,7 +64,7 @@
 - `docs/reports/b3/JVM_REGRESSION_DEBT_REMEDIATION_REPORT.md`
 - `docs/reports/b3/JVM_REGRESSION_FULL_TEST_20260921.log`
 
-未纳入本任务的工作区文件：`docs/reports/b3/PHOTO_REGISTRATION_ENGINE_OPTIONS.md`；它保持原状，不进入本任务提交。初始审计时曾看到的 `app/TestPattern.java`/`.class` 在最终状态已不再出现在工作区；本轮未对其执行删除或提交操作。
+`docs/reports/b3/PHOTO_REGISTRATION_ENGINE_OPTIONS.md` 不属于本 JVM 整改任务；它随后作为 V4/AKAZE 新任务的设计文档纳入独立文档收口。初始审计时曾看到的 `app/TestPattern.java`/`.class` 在最终状态已不再出现在工作区；本轮未对其执行删除或提交操作。
 
 ## 4. 定向测试与编译
 
@@ -124,8 +124,8 @@
 
 ## 8. Git 状态
 
-主协调已按当前任务路径完成选择性提交：`86d1ebd2 fix: close existing JVM regression failures`。未跟踪的 `docs/reports/b3/PHOTO_REGISTRATION_ENGINE_OPTIONS.md` 未纳入，保持原状；未使用 `git add .`、reset、clean、stash 或回滚用户改动。
+主协调已按当前任务路径完成选择性提交：`86d1ebd2 fix: close existing JVM regression failures`。该提交未纳入配准设计文档，因为配准属于后续独立任务；后续 V4/AKAZE 文档收口将单独记录。未使用 `git add .`、reset、clean、stash 或回滚用户改动。
 
 ## 9. 后续任务指针
 
-本整改任务已关闭。下一推荐软件任务是 V1-3“拍后模板与实拍比对 MVP”，详见 `tasks/plan.md` 的“后续任务审计与下一步建议”。`PHOTO_REGISTRATION_ENGINE_OPTIONS.md` 已登记为后续设计候选，但仍是“设计分析 / 未实现”，在用户确认前不启动配准实现；实时轮廓、姿态匹配、Homography/SIFT、自动 ROI 跟踪、新 Detector 和新 CameraX 仍保持 DEFERRED。
+本整改任务已关闭。当前下一任务是 V4/AKAZE 单张照片配准引擎，作为 V1-3“拍后模板与实拍比对 MVP”的底层能力；详见 `tasks/plan.md` 当前任务指针和 `PHOTO_REGISTRATION_ENGINE_OPTIONS.md`。V4 只做静态配准与 ROI 投影，不实现整图检测业务、ALIKED + LightGlue、比对 UI 或新 CameraX。

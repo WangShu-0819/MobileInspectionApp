@@ -1,31 +1,38 @@
-# 当前唯一任务：下一阶段任务选择与计划冻结
+# 当前唯一任务：V4/AKAZE 单张照片配准引擎
 
-状态：**READY_FOR_NEXT_TASK_SELECTION**（2026-09-21；既有 14 项 JVM 失败整改已用户确认并提交）
+状态：**IN_PROGRESS / IMPLEMENTATION_PENDING**（2026-09-21；用户已授权，等待执行 Agent handback）
 
-当前没有在执行的源码、测试、构建或真机任务。本指针只用于主协调审计、文档收口和下一软件任务选择；在用户明确确认前，不启动新的实现工作。
+本任务是 V1-3“拍后模板与实拍比对 MVP”的底层配准引擎切片。当前只实现静态单张照片的 V4/AKAZE 配准、几何质量门禁、模板 ROI 四角投影和失败状态输出；不实现完整 CaptureComparisonScreen，不启动实时相机或新检测算法。
 
-## 当前审计结论
+## 当前任务边界
 
-- 既有 14 项 JVM 失败已从 `959 tests completed / 14 failed / 5 skipped` 收口为 `959 tests / 0 failures / 0 errors / 5 skipped`。
-- `compileDebugKotlin` 与 `assembleDebug` 已通过；用户报告主 APK 为 `app/build/outputs/apk/debug/app-debug.apk`，大小约 `222 MB`。本轮没有新增真机验收，未提供新的 APK SHA-256。
-- 主协调已按路径选择性提交 `86d1ebd2`（`fix: close existing JVM regression failures`）。未跟踪的 `docs/reports/b3/PHOTO_REGISTRATION_ENGINE_OPTIONS.md` 未纳入该提交，保持原状。
-- 旧阶段报告中的“当时 14 项失败”属于历史快照，不回写为 0；当前结果以本节、`tasks/plan.md` 和 [`JVM_REGRESSION_DEBT_REMEDIATION_REPORT.md`](../docs/reports/b3/JVM_REGRESSION_DEBT_REMEDIATION_REPORT.md) 为准。
+- 输入：模板参考图、现场采集照片、模板 ROI 的规范坐标，以及必要的旋转/图像区域信息。
+- 主路径：AKAZE → BFMatcher/Lowe ratio → GMS（当前 OpenCV 能力允许时）→ Homography → 内点/覆盖率/重投影误差/四边形质量门禁。
+- 成功：输出稳定的配准结果和投影后的 ROI 四角；不得直接在配准引擎内运行 NanoDet。
+- 失败：明确输出失败原因或 `FALLBACK_FULL_IMAGE` 建议，禁止使用不可靠的映射 ROI；整图 NanoDet 兜底由后续检测集成任务负责。
+- 允许新增配准领域结果对象，但不得创建第二套 ROI、照片、检测结果或确认实体。
 
-## 推荐下一步（待用户确认）
+## 执行 Agent 指令
 
-推荐进入 B2/V1-3“拍后模板与实拍比对 MVP”，但先做只读审计，再决定实现拆分：
+完整指令见 [`V4_AKAZE_REGISTRATION_AGENT_INSTRUCTION.md`](V4_AKAZE_REGISTRATION_AGENT_INSTRUCTION.md)。执行 Agent 必须：
 
-1. 审计现有模板图、现场照片、`contentRect`/旋转、ROI 坐标和图片存储路径，确认复用现有 `CapturedPhotoEntity`、`MobileImageStore`、确认页状态与导出链路。
-2. 在不新增 CameraX、不做实时轮廓/姿态匹配/单应性对齐、不改 NanoDet 算法或阈值的前提下，设计模板与实拍的切换、透明叠加、blink、缩放和平移 MVP。
-3. 以同一 `templateId`、View、照片和稳定 ROI 关联为验收主线，补充几何映射、旋转、文件路径、状态恢复和导出回链测试；保持总体结果人工独立确认及既有 ZIP/CSV 语义。
-4. 实现后再执行定向 JVM、全量 JVM、`compileDebugKotlin`、`assembleDebug`；是否运行 ADB/真机由后续任务边界另行确认。
+1. 先审计现有图片存储、照片旋转、`contentRect`、`RoiCoordinateMapper`、模板 ROI 和 OpenCV 依赖，再决定实际文件范围。
+2. 只修改 MobileInspectionApp；旧 `Wearable Inspection` 只读参考，不提交 Git，不运行 ADB/真机。
+3. 补齐静态配准 JVM 测试：同图、平移/缩放/旋转/轻微透视、弱纹理/无匹配、各质量门禁、投影四边形非法和 fallback 语义。
+4. 真实报告中列出修改文件、测试命令、未完成项、OpenCV 能力差异和 Git 状态；不得把设计完成写成实现完成。
 
-## 暂不启动的事项
+## 明确不做
 
-- NanoDet 阈值校准：等待更大且独立的标注数据集，当前 `0.20` 仍只是阶段性候选。
-- DPM/OCR 真实样本验收：属于样本准备后的验收工作，不应伪装成新的代码任务。
-- 实时轮廓投影、Homography/SIFT/姿态匹配、ROI 自动跟踪、新 Detector、新 CameraX、批量导出扩展：继续保持 DEFERRED，除非用户另行授权。
-- 单张照片配准引擎：设计文档 [`PHOTO_REGISTRATION_ENGINE_OPTIONS.md`](../docs/reports/b3/PHOTO_REGISTRATION_ENGINE_OPTIONS.md) 已登记为后续候选，当前状态为“设计分析 / 未实现”。推荐 V4/AKAZE + 几何质量门禁先行；ALIKED + LightGlue 仅在真实数据证明第一方案不足后评估；双方案 fallback 不作为当前任务。文档明确禁止在授权前实现配准、整图检测或新增匹配模型。
+- ALIKED + LightGlue、双方案 fallback、新模型运行时。
+- 实时轮廓、实时姿态匹配、自动 `ALIGNED/LOST` 门禁、ROI 自动跟踪、新 CameraX。
+- NanoDet 算法、模型、阈值、全图检测业务判定和人工最终结果语义。
+- 完整 V1-3 比对 UI、Session ROI 拖动 UI、ZIP/CSV 导出扩展。
+
+## 当前任务完成后的后续顺序
+
+1. V4/AKAZE 引擎及 JVM 回归通过。
+2. 再实现 V1-3 CaptureComparisonScreen：切换、叠加、blink、缩放、平移和 Session ROI 人工微调。
+3. 最后由独立任务把配准结果接入现有 NanoDet ROI 检测和结果包，仍需单独验证。
 
 ## 未来真机验收门禁（仅在任务明确授权时使用）
 
