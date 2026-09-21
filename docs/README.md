@@ -11,7 +11,7 @@
 
 ## 当前执行
 
-- `../AGENTS.md`：Agent 唯一入口。
+- `../tasks/todo.md`：当前唯一任务入口。
 - `../tasks/todo.md`：唯一任务清单和累积阶段门禁；当前为 B1 Task 4。
 - `../tasks/plan.md`：Task 4 真实拍照、文件事务、验证范围和交付物。
 
@@ -30,4 +30,4 @@
 - `archive/instructions/`：已执行完或被取代的增量指令。
 - `archive/code-backups/`：从源码目录移出的人工备份。
 
-报告只记录生成当时的历史事实，不能替代 `AGENTS.md`、`tasks/todo.md` 和 `tasks/plan.md` 的当前状态。报告正文中的“下一步”“建议选项”和完成百分比不具有执行效力。
+报告只记录生成当时的历史事实，不能替代 `tasks/todo.md` 和 `tasks/plan.md` 的当前状态。报告正文中的“下一步”“建议选项”和完成百分比不具有执行效力。

@@ -1,6 +1,6 @@
 # B1 CameraX 基础实施报告
 
-> **当前状态**：B1 技术验收完成（Task 1-5 全部通过），等待用户确认进入 B2。当前任务与验收只以根目录 `AGENTS.md`、`tasks/todo.md`、`tasks/plan.md` 为准。
+> **当前状态**：B1 技术验收完成（Task 1-5 全部通过），等待用户确认进入 B2。当前任务与验收只以 `tasks/todo.md`、`tasks/plan.md` 为准。
 >
 > **历史记录**：下方”已完成文件”和”待完善部分”为 B1 早期（2026-08-31）历史快照，反映 Task 1 初始状态。Task 2/3/4/5 的实际实现已超出早期快照描述的范围，详见各 Task 独立报告和 `TASK5_FINAL_VALIDATION_REPORT.md`。
 

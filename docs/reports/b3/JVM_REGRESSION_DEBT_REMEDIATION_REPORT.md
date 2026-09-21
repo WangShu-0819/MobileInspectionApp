@@ -1,8 +1,8 @@
 # 既有 14 项 JVM 失败整改报告
 
-状态：**SOFTWARE_COMPLETE / AWAITING_USER_ACCEPTANCE**（2026-09-21）
+状态：**USER_ACCEPTED / COMMITTED**（2026-09-21；主协调提交 `86d1ebd2`）
 
-本报告对应 `tasks/todo.md` 顶部的独立整改任务，不属于已验收的 NanoDet exp09 四分类协议任务。执行 Agent 未提交 Git；本轮由主协调完成工作区审计、定向复跑、全量 JVM 复跑、编译复核和文档收口。
+本报告对应 `tasks/todo.md` 中已完成的独立整改任务，不属于已验收的 NanoDet exp09 四分类协议任务。执行 Agent 未提交 Git；本轮由主协调完成工作区审计、定向复跑、全量 JVM 复跑、编译复核、用户结果核对和选择性 Git 收口。
 
 ## 1. 基线与最终结果
 
@@ -14,6 +14,7 @@
 - 当前 JUnit XML 汇总：`959 tests / 0 failures / 0 errors / 5 skipped`。
 - XML 目录：`app/build/test-results/testDebugUnitTest/`（77 个 `TEST-*.xml`）。
 - 全量 Gradle 输出：`docs/reports/b3/JVM_REGRESSION_FULL_TEST_20260921.log`。
+- 用户补充构建结果：`compileDebugKotlin`、`assembleDebug` 均通过；APK 为 `app/build/outputs/apk/debug/app-debug.apk`，大小约 `222 MB`。用户未提供新的 APK SHA-256，本报告不补写或推测。
 - 基线失败 XML：当前工作区没有保留整改前的失败 XML；全量复跑已覆盖 `app/build/test-results/testDebugUnitTest/`。整改前的 14 项方法名和症状以本报告第 2 节及任务清单为准，不能伪称为已保存的失败 XML。
 
 ## 2. 14 项逐项审计与最小修复
@@ -123,4 +124,8 @@
 
 ## 8. Git 状态
 
-本轮未提交 Git。收口前需仅按当前任务路径选择性提交，不得纳入未跟踪的 `TestPattern` 文件或 `PHOTO_REGISTRATION_ENGINE_OPTIONS.md`，也不得使用 `git add .`、reset、clean、stash 或回滚用户改动。
+主协调已按当前任务路径完成选择性提交：`86d1ebd2 fix: close existing JVM regression failures`。未跟踪的 `docs/reports/b3/PHOTO_REGISTRATION_ENGINE_OPTIONS.md` 未纳入，保持原状；未使用 `git add .`、reset、clean、stash 或回滚用户改动。
+
+## 9. 后续任务指针
+
+本整改任务已关闭。下一推荐软件任务是 V1-3“拍后模板与实拍比对 MVP”，详见 `tasks/plan.md` 的“后续任务审计与下一步建议”。`PHOTO_REGISTRATION_ENGINE_OPTIONS.md` 已登记为后续设计候选，但仍是“设计分析 / 未实现”，在用户确认前不启动配准实现；实时轮廓、姿态匹配、Homography/SIFT、自动 ROI 跟踪、新 Detector 和新 CameraX 仍保持 DEFERRED。

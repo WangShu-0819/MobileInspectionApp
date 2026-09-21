@@ -1,6 +1,6 @@
 # 🎨 MobileInspectionApp UI 重构报告
 
-> 历史快照：本文记录 4 Tab 到 3 Tab 的迁移过程，正文中的阶段预告和相机占位状态不是当前任务。请以根目录 `AGENTS.md` 和 `tasks/todo.md` 为准。
+> 历史快照：本文记录 4 Tab 到 3 Tab 的迁移过程，正文中的阶段预告和相机占位状态不是当前任务。请以 `tasks/todo.md` 和 `tasks/plan.md` 为准。
 
 **项目**：MobileInspectionApp - 手机端通用视觉检测工作台
 **完成时间**：2026-08-31 16:30

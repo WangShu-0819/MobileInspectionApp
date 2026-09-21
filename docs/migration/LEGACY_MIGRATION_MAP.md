@@ -4,7 +4,7 @@
 **创建时间**：2026-08-31
 **状态**：B1 已完成；B2 Task 1 迁移审计进行中
 
-> 当前状态与执行边界以根目录 `AGENTS.md`、`tasks/todo.md` 和 `tasks/plan.md` 为准。本文件中标为“历史目标”的 B0/B1 内容只保留审计背景，不得据此重新创建 `SharedCameraSession`、`PhoneCameraController` 或第二套 CameraX。
+> 当前状态与执行边界以 `tasks/todo.md` 和 `tasks/plan.md` 为准。本文件中标为“历史目标”的 B0/B1 内容只保留审计背景，不得据此重新创建 `SharedCameraSession`、`PhoneCameraController` 或第二套 CameraX。
 
 ## 0. B2 Task 1 当前迁移结论
 

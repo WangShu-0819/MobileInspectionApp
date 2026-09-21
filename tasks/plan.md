@@ -405,7 +405,7 @@ Task 4 已完成全部验收项：会话安全快门、capture request token 机
 5. **前后台切换 10 次**：无崩溃
 6. **日志门禁 12 项**：0 违规（1 项系统误报）
 7. **截图证据**：01_cold_start.png 用户视觉复核通过
-8. **文档收口**：AGENTS.md、plan.md、todo.md、B1 报告已更新
+8. **文档收口**：plan.md、todo.md、B1 报告已更新
 
 详见 `TASK5_FINAL_VALIDATION_REPORT.md`。
 
@@ -445,7 +445,7 @@ B2 Task 1 连续执行检查点：
 5. 扫码页面、扫码框 contentRect/rotation ROI 映射和现场采集导航。
 6. 自动化、真机扫码框、CameraX 累积回归及旧/新 App 同样本 A/B 验收。
 
-所有真机检查点先执行 `AGENTS.md` 的“真机包名门禁”。新工程验收只能显式启动 `com.wearable.inspection.mobile/com.wearable.inspection.mobile.MainActivity`；桌面图标、最近任务或旧包 `com.wearable.inspection` 产生的证据无效。旧 App 仅在标注清楚的 A/B 对照轮次中单独启动，并在切换前停止另一包。`connectedDebugAndroidTest` 返回后必须假定新包已被卸载，无论测试成功或失败都先重新安装并显式启动主 APK、核对新旧 PID 与前台包，再继续或报告失败。
+所有真机检查点先执行 `tasks/todo.md` 顶部“未来真机验收门禁”。新工程验收只能显式启动 `com.wearable.inspection.mobile/com.wearable.inspection.mobile.MainActivity`；桌面图标、最近任务或旧包 `com.wearable.inspection` 产生的证据无效。旧 App 仅在标注清楚的 A/B 对照轮次中单独启动，并在切换前停止另一包。`connectedDebugAndroidTest` 返回后必须假定新包已被卸载，无论测试成功或失败都先重新安装并显式启动主 APK、核对新旧 PID 与前台包，再继续或报告失败。
 
 各检查点通过测试后允许自动继续并分别提交；任一失败立即暂停。DPM 识别链的软件迁移已完成，但在真实已绑定码切件和物理样本验收补证前，不得把 DPM 绑定/切件整体标记为最终验收完成。物理验收不阻塞后续非 DPM 软件开发。
 
@@ -624,7 +624,7 @@ DEFERRED / POST-MVP（不阻塞 V1 交付）：
 
 #### 阶段 0：清任务门禁与冻结接口
 
-- 实施 Agent 先读取根 `AGENTS.md` 和 `tasks/todo.md`，核实唯一当前任务。2026-09-14 的转换/桌面对照已结束；开始 Android/App 源码工作前，仍须由项目维护者将后续单一任务写入 `tasks/todo.md`，不得自行并行切换或同时设多个任务为 `IN_PROGRESS`。
+- 实施 Agent 先读取 `tasks/todo.md` 和 `tasks/plan.md`，核实唯一当前任务。2026-09-14 的转换/桌面对照已结束；开始 Android/App 源码工作前，仍须由项目维护者将后续单一任务写入 `tasks/todo.md`，不得自行并行切换或同时设多个任务为 `IN_PROGRESS`。
 - 核对训练配置、类别标签与 ROI 属性映射，并固定 ONNX 路径、SHA-256、输入输出名称/shape、预处理和解码版本。产品判定语义已由用户确认：对应目标达到阈值视为模型建议 OK，未检出/低于阈值视为模型建议 NG。
 - 确认模型产物的存储/加载方式、目标设备 ABI、现有 Android NDK 与 CMake/Gradle 配置；不改相机所有权、导航、模块结构或现有人工确认页路由。
 
@@ -790,9 +790,9 @@ DEFERRED / POST-MVP（不阻塞 V1 交付）：
 
 本任务不实现 `FEATURE` 检测、自动轮廓、姿态匹配、单应性对齐、ROI 自动跟踪、新 CameraX、DPM/OCR 变更、多选批量导出或批次删除；不处理 `BatchFilterAndDeleteTest`，也不重新打开已验收的 ROI 最终结果与证据图任务。
 
-## 2026-09-21 当前任务指针：既有 14 项 JVM 失败整改
+## 2026-09-21 已完成任务：既有 14 项 JVM 失败整改
 
-状态：**SOFTWARE_COMPLETE / AWAITING_USER_ACCEPTANCE**。这是用户在 NanoDet exp09 任务 `USER_ACCEPTED` 后明确授权的新独立任务。`tasks/todo.md` 顶部是唯一状态来源；本节不得被历史 NanoDet、ROI、DPM 或 B1/B2 报告覆盖。
+状态：**USER_ACCEPTED / COMMITTED**。这是用户在 NanoDet exp09 任务 `USER_ACCEPTED` 后明确授权的新独立任务，已由主协调提交 `86d1ebd2`。`tasks/todo.md` 顶部当前指向下一阶段任务选择；本节只保留本次整改的历史目标和验收证据。
 
 ### 目标
 
@@ -821,12 +821,39 @@ DEFERRED / POST-MVP（不阻塞 V1 交付）：
 
 ### Git 收口
 
-用户验收前保持工作区不提交。验收后主协调检查 `git status`、`git diff --stat`、`git diff --check`，仅按当前任务路径选择性提交，不使用 `git add .`、reset、clean、stash 或回滚用户改动。
+用户验收后主协调已检查 `git status`、`git diff --stat`、`git diff --check`，仅按当前任务路径选择性提交 `86d1ebd2`；未跟踪的 `docs/reports/b3/PHOTO_REGISTRATION_ENGINE_OPTIONS.md` 未纳入。未使用 `git add .`、reset、clean、stash 或回滚用户改动。
 
 ### 主协调复核结果（2026-09-21）
 
 - 全量 `:app:testDebugUnitTest --no-daemon --rerun-tasks --console=plain`：`959 tests / 0 failures / 0 errors / 5 skipped`，Gradle 退出码 0。
 - 失败相关定向测试：`206 tests / 0 failures / 0 errors / 0 skipped`。
 - `:app:compileDebugKotlin --no-daemon --rerun-tasks`：`BUILD SUCCESSFUL`。
+- `:app:assembleDebug`：`BUILD SUCCESSFUL`；用户报告 APK 路径 `app/build/outputs/apk/debug/app-debug.apk`，大小约 `222 MB`；未提供新的 SHA-256。
 - 5 个 skipped 均为 `DpmScannerTest` 外部样本/目录缺失，名称和原因已写入 `docs/reports/b3/JVM_REGRESSION_DEBT_REMEDIATION_REPORT.md`。
-- 未运行 APK、ADB、instrumented 或真机验证；等待用户验收后再按路径选择性提交。
+- 用户已确认本任务完成；本任务没有新增 ADB、instrumented 或真机验收。
+
+## 2026-09-21 后续任务审计与下一步建议
+
+状态：**READY_FOR_NEXT_TASK_SELECTION**。当前不启动新的源码任务，等待用户从候选方向中确认唯一下一任务。
+
+### 审计结论
+
+- 当前主线已恢复 JVM 全绿，提交 `86d1ebd2` 只包含本轮整改相关的 15 个文件。
+- 工作区唯一未跟踪文件为 `docs/reports/b3/PHOTO_REGISTRATION_ENGINE_OPTIONS.md`，属于配准设计分析，不属于本轮整改，必须保留但不自动纳入后续提交。
+- `tasks/todo.md`、本节和 `docs/reports/b3/JVM_REGRESSION_DEBT_REMEDIATION_REPORT.md` 已作为当前结果入口；各历史阶段报告保留其当时的测试快照，不做事后改写。
+
+### 推荐下一任务：V1-3 拍后模板与实拍比对 MVP
+
+这是当前产品计划中尚未开始、且最接近既有模板拍摄能力的下一软件切片。建议分两步推进：
+
+1. **只读审计**：检查 `LiveInspectionScreen`、确认页/确认页 ViewModel、模板图与现场照片实体、`MobileImageStore`、ROI 坐标映射、旋转和 `contentRect` 处理，先列出可复用路径和缺口。
+2. **最小实现**：只支持模板/实拍切换、透明叠加、blink、缩放和平移；不实现实时轮廓、姿态匹配、Homography/SIFT、自动 ALIGNED、ROI 自动跟踪或新 CameraX。
+
+验收门槛：同一模板、View、照片和 ROI 的稳定关联；正确处理旋转与 `contentRect`，不裁切、不拉伸、不把 letterbox 当图像区域；不破坏总体结果人工独立确认、固定确认栏、既有 ZIP/CSV 路径回链；补充几何、状态、路径和导出回归测试，并通过定向 JVM、全量 JVM、`compileDebugKotlin`、`assembleDebug`。
+
+### 后续候选但不作为当前任务
+
+- **阈值校准**：先收集更大、独立、分组无泄漏的标注集，再评估 `0.10/0.15/0.20/0.25/0.30` 及各类别；当前 `0.20` 只能作为阶段性候选。
+- **DPM/OCR 样本验收**：待真实样本具备后做专项验收，不新增代码任务。
+- **实时轮廓/姿态对齐/自动跟踪/新 Detector/新 CameraX**：继续 DEFERRED，需单独授权和拆分。
+- **单张照片配准引擎**：登记 [`PHOTO_REGISTRATION_ENGINE_OPTIONS.md`](../docs/reports/b3/PHOTO_REGISTRATION_ENGINE_OPTIONS.md) 作为设计候选，状态为“设计分析 / 未实现”。推荐 V4/AKAZE + 几何门禁，ALIKED + LightGlue 仅在真实数据证明必要时评估，双方案 fallback 暂不启动；在用户授权前不实现配准、整图检测或新匹配模型。

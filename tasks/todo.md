@@ -1,6 +1,43 @@
-# 当前唯一任务：既有 14 项 JVM 失败整改
+# 当前唯一任务：下一阶段任务选择与计划冻结
 
-状态：**SOFTWARE_COMPLETE / AWAITING_USER_ACCEPTANCE**（2026-09-21，主协调复核完成；独立于已验收的 NanoDet 任务）
+状态：**READY_FOR_NEXT_TASK_SELECTION**（2026-09-21；既有 14 项 JVM 失败整改已用户确认并提交）
+
+当前没有在执行的源码、测试、构建或真机任务。本指针只用于主协调审计、文档收口和下一软件任务选择；在用户明确确认前，不启动新的实现工作。
+
+## 当前审计结论
+
+- 既有 14 项 JVM 失败已从 `959 tests completed / 14 failed / 5 skipped` 收口为 `959 tests / 0 failures / 0 errors / 5 skipped`。
+- `compileDebugKotlin` 与 `assembleDebug` 已通过；用户报告主 APK 为 `app/build/outputs/apk/debug/app-debug.apk`，大小约 `222 MB`。本轮没有新增真机验收，未提供新的 APK SHA-256。
+- 主协调已按路径选择性提交 `86d1ebd2`（`fix: close existing JVM regression failures`）。未跟踪的 `docs/reports/b3/PHOTO_REGISTRATION_ENGINE_OPTIONS.md` 未纳入该提交，保持原状。
+- 旧阶段报告中的“当时 14 项失败”属于历史快照，不回写为 0；当前结果以本节、`tasks/plan.md` 和 [`JVM_REGRESSION_DEBT_REMEDIATION_REPORT.md`](../docs/reports/b3/JVM_REGRESSION_DEBT_REMEDIATION_REPORT.md) 为准。
+
+## 推荐下一步（待用户确认）
+
+推荐进入 B2/V1-3“拍后模板与实拍比对 MVP”，但先做只读审计，再决定实现拆分：
+
+1. 审计现有模板图、现场照片、`contentRect`/旋转、ROI 坐标和图片存储路径，确认复用现有 `CapturedPhotoEntity`、`MobileImageStore`、确认页状态与导出链路。
+2. 在不新增 CameraX、不做实时轮廓/姿态匹配/单应性对齐、不改 NanoDet 算法或阈值的前提下，设计模板与实拍的切换、透明叠加、blink、缩放和平移 MVP。
+3. 以同一 `templateId`、View、照片和稳定 ROI 关联为验收主线，补充几何映射、旋转、文件路径、状态恢复和导出回链测试；保持总体结果人工独立确认及既有 ZIP/CSV 语义。
+4. 实现后再执行定向 JVM、全量 JVM、`compileDebugKotlin`、`assembleDebug`；是否运行 ADB/真机由后续任务边界另行确认。
+
+## 暂不启动的事项
+
+- NanoDet 阈值校准：等待更大且独立的标注数据集，当前 `0.20` 仍只是阶段性候选。
+- DPM/OCR 真实样本验收：属于样本准备后的验收工作，不应伪装成新的代码任务。
+- 实时轮廓投影、Homography/SIFT/姿态匹配、ROI 自动跟踪、新 Detector、新 CameraX、批量导出扩展：继续保持 DEFERRED，除非用户另行授权。
+- 单张照片配准引擎：设计文档 [`PHOTO_REGISTRATION_ENGINE_OPTIONS.md`](../docs/reports/b3/PHOTO_REGISTRATION_ENGINE_OPTIONS.md) 已登记为后续候选，当前状态为“设计分析 / 未实现”。推荐 V4/AKAZE + 几何质量门禁先行；ALIKED + LightGlue 仅在真实数据证明第一方案不足后评估；双方案 fallback 不作为当前任务。文档明确禁止在授权前实现配准、整图检测或新增匹配模型。
+
+## 未来真机验收门禁（仅在任务明确授权时使用）
+
+- 新工程只允许显式安装并启动 `com.wearable.inspection.mobile/com.wearable.inspection.mobile.MainActivity`；不得使用桌面图标、最近任务、`monkey` 或省略组件名的启动方式。
+- 新旧包必须先停止并核对 `com.wearable.inspection.mobile` PID、旧包无 PID、前台 Activity 为新包；任何前台落到旧包的证据全部作废。
+- `connectedDebugAndroidTest` 结束后，无论成功或失败，都必须重新安装当前主 APK、显式启动并复核包名和前台状态后，才能继续采集证据。
+
+---
+
+# 已完成任务：既有 14 项 JVM 失败整改
+
+状态：**USER_ACCEPTED / COMMITTED**（2026-09-21；主协调提交 `86d1ebd2`；独立于已验收的 NanoDet 任务）
 
 本任务只处理上一项 NanoDet Android 回归中记录的既有 JVM 测试失败。不得把这些失败隐藏、删除、改成 skipped，或借此重开已验收的 NanoDet、ROI 人工改判、DPM、OCR、CameraX 或批次清理任务。执行 Agent 必须先在当前工作区重现并读取实际 JUnit XML；下面的失败清单是 2026-09-20/21 的基线，不替代当前复跑结果。
 
@@ -44,17 +81,18 @@
 
 - [x] 上述 14 项失败逐项有根因、最小修复和当前 JUnit XML 证据；整改前失败 XML 未在当前工作区留存，已在报告中明确标注。
 - [x] `:app:testDebugUnitTest --no-daemon` 全量 JVM 为 0 failures、0 errors；5 skipped 的名称和原因明确记录。
-- [x] 相关定向测试重复通过，`compileDebugKotlin` 通过；本任务未构建 APK、未运行 ADB/真机测试。
+- [x] 相关定向测试重复通过，`compileDebugKotlin` 与 `assembleDebug` 通过；本任务未运行 ADB/真机测试。
 - [x] 不修改旧 `Wearable Inspection` 工程，不改 NanoDet 模型/阈值/协议，不改 DPM/OCR/批次清理，不重开已验收 ROI 结果任务。
-- [x] 报告列出实际修改文件、测试命令/结果、当前 XML、未解决项和 Git 状态；执行 Agent 未提交 Git。
+- [x] 报告列出实际修改文件、测试命令/结果、当前 XML、未解决项和 Git 状态；执行 Agent 未提交 Git，主协调已完成选择性提交 `86d1ebd2`。
 
 ## 主协调复核结果（2026-09-21）
 
 - 全量 XML：`959 tests / 0 failures / 0 errors / 5 skipped`。
 - 失败相关定向 XML：`206 tests / 0 failures / 0 errors / 0 skipped`。
 - `compileDebugKotlin`：`BUILD SUCCESSFUL`。
+- `assembleDebug`：`BUILD SUCCESSFUL`；用户报告 APK 为 `app/build/outputs/apk/debug/app-debug.apk`，大小约 `222 MB`；本报告不伪造未提供的 SHA-256。
 - 证据报告：`docs/reports/b3/JVM_REGRESSION_DEBT_REMEDIATION_REPORT.md`。
-- 当前等待用户验收；不宣称 APK、真机或视觉验收完成。
+- 用户已确认整改完成；本任务不宣称新增 ADB、真机或视觉验收。
 
 ---
 

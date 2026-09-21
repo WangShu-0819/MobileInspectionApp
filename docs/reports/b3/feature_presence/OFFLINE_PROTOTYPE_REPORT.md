@@ -148,7 +148,7 @@ App 集成及后续真机验收延期到用户明确安排的 Android 任务；�
 本轮开始前工作区已经存在大量 Android、任务文档、样本和报告改动。本轮没有还原、覆盖或清理这些已有改动，也没有修改 `tasks/todo.md` 或 `tasks/plan.md`。当前 `git status --short` 中：
 
 - 本轮离线源码和报告显示为未跟踪路径：`tools/feature_presence/`、`docs/reports/b3/feature_presence/`；
-- `AGENTS.md`、`tasks/todo.md`、`tasks/plan.md`、`app/src/` 等既有改动仍保留；
+- `tasks/todo.md`、`tasks/plan.md`、`app/src/` 等既有改动仍保留；
 - 本轮未产生根目录临时文件；诊断阶段创建的 `tmp_plain.png` 已删除；
 - 未执行 `git reset`、`git checkout` 或 `git clean`；
 - 未提交 Git commit。

@@ -390,7 +390,7 @@ Bug Fix 新增 23 项测试：
 工作区脏改动文件：
 - 源码 8 个（同上一轮）
 - 测试 6 个（含本轮新增 `NoRoiViewAdvancementTest.kt`）
-- 文档 3 个（`tasks/todo.md`、`docs/reports/b2/VIEW_CONFIRMATION_ZIP_EXPORT_REPORT.md`、`AGENTS.md`）
+- 文档 2 个（`tasks/todo.md`、`docs/reports/b2/VIEW_CONFIRMATION_ZIP_EXPORT_REPORT.md`）
 - 其他脏改动来自 B3 离线工具和 B1/B2 历史任务，与本轮无关
 
 ---

@@ -65,7 +65,7 @@ Key 图片和 DCIM 大图中的青绿色线条/涂点是人工标记，不是检
 
 编码前先输出文件边界和依赖关系，暂不修改代码。至少检查：
 
-1. `AGENTS.md`、`tasks/todo.md` 和 `MOBILE_INSPECTION_AGENT_INSTRUCTION.md`；
+1. `tasks/todo.md`、`tasks/plan.md` 和 `MOBILE_INSPECTION_AGENT_INSTRUCTION.md`；
 2. 当前 `InspectionType`、`RoiDefinitionEntity`、`InspectionSessionEntity`、`RoiInspectionRecordEntity`；
 3. 当前唯一 `CameraController`、`FrameAnalyzer`、`LiveInspectionScreen` 和 `WorkbenchViewModel`；
 4. 旧工程的以下 V3/V4 参考实现：
@@ -245,7 +245,7 @@ D:\ProgramData\anaconda3\envs\dinov2\python.exe
 - [ ] 5 张 Key 正样本和已标注 holdout 的混淆矩阵已生成；
 - [ ] 未标注图片未被偷偷当作负样本；
 - [ ] `:app:compileDebugKotlin`、`:app:testDebugUnitTest`、`:app:assembleDebug` 通过；
-- [ ] 如进行真机测试，严格执行 `AGENTS.md` 的新包安装、前台包名和 instrumented 测试后恢复门禁；
+- [ ] 如进行真机测试，严格执行 `tasks/todo.md` 顶部的新包安装、前台包名和 instrumented 测试后恢复门禁；
 - [ ] 报告包含前序能力回归矩阵：导航、权限、相机状态、画幅、contentRect、资源释放和错误态。
 
 ## 8. 测试与报告要求
