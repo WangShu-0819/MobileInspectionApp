@@ -321,9 +321,9 @@ fun LiveInspectionScreen(
                                     captureSavedMessage = "照片已保存，进入人工确认"
                                     // 先锁住现场页操作栏，再发起导航；相机回调不能覆盖这个过渡状态。
                                     captureNavigationPending = true
-                                    captureState = CaptureUiState.SAVED
                                     captureError = null
                                     savedPath = null
+                                    captureState = CaptureUiState.IDLE
                                     onNavigateToConfirm(
                                         batchId,
                                         persistedPhoto.photoId,

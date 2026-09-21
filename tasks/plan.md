@@ -789,3 +789,44 @@ DEFERRED / POST-MVP（不阻塞 V1 交付）：
 ### 明确不做
 
 本任务不实现 `FEATURE` 检测、自动轮廓、姿态匹配、单应性对齐、ROI 自动跟踪、新 CameraX、DPM/OCR 变更、多选批量导出或批次删除；不处理 `BatchFilterAndDeleteTest`，也不重新打开已验收的 ROI 最终结果与证据图任务。
+
+## 2026-09-21 当前任务指针：既有 14 项 JVM 失败整改
+
+状态：**SOFTWARE_COMPLETE / AWAITING_USER_ACCEPTANCE**。这是用户在 NanoDet exp09 任务 `USER_ACCEPTED` 后明确授权的新独立任务。`tasks/todo.md` 顶部是唯一状态来源；本节不得被历史 NanoDet、ROI、DPM 或 B1/B2 报告覆盖。
+
+### 目标
+
+修复上一项 Android 回归中记录的 14 个既有 JVM 测试失败，恢复全量 JVM 绿灯，同时保持已验收功能和产品边界不变。当前基线为 `959 tests completed / 14 failed / 5 skipped`，实际方法名和失败栈以本轮重跑 XML 为准。
+
+### 依赖与分组
+
+1. **基线与证据**：先运行全量 `:app:testDebugUnitTest --no-daemon`，保存 Gradle 输出、`app/build/test-results/testDebugUnitTest/` XML，并核实失败是否仍为 14 项。
+2. **数据/模板契约**：`MultiViewPhotoPersistenceTest` 的 schema 路径与布局/状态契约；`TemplatePackageExporterTest` 的稳定 JSON 序列化契约；`TemplatePackageImporterTest` 的损坏 ZIP 与缺 `template.json` 错误语义。不得只放宽断言、删除测试或改为跳过。
+3. **导航/流程状态**：`ViewConfirmationNavigationTest`、`NoRoiViewAdvancementTest`、`WorkbenchViewModelAdvanceTest`，确保回退不推进、导出回调传递、拍照/插入失败不完成视角、无 ROI 视角仍导出照片、切换零件后模板/ROI 重新加载。
+4. **布局/相机/性能**：`BatchFilterAndDeleteTest`、`CameraPreviewTest`、`ViewConfirmationPerformanceTest`，确保固定提示槽位、不可见相机断开不报错、图片读取在 IO 调度器，并保留 CameraX 单一所有者与既有生命周期。
+5. **收口回归**：定向测试、全量 JVM、`compileDebugKotlin`；5 个 skipped 必须列出名称和原因。除非用户另行授权，不运行 ADB、instrumented 或真机验证。
+
+### 实施规则
+
+- 执行 Agent 先审计再修改，提交 handback 前不得提交 Git；主协调只按路径审计和选择性提交。
+- 只改 MobileInspectionApp 当前任务涉及的生产代码、测试夹具/测试和文档；不修改旧工程。
+- 先判断失败是产品回归、测试夹具失效、格式契约漂移还是脆弱源码字符串断言，再选择修生产代码、修测试契约或补夹具；每项必须记录理由。
+- 不通过隐藏测试、删除断言、扩大 `@Ignore`/skip、更新快照掩盖行为变化来“清零”。
+- 任一前序已验收能力回归时立即暂停，状态改为“回归整改中”，不得继续扩大范围。
+
+### 交付物
+
+- `docs/reports/b3/JVM_REGRESSION_DEBT_REMEDIATION_REPORT.md`：实际修改文件、每项根因与修复、定向/全量测试 XML、跳过项、编译结果、未完成项和 Git 状态。
+- 真实 Gradle 命令及输出路径；若构建 APK，记录 APK 路径/时间/大小/SHA-256；本任务不以真机验收为门槛。
+
+### Git 收口
+
+用户验收前保持工作区不提交。验收后主协调检查 `git status`、`git diff --stat`、`git diff --check`，仅按当前任务路径选择性提交，不使用 `git add .`、reset、clean、stash 或回滚用户改动。
+
+### 主协调复核结果（2026-09-21）
+
+- 全量 `:app:testDebugUnitTest --no-daemon --rerun-tasks --console=plain`：`959 tests / 0 failures / 0 errors / 5 skipped`，Gradle 退出码 0。
+- 失败相关定向测试：`206 tests / 0 failures / 0 errors / 0 skipped`。
+- `:app:compileDebugKotlin --no-daemon --rerun-tasks`：`BUILD SUCCESSFUL`。
+- 5 个 skipped 均为 `DpmScannerTest` 外部样本/目录缺失，名称和原因已写入 `docs/reports/b3/JVM_REGRESSION_DEBT_REMEDIATION_REPORT.md`。
+- 未运行 APK、ADB、instrumented 或真机验证；等待用户验收后再按路径选择性提交。

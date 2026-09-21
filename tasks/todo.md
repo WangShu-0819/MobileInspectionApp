@@ -1,4 +1,64 @@
-# 当前唯一任务：NanoDet exp09 四分类 Android 协议、BOLT/NUTSERT 检测路由与阈值校准
+# 当前唯一任务：既有 14 项 JVM 失败整改
+
+状态：**SOFTWARE_COMPLETE / AWAITING_USER_ACCEPTANCE**（2026-09-21，主协调复核完成；独立于已验收的 NanoDet 任务）
+
+本任务只处理上一项 NanoDet Android 回归中记录的既有 JVM 测试失败。不得把这些失败隐藏、删除、改成 skipped，或借此重开已验收的 NanoDet、ROI 人工改判、DPM、OCR、CameraX 或批次清理任务。执行 Agent 必须先在当前工作区重现并读取实际 JUnit XML；下面的失败清单是 2026-09-20/21 的基线，不替代当前复跑结果。
+
+## 当前基线：14 个失败
+
+总基线：`959 tests completed / 14 failed / 5 skipped`。失败测试及当时首要症状如下：
+
+1. `MultiViewPhotoPersistenceTest` ×3
+   - `captured photos table has no unique index on viewIndex per batch`：读取 `app/schemas/.../AppDatabase/6.json` 时路径不存在。
+   - `all views captured card uses a compact fixed height`：完成卡片文字区域未满足紧凑固定布局契约。
+   - `capture state resets to IDLE before roi confirmation navigation`：拍照状态复位顺序不满足导航前复位契约。
+2. `TemplatePackageExporterTest` ×1
+   - `导出包可被现有导入解析器完整读取`：ROI JSON 字段顺序与当前测试契约不一致；必须先确认这是稳定格式契约还是脆弱的字符串比较。
+3. `TemplatePackageImporterTest` ×1
+   - `损坏 zip - 返回可读错误`：测试期望“不是有效的 ZIP”，实际得到“模板包缺少 template.json”；需区分损坏 ZIP 与缺少必需条目。
+4. `ViewConfirmationNavigationTest` ×2
+   - `LiveInspection receives onNavigateToExport callback`：导航未传递 `onNavigateToExport` 回调。
+   - `onBack only pops back stack without advancing`：确认页 `onBack` 契约未满足。
+5. `BatchFilterAndDeleteTest` ×1
+   - `trace records export message reserves a fixed single line slot`：导出结果提示未使用固定高度。
+6. `CameraPreviewTest` ×1
+   - `现场采集页将可见状态传给 CameraPreview`：不可见时相机断开被误报为连接失败。
+7. `NoRoiViewAdvancementTest` ×3
+   - `live inspection source prevents view completion when photo insert fails`：缺少插入失败的 `catch` 分支契约。
+   - `zip keeps all photos including views without roi confirms`：导出未遍历全部照片。
+   - `live inspection source prevents view completion on capture failure`：缺少拍照失败的 `onFailure` 分支契约。
+8. `ViewConfirmationPerformanceTest` ×1
+   - `photo dimensions and roi crops are loaded on IO dispatcher`：照片尺寸/ROI 裁剪读取未满足 IO 调度契约。
+9. `WorkbenchViewModelAdvanceTest` ×1
+   - `selectPart reloads templates and rois from the new part`：切换零件后当前 part 未正确更新为 `p2`。
+
+## 有序执行与验收门槛
+
+1. **基线复现与分组**：只读检查当前 `git status`，运行全量 JVM，保存 Gradle 输出和每个失败 XML；确认失败数量、方法名和栈与上表一致或记录漂移。
+2. **数据/模板契约**：先处理 Room schema 测试夹具/路径、模板导出字段契约、损坏 ZIP 错误语义；不通过放宽断言或删除测试掩盖问题。若测试契约本身错误，必须以现有产品兼容性和导入导出行为为证据后再最小修正测试。
+3. **导航/采集流程**：修复确认页返回与导出回调、无 ROI 视角推进和失败分支、零件切换后的模板/ROI 重载；保持多 View、批次、照片稳定关联和失败不推进语义。
+4. **布局/相机/性能**：修复固定提示槽位、完成卡片布局、CameraPreview 不可见状态和确认页 IO 调度；不得改变 CameraX 所有权、相机模式、contentRect 或已验收的相机生命周期语义。
+5. **全量收口**：定向测试、全量 JVM、编译回归均通过；5 项 skipped 必须逐项报告原因，不得伪装成通过。若发现前序已验收能力回归，立即暂停并将状态改为“回归整改中”。
+
+## 本任务验收标准
+
+- [x] 上述 14 项失败逐项有根因、最小修复和当前 JUnit XML 证据；整改前失败 XML 未在当前工作区留存，已在报告中明确标注。
+- [x] `:app:testDebugUnitTest --no-daemon` 全量 JVM 为 0 failures、0 errors；5 skipped 的名称和原因明确记录。
+- [x] 相关定向测试重复通过，`compileDebugKotlin` 通过；本任务未构建 APK、未运行 ADB/真机测试。
+- [x] 不修改旧 `Wearable Inspection` 工程，不改 NanoDet 模型/阈值/协议，不改 DPM/OCR/批次清理，不重开已验收 ROI 结果任务。
+- [x] 报告列出实际修改文件、测试命令/结果、当前 XML、未解决项和 Git 状态；执行 Agent 未提交 Git。
+
+## 主协调复核结果（2026-09-21）
+
+- 全量 XML：`959 tests / 0 failures / 0 errors / 5 skipped`。
+- 失败相关定向 XML：`206 tests / 0 failures / 0 errors / 0 skipped`。
+- `compileDebugKotlin`：`BUILD SUCCESSFUL`。
+- 证据报告：`docs/reports/b3/JVM_REGRESSION_DEBT_REMEDIATION_REPORT.md`。
+- 当前等待用户验收；不宣称 APK、真机或视觉验收完成。
+
+---
+
+# 已验收任务：NanoDet exp09 四分类 Android 协议、BOLT/NUTSERT 检测路由与阈值校准
 
 状态：**TASK_2B_PROTOCOL_PASS / ANDROID_PARITY_PASS / TASK_3_SOFTWARE_COMPLETE / TASK_4_ANALYSIS_COMPLETE / TASK_5_REGRESSION_PASS / USER_ACCEPTED**（2026-09-21）
 

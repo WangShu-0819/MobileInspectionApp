@@ -155,6 +155,9 @@ object TemplatePackageImporter {
                 }
             }
 
+            if (entryCount == 0) {
+                throw TemplatePackageImportException("模板包不是有效的 ZIP 文件（无条目）")
+            }
             val manifest = manifestBytes ?: throw TemplatePackageImportException("模板包缺少 $MANIFEST_ENTRY")
             return parseManifest(String(manifest, Charsets.UTF_8), extracted)
         } catch (e: TemplatePackageImportException) {

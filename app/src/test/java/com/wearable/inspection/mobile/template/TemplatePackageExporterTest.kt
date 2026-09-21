@@ -71,10 +71,12 @@ class TemplatePackageExporterTest {
         assertEquals(1, parsed.regions[1].displayOrder)
         assertEquals("THREAD", parsed.regions[1].rois.single().targetType)
         assertEquals("螺纹区域", parsed.regions[1].rois.single().name)
-        assertEquals(
-            "{\"left\":0.1,\"top\":0.2,\"right\":0.8,\"bottom\":0.9}",
-            parsed.regions[1].rois.single().normalizedRect,
-        )
+        // normalizedRect 语义比较（JSONObject 字段顺序不稳定）
+        val actualRect = org.json.JSONObject(parsed.regions[1].rois.single().normalizedRect)
+        assertEquals(0.1, actualRect.getDouble("left"), 1e-9)
+        assertEquals(0.2, actualRect.getDouble("top"), 1e-9)
+        assertEquals(0.8, actualRect.getDouble("right"), 1e-9)
+        assertEquals(0.9, actualRect.getDouble("bottom"), 1e-9)
         assertArrayEquals(imageTwo, parsed.regions[0].imageFiles.single().readBytes())
         assertArrayEquals(imageOne, parsed.regions[1].imageFiles.single().readBytes())
     }

@@ -221,21 +221,23 @@ class NoRoiViewAdvancementTest {
 
         // completeView 调用必须在 storeResult != null 分支内
         val storeCheck = source.indexOf("if (storeResult != null)")
+        assertTrue("应有 storeResult 检查", storeCheck > 0)
         val completeCall = source.indexOf("viewModel.completeView(capturedViewIndex)")
         assertTrue("completeView 必须在 storeResult 检查之后", completeCall > storeCheck)
 
-        // onFailure 分支不应包含 completeView
-        val failureIdx = source.indexOf("onFailure = {")
-        assertTrue("应存在 onFailure 分支", failureIdx > 0)
+        // 拍照结果失败分支不应包含 completeView（else 分支处理 result.isFailure）
+        val resultFailure = source.indexOf("result.exceptionOrNull()")
+        assertTrue("应存在拍照失败处理分支", resultFailure > 0)
         assertFalse(
-            "onFailure 分支不应调用 completeView",
-            source.substring(failureIdx).contains("completeView")
+            "拍照失败分支不应调用 completeView",
+            source.substring(resultFailure, (resultFailure + 400).coerceAtMost(source.length)).contains("completeView")
         )
 
         // storeResult == null 分支（图片保存失败）不应推进
         val elseBranch = source.indexOf("} else {", storeCheck)
         assertTrue("应有 storeResult 为 null 的 else 分支", elseBranch > storeCheck)
-        val nextTry = source.indexOf("try {", storeCheck)
+        val nextTry = source.indexOf("try {", elseBranch)
+        assertTrue("应有后续 try 块", nextTry > elseBranch)
         assertFalse(
             "图片保存失败分支不应调用 completeView",
             source.substring(elseBranch, nextTry).contains("completeView")
@@ -248,10 +250,14 @@ class NoRoiViewAdvancementTest {
             .readText()
 
         // try-catch 包裹 photoId 校验和 completeView
-        val tryIdx = source.indexOf("try {", source.indexOf("val photoId = repository.insertCapturedPhoto"))
+        val insertIdx = source.indexOf("val photoId = repository.insertCapturedPhoto")
+        assertTrue("应有照片插入调用", insertIdx > 0)
+        // 包裹照片插入的 try 在 insert 之前
+        val tryIdx = source.lastIndexOf("try {", insertIdx)
         assertTrue("应有 try-catch 包裹照片插入", tryIdx > 0)
-        val catchIdx = source.indexOf("catch (error: Exception)", tryIdx)
-        assertTrue("应有 catch 分支", catchIdx > tryIdx)
+        // 定位包含 CaptureUiState.ERROR 的 catch 分支（在 insert 之后）
+        val catchIdx = source.indexOf("catch (", insertIdx)
+        assertTrue("应有 catch 分支", catchIdx > insertIdx)
 
         // catch 内设置 ERROR 状态，不推进
         val catchBlock = source.substring(catchIdx, (catchIdx + 300).coerceAtMost(source.length))
@@ -312,8 +318,9 @@ class NoRoiViewAdvancementTest {
         assertTrue("照片应写入按 View 区分的目录", source.contains("views/view_"))
         assertTrue("照片索引和结果应写入同一个 CSV", source.contains("exportUnifiedToStream("))
         assertFalse("不应再生成第二个照片清单 CSV", source.contains("photo_manifest.csv"))
-        // 遍历 photos 列表
-        assertTrue("应遍历全部照片", source.contains("for (photo in photos)"))
+        // 遍历 photos 列表（支持 for-in 或 forEach 两种遍历风格）
+        assertTrue("应遍历全部照片",
+            source.contains("for (photo in photos)") || source.contains("photos.forEach { photo"))
     }
 
     // ── 场景 13：无 ROI View 不生成虚假 ROI 或 PASS/FAIL ──

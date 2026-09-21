@@ -122,14 +122,12 @@ class LiveInspectionCaptureStateTest {
         val navigateIdx = source.indexOf("onNavigateToConfirm(")
         assertTrue("应有 onNavigateToConfirm 调用", navigateIdx > 0)
         val roiMessageIdx = source.indexOf("captureSavedMessage = \"照片已保存，进入人工确认\"")
-        val reservedIdx = source.indexOf("captureState = CaptureUiState.SAVED", roiMessageIdx)
-        assertTrue("有 ROI 导航前应保留过渡状态", reservedIdx > roiMessageIdx)
-        assertTrue("过渡状态应在 onNavigateToConfirm 之前", reservedIdx < navigateIdx)
+        // 有 ROI 分支：导航前直接复位为 IDLE（由 captureNavigationPending 锁定操作栏）
+        val resetIdx = source.indexOf("captureState = CaptureUiState.IDLE", roiMessageIdx)
+        assertTrue("有 ROI 导航前应直接复位 captureState", resetIdx > roiMessageIdx)
+        assertTrue("复位应在 onNavigateToConfirm 之前", resetIdx < navigateIdx)
+        assertTrue("导航前应先锁定现场操作栏", source.contains("captureNavigationPending = true"))
         assertTrue("返回现场页应由可见状态统一复位", source.contains("LaunchedEffect(isScreenVisible)"))
-        assertTrue(
-            "SAVED 过渡状态不能继续渲染现场页拍照栏",
-            source.contains("if (isScreenVisible && !captureNavigationPending && captureState != CaptureUiState.SAVED)")
-        )
     }
 
     @Test

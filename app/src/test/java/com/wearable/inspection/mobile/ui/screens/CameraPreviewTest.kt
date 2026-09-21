@@ -150,6 +150,8 @@ class CameraPreviewTest {
         ).readText()
         assertTrue("现场页应将导航可见状态传给 CameraPreviewSection", source.contains("active = isScreenVisible"))
         assertTrue("不可见时不应处理旧 contentRect 回调", source.contains("if (isScreenVisible) contentRect = info.contentRect"))
-        assertTrue("不可见时不应把相机断开误报为连接失败", source.contains("if (isScreenVisible) {\n                        contentRect = null\n                        sessionId = id"))
+        assertTrue("不可见时不应把相机断开误报为连接失败",
+            source.contains("if (isScreenVisible) {\r\n                        contentRect = null\r\n                        sessionId = id") ||
+            source.contains("if (isScreenVisible) {\n                        contentRect = null\n                        sessionId = id"))
     }
 }

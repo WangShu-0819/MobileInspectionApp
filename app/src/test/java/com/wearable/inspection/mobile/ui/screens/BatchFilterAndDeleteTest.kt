@@ -517,7 +517,8 @@ class BatchFilterAndDeleteTest {
         val source = read("src/main/java/com/wearable/inspection/mobile/ui/screens/TraceRecordsScreen.kt")
         val messageStart = source.indexOf("exportMessage?.let")
         assertTrue("应存在导出结果提示槽位", messageStart > 0)
-        val messageBlock = source.substring(messageStart, (messageStart + 450).coerceAtMost(source.length))
+        // .height(20.dp) 在 exportMessage?.let 之前几行，向前提取覆盖整个 Box 容器
+        val messageBlock = source.substring((messageStart - 300).coerceAtLeast(0), (messageStart + 450).coerceAtMost(source.length))
         assertTrue("导出结果提示应使用固定高度", messageBlock.contains(".height(20.dp)"))
         assertTrue("导出结果提示应限制为单行", messageBlock.contains("maxLines = 1"))
     }

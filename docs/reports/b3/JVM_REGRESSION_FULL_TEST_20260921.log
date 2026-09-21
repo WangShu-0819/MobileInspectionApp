@@ -1,0 +1,109 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.9/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build
+Configuration on demand is an incubating feature.
+
+> Configure project :app
+WARNING: The option setting 'android.overridePathCheck=true' is experimental.
+The current default is 'false'.
+
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:generateDebugBuildConfig
+> Task :app:generateDebugResValues
+> Task :app:checkDebugAarMetadata
+> Task :app:mapDebugSourceSetPaths
+> Task :app:generateDebugResources
+> Task :app:packageDebugResources
+> Task :app:createDebugCompatibleScreenManifests
+> Task :app:extractDeepLinksDebug
+> Task :app:parseDebugLocalResources
+> Task :app:processDebugMainManifest
+> Task :app:mergeDebugResources
+> Task :app:processDebugManifest
+> Task :app:preDebugUnitTestBuild UP-TO-DATE
+> Task :app:javaPreCompileDebugUnitTest
+> Task :app:javaPreCompileDebug
+> Task :app:mergeDebugShaders
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:mergeDebugAssets
+> Task :app:processDebugManifestForPackage
+> Task :app:processDebugResources
+> Task :app:packageDebugUnitTestForUnitTest
+> Task :app:generateDebugUnitTestConfig
+
+> Task :app:kspDebugKotlin
+w: [ksp] D:/study/Textile_defects/Wearable Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/data/entity/InspectionTemplateEntity.kt:21: partId column references a foreign key but it is not part of an index. This may trigger full table scans whenever parent table is modified so you are highly advised to create an index that covers this column.
+w: [ksp] D:/study/Textile_defects/Wearable Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/data/entity/RoiDefinitionEntity.kt:21: templateId column references a foreign key but it is not part of an index. This may trigger full table scans whenever parent table is modified so you are highly advised to create an index that covers this column.
+w: [ksp] D:/study/Textile_defects/Wearable Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/data/entity/InspectionSessionEntity.kt:27: partId column references a foreign key but it is not part of an index. This may trigger full table scans whenever parent table is modified so you are highly advised to create an index that covers this column.
+w: [ksp] D:/study/Textile_defects/Wearable Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/data/entity/InspectionSessionEntity.kt:27: templateId column references a foreign key but it is not part of an index. This may trigger full table scans whenever parent table is modified so you are highly advised to create an index that covers this column.
+w: [ksp] D:/study/Textile_defects/Wearable Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/data/entity/RoiInspectionRecordEntity.kt:27: sessionId column references a foreign key but it is not part of an index. This may trigger full table scans whenever parent table is modified so you are highly advised to create an index that covers this column.
+w: [ksp] D:/study/Textile_defects/Wearable Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/data/entity/RoiInspectionRecordEntity.kt:27: roiId column references a foreign key but it is not part of an index. This may trigger full table scans whenever parent table is modified so you are highly advised to create an index that covers this column.
+w: [ksp] D:/study/Textile_defects/Wearable Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/data/entity/CaptureBatchEntity.kt:24: partId column references a foreign key but it is not part of an index. This may trigger full table scans whenever parent table is modified so you are highly advised to create an index that covers this column.
+w: [ksp] D:/study/Textile_defects/Wearable Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/data/entity/CapturedPhotoEntity.kt:24: batchId column references a foreign key but it is not part of an index. This may trigger full table scans whenever parent table is modified so you are highly advised to create an index that covers this column.
+w: [ksp] D:/study/Textile_defects/Wearable Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/data/entity/ViewRoiConfirmEntity.kt:30: batchId column references a foreign key but it is not part of an index. This may trigger full table scans whenever parent table is modified so you are highly advised to create an index that covers this column.
+
+> Task :app:compileDebugKotlin
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/debug/java/com/wearable/inspection/mobile/verify/Capture20VerifyActivity.kt:98:18 This declaration overrides a deprecated member but is not marked as deprecated itself. Please add the '@Deprecated' annotation or suppress the diagnostic.
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/debug/java/com/wearable/inspection/mobile/verify/Capture20VerifyActivity.kt:99:15 'fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray): Unit' is deprecated. This method has been deprecated in favor of using the Activity Result API
+      which brings increased type safety via an {@link ActivityResultContract} and the prebuilt
+      contracts for common intents available in
+      {@link androidx.activity.result.contract.ActivityResultContracts}, provides hooks for
+      testing, and allow receiving results in separate, testable classes independent from your
+      activity. Use
+      {@link #registerForActivityResult(ActivityResultContract, ActivityResultCallback)} passing
+      in a {@link RequestMultiplePermissions} object for the {@link ActivityResultContract} and
+      handling the result in the {@link ActivityResultCallback#onActivityResult(Object) callback}.
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/ocr/OcrRoiCropUtils.kt:139:47 'static fun newInstance(p0: String, p1: Boolean): BitmapRegionDecoder' is deprecated. Deprecated in Java.
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/ui/screens/AppSettingsScreen.kt:97:57 'val Icons.Filled.ArrowBack: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ArrowBack.
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/ui/screens/AppSettingsScreen.kt:273:25 'fun Divider(modifier: Modifier = ..., thickness: Dp = ..., color: Color = ...): Unit' is deprecated. Renamed to HorizontalDivider.
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/ui/screens/PartDetailScreen.kt:167:26 'val LocalLifecycleOwner: ProvidableCompositionLocal<LifecycleOwner>' is deprecated. Moved to lifecycle-runtime-compose library in androidx.lifecycle.compose package.
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/ui/screens/PartListScreen.kt:110:26 'val LocalLifecycleOwner: ProvidableCompositionLocal<LifecycleOwner>' is deprecated. Moved to lifecycle-runtime-compose library in androidx.lifecycle.compose package.
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/ui/screens/PartManagementScreen.kt:110:57 'val Icons.Filled.ArrowBack: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ArrowBack.
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/ui/screens/PlaceholderScreens.kt:62:57 'val Icons.Filled.ArrowBack: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ArrowBack.
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/ui/screens/ProfileScreen.kt:246:25 'fun Divider(modifier: Modifier = ..., thickness: Dp = ..., color: Color = ...): Unit' is deprecated. Renamed to HorizontalDivider.
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/ui/screens/ProfileScreen.kt:306:41 'val Icons.Filled.ArrowForward: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ArrowForward.
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/ui/screens/ResultManagementScreen.kt:69:57 'val Icons.Filled.ArrowBack: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ArrowBack.
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/ui/screens/TemplateConfigScreen.kt:162:26 'val LocalLifecycleOwner: ProvidableCompositionLocal<LifecycleOwner>' is deprecated. Moved to lifecycle-runtime-compose library in androidx.lifecycle.compose package.
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/ui/screens/TemplateConfigScreen.kt:537:13 'fun Divider(modifier: Modifier = ..., thickness: Dp = ..., color: Color = ...): Unit' is deprecated. Renamed to HorizontalDivider.
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/ui/screens/TemplateConfigScreen.kt:576:21 'fun Divider(modifier: Modifier = ..., thickness: Dp = ..., color: Color = ...): Unit' is deprecated. Renamed to HorizontalDivider.
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/ui/screens/TemplateDetailScreen.kt:278:37 'fun Divider(modifier: Modifier = ..., thickness: Dp = ..., color: Color = ...): Unit' is deprecated. Renamed to HorizontalDivider.
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/ui/screens/ViewConfirmationScreen.kt:116:57 'val Icons.Filled.ArrowBack: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ArrowBack.
+
+> Task :app:compileDebugJavaWithJavac
+> Task :app:processDebugJavaRes
+> Task :app:bundleDebugClassesToCompileJar
+> Task :app:bundleDebugClassesToRuntimeJar
+> Task :app:kspDebugUnitTestKotlin
+
+> Task :app:compileDebugUnitTestKotlin
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/test/java/com/wearable/inspection/mobile/camera/CameraControllerTakePhotoTest.kt:201:13 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/test/java/com/wearable/inspection/mobile/camera/CameraControllerTakePhotoTest.kt:209:13 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/test/java/com/wearable/inspection/mobile/camera/CameraControllerTakePhotoTest.kt:240:13 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/test/java/com/wearable/inspection/mobile/camera/CameraControllerTakePhotoTest.kt:247:13 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/test/java/com/wearable/inspection/mobile/camera/CameraControllerTakePhotoTest.kt:265:13 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/test/java/com/wearable/inspection/mobile/camera/CameraControllerTakePhotoTest.kt:269:13 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/test/java/com/wearable/inspection/mobile/camera/CameraControllerTakePhotoTest.kt:287:13 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/test/java/com/wearable/inspection/mobile/camera/CameraControllerTakePhotoTest.kt:291:13 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/test/java/com/wearable/inspection/mobile/camera/CameraControllerTakePhotoTest.kt:309:13 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/test/java/com/wearable/inspection/mobile/camera/CameraControllerTakePhotoTest.kt:312:13 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/test/java/com/wearable/inspection/mobile/camera/CameraControllerTakePhotoTest.kt:330:13 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/test/java/com/wearable/inspection/mobile/camera/CameraControllerTakePhotoTest.kt:333:13 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/test/java/com/wearable/inspection/mobile/camera/CameraControllerTakePhotoTest.kt:375:13 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/test/java/com/wearable/inspection/mobile/camera/CameraControllerTakePhotoTest.kt:383:13 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/test/java/com/wearable/inspection/mobile/camera/CameraControllerTakePhotoTest.kt:404:13 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/test/java/com/wearable/inspection/mobile/camera/CameraControllerTakePhotoTest.kt:411:13 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/test/java/com/wearable/inspection/mobile/data/export/DpmEvidenceExportServiceTest.kt:48:20 Check for instance is always 'true'.
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/test/java/com/wearable/inspection/mobile/dpm/DpmFrameAnalyzerTest.kt:34:54 Check for instance is always 'true'.
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/test/java/com/wearable/inspection/mobile/dpm/DpmOfflineDecodeTest.kt:30:41 Java type mismatch: inferred type is 'kotlin.String?', but 'kotlin.String' was expected.
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/test/java/com/wearable/inspection/mobile/ui/screens/RoiExifMapperTest.kt:51:29 Type 'android.graphics.Bitmap' is final, so the value of the type parameter is predetermined.
+
+> Task :app:compileDebugUnitTestJavaWithJavac
+> Task :app:processDebugUnitTestJavaRes
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+> Task :app:testDebugUnitTest
+
+BUILD SUCCESSFUL in 1m 39s
+31 actionable tasks: 31 executed

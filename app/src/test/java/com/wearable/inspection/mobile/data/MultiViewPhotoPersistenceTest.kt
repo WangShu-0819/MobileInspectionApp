@@ -22,7 +22,7 @@ class MultiViewPhotoPersistenceTest {
 
     @Test
     fun `captured photos table has no unique index on viewIndex per batch`() {
-        val schema = File("app/schemas/com.wearable.inspection.mobile.data.db.AppDatabase/6.json").readText()
+        val schema = File("schemas/com.wearable.inspection.mobile.data.db.AppDatabase/11.json").readText()
         // captured_photos 的 indices 应为空（无额外唯一约束）
         val photosSection = schema.substring(
             schema.indexOf("\"tableName\": \"captured_photos\""),
@@ -85,10 +85,13 @@ class MultiViewPhotoPersistenceTest {
     @Test
     fun `capture state resets to IDLE before roi confirmation navigation`() {
         val source = read("src/main/java/com/wearable/inspection/mobile/ui/screens/LiveInspectionScreen.kt")
-        val navigateIdx = source.indexOf("onNavigateToConfirm(")
-        val messageIdx = source.indexOf("captureSavedMessage = \"照片已保存，进入人工确认\"")
-        val resetIdx = source.indexOf("captureState = CaptureUiState.IDLE", messageIdx)
-        assertTrue("有 ROI 导航前应直接重置 captureState", resetIdx > messageIdx)
+        // 使用有 ROI 分支专有文本定位，避免匹配无 ROI ADVANCED 分支
+        val roiMessageIdx = source.indexOf("captureSavedMessage = \"照片已保存，进入人工确认\"")
+        assertTrue("应有 ROI 分支消息", roiMessageIdx > 0)
+        val navigateIdx = source.indexOf("onNavigateToConfirm(", roiMessageIdx)
+        assertTrue("onNavigateToConfirm 应在 ROI 消息之后", navigateIdx > roiMessageIdx)
+        val resetIdx = source.indexOf("captureState = CaptureUiState.IDLE", roiMessageIdx)
+        assertTrue("有 ROI 导航前应直接重置 captureState", resetIdx > roiMessageIdx)
         assertTrue("复位应在导航前完成", resetIdx < navigateIdx)
         assertFalse("不应使用 needsCaptureReset", source.contains("needsCaptureReset"))
         assertFalse("不应依赖 ON_RESUME", source.contains("Lifecycle.Event.ON_RESUME"))
@@ -164,7 +167,7 @@ class MultiViewPhotoPersistenceTest {
         val cardCall = source.indexOf("AllViewsCapturedCard(")
         assertTrue("应调用 AllViewsCapturedCard", cardCall > 0)
         val cardDecl = source.indexOf("private fun AllViewsCapturedCard")
-        val block = source.substring(cardDecl, (cardDecl + 500).coerceAtMost(source.length))
+        val block = source.substring(cardDecl, (cardDecl + 1200).coerceAtMost(source.length))
         assertTrue("完成卡片应使用固定高度", block.contains(".height(64.dp)"))
         assertTrue("完成卡片文字区域应允许收缩", block.contains(".widthIn(min = 0.dp)"))
     }

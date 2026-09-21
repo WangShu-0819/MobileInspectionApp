@@ -288,6 +288,7 @@ class WorkbenchViewModelAdvanceTest {
 
         val vm = WorkbenchViewModel(mockRepository, mockSettings)
         val jobs = listOf(
+            launch { vm.selectedPart.collect {} },
             launch { vm.templates.collect {} },
             launch { vm.selectedTemplate.collect {} },
             launch { vm.rois.collect {} },

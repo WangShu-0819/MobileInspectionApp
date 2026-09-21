@@ -68,7 +68,8 @@ class ViewConfirmationNavigationTest {
         assertTrue("ViewConfirmation 路由应存在", viewConfirmStart > 0)
 
         // 使用足够大的窗口覆盖整个 composable 块（约70行，~3500字符）
-        val block = source.substring(viewConfirmStart, (viewConfirmStart + 4000).coerceAtMost(source.length))
+        // ViewConfirmation composable 参数列表+lambda 体约80行(~5000字符)
+        val block = source.substring(viewConfirmStart, (viewConfirmStart + 5000).coerceAtMost(source.length))
         val onBackIdx = block.indexOf("onBack = {")
         assertTrue("onBack 应存在", onBackIdx > 0)
 
@@ -213,7 +214,8 @@ class ViewConfirmationNavigationTest {
         val liveInspectionIdx = source.indexOf("Screen.LiveInspection.route")
         assertTrue("LiveInspection 路由应存在", liveInspectionIdx > 0)
 
-        val block = source.substring(liveInspectionIdx, (liveInspectionIdx + 2000).coerceAtMost(source.length))
+        // LiveInspection composable 参数列表较长(~40行，~3700字符)
+        val block = source.substring(liveInspectionIdx, (liveInspectionIdx + 4500).coerceAtMost(source.length))
         assertTrue(
             "AppNavigation 应传递 onNavigateToExport 回调",
             block.contains("onNavigateToExport =")
