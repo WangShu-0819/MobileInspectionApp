@@ -1,6 +1,6 @@
 # Task 3: BOLT/NUTSERT ROI 属性与检测路由
 
-状态：**SOFTWARE_COMPLETE**（2026-09-20），等待主协调审计和用户验收。
+状态：**SOFTWARE_COMPLETE / USER_ACCEPTED**（2026-09-21，用户人工确认无误）。
 
 ## 目标
 

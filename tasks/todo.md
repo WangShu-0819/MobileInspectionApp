@@ -1,6 +1,6 @@
 # 当前唯一任务：NanoDet exp09 四分类 Android 协议、BOLT/NUTSERT 检测路由与阈值校准
 
-状态：**TASK_2B_PROTOCOL_PASS / ANDROID_PARITY_PASS / TASK_3_SOFTWARE_COMPLETE / TASK_4_ANALYSIS_COMPLETE / TASK_5_REGRESSION_PASS**（2026-09-20）
+状态：**TASK_2B_PROTOCOL_PASS / ANDROID_PARITY_PASS / TASK_3_SOFTWARE_COMPLETE / TASK_4_ANALYSIS_COMPLETE / TASK_5_REGRESSION_PASS / USER_ACCEPTED**（2026-09-21）
 
 - 桌面 parity（yolov12 环境）：✅ 通过（PT vs ONNX max=1.22e-05, NCNN vs ONNX max=5.80e-06, IoU≥0.999）
 - Task 2A NCNN 转换（ncnn_py311 环境）：✅ 已完成（用户授权环境例外）
@@ -48,7 +48,7 @@
 
 ## Task 3 完成报告：BOLT/NUTSERT ROI 属性与检测路由（2026-09-20）
 
-状态：**SOFTWARE_COMPLETE**，等待主协调审计和用户验收。
+状态：**SOFTWARE_COMPLETE / USER_ACCEPTED**（2026-09-21，用户人工确认无误）。
 
 ### 实际修改文件（9 个）
 
@@ -190,7 +190,7 @@ CameraX、DPM、OCR、NanoDet decoder/DFL/NMS、模型资产、阈值策略和�
 
 ## Task 5 完成报告：Android 回归与收口验收（2026-09-20）
 
-状态：**REGRESSION_PASS**。exp09 四分类输出契约、BOLT/NUTSERT 路由和静态 ROI 推理已完成 Android 结构化回归；阈值 `0.20` 仍仅为阶段性候选基线。
+状态：**REGRESSION_PASS / USER_ACCEPTED**（2026-09-21，用户人工确认无误）。exp09 四分类输出契约、BOLT/NUTSERT 路由和静态 ROI 推理已完成 Android 结构化回归；阈值 `0.20` 仍仅为阶段性候选基线。
 
 ### 回归证据
 
@@ -213,7 +213,7 @@ CameraX、DPM、OCR、NanoDet decoder/DFL/NMS、模型资产、阈值策略和�
 
 - 用更大规模、更多现场条件的独立数据继续校准阈值。
 - 补充 bolt 独立外部标注；当前冻结外部集无 bolt GT，不能据此评价 bolt 召回率/精度。
-- 主协调文档审计已完成并准备选择性 Git 收口；仍等待用户验收。
+- 主协调文档审计和用户人工验收均已完成；本轮状态已收口。
 
 ## 当前验收门槛
 
