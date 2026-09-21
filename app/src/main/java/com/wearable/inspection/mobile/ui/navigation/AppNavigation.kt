@@ -58,7 +58,7 @@ fun AppRoot() {
     val currentRoute = navBackStackEntry?.destination?.route
     // 只允许三个一级 Tab 拥有根级导航；确认/导出等子流程即使发生过渡也不显示它。
     val routeKey = currentRoute?.substringBefore('/')
-    val isCaptureSubFlow = routeKey == "view_confirmation" || routeKey == "export_result"
+    val isCaptureSubFlow = routeKey == "capture_comparison" || routeKey == "view_confirmation" || routeKey == "export_result"
     val showBottomBar = routeKey != null && !isCaptureSubFlow && routeKey in setOf(
         Screen.LiveInspection.route,
         Screen.TraceRecords.route,
@@ -81,22 +81,26 @@ fun AppRoot() {
             // 淡出，根级底部导航和现场拍照栏会先被隐藏，用户会看到“实时图+模板图+
             // 空白+透明度栏”的残影。一级页面仍保留轻量过渡。
             enterTransition = {
-                if (targetState.destination.route?.startsWith("view_confirmation") == true ||
+                if (targetState.destination.route?.startsWith("capture_comparison") == true ||
+                    targetState.destination.route?.startsWith("view_confirmation") == true ||
                     targetState.destination.route?.startsWith("export_result") == true
                 ) EnterTransition.None else fadeIn(animationSpec = tween(180))
             },
             exitTransition = {
-                if (targetState.destination.route?.startsWith("view_confirmation") == true ||
+                if (targetState.destination.route?.startsWith("capture_comparison") == true ||
+                    targetState.destination.route?.startsWith("view_confirmation") == true ||
                     targetState.destination.route?.startsWith("export_result") == true
                 ) ExitTransition.None else fadeOut(animationSpec = tween(120))
             },
             popEnterTransition = {
-                if (initialState.destination.route?.startsWith("view_confirmation") == true ||
+                if (initialState.destination.route?.startsWith("capture_comparison") == true ||
+                    initialState.destination.route?.startsWith("view_confirmation") == true ||
                     initialState.destination.route?.startsWith("export_result") == true
                 ) EnterTransition.None else fadeIn(animationSpec = tween(180))
             },
             popExitTransition = {
-                if (initialState.destination.route?.startsWith("view_confirmation") == true ||
+                if (initialState.destination.route?.startsWith("capture_comparison") == true ||
+                    initialState.destination.route?.startsWith("view_confirmation") == true ||
                     initialState.destination.route?.startsWith("export_result") == true
                 ) ExitTransition.None else fadeOut(animationSpec = tween(120))
             },
@@ -119,7 +123,7 @@ fun AppRoot() {
                     },
                     onNavigateToConfirm = { batchId, photoId, photoPath, viewIndex, templateId, templateName, partId, totalViews ->
                         navController.navigate(
-                            Screen.ViewConfirmation.createRoute(
+                            Screen.CaptureComparison.createRoute(
                                 batchId = batchId,
                                 photoId = photoId,
                                 photoPath = photoPath,
@@ -442,6 +446,74 @@ fun AppRoot() {
 
             // View 人工确认
             composable(
+                route = Screen.CaptureComparison.route,
+                arguments = listOf(
+                    navArgument(Screen.CaptureComparison.ARG_BATCH_ID) { type = NavType.StringType },
+                    navArgument(Screen.CaptureComparison.ARG_PHOTO_ID) { type = NavType.LongType },
+                    navArgument(Screen.CaptureComparison.ARG_PHOTO_PATH) { type = NavType.StringType },
+                    navArgument(Screen.CaptureComparison.ARG_VIEW_INDEX) { type = NavType.IntType },
+                    navArgument(Screen.CaptureComparison.ARG_TEMPLATE_ID) { type = NavType.StringType },
+                    navArgument(Screen.CaptureComparison.ARG_TEMPLATE_NAME) { type = NavType.StringType },
+                    navArgument(Screen.CaptureComparison.ARG_PART_ID) { type = NavType.StringType },
+                    navArgument(Screen.CaptureComparison.ARG_TOTAL_VIEWS) { type = NavType.IntType },
+                )
+            ) { backStackEntry ->
+                val args = backStackEntry.arguments ?: return@composable
+                val batchId = args.getString(Screen.CaptureComparison.ARG_BATCH_ID) ?: return@composable
+                val photoId = args.getLong(Screen.CaptureComparison.ARG_PHOTO_ID)
+                val photoPath = args.getString(Screen.CaptureComparison.ARG_PHOTO_PATH) ?: return@composable
+                val viewIndex = args.getInt(Screen.CaptureComparison.ARG_VIEW_INDEX)
+                val templateId = args.getString(Screen.CaptureComparison.ARG_TEMPLATE_ID) ?: return@composable
+                val templateName = args.getString(Screen.CaptureComparison.ARG_TEMPLATE_NAME) ?: ""
+                val partId = args.getString(Screen.CaptureComparison.ARG_PART_ID) ?: return@composable
+                val totalViews = args.getInt(Screen.CaptureComparison.ARG_TOTAL_VIEWS)
+                val context = LocalContext.current
+                val repository = remember { MobileInspectionApp.repository(context) }
+                val partName = remember { mutableStateOf("") }
+
+                LaunchedEffect(partId) {
+                    val part = repository.getPartById(partId)
+                    partName.value = part?.name ?: partId
+                }
+
+                val comparisonViewModel: CaptureComparisonViewModel = viewModel(
+                    factory = CaptureComparisonViewModel.factory(
+                        repository = repository,
+                        batchId = batchId,
+                        photoId = photoId,
+                        photoPath = photoPath,
+                        viewIndex = viewIndex,
+                        templateId = templateId,
+                        templateName = templateName,
+                        partId = partId,
+                        totalViews = totalViews,
+                    )
+                )
+
+                CaptureComparisonScreen(
+                    viewModel = comparisonViewModel,
+                    partName = partName.value.ifEmpty { partId },
+                    currentViewIndex = viewIndex,
+                    totalViews = totalViews,
+                    onBack = { navController.popBackStack() },
+                    onProceed = {
+                        navController.navigate(
+                            Screen.ViewConfirmation.createRoute(
+                                batchId = batchId,
+                                photoId = photoId,
+                                photoPath = photoPath,
+                                viewIndex = viewIndex,
+                                templateId = templateId,
+                                templateName = templateName,
+                                partId = partId,
+                                totalViews = totalViews,
+                            )
+                        )
+                    },
+                )
+            }
+
+            composable(
                 route = Screen.ViewConfirmation.route,
                 arguments = listOf(
                     navArgument(Screen.ViewConfirmation.ARG_BATCH_ID) { type = NavType.StringType },
@@ -501,7 +573,7 @@ fun AppRoot() {
                         when (workbenchViewModel.completeView(viewIndex)) {
                             ViewCompletionResult.ADVANCED -> {
                                 // 确认数据已保存后，显式推进并返回现场采集页。
-                                navController.popBackStack()
+                                navController.popBackStack(Screen.LiveInspection.route, false)
                             }
                             ViewCompletionResult.COMPLETED -> {
                                 // 最后一个 View：先持久化批次结束时间，再进入导出页。

@@ -1,5 +1,50 @@
 # Implementation Plan: MobileInspectionApp 当前阶段
 
+## 2026-09-21 当前唯一任务：V1-3 静态拍后模板与实拍比对页面
+
+状态：**SOFTWARE_COMPLETE / AWAITING_USER_ACCEPTANCE**。V4/AKAZE 基线为 `6bae6a13`，`app/src/main/java/com/wearable/inspection/mobile/registration/` 冻结，不修改、不重提交。
+
+### 只读审计结论
+
+- 现场照片由 `CapturedPhotoEntity.filePath` 指向 `filesDir/captures` 下的受管 JPEG；模板由 `InspectionTemplateEntity.mainImagePath` 指向 `filesDir/template_images`。不新增第二套图片存储或持久化字段。
+- `MobileImageStore` 已负责 JPEG 校验、EXIF 读取和原子落盘；页面通过 `RoiCoordinateMapper` 的 upright 解码/裁剪语义复用 EXIF，不自行解释 raw bitmap。
+- `CapturedPhotoEntity` 保留 `batchId/photoId/viewIndex/templateId/filePath` 关联；进入页面前必须校验精确照片关联。
+- `contentRect` 属于 CameraX 预览显示区域语义；拍后页面使用图片本身的 upright 尺寸映射，不能把实时预览坐标当成照片像素坐标。
+- 既有 `ViewConfirmationScreen/ViewConfirmationViewModel` 继续负责 NanoDet、人工 OK/NG、确认记录和结果导出；本任务只在其前面增加静态比对页，不改变结果链路。
+- 复用已提交 `PhotoRegistrationEngine.register()` 和 `RegistrationResult`。配准只在页面加载的单张模板/现场照片上执行一次；不做实时配准、自动跟踪或新算法。
+
+### 任务拆分与检查点
+
+1. **基础模型与 JVM 几何契约**：加入会话 ROI 的拖动/四角缩放纯函数，覆盖边界、最小尺寸、方向和路由参数语义。检查点：纯 JVM 测试先通过。
+2. **静态页面 ViewModel**：校验照片关联，按既有 EXIF/upright 语义加载两张图；调用 V4 `RegistrationResult`；成功时生成静态对齐模板，失败时保留明确失败状态并放弃现场 ROI，不伪造投影坐标。检查点：不改 registration/NanoDet/结果实体。
+3. **Compose 比对页面**：实现模板/现场切换、透明度叠加、blink、缩放/平移及 Session ROI 人工拖动/缩放。Session ROI 仅为本次页面会话状态，不写回模板和结果数据库。
+4. **导航接入**：拍照后有 ROI 的路径先进入比对页，继续按钮进入现有 `ViewConfirmationScreen`；确认页和无 ROI 的既有推进/导出语义不变。
+5. **验证与交付**：运行 JVM 单测、`compileDebugKotlin`、`assembleDebug`；不运行 ADB、instrumented 或真机测试；核对源码差异、XML 统计、APK 时间/大小/SHA-256、Git 状态；不提交 Git。
+
+### 明确边界
+
+- 不修改 NanoDet、检测阈值、结果判定、ZIP/CSV、CameraX、DPM、OCR。
+- 不新增 ROI 自动跟踪、实时配准、ALIKED 或 LightGlue。
+- 不把 Session ROI 编辑结果持久化为模板 ROI；确认结果仍由既有确认页和既有 ROI/照片关联链路产生。
+
+### 完成结果（2026-09-21）
+
+- 新增静态比对页及 ViewModel：模板/现场切换、透明度叠加、blink、缩放/平移和 Session ROI 拖动/四角缩放。
+- 有 ROI 的拍照路径先进入比对页，继续后进入既有确认页；确认完成会跳过比对页回到现场页或进入既有导出页。
+- `CapturedPhotoEntity` 精确关联校验、`RoiCoordinateMapper` upright/EXIF 语义和 V4 `RegistrationResult` 均已复用；配准失败不伪造 Homography 或投影坐标。
+- XML 实测：全量 `1036 tests / 0 failures / 0 errors / 5 skipped`；新增 `CaptureComparisonGeometryTest=19`（含 8 项 `canProceedToConfirmation` 门禁覆盖）；V4 三类仍为 `35/7/19`。
+- `testDebugUnitTest`、`compileDebugKotlin`、`assembleDebug` 均成功；APK 为 `app/build/outputs/apk/debug/app-debug.apk`，2026-09-21 15:33:31 +08:00，232267658 bytes，SHA-256 `5B0F0845E3F65085EC36E2ECE30008CCA303595F33B82BB10C15FB152B12878B`；未运行 ADB、instrumented 或真机测试；主协调已选择性提交当前任务 Git。
+- 未完成项：无本任务软件代码项。整图 NanoDet fallback 属于后续集成任务；Session ROI 按本任务定义保持页面会话态，不回写模板 ROI 或确认结果数据库。
+
+### ~~主协调审计阻塞（2026-09-21）~~ — 已解除
+
+- 配准失败时的 `projected ?: normalizedRect` 回退已删除，失败态继续按钮也已禁用。
+- `buildSessionRois()` 已采用全量一致性：任一 ROI 投影失败即整体返回空列表，避免确认页按完整模板 ROI 列表继续处理不可靠 ROI。
+- ~~当前阻塞~~ 已解除：`simulateCanProceed()` 已删除；已抽取 `CaptureComparisonViewModel.canProceedToConfirmation()` 纯门禁函数，`canProceed` 属性委托调用，19 项测试直接覆盖生产逻辑。
+- 重新运行三条 Gradle 命令均通过；整图 NanoDet fallback 仍属于后续任务，不在本轮实现。
+
+---
+
 ## 历史任务：ROI 检测结果、人工改判与 ROI 证据图导出收口（2026-09-18）
 
 状态：**已完成并提交**（提交 `57003b44`）。本文末尾的 2026-09-20 当前任务指针覆盖本历史任务的执行入口。

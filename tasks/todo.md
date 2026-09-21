@@ -1,4 +1,48 @@
-# 当前唯一任务：V4/AKAZE 单张照片配准引擎
+# 当前唯一任务：V1-3 静态拍后模板与实拍比对页面
+
+状态：**SOFTWARE_COMPLETE / AWAITING_USER_ACCEPTANCE**（2026-09-21；V4 基线 `6bae6a13` 已提交并冻结）
+
+## 验收清单
+
+- [x] 只读审计结论已写入计划：图片存储、`CapturedPhotoEntity`、`MobileImageStore`、`RoiCoordinateMapper`、EXIF、`contentRect`、确认页与结果链路。
+- [x] 模板图/现场照片切换。
+- [x] 透明度叠加与 blink。
+- [x] 缩放和平移。
+- [x] Session ROI 人工拖动与四角缩放；状态不写回模板数据库。
+- [x] 复用既有 `RegistrationResult`，只做单张静态加载配准；失败时不伪造 Homography/投影结果，且不得继续使用未经配准验证的 ROI。
+- [x] 有 ROI 拍照路径进入比对页，再进入既有人工确认页；不改变无 ROI 推进和结果导出。
+- [x] JVM 测试、Kotlin 编译、Debug APK 构建通过。
+- [x] 返回真实测试 XML 统计、APK 时间/大小/SHA-256 和 Git 状态。
+- [x] 未运行 ADB、instrumented 或真机测试；主协调已选择性提交当前任务 Git。
+
+## 完成实测
+
+- 全量 XML：`1036 tests / 0 failures / 0 errors / 5 skipped`。
+- 新增 `CaptureComparisonGeometryTest.xml`：`19 / 0 / 0 / 0`（含 8 项 `canProceedToConfirmation` 门禁覆盖）。
+- V4 XML：`RegistrationQualityGatesTest=35`、`GmsGridFilterTest=7`、`PhotoRegistrationEngineTest=19`，均 `0 failures / 0 errors / 0 skipped`。
+- Session ROI 是页面会话态，按边界不回写模板 ROI 或确认结果；失败态和混合投影的全量一致性策略已修复。
+
+## ~~主协调审计阻塞（2026-09-21）~~ — 已解除
+
+- `buildSessionRois()` 已改为全量一致性：配准失败、`FALLBACK_FULL_IMAGE` 或任一 ROI 投影失败均返回空列表；失败态继续按钮已禁用。
+- ~~当前阻塞~~ 已解除：已抽取 `CaptureComparisonViewModel.canProceedToConfirmation()` 纯门禁函数，`canProceed` 属性委托调用，`simulateCanProceed` 已删除，19 项测试直接调用生产共享函数。
+- 三条 Gradle 命令均通过；主协调已选择性提交当前任务 Git，当前等待用户验收。
+
+## 实施顺序
+
+1. 纯函数 Session ROI 几何与 JVM 测试。
+2. 静态图片/EXIF/照片关联 ViewModel 与 `RegistrationResult` 消费。
+3. Compose 比对页面交互。
+4. 导航接入现有确认页。
+5. 按用户指定命令验证并整理交付报告。
+
+## 禁止范围
+
+NanoDet、检测阈值、结果判定、ZIP/CSV、CameraX、DPM、OCR、实时配准、ROI 自动跟踪、ALIKED、LightGlue，以及 V4 registration 引擎源码。
+
+---
+
+# 历史任务：V4/AKAZE 单张照片配准引擎
 
 状态：**SOFTWARE_COMPLETE / AWAITING_USER_ACCEPTANCE**（2026-09-21；实现完成，61/61 测试通过，编译/构建成功，等待用户验收）
 

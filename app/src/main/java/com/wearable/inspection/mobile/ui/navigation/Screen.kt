@@ -69,6 +69,35 @@ sealed class Screen(val route: String) {
             "template_capture/${android.net.Uri.encode(partId)}/${android.net.Uri.encode(templateId)}"
     }
 
+    /** 静态拍后模板/现场照片比对。 */
+    object CaptureComparison : Screen(
+        "capture_comparison/{batchId}/{photoId}/{photoPath}/{viewIndex}/{templateId}/{templateName}/{partId}/{totalViews}"
+    ) {
+        const val ARG_BATCH_ID = "batchId"
+        const val ARG_PHOTO_ID = "photoId"
+        const val ARG_PHOTO_PATH = "photoPath"
+        const val ARG_VIEW_INDEX = "viewIndex"
+        const val ARG_TEMPLATE_ID = "templateId"
+        const val ARG_TEMPLATE_NAME = "templateName"
+        const val ARG_PART_ID = "partId"
+        const val ARG_TOTAL_VIEWS = "totalViews"
+
+        fun createRoute(
+            batchId: String,
+            photoId: Long,
+            photoPath: String,
+            viewIndex: Int,
+            templateId: String,
+            templateName: String,
+            partId: String,
+            totalViews: Int,
+        ): String {
+            val encodedPath = android.net.Uri.encode(photoPath)
+            val encodedTemplateName = android.net.Uri.encode(templateName)
+            return "capture_comparison/$batchId/$photoId/$encodedPath/$viewIndex/$templateId/$encodedTemplateName/$partId/$totalViews"
+        }
+    }
+
     /** View 人工确认 */
     object ViewConfirmation : Screen(
         "view_confirmation/{batchId}/{photoId}/{photoPath}/{viewIndex}/{templateId}/{templateName}/{partId}/{totalViews}"
