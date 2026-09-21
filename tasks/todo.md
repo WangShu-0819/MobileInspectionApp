@@ -4,6 +4,8 @@
 
 本任务是 V1-3“拍后模板与实拍比对 MVP”的底层配准引擎切片。当前只实现静态单张照片的 V4/AKAZE 配准、几何质量门禁、模板 ROI 四角投影和失败状态输出；不实现完整 CaptureComparisonScreen，不启动实时相机或新检测算法。
 
+任务提报见 [`V4_AKAZE_REGISTRATION_TASK_PROPOSAL.md`](V4_AKAZE_REGISTRATION_TASK_PROPOSAL.md)。
+
 ## 当前任务边界
 
 - 输入：模板参考图、现场采集照片、模板 ROI 的规范坐标，以及必要的旋转/图像区域信息。

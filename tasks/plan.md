@@ -836,6 +836,8 @@ DEFERRED / POST-MVP（不阻塞 V1 交付）：
 
 状态：**IN_PROGRESS / IMPLEMENTATION_PENDING**。用户已确认实现 V4/AKAZE，作为 V1-3 拍后模板与实拍比对 MVP 的底层配准引擎；当前等待执行 Agent handback。`tasks/todo.md` 顶部为唯一执行入口。
 
+任务提报：[`tasks/V4_AKAZE_REGISTRATION_TASK_PROPOSAL.md`](V4_AKAZE_REGISTRATION_TASK_PROPOSAL.md)。
+
 ### 任务目标
 
 - 为 V1-3 提供一次性的静态照片配准能力：模板图 + 现场照片 → 几何匹配 → Homography → 模板 ROI 四角投影。
