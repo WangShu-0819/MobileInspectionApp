@@ -834,9 +834,28 @@ DEFERRED / POST-MVP（不阻塞 V1 交付）：
 
 ## 2026-09-21 当前任务指针：V4/AKAZE 单张照片配准引擎
 
-状态：**IN_PROGRESS / IMPLEMENTATION_PENDING**。用户已确认实现 V4/AKAZE，作为 V1-3 拍后模板与实拍比对 MVP 的底层配准引擎；当前等待执行 Agent handback。`tasks/todo.md` 顶部为唯一执行入口。
+状态：**SOFTWARE_COMPLETE / AWAITING_USER_ACCEPTANCE**（2026-09-21）。实现完成，61/61 测试通过，编译/构建成功。`tasks/todo.md` 顶部为唯一执行入口。
 
 任务提报：[`tasks/V4_AKAZE_REGISTRATION_TASK_PROPOSAL.md`](V4_AKAZE_REGISTRATION_TASK_PROPOSAL.md)。
+执行指令：[`tasks/V4_AKAZE_REGISTRATION_AGENT_INSTRUCTION.md`](V4_AKAZE_REGISTRATION_AGENT_INSTRUCTION.md)。
+
+### 实现概要
+
+- 生产代码 5 个：RegistrationResult.kt、RegistrationConfig.kt、GmsGridFilter.kt、RegistrationQualityGates.kt、PhotoRegistrationEngine.kt
+- 测试代码 3 个：RegistrationQualityGatesTest.kt（35 项）、GmsGridFilterTest.kt（7 项）、PhotoRegistrationEngineTest.kt（19 项）
+- 算法：AKAZE → BFMatcher+Lowe(0.75) → GMS 纯 Kotlin → USAC_MAGSAC Homography → 8 项质量门禁 → ROI 四角投影
+- 失败语义：配准失败时 homography=null、projectedRoiCorners=null，禁止返回看似有效的错误坐标
+- 未实现：CaptureComparisonScreen、ALIKED+LightGlue、实时特征、NanoDet 内部调用
+- 未修改：CameraX、DPM、OCR、NanoDet 模型、旧 Wearable Inspection 工程
+- 执行 Agent handback 时未提交 Git；由主协调在独立审计通过后按当前任务路径选择性提交
+
+### 主协调收口审计（2026-09-21）
+
+- 源码/测试差异复核通过：Mat 资源释放、确定性 fallback 断言、ROI 投影成功断言和 OpenCV 版本标识均已收口。
+- 全量 JVM：1020 tests / 0 failures / 0 errors / 5 skipped；V4 定向 XML：61 / 0 / 0 / 0。
+- `compileDebugKotlin`、`assembleDebug` 独立复跑通过；APK SHA-256 为 `CC09EFC49096EA10C0F9FD7F89364A67B6F2ED2D57D0A98F7CBE541B80F315C1`。
+- 既有图片存储、照片/模板关联、EXIF、`contentRect`、`RoiCoordinateMapper` 和 Android/JVM OpenCV 差异已记录在 [`V4_AKAZE_REGISTRATION_ENGINE_REPORT.md`](../docs/reports/b3/V4_AKAZE_REGISTRATION_ENGINE_REPORT.md)。
+- 未运行 ADB、instrumented 或真机测试；状态保持 `SOFTWARE_COMPLETE / AWAITING_USER_ACCEPTANCE`。
 
 ### 任务目标
 

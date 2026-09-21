@@ -1,10 +1,99 @@
 # 当前唯一任务：V4/AKAZE 单张照片配准引擎
 
-状态：**IN_PROGRESS / IMPLEMENTATION_PENDING**（2026-09-21；用户已授权，等待执行 Agent handback）
+状态：**SOFTWARE_COMPLETE / AWAITING_USER_ACCEPTANCE**（2026-09-21；实现完成，61/61 测试通过，编译/构建成功，等待用户验收）
 
-本任务是 V1-3“拍后模板与实拍比对 MVP”的底层配准引擎切片。当前只实现静态单张照片的 V4/AKAZE 配准、几何质量门禁、模板 ROI 四角投影和失败状态输出；不实现完整 CaptureComparisonScreen，不启动实时相机或新检测算法。
+本任务是 V1-3”拍后模板与实拍比对 MVP”的底层配准引擎切片。当前只实现静态单张照片的 V4/AKAZE 配准、几何质量门禁、模板 ROI 四角投影和失败状态输出；不实现完整 CaptureComparisonScreen，不启动实时相机或新检测算法。
 
 任务提报见 [`V4_AKAZE_REGISTRATION_TASK_PROPOSAL.md`](V4_AKAZE_REGISTRATION_TASK_PROPOSAL.md)。
+
+## 实现完成报告（2026-09-21）
+
+### 实际修改文件（5 个生产 + 3 个测试）
+
+**生产代码（5 个）：**
+- `app/src/main/java/com/wearable/inspection/mobile/registration/RegistrationResult.kt` — 数据类（RegistrationResult、ProjectedPoint、RegistrationStatus 枚举、自定义 equals/hashCode）
+- `app/src/main/java/com/wearable/inspection/mobile/registration/RegistrationConfig.kt` — 集中配置（AKAZE/Lowe/GMS/USAC/质量门禁全部阈值）
+- `app/src/main/java/com/wearable/inspection/mobile/registration/GmsGridFilter.kt` — 纯 Kotlin GMS 网格滤波（O(N) 分箱、3×3 邻域支持度计算）
+- `app/src/main/java/com/wearable/inspection/mobile/registration/RegistrationQualityGates.kt` — 质量门禁（8 项检查：内点数/比例、重投影误差、空间覆盖率、凸性、面积、边界、NaN/Inf）
+- `app/src/main/java/com/wearable/inspection/mobile/registration/PhotoRegistrationEngine.kt` — 主引擎（AKAZE→BFMatcher+Lowe→GMS→USAC_MAGSAC Homography→门禁→ROI 投影）
+
+**测试代码（3 个）：**
+- `app/src/test/java/com/wearable/inspection/mobile/registration/RegistrationQualityGatesTest.kt` — 35 纯逻辑测试
+- `app/src/test/java/com/wearable/inspection/mobile/registration/GmsGridFilterTest.kt` — 7 纯逻辑测试
+- `app/src/test/java/com/wearable/inspection/mobile/registration/PhotoRegistrationEngineTest.kt` — 19 OpenCV 集成测试
+
+### 测试结果
+
+```
+./gradlew.bat :app:testDebugUnitTest --no-daemon --rerun-tasks --console=plain --tests "com.wearable.inspection.mobile.registration.*"
+```
+
+**61 tests completed, 0 failed**
+
+| 测试类 | 项数 | 结果 |
+|---|---|---|
+| RegistrationQualityGatesTest | 35 | 全部通过 |
+| GmsGridFilterTest | 7 | 全部通过 |
+| PhotoRegistrationEngineTest | 19 | 全部通过 |
+| **注册模块定向测试** | **61** | **全部通过** |
+
+### 编译与构建
+
+| 命令 | 结果 |
+|---|---|
+| `compileDebugKotlin` | BUILD SUCCESSFUL |
+| `testDebugUnitTest` | BUILD SUCCESSFUL |
+| `assembleDebug` | BUILD SUCCESSFUL |
+
+### 算法与门禁实现
+
+**主路径：**
+1. AKAZE 特征提取（MLDB 描述子，阈值 0.002，最大 1000 特征按 response 截断）
+2. BFMatcher KNN + Lowe ratio（ratio=0.75，最少 10 good matches）
+3. GMS 网格滤波（20×20 网格，支持度阈值 6，匹配数 ≥24 时启用）
+4. Homography 估计（USAC_MAGSAC，阈值 8px，500 迭代，置信度 0.995）
+5. 质量门禁（8 项顺序检查）
+6. ROI 四角投影（perspectiveTransform）
+
+**质量门禁阈值：**
+- 最少内点：10
+- 最小内点比例：0.30
+- 最大中位重投影误差：8.0px
+- 最小空间覆盖率：0.15
+- 最小投影面积比：0.005
+- 最大投影面积比：0.95
+- 图像边界容差：50px
+
+**失败语义：**
+- 配准失败 → `RegistrationStatus.FAILED` 或 `FALLBACK_FULL_IMAGE`
+- 失败时 `homography=null`、`projectedRoiCorners=null`
+- 禁止返回看似有效的错误投影坐标
+
+### 未完成项
+
+- 无。本任务所有要求均已实现并验证。
+
+### 已知限制
+
+1. GMS xfeatures2d 在 Android OpenCV SDK 和桌面 openpnp 均不可用，已用纯 Kotlin 替代实现
+2. 旋转角度 >15° 时配准成功率下降（已知风险，属于后续优化范围）
+3. 桌面 OpenCV 版本为 4.9.0-0（openpnp），Android 为 4.10.0，算法行为一致但版本号不同
+4. 未运行 ADB/真机测试（按任务边界禁止）
+
+### Git 状态
+
+本报告 handback 时未提交；主协调完成独立审计后按当前任务路径选择性提交。工作区包含新增的 `registration/` 目录（5 个生产文件 + 3 个测试文件）。
+
+### 主协调收口审计（2026-09-21）
+
+- 独立复核源码与测试：Mat 成功/失败/异常路径释放，确定性 `FALLBACK_FULL_IMAGE`、ROI 空值和失败原因断言，`MATCHER_VERSION` 为 `opencv-4.10.0`。
+- 独立复跑 `:app:testDebugUnitTest --no-daemon --rerun-tasks --console=plain`：1020 tests / 0 failures / 0 errors / 5 skipped；V4 XML 为 61 / 0 / 0 / 0。
+- 独立复跑 `:app:compileDebugKotlin --no-daemon --rerun-tasks` 与 `:app:assembleDebug --no-daemon`：均 `BUILD SUCCESSFUL`。
+- 独立核对 APK：`app/build/outputs/apk/debug/app-debug.apk`，2026-09-21 14:09:03 +08:00，232151892 bytes，SHA-256 `CC09EFC49096EA10C0F9FD7F89364A67B6F2ED2D57D0A98F7CBE541B80F315C1`。
+- 未运行 ADB、instrumented 或真机测试；当前仍为 `SOFTWARE_COMPLETE / AWAITING_USER_ACCEPTANCE`。
+- 本轮仅收口 V4/AKAZE 生产代码、测试和文档；不接入 V1-3 页面、NanoDet、CameraX 或既有导出链路。
+
+---
 
 ## 当前任务边界
 
