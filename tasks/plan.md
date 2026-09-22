@@ -2,11 +2,11 @@
 
 ## 2026-09-21 当前唯一任务：V4 RegistrationResult → NanoDet 检测集成和结果包
 
-状态：**SOFTWARE_COMPLETE / AWAITING_USER_ACCEPTANCE**。V4/AKAZE 基线 `6bae6a13` 冻结，不修改；V1-3 基线 `c81391b1` 保持不回滚。
+状态：**SOFTWARE_AUDIT_PASSED / USER_ACCEPTED**（2026-09-22 用户已完成真实设备验收；模板图片加载修正和 CaptureComparison 自动导航已获明确 Git 提交授权）。V4/AKAZE 基线 `6bae6a13` 冻结，不修改；V1-3 基线 `c81391b1` 保持不回滚。
 
 ### 主协调 handback 审计结论
 
-- 本地现有 XML/HTML 实为 `1115 / 0 / 0 / 5`；5 项均为 `DpmScannerTest` 外部样本/目录缺失。
+- 本地最新 XML/HTML 实为 `1158 / 0 / 0 / 5`；5 项均为 `DpmScannerTest` 外部样本/目录缺失。
 - 失败/`FALLBACK_FULL_IMAGE` 主链已接通：`canProceedToConfirmation()` 允许已完成配准尝试，`AppNavigation` 传递真实 fallback 状态，确认页整图摘要和 synthetic ROI 导出路径已加入。
 - `ViewConfirmationViewModel.loadData()` 通过 `resolveLoadingPath()` fail-closed；缓存缺失、状态不一致、空投影和显式 fallback 均转整图，`loadWithTemplateRois()` 不再是可达路径。
 - `loadWithProjectedRois()` 对投影 ROI 做全量覆盖检查；缺少任一 ROI 时整体转整图，不保留原模板 `normalizedRect`，不形成 projected/template 混合检测。
@@ -14,7 +14,11 @@
 - 结果包坐标已收口：`saveRoiConfirms()` 使用 `projectedPixelRects`；缺失时 fail-closed，不回退模板 `normalizedRect`。
 - 整图结果不生成 `aggregatedSuggestion`；人工总体结果继续由现有确认实体保存。导出器仅对已知 `__FULL_IMAGE__` synthetic ID 构造虚拟定义，未知 ID 跳过并告警。
 - 主协调已完成源码审计、全量 JVM XML/HTML 和 Debug APK 现场复核；最新 handback 报告 `compileDebugKotlin` 成功；未运行 ADB、instrumented 或真机。
-- 2026-09-22 复核实际工作区为 16 个已修改文件、6 个未跟踪文件（含本审计报告和 ProjectedRoiBoundaryTest）；APK 现场为 `C99F87FD8F26139DB2F97EFB6443D9D7461A82374C1D0381F7B408F0B24EF5A9`，最新测试夹具修改不改变生产 APK 内容；当前任务已选择性提交为 `a690fa15`。
+- 2026-09-22 最终复核工作区为 7 个已修改文件、3 个未跟踪文件；APK 现场为 `C7FE3B140B381F2CF740A4B63DB0C08BBE49B46967CFB4C4D00C0F22E29693CC`；V4 基线已选择性提交为 `a690fa15`，当前模板加载和自动导航修正未提交。
+- 当前拍照后流程已隐藏 `CaptureComparison` 可见 UI，但保留 registration、projected snapshot、registry、`CaptureComparisonScreen`、`CaptureComparisonViewModel` 和 `Screen.CaptureComparison`；registration 完成后写 registry，再进入 `ViewConfirmation`。
+- 模板图片加载已统一到 `TemplateImageLoader`，支持纯路径、`file://`、`content://`，两遍独立流解码并传播 `CancellationException`；运行时设备行为已由用户现场验收确认。
+- 用户已确认真实设备验收完成：Compose `LaunchedEffect` 自动导航、`NavController.popUpTo` 栈清理、`SessionRoiRegistry` 运行时写入、失败/fallback 整图检测和模板图片加载均已现场确认。
+- 最终 handback 已通过源码审计：XML/HTML 为 `1158 / 0 / 0 / 5`；`TemplateImageLoaderTest=23`、`NoRoiViewAdvancementTest=18`、`CaptureComparisonAutoNavigationTest=20`，均 0 failures / 0 errors。失败分支已覆盖临时文件删除、错误状态和不调用 `completeView`；自动导航写入 registry 后再导航并使用 `popUpTo(... inclusive = true)`。handback 本身未运行 instrumented/真机测试，但后续用户已确认真实设备行为。
 
 ### 本轮实际收口
 
@@ -22,22 +26,30 @@
 2. 已完成 ViewModel fail-closed：成功只接受 projected Session ROI；其余路径只调用整图推理，禁止模板 ROI 检测。
 3. 已完成整图摘要与人工总体确认语义，整图模型建议保持空值。
 4. 已复用 `ViewRoiConfirmEntity` 和既有导出行模型；`__FULL_IMAGE__` 进入 ZIP/CSV，未知 synthetic/旧 ROI 不被静默导出；成功 ROI 像素坐标与 projected ROI 同源。
-5. 已通过全量 `testDebugUnitTest`：1115 tests / 0 failures / 0 errors / 5 skipped；目标边界回归和保存生命周期回归均通过。Git 已提交为 `a690fa15`，当前等待最终用户验收。
+5. 已通过全量 `testDebugUnitTest`：1158 tests / 0 failures / 0 errors / 5 skipped；目标边界回归和保存生命周期回归均通过。V4 基线为 `a690fa15`，用户已完成最终验收并授权当前修正选择性提交 Git。
 
-禁止新增模型、decoder、阈值、类别协议、实体、CameraX、DPM、OCR、实时配准或自动跟踪；本轮 Git 已按当前任务范围提交。
+禁止新增模型、decoder、阈值、类别协议、实体、CameraX、DPM、OCR、实时配准或自动跟踪；当前修正不得在未获用户授权前提交 Git。
+
+### 2026-09-22 用户确认的后续范围决策
+
+- **历史 legacy ROI 不再兼容。** 用户明确不处理历史旧格式的单个 `roi` 字段；当前只保证 App 新格式 `rois[]` 的 ROI 名称、`normalizedRect`、属性、`enabled` 状态和顺序能够导入、落库和导出。
+- **当前产品模型为一个视角一张模板图。** `imageFiles[]` 作为模板包数组字段保留格式兼容，但每个视角当前只使用一个主模板图片并写入 `mainImagePath`；不启动多图切换、多图配准、多图 ROI 或多图结果导出任务。
+- **EXIF 采用条件式方案，不默认立项。** 先对实际模板和采集图片做只读取证：原始像素宽高、EXIF `Orientation`、模板显示、ROI 位置和检测位置。若原始像素为竖向、`Orientation = 1` 且三者一致，则关闭风险，不修改代码；若原始像素为横向、`Orientation = 6/8`，或显示、ROI/检测位置不一致，则必须新建并实施独立的全链路 EXIF upright 代码修正任务，而不只是补测试或记录风险。该任务必须统一各图片入口的 EXIF-aware 解码和方向语义，明确 normalized ROI 使用 upright 坐标，接入模板编辑、预览叠加、配准、ROI 映射和检测入口，并补充方向与坐标回归测试；不得只对 `TemplateImageLoader` 做孤立旋转修正。
 
 ### 后续未完成项（仅在用户明确要求时启动）
 
-- V4 → NanoDet 软件闭环已完成；下一步仅等待最终用户验收；不运行 ADB、instrumented 或真机测试，除非用户另行明确授权。
+- V4 → NanoDet 软件闭环和用户验收均已完成；当前进行用户授权的 Git 收口。不运行新的 ADB、instrumented 或真机测试，除非用户另行明确授权。
 - DPM 绑定码切件人工验收已由用户确认完成，不再作为待办任务。
-- legacy ROI 迁移、`imageFiles[]` 多图处理、模板 EXIF 方向补证：后续独立任务。
+- legacy ROI 迁移：已关闭，不启动。
+- `imageFiles[]` 多图处理：已从任务清单移除，当前只保留一个视角一张主模板图的产品约束。
+- 模板 EXIF：仅保留条件式取证方案；未完成实际图片证据前，不创建代码修正任务。
 - 更大独立数据集上的 NanoDet 阈值和现场鲁棒性验证：交付后的增强验证，不阻塞当前版本交付。
 - 更完整的 manifest/Excel/模型框结果包扩展：后续独立任务。
 - OCR 真实钢印样品拍照、识别和人工确认：**明确延期**，除非用户再次提出，不得主动启动。
 
 ### 当前 Agent 状态
 
-当前无新的代码修正指令。软件边界、JVM 回归和 Git 收口已经完成，提交为 `a690fa15`；只等待最终用户验收。
+当前无新的 Agent 修正指令；主协调已完成最终源码、XML/HTML、APK、Git diff 审计和用户验收记录，正在按用户授权进行选择性 Git 提交。不得主动运行新的 ADB、instrumented、真机测试或 OCR。
 
 详细证据见 [`docs/reports/b3/V4_REGISTRATION_NANODET_INTEGRATION_AUDIT_20260921.md`](../docs/reports/b3/V4_REGISTRATION_NANODET_INTEGRATION_AUDIT_20260921.md)。
 

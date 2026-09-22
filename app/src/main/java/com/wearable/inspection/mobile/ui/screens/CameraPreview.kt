@@ -2,7 +2,6 @@ package com.wearable.inspection.mobile.ui.screens
 
 import android.Manifest
 import android.content.Intent
-import android.graphics.BitmapFactory
 import android.net.Uri
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -126,45 +125,13 @@ fun CameraPreview(
         }
 
         if (templateImagePath != null) {
-            try {
-                val file = java.io.File(templateImagePath)
-                if (!file.exists() || file.length() == 0L) {
-                    templateLoadError = "模板图片不存在"
-                } else {
-                    // 在 IO 线程执行图片解码，不阻塞 Compose 主线程
-                    val bmp = withContext(Dispatchers.IO) {
-                        // 先获取图片尺寸，计算降采样率
-                        val options = BitmapFactory.Options().apply {
-                            inJustDecodeBounds = true
-                        }
-                        BitmapFactory.decodeFile(templateImagePath, options)
-                        val imageWidth = options.outWidth
-                        val imageHeight = options.outHeight
-
-                        if (imageWidth <= 0 || imageHeight <= 0) {
-                            return@withContext null
-                        }
-
-                        // 计算 inSampleSize：确保解码后最大边不超过 2048px
-                        val inSampleSize = calculateInSampleSize(imageWidth, imageHeight)
-
-                        val decodeOptions = BitmapFactory.Options().apply {
-                            this.inSampleSize = inSampleSize
-                        }
-                        BitmapFactory.decodeFile(templateImagePath, decodeOptions)
-                    }
-
-                    if (bmp == null) {
-                        templateLoadError = "模板图片解码失败"
-                    } else {
-                        templateBitmap = bmp
-                    }
-                }
-            } catch (e: Exception) {
-                templateLoadError = "模板图片加载失败"
-                if (BuildConfig.DEBUG) {
-                    android.util.Log.e("CameraPreview", "Template overlay load failed", e)
-                }
+            // CancellationException 由 LaunchedEffect 框架正确处理，不会进入 catch
+            val result = withContext(Dispatchers.IO) {
+                loadTemplateBitmap(templateImagePath, context.contentResolver)
+            }
+            when (result) {
+                is TemplateLoadResult.Success -> templateBitmap = result.bitmap
+                is TemplateLoadResult.Failure -> templateLoadError = result.userMessage
             }
         }
     }
@@ -558,34 +525,4 @@ fun CameraPreviewScreen(
     onBack: () -> Unit
 ) {
     CameraPreview(modifier = Modifier.fillMaxSize())
-}
-
-/**
- * 计算模板图片降采样率
- *
- * 确保解码后图片最大边不超过 [maxTarget]px。
- *
- * @param imageWidth 原图宽度
- * @param imageHeight 原图高度
- * @param maxTarget 目标最大边长，默认 2048
- * @return inSampleSize（2 的幂次）
- *
- * 示例：
- * - 8000x6000 -> 4（解码后约 2000x1500）
- * - 6000x8000 -> 4（解码后约 1500x2000）
- * - 2048x2048 -> 1
- * - 1920x1080 -> 1
- */
-internal fun calculateInSampleSize(
-    imageWidth: Int,
-    imageHeight: Int,
-    maxTarget: Int = 2048,
-): Int {
-    if (imageWidth <= 0 || imageHeight <= 0) return 1
-    var sample = 1
-    val maxDimension = maxOf(imageWidth, imageHeight)
-    while (maxDimension / sample > maxTarget) {
-        sample *= 2
-    }
-    return sample
 }

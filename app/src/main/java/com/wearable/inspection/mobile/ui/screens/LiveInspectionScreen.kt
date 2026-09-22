@@ -1113,20 +1113,34 @@ private fun TemplateContent(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
+                val context = LocalContext.current
                 var bitmap by remember(template.mainImagePath) {
                     mutableStateOf<android.graphics.Bitmap?>(null)
                 }
+                var loadError by remember(template.mainImagePath) {
+                    mutableStateOf<String?>(null)
+                }
                 LaunchedEffect(template.mainImagePath) {
-                    bitmap = withContext(Dispatchers.IO) {
-                        try {
-                            val opts = android.graphics.BitmapFactory.Options().apply {
-                                inSampleSize = 2 // 保留更高分辨率，适配放大的参考图
-                            }
-                            android.graphics.BitmapFactory.decodeFile(template.mainImagePath, opts)
-                        } catch (_: Exception) { null }
+                    val result = withContext(Dispatchers.IO) {
+                        loadTemplateBitmap(
+                            imageSource = template.mainImagePath,
+                            contentResolver = context.contentResolver,
+                            maxTargetSize = 1024
+                        )
+                    }
+                    when (result) {
+                        is TemplateLoadResult.Success -> {
+                            bitmap = result.bitmap
+                            loadError = null
+                        }
+                        is TemplateLoadResult.Failure -> {
+                            bitmap = null
+                            loadError = result.userMessage
+                        }
                     }
                 }
                 val currentBitmap = bitmap
+                val currentError = loadError
                 if (currentBitmap != null) {
                     androidx.compose.foundation.Image(
                         bitmap = currentBitmap.asImageBitmap(),
@@ -1134,6 +1148,25 @@ private fun TemplateContent(
                         modifier = Modifier.fillMaxSize(),
                         contentScale = if (fillImage) ContentScale.Crop else ContentScale.Fit
                     )
+                } else if (currentError != null) {
+                    // 模板图片加载失败：显示安全的分类错误提示
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Warning,
+                            contentDescription = "加载失败",
+                            tint = Color(0xFFB0B0B0),
+                            modifier = Modifier.size(32.dp)
+                        )
+                        Text(
+                            text = currentError,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color(0xFFB0B0B0),
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 } else {
                     Icon(
                         imageVector = Icons.Default.Photo,

@@ -1,8 +1,10 @@
 # V4 RegistrationResult → NanoDet 检测集成和结果包：主协调审计
 
-日期：2026-09-21
-状态：**SOFTWARE_COMPLETE / AWAITING_USER_ACCEPTANCE**（2026-09-22 最新 handback 复核后）
-范围：只读审计 handback 及工作区差异；未运行 ADB、instrumented 或真机；当前 V4 代码已选择性提交。
+日期：2026-09-22
+状态：**SOFTWARE_AUDIT_PASSED / AWAITING_USER_ACCEPTANCE**（最终证据修正已复核）
+范围：只读审计 handback、源码差异、JVM XML/HTML 和 APK 现场；未运行 ADB、instrumented 或真机。V4 基线提交为 `a690fa15`，当前模板加载和自动导航修正仍未提交。
+
+> 说明：本报告前面的 handback 章节按时间顺序保留，仅用于追溯；当前有效结论以文末“最终证据修正审计”为准。
 
 ## 第一版 handback 复核（16:51 APK）
 
@@ -159,3 +161,142 @@
 - 手动 ROI 操作只存在于模板 ROI 编辑阶段，不参与拍照后比对、NanoDet 或结果包。
 
 当前任务状态：**SOFTWARE_COMPLETE / AWAITING_USER_ACCEPTANCE**。V4 代码已选择性提交为 `a690fa15`；无新的 Agent 代码指令，下一步只等待最终用户验收。
+
+## 2026-09-22 用户新增要求：暂时隐藏拍照后 CaptureComparison 界面
+
+### 主协调源码复核
+
+- 当前源码已经移除拍照后 Session ROI 的拖动、缩放和四角调整控件；`SessionRoiOverlay` 为只读显示，工具栏提示为“双指缩放/平移”，注册摘要为“已自动投影 Session ROI”。模板 ROI 编辑阶段的手动框选仍保留。
+- `AppNavigation.kt` 的拍照成功回调仍导航到 `Screen.CaptureComparison`，因此用户仍会看到该拍照后比对页面。该页面同时承担 registration 结果交接、projected ROI snapshot 写入 `SessionRoiRegistry` 和进入 `ViewConfirmation` 的中转职责。
+- 当前源码不再包含“可调整 Session ROI”文案；若设备仍显示该旧文案，应先核对安装 APK 是否来自旧提交 `c81391b1` 或旧构建产物，不能据此认定当前源码仍有拍照后 ROI 调整能力。
+
+### 本次修正边界
+
+- 暂时隐藏拍照后的 `CaptureComparison` 可见 UI，但保留 `CaptureComparisonScreen`、`CaptureComparisonViewModel`、`Screen.CaptureComparison`、registration、projected ROI 和 registry 代码，便于后续恢复入口。
+- 隐藏路径必须继续等待并读取 registration 结果；成功时写入 `projectedRoisSnapshot`，失败、状态不一致、registry 缺失或投影不完整时继续写入真实 fallback 状态并进入整图 NanoDet 路径，最后进入 `ViewConfirmation`。
+- 不得通过直接跳转 `ViewConfirmation` 绕过 registration 或 registry 交接；不得修改 NanoDet 模型、decoder、阈值、类别协议、结果包语义、模板 ROI 编辑、CameraX、DPM 或 OCR。
+- 需要新增/更新回归覆盖：隐藏入口不会渲染拍照后比对 UI；成功投影仍使用 projected snapshot；失败路径仍进入整图兜底。未获用户对本次新修正明确授权前，主协调不提交 Git。
+
+### 当前状态
+
+当前状态：**SOFTWARE_AUDIT_BLOCKED / AWAITING_CORRECTION**。主协调未修改生产代码、未联系执行 Agent、未运行 ADB、instrumented 或真机测试；等待执行 Agent 按上述边界完成修正并提交 handback 后复核。
+
+## 2026-09-22 用户新增问题：现场采集页模板图片加载失败
+
+### 主协调源码定位
+
+- `LiveInspectionScreen.kt` 将当前模板的 `template.mainImagePath` 传给 `CameraPreview`，现场采集页的红色提示由 `CameraPreview.kt` 生成。
+- `CameraPreview.kt` 在 `LaunchedEffect(templateImagePath)` 中使用 `java.io.File`、`BitmapFactory.decodeFile` 和降采样解码；文件不存在时显示“模板图片不存在”，解码返回空时显示“模板图片解码失败”，捕获到 `Exception` 时才显示“模板图片加载失败”。
+- 当前 catch 只记录 DEBUG 日志并把所有异常压缩成同一条文案，主协调仅能确认发生了文件访问或解码异常，不能凭现有界面确定现场设备上的具体异常类型。
+- 该 catch 还存在明确的协程语义风险：`CancellationException` 属于 `Exception`，模板切换、页面离开或 `LaunchedEffect` key 变化时可能被误报为“模板图片加载失败”；修正必须先单独重新抛出取消异常。
+- 模板导入链当前通常把图片复制到 App 私有 `template_images/` 目录并将绝对路径写入数据库；历史数据仍可能包含 `content://` 或 `file://` 形式，因此单纯继续使用 `File(path)` 不是完整的路径兼容策略。
+
+### 执行 Agent 修正边界
+
+- 统一模板图片读取/解码入口，兼容 App 私有绝对路径、`file://` 和 `content://`；先读取 bounds，再以受控 `inSampleSize` 解码，所有流正确关闭。
+- `catch (CancellationException) { throw ... }` 必须位于通用异常处理之前；不得把协程取消、页面离开或模板切换显示成红色加载错误。
+- 区分路径为空、文件不存在、不可读、图片格式不可解码和运行时异常；DEBUG 日志必须包含模板 ID/路径类型/阶段和原始异常，UI 继续使用安全、明确的用户文案，不显示堆栈。
+- `CameraPreview` 的实时模板叠加和现场页下方模板参考图应使用同一套读取语义，避免一个区域能显示而另一个区域报错。
+- 保持现有模板图片存储路径和数据库字段兼容；不得删除或重写已有模板数据，不改变 CameraX 拍照、V4 registration、projected ROI、NanoDet、DPM 或 OCR。
+- 增加 JVM 回归覆盖有效绝对路径、缺失路径、无效图片、`file://`/`content://` 读取和异常分类；仅运行 JVM 单元测试、`compileDebugKotlin`、`assembleDebug`，不运行 ADB、instrumented 或真机测试。
+
+当前该问题与“隐藏拍照后 CaptureComparison UI”共同处于 **SOFTWARE_AUDIT_BLOCKED / AWAITING_CORRECTION**；主协调未修改生产代码，等待执行 Agent handback 后统一复核。
+
+## 2026-09-22 模板图片加载 handback 审计
+
+### 实际证据
+
+- 工作区新增 `TemplateImageLoader.kt` 和 `TemplateImageLoaderTest.kt`，修改 `CameraPreview.kt`、`LiveInspectionScreen.kt`；未提交 Git。
+- 本地 XML/HTML 实际汇总为 `1136 tests / 1 failure / 0 errors / 5 skipped`，不是可接受的全量回归结果。唯一失败为 `NoRoiViewAdvancementTest.live inspection source prevents view completion on capture failure`，断言“应有后续 try 块”。
+- 该失败不是预存问题：此前 V4 基线本地汇总为 0 failure；本次 `TemplateContent` 移除内层 `try/catch` 后，旧测试通过全文寻找后续 `try {` 的脆弱实现失效。执行 Agent 必须更新该测试为与图片加载实现无关的结构/行为断言，或保留等价的生产结构后重新验证，但不得把它标为 pre-existing。
+- APK 现场为 `app/build/outputs/apk/debug/app-debug.apk`，2026-09-22 11:43:05 +08:00，232224821 bytes，SHA-256 `3F2E069C2D518D84251EECB8A687D7C81D73F374A62A5D4D75C73470AD6AB69B`。该 APK 不能作为本轮最终交付证据，因为全量测试仍失败。
+
+### 代码审计问题
+
+- `TemplateImageLoader.decodeFromStream()` 使用 `inputStream.readBytes()`，然后对完整 ByteArray 做 bounds 和实际解码；这会把整张模板图一次性放入堆内存，不能兑现“受控降采样避免 OOM”的目标。应对同一来源重新打开流，分别用 `BitmapFactory.decodeStream()` 读取 bounds 和按 `inSampleSize` 实际解码。
+- handback 所列“有效 file URI”测试实际调用的是绝对路径；content URI 只覆盖缺少 ContentResolver 的失败分支，没有真实可读 Provider 的成功路径。需要补齐有效 `file://` 和可控 `content://` Resolver/Provider 测试。
+
+### 当前结论
+
+模板图片加载修正暂不通过，状态保持 **SOFTWARE_AUDIT_BLOCKED / AWAITING_CORRECTION**。主协调不提交当前代码；等待执行 Agent 修正测试回归、内存解码和 URI 成功证据后重新 handback。未运行 ADB、instrumented 或真机测试。
+
+## 2026-09-22 模板图片加载 handback v2 审计
+
+### 已核对的实际证据
+
+- `TemplateImageLoader.kt` 已改为两次重新打开输入流，分别使用 `BitmapFactory.decodeStream()` 读取 bounds 和按 `inSampleSize` 解码；未发现 `readBytes()`。
+- `TemplateImageLoaderTest` XML：`23 tests / 0 failures / 0 errors / 0 skipped`。
+- `NoRoiViewAdvancementTest` XML：`18 tests / 0 failures / 0 errors / 0 skipped`。
+- 全量 `testDebugUnitTest` XML 汇总：`1138 tests / 0 failures / 0 errors / 5 skipped`；5 个 skipped 仍来自 `DpmScannerTest` 外部样本或目录缺失。
+- APK 现场：`app/build/outputs/apk/debug/app-debug.apk`，2026-09-22 12:05:52 +08:00，232963737 bytes，SHA-256 `9DEFC9F28569A7A46CF5029E12B5019411976DF1465E4F2E922D7A54B011A0D4`。
+- `compileDebugKotlin`、`assembleDebug` 的 handback 结果为成功；本轮未运行 ADB、instrumented 或真机测试。
+
+### 仍未通过的审计项
+
+1. `NoRoiViewAdvancementTest` 用 `source.indexOf("}", elseBranch + 4)` 得到的是 `storeResult == null` 分支内 `withContext` lambda 的首个闭合括号，不是整个 `else` 块的匹配括号；它仍可能漏过 else 块后半段的违规调用。
+2. 该测试只断言 `completeView` 不在截取片段中，未稳定验证失败分支必须删除临时文件、设置 `captureError = "图片保存失败"` 和 `captureState = CaptureUiState.ERROR`。
+3. `content://` 成功测试仍使用 Mockito 返回的单个 `ByteArrayInputStream`；由于该类关闭操作是 no-op，不能证明 ContentResolver 在 bounds 与实际解码阶段均能提供新的可读流，也不是实际 Provider 成功路径。
+4. `AppNavigation.kt` 拍照成功回调仍导航到 `Screen.CaptureComparison`；“暂时隐藏拍照后的 CaptureComparison UI、保留 registration/registry/projected snapshot 并进入 ViewConfirmation”的独立要求仍未收口。
+
+### 当前结论
+
+模板图片加载 v2 的构建和现有 XML 统计通过，但源码审计仍不通过；整体任务继续保持 **SOFTWARE_AUDIT_BLOCKED / AWAITING_CORRECTION**。当前代码不提交 Git。下一轮必须先修正失败分支测试的真实边界和可控 content URI 两次开流证据，并同时处理拍照后 CaptureComparison 隐藏路径；不得修改 V4 registration、NanoDet、CameraX、DPM 或 OCR。
+
+## 2026-09-22 模板图片加载 + CaptureComparison 自动导航 handback v3 审计
+
+### 已核对的实际证据
+
+- `TemplateImageLoader.kt` 使用两次独立 `openStream().use {}`，分别读取 bounds 和执行 `BitmapFactory.decodeStream()`；未发现 `readBytes()`。
+- `TemplateImageLoaderTest` 实际为 `23 tests / 0 failures / 0 errors / 0 skipped`，`content://` 成功测试使用新流和 `AtomicInteger` 验证两次打开。
+- `NoRoiViewAdvancementTest` 实际为 `18 tests / 0 failures / 0 errors / 0 skipped`，已改用完整花括号块提取。
+- `CaptureComparisonAutoNavigationTest` 实际为 `16 tests / 0 failures / 0 errors / 0 skipped`，不是 handback 声称的 15 项。
+- 全量 `testDebugUnitTest` 实际汇总：`1154 tests / 0 failures / 0 errors / 5 skipped`；5 个 skipped 仍来自 `DpmScannerTest` 外部样本或目录缺失。
+- `AppNavigation.kt` 当前在 `comparisonViewModel.isLoaded` 后写入 `SessionRoiRegistry`，传递 `isFullImageFallback`，并导航到 `ViewConfirmation`；拍照后不再渲染 `CaptureComparisonScreen`，仅显示加载指示器。
+- APK 现场：`app/build/outputs/apk/debug/app-debug.apk`，2026-09-22 12:24:53 +08:00，232963737 bytes，SHA-256 `C7FE3B140B381F2CF740A4B63DB0C08BBE49B46967CFB4C4D00C0F22E29693CC`。
+- handback 声称 `compileDebugKotlin`、`assembleDebug` 成功；本轮未运行 ADB、instrumented 或真机测试。
+
+### 仍需修正的审计项
+
+1. `NoRoiViewAdvancementTest` 的完整失败分支块当前只断言包含“图片保存失败”和 `CaptureUiState.ERROR`，以及不包含 `completeView`；没有断言该分支执行 `imageStore.delete(file.absolutePath)`，未完整覆盖本轮明确要求。
+2. handback 对 `CaptureComparisonAutoNavigationTest` 的数量报告为 15，但本地 XML 实际为 16；下一次 handback 必须按 XML/HTML 实际统计报告并解释差异。
+3. `CaptureComparisonAutoNavigationTest` 主要是源码结构断言，未通过真实 NavController/Compose 行为验证 `LaunchedEffect` 完成后自动导航和 `popUpTo` 栈清理；这属于证据强度限制，至少需要补充明确的路由顺序/栈清理断言或在 handback 中说明可接受边界。
+
+### 当前结论
+
+CaptureComparison 隐藏自动导航和模板图片加载实现已基本符合产品边界，现有测试与构建均通过；但由于失败分支删除临时文件断言缺失、目标测试统计不一致，源码审计暂不完全通过。整体任务继续保持 **SOFTWARE_AUDIT_BLOCKED / AWAITING_CORRECTION**，当前不提交 Git。
+
+## 2026-09-22 最终证据修正审计
+
+### 实际核验结果
+
+- 全量 `testDebugUnitTest` XML/HTML：`1158 tests / 0 failures / 0 errors / 5 skipped`。
+- `TemplateImageLoaderTest`：`23 / 0 / 0 / 0`。
+- `NoRoiViewAdvancementTest`：`18 / 0 / 0 / 0`，失败分支已断言临时文件删除、错误消息、`CaptureUiState.ERROR` 和不调用 `completeView`。
+- `CaptureComparisonAutoNavigationTest`：`20 / 0 / 0 / 0`；handback 已解释此前 15/16 项统计遗漏，本地 XML 以 20 项为准。
+- `AppNavigation.kt` 已通过 `LaunchedEffect(comparisonViewModel.isLoaded)` 等待 registration ViewModel 完成；写入 `SessionRoiRegistry` 后才导航 `ViewConfirmation`，并使用 `popUpTo(Screen.CaptureComparison.route) { inclusive = true }` 清理隐藏路由。
+- 拍照后不再渲染 `CaptureComparisonScreen`，但 `CaptureComparisonScreen`、`CaptureComparisonViewModel`、`Screen.CaptureComparison`、registry 和 projected ROI 逻辑均保留。
+- APK 现场：`app/build/outputs/apk/debug/app-debug.apk`，2026-09-22 12:24:53 +08:00，232963737 bytes，SHA-256 `C7FE3B140B381F2CF740A4B63DB0C08BBE49B46967CFB4C4D00C0F22E29693CC`。
+- `compileDebugKotlin`、`assembleDebug` handback 成功；未运行 ADB、instrumented 或真机测试。
+- 当前 Git 状态为未提交工作区；未发现 V4 registration、NanoDet、CameraX、DPM 或 OCR 改动。
+
+### 验证边界
+
+`CaptureComparisonAutoNavigationTest` 为源码结构测试，能验证关键调用、参数和顺序，但不能替代真实 Compose `LaunchedEffect` 时序、NavController 执行、栈清理或 `SessionRoiRegistry` 运行时写入。由于本任务明确禁止 instrumented/真机测试，该边界已记录，不阻塞软件审计通过。
+
+### 最终结论
+
+模板图片加载修正和拍照后 CaptureComparison 自动导航已通过本地源码、JVM、Kotlin 编译和 APK 审计，状态更新为 **SOFTWARE_AUDIT_PASSED / AWAITING_USER_ACCEPTANCE**。当前不提交 Git；待用户明确授权后再按文件路径选择性提交。后续无新的 Agent 指令。
+
+## 2026-09-22 用户确认的后续任务范围修正
+
+- **legacy ROI 迁移关闭。** 用户明确不需要兼容历史旧格式的单个 `roi` 字段；当前 App 只维护新格式 `rois[]` 的导入导出闭环。新格式中的 ROI 名称、`normalizedRect`、属性、`enabled` 状态和顺序属于当前支持范围。
+- **`imageFiles[]` 多图处理移出待办。** 当前产品模型确定为一个视角对应一张主模板图。`imageFiles[]` 仅作为模板包数组字段保留格式兼容；当前每个视角只写入一个图片元素并落到 `mainImagePath`，不开发多图切换、配准、ROI 或结果导出。
+- **模板 EXIF 改为条件式方案。** 第一阶段只取证实际模板和采集图片的原始像素宽高、EXIF `Orientation`，并核对模板显示、ROI 和检测位置。若原始像素为竖向、`Orientation = 1` 且三者一致，则关闭 EXIF 风险，不创建代码任务；若原始像素为横向、`Orientation = 6/8`，或方向/坐标不一致，则必须新建并实施独立的全链路 EXIF upright 代码修正任务，而不只是记录风险或补测试。修正必须统一 EXIF-aware 解码、模板编辑、预览叠加、配准、ROI 映射和检测入口的方向语义，明确 normalized ROI 使用 upright 坐标，并补充方向与坐标回归测试。不得只修改单一加载器导致重复旋转或坐标语义分裂。
+- 上述范围修正只更新当前有效任务边界；报告此前按时间顺序保留的 handback 章节仍为历史追溯，不代表当前待办。当前没有新的 Agent 指令，本轮未修改生产代码、未运行构建或设备测试。
+
+## 2026-09-22 用户验收完成与 Git 收口授权
+
+- 用户已确认完成真实设备验收，确认范围包括：Compose `LaunchedEffect` 实际自动导航、`NavController.popUpTo` 栈清理、`SessionRoiRegistry` 运行时写入、失败/fallback 整图检测现场效果，以及模板图片真实设备加载表现。
+- 当前任务状态更新为 **SOFTWARE_AUDIT_PASSED / USER_ACCEPTED**。这条用户验收记录不改变此前“未运行 ADB/instrumented/真机”的主协调审计事实；它记录的是用户对现场验收结果的明确确认。
+- 用户已明确授权当前 7 个已修改文件和 3 个未跟踪文件按路径选择性提交 Git；5 个 DPM skipped 仍因外部样本/目录缺失保留，不作为本次用户验收阻塞项。
+- 模板加载日志缺少 `templateId`、整图模式缺少检测框叠加仍属于非阻塞后续增强；本次不启动新的代码任务。

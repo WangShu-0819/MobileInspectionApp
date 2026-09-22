@@ -234,13 +234,18 @@ class NoRoiViewAdvancementTest {
         )
 
         // storeResult == null 分支（图片保存失败）不应推进
-        val elseBranch = source.indexOf("} else {", storeCheck)
+        // 用 "图片保存失败" 反向定位正确的 else 分支（跳过 rois.isEmpty() 的 else）
+        val failMsgIdx = source.indexOf("图片保存失败")
+        assertTrue("应有图片保存失败消息", failMsgIdx > 0)
+        val elseBranch = source.lastIndexOf("} else {", failMsgIdx)
         assertTrue("应有 storeResult 为 null 的 else 分支", elseBranch > storeCheck)
-        val nextTry = source.indexOf("try {", elseBranch)
-        assertTrue("应有后续 try 块", nextTry > elseBranch)
+        val elseBlock = extractBlock(source, elseBranch)
+        assertTrue("else 块应包含 imageStore.delete(file.absolutePath)", elseBlock.contains("imageStore.delete(file.absolutePath)"))
+        assertTrue("else 块应包含 captureError = \"图片保存失败\"", elseBlock.contains("图片保存失败"))
+        assertTrue("else 块应设置 CaptureUiState.ERROR", elseBlock.contains("CaptureUiState.ERROR"))
         assertFalse(
             "图片保存失败分支不应调用 completeView",
-            source.substring(elseBranch, nextTry).contains("completeView")
+            elseBlock.contains("completeView")
         )
     }
 
@@ -428,5 +433,28 @@ class NoRoiViewAdvancementTest {
         val finishIdx = source.indexOf("repository.finishCaptureBatch(batchId)", comIdx)
         val exportIdx = source.indexOf("onNavigateToExport(batchId", comIdx)
         assertTrue("finishCaptureBatch 应在 onNavigateToExport 之前", finishIdx < exportIdx)
+    }
+
+    /**
+     * 从 [startIndex] 开始提取完整的花括号块。
+     * 找到 `} else {` 之后的第一个 `{`，然后匹配花括号计数直到闭合。
+     */
+    private fun extractBlock(source: String, startIndex: Int): String {
+        val openBrace = source.indexOf("{", startIndex)
+        assertTrue("应找到开括号", openBrace > startIndex)
+        var depth = 0
+        for (i in openBrace until source.length) {
+            when (source[i]) {
+                '{' -> depth++
+                '}' -> {
+                    depth--
+                    if (depth == 0) {
+                        return source.substring(openBrace, i + 1)
+                    }
+                }
+            }
+        }
+        fail("未找到匹配的闭合括号")
+        error("unreachable")
     }
 }
