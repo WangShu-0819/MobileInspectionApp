@@ -70,6 +70,7 @@ import com.wearable.inspection.mobile.data.entity.RoiDefinitionEntity
 import com.wearable.inspection.mobile.data.entity.RoiTargetType
 import com.wearable.inspection.mobile.detection.NanoDetDetection
 import com.wearable.inspection.mobile.detection.NanoDetInferenceStatus
+import com.wearable.inspection.mobile.detection.NanoDetModelContract
 import com.wearable.inspection.mobile.detection.NanoDetRoiInferenceResult
 import com.wearable.inspection.mobile.ui.theme.BackgroundVariant1
 import androidx.compose.material3.HorizontalDivider
@@ -246,6 +247,17 @@ fun ViewConfirmationScreen(
                     }
                 }
 
+                // 业务阈值过滤：只显示 score >= threshold 的检测框和标签
+                // 有限且在 0..1 时使用原值；NaN、无穷、负数或 >1 时回退到 STARTING_BUSINESS_THRESHOLD
+                val rawThreshold = fullResult?.threshold
+                val threshold = if (rawThreshold != null && rawThreshold.isFinite() && rawThreshold in 0f..1f) {
+                    rawThreshold
+                } else {
+                    NanoDetModelContract.STARTING_BUSINESS_THRESHOLD
+                }
+                val allDetections = fullResult?.detections ?: emptyList()
+                val displayDetections = allDetections.filter { it.score >= threshold }
+
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
@@ -254,12 +266,12 @@ fun ViewConfirmationScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 8.dp)
                 ) {
-                    // 检测框叠加图片
+                    // 检测框叠加图片（只绘制达到阈值的检测框）
                     item {
                         FullImageDetectionOverlay(
                             photoBitmap = photoBitmap,
                             photoLoadError = photoLoadError,
-                            detections = fullResult?.detections ?: emptyList(),
+                            detections = displayDetections,
                             imageWidth = fullResult?.imageWidth ?: 0,
                             imageHeight = fullResult?.imageHeight ?: 0,
                             modifier = Modifier.fillMaxWidth(),
@@ -291,14 +303,18 @@ fun ViewConfirmationScreen(
                                 )
                                 HorizontalDivider()
                                 if (fullResult != null) {
+                                    val rawCount = allDetections.size
+                                    val displayedCount = displayDetections.size
+                                    val hiddenCount = rawCount - displayedCount
                                     Text(
-                                        text = "检出目标：${fullResult.detections.size} 个",
+                                        text = "原始检出：$rawCount 个 | 显示：$displayedCount 个（阈值 ≥ ${"%.0f".format(threshold * 100)}%）| 隐藏：$hiddenCount 个",
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = TextPrimary,
                                     )
-                                    if (fullResult.highestScore != null) {
+                                    val displayHighestScore = displayDetections.maxOfOrNull { it.score }
+                                    if (displayHighestScore != null) {
                                         Text(
-                                            text = "最高置信度：${"%.1f".format(fullResult.highestScore * 100)}%",
+                                            text = "最高置信度：${"%.1f".format(displayHighestScore * 100)}%",
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = TextPrimary,
                                         )
@@ -308,23 +324,23 @@ fun ViewConfirmationScreen(
                                         style = MaterialTheme.typography.bodySmall,
                                         color = TextSecondary,
                                     )
-                                    if (fullResult.detections.isNotEmpty()) {
+                                    if (displayDetections.isNotEmpty()) {
                                         Text(
                                             text = "检测详情：",
                                             style = MaterialTheme.typography.bodySmall,
                                             fontWeight = FontWeight.SemiBold,
                                             color = TextPrimary,
                                         )
-                                        fullResult.detections.take(20).forEachIndexed { index, det ->
+                                        displayDetections.take(20).forEachIndexed { index, det ->
                                             Text(
                                                 text = "  ${index + 1}. ${det.className} — ${"%.1f".format(det.score * 100)}%",
                                                 style = MaterialTheme.typography.bodySmall,
                                                 color = TextSecondary,
                                             )
                                         }
-                                        if (fullResult.detections.size > 20) {
+                                        if (displayDetections.size > 20) {
                                             Text(
-                                                text = "  … 共 ${fullResult.detections.size} 个检出",
+                                                text = "  … 共 ${displayDetections.size} 个检出",
                                                 style = MaterialTheme.typography.bodySmall,
                                                 color = TextSecondary,
                                             )

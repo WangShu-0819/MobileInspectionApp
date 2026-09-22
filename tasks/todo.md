@@ -1,17 +1,71 @@
-# 当前唯一任务：模板加载 templateId 诊断增强与 fallback 整图检测框叠加
+# 当前唯一任务：整图检测置信度阈值与采集 ZIP/CSV 记录增强
 
-状态：**SOFTWARE_AUDIT_PASSED / BASELINE_COMMITTED**（2026-09-22；用户已授权并按文件路径选择性提交为 `a66d8f5d`；当前工作区干净，后续 0.37/CSV 任务仍独立排队）
+状态：**SOFTWARE_AUDIT_PASSED / AWAITING_USER_AUTHORIZATION**（2026-09-22；上一阶段基线已由 `a66d8f5d` 和 `613ca2d1` 收口；本轮实现已通过复核但尚未提交）
 
-- 用户已人工验收确认拍照后存在模板/现场对齐界面；该界面保留要求已满足，当前增强已完成提交。
+## 最新 handback 审计结论（2026-09-22）
 
-## 当前请求复核结论
+- 本地 XML 实际汇总：`1221 tests / 0 failures / 0 errors / 5 skipped`；HTML `app/build/reports/tests/testDebugUnitTest/index.html` 同为 `1221 / 0 / 0 / 5`。
+- 重点 XML：`InspectionExcelExporterTest=20/0/0/0`、`ViewConfirmationModelResultTest=26/0/0/0`、`InspectionZipExportArchiveTest=3/0/0/0`。
+- APK 本地实际：`app/build/outputs/apk/debug/app-debug.apk`，2026-09-22 16:43:22，232976893 bytes，SHA-256 `7F955CA6934F74EA19E715F5F714C73D959BD05784E5C86BA40DCD20D8547D4D`。
+- 实际工作区为 4 个实现/测试文件和 3 个协调文档已修改；无未跟踪文件；分支 `main...origin/main [ahead 23]`。`git diff --check` 无实质错误，仅有 LF→CRLF 警告。未运行 ADB、instrumented、真机测试或 OCR。
+- 已确认通过：有限/0..1 threshold 原样使用，NaN/无穷/越界回退 0.37；边界采用 `score >= threshold`；摘要显示原始数、显示数、阈值和隐藏数；原始 detections 保留；CSV/ZIP 既有闭环未被破坏。
+
+当前软件审计通过。允许在用户明确授权后按文件路径选择性提交；当前不需要新的 mimo 指令。
+
+- 上一阶段模板加载诊断、EXIF/upright 整图框和拍后比对页修正已完成并提交；本轮只处理 0.37 阈值显示和 ZIP/CSV 记录。
+
+## 上一阶段完成证据
 
 - `TemplateImageLoader.kt` 已在空路径、文件预检、bounds、decode 等失败阶段记录 `templateId/stage/scheme/source/exception`，并通过 `TemplateLogEntry` 和 `TemplateImageLoaderTest` 验证；`CancellationException` 仍传播。
 - `ViewConfirmationScreen.kt` 已在 fallback 整图模式使用 EXIF-aware upright 照片和 `imageBox` 绘制整图检测框；`FullImageDetectionOverlayTest`、`ExifOrientationRegressionTest` 和坐标映射测试已有通过证据。
 - 当前本地基线实际为 `1201 tests / 0 failures / 0 errors / 5 skipped`，APK SHA-256 为 `5AD754579320AEF172B9AFB3B6F02E37A0F26BF498B5DC6E4458DE051239128D`；上一阶段人工验收已确认模板对齐页面可见。
 - 因此不应再次派发“从零实现”任务。若需要交给 mimo，只能执行当前工作区核验；只有发现实际缺口时才做最小补丁。
 
-## 上一轮 Agent 核验指令（已完成）
+## 本任务产品契约
+
+- 阈值来源复用 `FullImageInferResult.threshold`；正常业务阈值为 `0.37`，显示条件严格为 `score >= 0.37`。
+- `FullImageInferResult.detections` 和 `softwareDetectionsJson` 保留全部原始结果；只过滤整图确认页可见框/详情和 CSV detection 行。
+- `inspection_result.csv` 只保留 `__FULL_IMAGE__` detection 行中 `score >= 0.37` 的记录；ZIP 继续包含每个视角的原始照片和现有 CSV。
+- 不生成真正 `.xlsx` 或新增带框照片；不新增数据库实体/迁移，不改变照片路径、人工 OK/NG、NanoDet 推理和现有 ZIP entry 语义。
+
+## 实施任务
+
+### Task 1：阈值过滤契约与纯逻辑
+
+- [x] 使用现有 `FullImageInferResult.threshold`，正常值为 `0.37`，边界采用 `>=`。
+- [x] 覆盖低于、等于、高于阈值、空列表和无效/越界阈值；无效阈值安全回退到 `0.37`。
+- [x] 不修改 NanoDet candidate threshold、decoder、模型、推理服务或原始 detection 集合。
+
+依赖：无。规模：S。
+
+### Task 2：确认页可见结果过滤
+
+- [x] 框、标签、详情列表和摘要共用同一 `visibleDetections`，只显示 `score >= 0.37`。
+- [x] 摘要同时显示原始检出数、显示数、阈值和隐藏数；空列表不绘制、不伪造结果。
+- [x] 保持 `imageBox`、EXIF/upright、`ContentScale.Fit`、整图 fallback 和人工总体 OK/NG 语义不变。
+
+依赖：Task 1。规模：M。
+
+### Task 3：ZIP/CSV 记录闭环
+
+- [x] ZIP 继续写入每个视角的原始采集照片和 `inspection_result.csv`，照片行及既有非 detection 行语义不变。
+- [x] `__FULL_IMAGE__` detection 行只保留 `score >= 0.37`，并保留 score、threshold、class、upright `imageBox`。
+- [x] 无检测、推理失败、照片缺失和临时 ZIP 失败场景均可解释，不丢失原始 JSON，不伪造检测行。
+
+依赖：Task 1；可与 Task 2 并行。规模：M。
+
+### Checkpoint：最终软件回归
+
+- [x] 全量 JVM：`:app:testDebugUnitTest --no-daemon --rerun-tasks --console=plain`。
+- [x] Kotlin 编译：`:app:compileDebugKotlin --no-daemon --rerun-tasks`。
+- [x] Debug APK：`:app:assembleDebug --no-daemon`。
+- [x] 本地核对 XML/HTML、APK 时间/大小/SHA-256、Git diff/status；不运行 ADB、instrumented、真机测试或 OCR，不提交 Git。
+
+## 当前 mimo 指令
+
+本任务已通过软件审计，当前不需要新的 mimo 指令；上一轮修正指令和 handback 证据保留在 [`tasks/plan.md`](plan.md) 及本报告中。若用户后续要求新功能，再单独建立新任务。
+
+## 上一阶段 Agent 核验指令（已完成）
 
 ```text
 当前工作区已经包含模板加载 templateId 诊断日志和 fallback 整图检测框实现。请先只读审计，不要重复实现，不要重写已有逻辑。
@@ -32,9 +86,9 @@
 禁止 ADB、instrumented、真机测试、OCR 和 Git commit。不要修改 tasks/todo.md、tasks/plan.md、docs/reports。handback 必须按本地 XML/HTML 实际统计，提供修改文件、diff --stat、diff --check、Git 状态、重点 XML、APK 时间/大小/SHA-256，并说明未执行禁止命令。
 ```
 
-## 后续排队任务：整图检测置信度阈值与采集 ZIP/Excel 记录
+## 历史方案记录：整图检测置信度阈值与采集 ZIP/Excel 记录（已提升为当前任务）
 
-该任务已经完成方案确认；当前基线已由 `a66d8f5d` 收口，后续任务仍需单独启动；阈值 `0.37`，`inspection_result.csv` 只保留达标检测记录。
+该方案已提升为当前唯一任务；当前基线已由 `a66d8f5d` 收口，阈值 `0.37`，`inspection_result.csv` 只保留达标检测记录。执行指令以本文件顶部和 `tasks/plan.md` 为准。
 
 ---
 

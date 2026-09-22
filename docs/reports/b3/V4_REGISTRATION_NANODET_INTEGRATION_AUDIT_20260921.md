@@ -433,4 +433,51 @@ CaptureComparison 隐藏自动导航和模板图片加载实现已基本符合�
 - 用户将“模板加载日志补充 templateId”和“fallback 到整图检测时在整张照片绘制检测框”确认为下一步增强，并明确两项均不阻塞主流程。
 - 经主协调复核，这两项已完成并提交：TemplateImageLoader 结构化日志、EXIF/upright 整图照片加载、`imageBox` 坐标叠加和对应 JVM/Compose 回归测试均已完成；上一轮本地全量为 `1201 / 0 / 0 / 5`，APK SHA-256 为 `5AD754579320AEF172B9AFB3B6F02E37A0F26BF498B5DC6E4458DE051239128D`。
 - 用户人工验收已确认拍照后模板/现场对齐界面存在。当前不应重复派发实现任务；如需交给 mimo，只安排只读核验和缺口修补。
-- 当前状态：**SOFTWARE_AUDIT_PASSED / BASELINE_COMMITTED**。基线提交为 `a66d8f5d`；下一步仅在用户明确启动后，单独开始已确认的 `0.37` 阈值与 CSV 过滤任务。
+- 当前状态：**PLAN_CONFIRMED / READY_FOR_MIMO_DISPATCH**。基线提交为 `a66d8f5d`；用户已明确启动下一任务方案，主协调已更新 `tasks/todo.md`、`tasks/plan.md` 和本报告，但尚未联系 mimo。
+
+## 2026-09-22 新任务启动方案：整图阈值与 ZIP/CSV 记录
+
+- 业务阈值固定为 `0.37`，整图确认页显示条件为 `score >= 0.37`。
+- `FullImageInferResult.detections` 与 `softwareDetectionsJson` 保留全部原始检测；仅过滤确认页可见结果和 `inspection_result.csv` 的 detection 行。
+- ZIP 继续包含每个视角原始采集照片与现有 `inspection_result.csv`；不生成真正 `.xlsx` 或新增带框照片。
+- 实施拆为阈值纯逻辑、确认页可见结果过滤、ZIP/CSV 闭环三个任务；完整 mimo 指令已写入 `tasks/plan.md`，协调文档由主协调维护，mimo 不得修改文档或提交 Git。
+- 本轮只更新方案文档，未修改生产代码、未运行构建、未运行 ADB/instrumented/真机/OCR。
+
+## 2026-09-22 新任务 handback：整图阈值与 ZIP/CSV 记录主协调复核
+
+### 本地实际证据
+
+- XML 路径为 `app/build/test-results/testDebugUnitTest/TEST-*.xml`，本地汇总 `1210 tests / 0 failures / 0 errors / 5 skipped`；HTML `app/build/reports/tests/testDebugUnitTest/index.html` 实际同为 `1210 / 0 / 0 / 5`。
+- 重点测试：`InspectionExcelExporterTest=20/0/0/0`、`ViewConfirmationModelResultTest=15/0/0/0`、`InspectionZipExportArchiveTest=3/0/0/0`。
+- APK：`app/build/outputs/apk/debug/app-debug.apk`；2026-09-22 16:24:18；232224821 bytes；SHA-256 `25FEC9A5F1B60D8B3D22F6B42C5723F90E1B1DFC6FB78812610D6D882A70C09F`。
+- 代码实际修改 4 个实现/测试文件，协调文档另有 3 个修改文件；无未跟踪文件。未发现 ZIP service、数据库、registration、detection/NanoDet、CameraX、DPM 或 OCR 禁止范围改动。`git diff --check` 无实质错误，仅有 LF→CRLF 警告；未运行 ADB、instrumented、真机测试或 OCR。
+
+### 已通过项
+
+- `ViewConfirmationScreen` 的整图 overlay、详情和数量均基于 `score >= threshold` 的过滤集合，原始 `FullImageInferResult.detections` 未被删除。
+- `InspectionExcelExporter` 只对 `__FULL_IMAGE__` detection 行按阈值过滤；普通 ROI 不过滤，`threshold=null` 保持旧数据全部导出。
+- 现有 `InspectionZipExportService` 未修改，既有测试验证 ZIP 仍包含各视角照片 entry 和 `inspection_result.csv`。
+
+### 审计阻塞与下一步
+
+- 当前 UI 直接使用 `fullResult.threshold`，没有对 NaN/无穷/越界值回退到 0.37；计划要求的等于阈值、无效/越界阈值测试也未补齐。
+- 当前摘要只显示过滤后的“检出目标”数量，没有按计划同时显示原始检出数、显示数、阈值和隐藏数。
+- 结论：**SOFTWARE_AUDIT_BLOCKED / AWAITING_MIMO_CORRECTION**。不提交当前 4 个代码/测试文件及 3 个协调文档修改。下一轮只要求 mimo 做上述最小修正并重新回传本地 XML/HTML、编译、APK 与 Git 证据；主协调不主动联系 mimo。
+
+## 2026-09-22 新任务 handback v2：整图阈值与 ZIP/CSV 记录最终复核
+
+### 本地实际证据
+
+- XML 路径为 `app/build/test-results/testDebugUnitTest/TEST-*.xml`，本地汇总 `1221 tests / 0 failures / 0 errors / 5 skipped`；HTML `app/build/reports/tests/testDebugUnitTest/index.html` 实际同为 `1221 / 0 / 0 / 5`，最后写入时间 16:41:45。
+- 重点 XML：`InspectionExcelExporterTest=20/0/0/0`、`ViewConfirmationModelResultTest=26/0/0/0`、`InspectionZipExportArchiveTest=3/0/0/0`。
+- APK：`app/build/outputs/apk/debug/app-debug.apk`；2026-09-22 16:43:22；232976893 bytes；SHA-256 `7F955CA6934F74EA19E715F5F714C73D959BD05784E5C86BA40DCD20D8547D4D`，与 handback 一致。
+- Git：`main...origin/main [ahead 23]`；4 个实现/测试文件和 3 个协调文档已修改；无未跟踪文件。`git diff --check` 无实质错误，仅有 LF→CRLF 警告。
+
+### 最终审计结论
+
+- `ViewConfirmationScreen` 已对有限且在 0..1 的 threshold 原样使用，对 NaN、无穷、负数和大于 1 回退到 0.37；框、详情和摘要共用同一过滤集合，边界为 `score >= threshold`。
+- 摘要已同时显示原始检出数、显示数、阈值和隐藏数；`FullImageInferResult.detections` 与 `softwareDetectionsJson` 未被改写。
+- `InspectionExcelExporter` 的既有差异已复核：仅过滤 `__FULL_IMAGE__` detection 行，普通 ROI 不过滤，`threshold=null` 旧数据兼容保持；ZIP service 未修改，照片和 `inspection_result.csv` 现有闭环保持。
+- 未发现禁止范围改动；未运行 ADB、instrumented、真机测试或 OCR；未提交 Git。
+
+结论：**SOFTWARE_AUDIT_PASSED / AWAITING_USER_AUTHORIZATION**。当前允许用户明确授权后按文件路径选择性提交；当前不需要新的 mimo 指令。

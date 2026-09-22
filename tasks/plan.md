@@ -1,30 +1,59 @@
 # Implementation Plan: MobileInspectionApp 当前阶段
 
-## 2026-09-22 当前唯一任务：模板加载 templateId 诊断增强与 fallback 整图检测框叠加
+## 2026-09-22 当前唯一任务：整图检测置信度阈值与采集 ZIP/CSV 记录增强
 
-状态：**SOFTWARE_AUDIT_PASSED / BASELINE_COMMITTED**。用户已确认这两项增强不阻塞主流程；实现和审计证据已按文件路径提交为 `a66d8f5d`，人工验收已确认拍照后存在模板/现场对齐界面，不重复实现。
+状态：**SOFTWARE_AUDIT_PASSED / AWAITING_USER_AUTHORIZATION**。上一阶段基线已由 `a66d8f5d` 和 `613ca2d1` 收口；本轮实现已通过本地复核但尚未提交。
 
-### 当前复核结论
+### 本轮 handback 主协调复核
 
-- `TemplateImageLoader.kt` 已覆盖 templateId/stage/scheme/source/exception 诊断日志，`TemplateLogEntry` 与 `TemplateImageLoaderTest` 已有证据，取消异常继续传播。
-- `ViewConfirmationScreen.kt` 已使用 EXIF-aware upright 照片和 `imageBox` 绘制 fallback 整图检测框；已有坐标、留白和 Orientation=6/8 回归证据。
-- 当前本地基线为 `1201 / 0 / 0 / 5`，APK SHA-256 为 `5AD754579320AEF172B9AFB3B6F02E37A0F26BF498B5DC6E4458DE051239128D`。
-- `CaptureComparisonScreen`、模板/现场/叠加工具栏和 Session ROI 纯绘制仍保留；人工 ROI 编辑入口暂不开放但没有删除。
+- 本地 XML/HTML 实际为 `1221 / 0 / 0 / 5`；`InspectionExcelExporterTest=20/0/0/0`、`ViewConfirmationModelResultTest=26/0/0/0`、`InspectionZipExportArchiveTest=3/0/0/0`。
+- APK 实际为 `app/build/outputs/apk/debug/app-debug.apk`，2026-09-22 16:43:22，232976893 bytes，SHA-256 `7F955CA6934F74EA19E715F5F714C73D959BD05784E5C86BA40DCD20D8547D4D`。
+- 实际代码差异只有 `InspectionExcelExporter.kt`、`ViewConfirmationScreen.kt` 及其两个测试；ZIP service、数据库、detection/NanoDet、registration、CameraX、DPM、OCR 未改动。协调文档另有 3 个已修改文件，无未跟踪文件。
+- 当前已通过：threshold 规范化和回退、`score >= threshold` 边界、四项摘要统计、原始 detections 保留、`__FULL_IMAGE__` CSV 过滤、普通 ROI/旧数据兼容，以及既有 ZIP 照片和 `inspection_result.csv` 闭环。`git diff --check` 只有 LF→CRLF 警告；未运行 ADB、instrumented、真机测试或 OCR。
 
-### 上一轮 Agent 核验门禁（已完成）
+### 上一轮 mimo 最小修正指令（已完成）
 
-- [x] 先只读核验当前工作区，不重复实现已完成的日志和 overlay。
-- [x] 只有发现真实缺口时，才在允许文件内做最小补丁。
+```text
+请只修复当前 handback 的两个真实验收缺口，不要重做已经通过的 CSV/ZIP 过滤。
+
+1. 在整图确认页把 threshold 规范化为：有限且在 0..1 时使用结果中的 threshold，否则回退 NanoDetModelContract.STARTING_BUSINESS_THRESHOLD（0.37）。框、详情、数量摘要必须继续共用同一 visibleDetections，条件严格为 score >= threshold。
+2. 摘要同时明确显示原始检出数、达到阈值的显示数、阈值和低于阈值隐藏数；不得修改 FullImageInferResult.detections 或 softwareDetectionsJson。
+3. 为等于 0.37、NaN、负数/大于 1 的 threshold 增加确定性 JVM 测试；保持原始 detections 完整保留。
+4. 复核 InspectionExcelExporter：__FULL_IMAGE__ 只过滤 CSV detection 行，普通 ROI、照片行、结果行和 threshold=null 旧数据兼容保持不变；不要修改 InspectionZipExportService，除非发现实际闭环缺口。
+
+允许修改：ViewConfirmationScreen.kt 及对应阈值/显示测试；如 CSV 无效阈值回退需要补强，只做 InspectionExcelExporter.kt 和对应测试的最小修改。
+禁止修改 detection/NanoDet 推理、decoder、模型、registration、CameraX、DPM、OCR、数据库实体/迁移、照片路径、SessionRoiRegistry、projected ROI、ZIP entry 语义、tasks/todo.md、tasks/plan.md、docs/reports；禁止 Git commit。
+
+只允许运行：
+./gradlew.bat :app:testDebugUnitTest --no-daemon --rerun-tasks --console=plain
+./gradlew.bat :app:compileDebugKotlin --no-daemon --rerun-tasks
+./gradlew.bat :app:assembleDebug --no-daemon
+
+禁止 ADB、instrumented、真机测试和 OCR。handback 必须按本地 XML/HTML 实际统计，提供修改文件、git diff --stat、git diff --check、git status --short --branch、重点 XML、APK 时间/大小/SHA-256，并说明未运行禁止命令、未提交 Git。
+```
+
+### 基线复核与任务边界
+
+- 已提交基线功能、测试和协调文档；本轮 handback 产生的 4 个实现/测试文件仍在未提交工作区，不能把当前工作区误写为干净基线。
+- 整图显示阈值复用 `FullImageInferResult.threshold`，产品阈值为 `0.37`，显示条件严格为 `score >= 0.37`。
+- `FullImageInferResult.detections` 和现有 `softwareDetectionsJson` 保留全部原始结果；只过滤整图确认页可见框/详情，以及 CSV detection 行。
+- ZIP 继续包含每个视角的原始采集照片和现有 `inspection_result.csv`；不生成真正 `.xlsx`，不新增标注照片。
+- 不修改 NanoDet 推理、decoder、candidate threshold、模型、数据库实体/迁移、照片路径、人工 OK/NG、`aggregatedSuggestion`、registration、CameraX、DPM、OCR、SessionRoiRegistry 或 projected ROI 语义。
+
+### 实施门禁
+
+- [x] 先只读核对现有 threshold、确认页、Excel exporter、ZIP exporter 和测试，不重写已存在的照片/CSV结构。
+- [x] 只做最小实现和对应 JVM/Compose/导出测试；不修改禁止范围。
 - [x] 运行 JVM、Kotlin 编译、Debug APK；不运行 ADB/instrumented/真机/OCR，不提交 Git。
-- [x] handback 按本地 XML/HTML 和 APK 实际证据回传，不修改协调文档。
+- [x] handback 按本地 XML/HTML、APK 和 Git 实际证据回传，不修改 `tasks/` 或 `docs/reports/`。
 
-上一轮 Agent 指令已完成；当前基线已收口，不重复派发上一轮生产实现。
+实现完成后由主协调独立复核 handback，不直接采信 handback 统计。
 
 ---
 
-## 后续排队任务：整图检测置信度阈值与采集 ZIP/Excel 记录增强
+## 当前任务拆解：整图检测置信度阈值与采集 ZIP/CSV 记录增强
 
-状态：**PLAN_CONFIRMED / QUEUED**。用户已确认阈值 `0.37`、`inspection_result.csv` 只保留达标检测、继续使用现有 CSV；必须在当前基线收口后单独启动。
+状态：**SOFTWARE_AUDIT_PASSED / AWAITING_USER_AUTHORIZATION**。用户已确认阈值 `0.37`、`inspection_result.csv` 只保留达标检测、继续使用现有 CSV；当前 handback 已通过本地复核。
 
 ### 目标与架构决策
 
@@ -37,33 +66,33 @@
 
 #### Task 1：阈值过滤纯逻辑
 
-- [ ] 固化阈值来源、`>=` 边界和无效值安全处理。
-- [ ] 增加低于/等于/高于阈值及空列表测试。
+- [x] 固化阈值来源、`>=` 边界和无效值安全处理。
+- [x] 增加低于/等于/高于阈值及空列表测试。
 
 依赖：无。规模：S。
 
 #### Task 2：确认页可视化过滤
 
-- [ ] `FullImageDetectionOverlay` 只绘制阈值以上框，保持 imageBox、ContentScale.Fit 和 EXIF/upright 坐标不变。
-- [ ] 详情列表和摘要与同一过滤列表一致，保留人工总体 OK/NG 和整图 fallback 语义。
-- [ ] 增加 Compose/JVM 显示过滤和数量摘要回归。
+- [x] `FullImageDetectionOverlay` 只绘制阈值以上框，保持 imageBox、ContentScale.Fit 和 EXIF/upright 坐标不变。
+- [x] 详情列表和摘要与同一过滤列表一致，保留人工总体 OK/NG 和整图 fallback 语义。
+- [x] 增加 Compose/JVM 显示过滤和数量摘要回归。
 
 依赖：Task 1。规模：M。
 
 #### Task 3：ZIP/Excel 记录闭环
 
-- [ ] 用现有照片 entry 和 `inspection_result.csv` 输出每个视角照片记录。
-- [ ] 为整图检测行保留 `score >= 0.37` 的 score/threshold/class/imageBox；低于阈值的结果不生成 CSV detection 行；验证 `__FULL_IMAGE__`、无检测、推理失败和照片缺失场景。
-- [ ] 扩展 `InspectionExcelExporterTest`、`InspectionZipExportServiceTest`，优先不改 `InspectionZipExportService` 生产逻辑，只有现有字段不足时才修改。
+- [x] 用现有照片 entry 和 `inspection_result.csv` 输出每个视角照片记录。
+- [x] 为整图检测行保留 `score >= 0.37` 的 score/threshold/class/imageBox；低于阈值的结果不生成 CSV detection 行；验证 `__FULL_IMAGE__`、无检测、推理失败和照片缺失场景。
+- [x] 扩展 `InspectionExcelExporterTest`、`InspectionZipExportServiceTest`，优先不改 `InspectionZipExportService` 生产逻辑，只有现有字段不足时才修改。
 
 依赖：Task 1；与 Task 2 可并行实现，最终统一验收。规模：M。
 
 #### Checkpoint：最终软件回归
 
-- [ ] `:app:testDebugUnitTest --no-daemon --rerun-tasks --console=plain`。
-- [ ] `:app:compileDebugKotlin --no-daemon --rerun-tasks`。
-- [ ] `:app:assembleDebug --no-daemon`。
-- [ ] 核对 XML/HTML、APK 时间/大小/SHA-256、Git diff/status；不运行 ADB/instrumented/真机/OCR，不提交 Git。
+- [x] `:app:testDebugUnitTest --no-daemon --rerun-tasks --console=plain`。
+- [x] `:app:compileDebugKotlin --no-daemon --rerun-tasks`。
+- [x] `:app:assembleDebug --no-daemon`。
+- [x] 核对 XML/HTML、APK 时间/大小/SHA-256、Git diff/status；不运行 ADB/instrumented/真机/OCR，不提交 Git。
 
 ### 开放决策
 
@@ -79,7 +108,47 @@
 
 ### 当前 Agent 状态
 
-方案已确认；上一阶段已由 `a66d8f5d` 收口。本阶段尚未启动，待用户明确启动后再生成 mimo 指令。
+方案已确认并完成；上一阶段已由 `a66d8f5d` 收口，本阶段 handback 已通过。当前不再交给 mimo，主协调等待用户明确授权后选择性提交。
+
+### 当前 mimo 指令（已完成，留档）
+
+```text
+请在当前已提交基线之上，单独实现“整图检测置信度阈值与采集 ZIP/CSV 记录增强”。不要重做上一阶段 templateId 日志、EXIF/upright overlay 或 CaptureComparison 修正。
+
+产品契约：
+1. 复用现有 FullImageInferResult.threshold；正常业务阈值为 0.37，确认页显示条件严格为 score >= 0.37。
+2. 只过滤整图确认页的可见检测框、标签、详情和数量摘要；FullImageInferResult.detections 必须保留全部原始检测结果。
+3. inspection_result.csv 只保留整图 __FULL_IMAGE__ 的 detection 行中 score >= 0.37 的记录；照片行、结果行和现有 CSV 字段语义保持不变。
+4. ZIP 继续包含每个视角的原始采集照片和 inspection_result.csv；不生成真正 .xlsx，不新增带框照片。
+5. softwareDetectionsJson/数据库中的原始 detections 不得因 CSV 过滤被删除或改写；aggregatedSuggestion 仍保持整图模式现有语义。
+
+请按以下顺序执行：
+1. 先只读检查现有 FullImageInferResult.threshold、ViewConfirmationScreen 的整图 overlay/详情、InspectionExcelExporter、InspectionZipExportService 及相关测试，确认最小改动点。
+2. 固化纯阈值过滤逻辑和测试：低于 0.37、等于 0.37、高于 0.37、空列表、无效/越界阈值；无效阈值安全回退到 0.37，不改变推理结果集合。
+3. 让整图确认页的框、标签、详情和摘要共用同一 visibleDetections；摘要同时显示原始检出数、显示数、阈值和隐藏数；保持 imageBox、EXIF/upright、ContentScale.Fit 和人工总体 OK/NG 语义不变。
+4. 让 inspection_result.csv 的整图 detection 行只输出 score >= 0.37 的检测，并保留 score、threshold、class 和 upright imageBox；验证原始照片 entry、__FULL_IMAGE__、无检测、推理失败和照片缺失场景。优先只改 exporter，只有现有字段/流程不足时才改 ZIP service。
+
+允许优先修改：
+- app/src/main/java/com/wearable/inspection/mobile/ui/screens/ViewConfirmationScreen.kt
+- app/src/main/java/com/wearable/inspection/mobile/data/export/InspectionExcelExporter.kt
+- 必要时 app/src/main/java/com/wearable/inspection/mobile/ui/screens/ViewConfirmationViewModel.kt
+- 以上对应的 JVM/Compose/导出测试
+- 仅在确认闭环不足时修改 InspectionZipExportService.kt 及其测试
+
+禁止修改：
+- detection/、NanoDet 模型、decoder、candidate threshold、推理服务语义
+- registration、CameraX、DPM、OCR
+- 数据库实体/迁移、mainImagePath、SessionRoiRegistry、projected ROI 语义
+- 人工 OK/NG、照片路径、现有 ZIP entry 命名和 CSV 非 detection 行语义
+- tasks/todo.md、tasks/plan.md、docs/reports；不要 Git commit
+
+只允许运行：
+./gradlew.bat :app:testDebugUnitTest --no-daemon --rerun-tasks --console=plain
+./gradlew.bat :app:compileDebugKotlin --no-daemon --rerun-tasks
+./gradlew.bat :app:assembleDebug --no-daemon
+
+禁止 ADB、instrumented、真机测试、OCR。handback 必须以本地实际 XML/HTML 为准，提供：修改文件、git diff --stat、git diff --check、git status --short --branch、全量测试统计、重点阈值/CSV/ZIP XML，以及 APK 时间/大小/SHA-256；并明确说明未运行禁止命令、未提交 Git。
+```
 
 ---
 

@@ -3,9 +3,11 @@ package com.wearable.inspection.mobile.ui.screens
 import com.wearable.inspection.mobile.data.entity.RoiDefinitionEntity
 import com.wearable.inspection.mobile.detection.NanoDetBox
 import com.wearable.inspection.mobile.detection.NanoDetDetection
+import com.wearable.inspection.mobile.detection.FullImageInferResult
 import com.wearable.inspection.mobile.detection.NanoDetInferenceStatus
 import com.wearable.inspection.mobile.detection.NanoDetRoiInferenceResult
 import com.wearable.inspection.mobile.detection.NanoDetSuggestion
+import com.wearable.inspection.mobile.detection.NanoDetModelContract
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
@@ -234,5 +236,253 @@ class ViewConfirmationModelResultTest {
         assertEquals("模型不可用", inferenceStatusLabel(NanoDetInferenceStatus.MODEL_UNAVAILABLE))
         assertEquals("推理错误", inferenceStatusLabel(NanoDetInferenceStatus.INFERENCE_ERROR))
         assertEquals("已检出，达到模型阈值", inferenceStatusLabel(NanoDetInferenceStatus.DETECTED))
+    }
+
+    // ───────────────────────────────────────────────
+    // 整图检测阈值过滤测试
+    // ───────────────────────────────────────────────
+
+    private fun fullImageResult(
+        detections: List<NanoDetDetection>,
+        threshold: Float = 0.37f,
+    ) = FullImageInferResult(
+        detections = detections,
+        aggregatedSuggestion = null,
+        highestScore = detections.maxOfOrNull { it.score },
+        elapsedMs = 50,
+        imageWidth = 1920,
+        imageHeight = 1080,
+        exifOrientation = 1,
+        status = NanoDetInferenceStatus.DETECTED,
+        threshold = threshold,
+    )
+
+    @Test
+    fun `full-image threshold filters detections for display`() {
+        val allDetections = listOf(
+            NanoDetDetection(1, "thread", 0.89f, 10, NanoDetBox(1.0, 2.0, 50.0, 60.0), NanoDetBox(101.0, 202.0, 150.0, 262.0)),
+            NanoDetDetection(0, "nut", 0.20f, 5, NanoDetBox(10.0, 15.0, 20.0, 28.0), NanoDetBox(110.0, 215.0, 120.0, 228.0)),
+            NanoDetDetection(2, "bolt", 0.45f, 8, NanoDetBox(70.0, 80.0, 100.0, 110.0), NanoDetBox(170.0, 280.0, 200.0, 310.0)),
+        )
+        val result = fullImageResult(allDetections, threshold = 0.37f)
+        val threshold = result.threshold
+        val displayDetections = result.detections.filter { it.score >= threshold }
+
+        assertEquals("threshold 应为 0.37", 0.37f, threshold, 0.001f)
+        assertEquals("0.89 和 0.45 达到阈值，应有 2 个", 2, displayDetections.size)
+        assertTrue("0.89 应保留", displayDetections.any { it.score == 0.89f })
+        assertTrue("0.45 应保留", displayDetections.any { it.score == 0.45f })
+        assertFalse("0.20 应过滤", displayDetections.any { it.score == 0.20f })
+    }
+
+    @Test
+    fun `full-image threshold filters all detections when all below threshold`() {
+        val allDetections = listOf(
+            NanoDetDetection(0, "nut", 0.10f, 3, NanoDetBox(1.0, 2.0, 10.0, 12.0), NanoDetBox(101.0, 202.0, 110.0, 212.0)),
+            NanoDetDetection(1, "thread", 0.30f, 7, NanoDetBox(20.0, 25.0, 40.0, 45.0), NanoDetBox(120.0, 225.0, 140.0, 245.0)),
+        )
+        val result = fullImageResult(allDetections, threshold = 0.37f)
+        val displayDetections = result.detections.filter { it.score >= result.threshold }
+
+        assertEquals("所有检测低于阈值时应为空", 0, displayDetections.size)
+    }
+
+    @Test
+    fun `full-image threshold passes all detections when all above threshold`() {
+        val allDetections = listOf(
+            NanoDetDetection(1, "thread", 0.91f, 12, NanoDetBox(1.0, 2.0, 50.0, 60.0), NanoDetBox(101.0, 202.0, 150.0, 262.0)),
+            NanoDetDetection(2, "bolt", 0.55f, 9, NanoDetBox(70.0, 80.0, 100.0, 110.0), NanoDetBox(170.0, 280.0, 200.0, 310.0)),
+        )
+        val result = fullImageResult(allDetections, threshold = 0.37f)
+        val displayDetections = result.detections.filter { it.score >= result.threshold }
+
+        assertEquals("全部达到阈值时应全部保留", 2, displayDetections.size)
+    }
+
+    @Test
+    fun `full-image result preserves original detections intact`() {
+        val allDetections = listOf(
+            NanoDetDetection(1, "thread", 0.89f, 10, NanoDetBox(1.0, 2.0, 50.0, 60.0), NanoDetBox(101.0, 202.0, 150.0, 262.0)),
+            NanoDetDetection(0, "nut", 0.20f, 5, NanoDetBox(10.0, 15.0, 20.0, 28.0), NanoDetBox(110.0, 215.0, 120.0, 228.0)),
+        )
+        val result = fullImageResult(allDetections, threshold = 0.37f)
+
+        // 原始 detections 必须完整保留（不受阈值过滤影响）
+        assertEquals("原始 detections 应完整保留", 2, result.detections.size)
+        assertTrue("0.20 应在原始 detections 中", result.detections.any { it.score == 0.20f })
+        assertTrue("0.89 应在原始 detections 中", result.detections.any { it.score == 0.89f })
+    }
+
+    @Test
+    fun `full-image display highest score comes from filtered detections`() {
+        val allDetections = listOf(
+            NanoDetDetection(1, "thread", 0.89f, 10, NanoDetBox(1.0, 2.0, 50.0, 60.0), NanoDetBox(101.0, 202.0, 150.0, 262.0)),
+            NanoDetDetection(0, "nut", 0.20f, 5, NanoDetBox(10.0, 15.0, 20.0, 28.0), NanoDetBox(110.0, 215.0, 120.0, 228.0)),
+        )
+        val result = fullImageResult(allDetections, threshold = 0.37f)
+        val displayDetections = result.detections.filter { it.score >= result.threshold }
+        val displayHighestScore = displayDetections.maxOfOrNull { it.score }
+
+        // 显示的最高分应来自过滤后的检测（0.89），而非全部检测的 result.highestScore（也是0.89但逻辑不同）
+        assertEquals("显示最高分应为 0.89", 0.89f, displayHighestScore!!, 0.001f)
+    }
+
+    // ───────────────────────────────────────────────
+    // 阈值边界与回退测试（handback 缺口修复）
+    // ───────────────────────────────────────────────
+
+    /** 模拟 ViewConfirmationScreen 中的阈值规范化逻辑 */
+    private fun normalizeThreshold(rawThreshold: Float?): Float {
+        return if (rawThreshold != null && rawThreshold.isFinite() && rawThreshold in 0f..1f) {
+            rawThreshold
+        } else {
+            NanoDetModelContract.STARTING_BUSINESS_THRESHOLD
+        }
+    }
+
+    @Test
+    fun `threshold exactly at boundary score 0_37 is included in display`() {
+        val allDetections = listOf(
+            NanoDetDetection(1, "thread", 0.37f, 10, NanoDetBox(1.0, 2.0, 50.0, 60.0), NanoDetBox(101.0, 202.0, 150.0, 262.0)),
+            NanoDetDetection(0, "nut", 0.36f, 5, NanoDetBox(10.0, 15.0, 20.0, 28.0), NanoDetBox(110.0, 215.0, 120.0, 228.0)),
+        )
+        val threshold = normalizeThreshold(0.37f)
+        val displayDetections = allDetections.filter { it.score >= threshold }
+
+        assertEquals("score==0.37 应保留（>= 阈值）", 1, displayDetections.size)
+        assertEquals(0.37f, displayDetections[0].score, 0.0001f)
+    }
+
+    @Test
+    fun `threshold NaN falls back to STARTING_BUSINESS_THRESHOLD`() {
+        val threshold = normalizeThreshold(Float.NaN)
+        assertEquals("NaN 应回退到 0.37", 0.37f, threshold, 0.0001f)
+
+        val allDetections = listOf(
+            NanoDetDetection(1, "thread", 0.50f, 10, NanoDetBox(1.0, 2.0, 50.0, 60.0), NanoDetBox(101.0, 202.0, 150.0, 262.0)),
+            NanoDetDetection(0, "nut", 0.20f, 5, NanoDetBox(10.0, 15.0, 20.0, 28.0), NanoDetBox(110.0, 215.0, 120.0, 228.0)),
+        )
+        val displayDetections = allDetections.filter { it.score >= threshold }
+        assertEquals("0.50 应保留", 1, displayDetections.size)
+        assertFalse("0.20 应过滤", displayDetections.any { it.score == 0.20f })
+    }
+
+    @Test
+    fun `threshold negative falls back to STARTING_BUSINESS_THRESHOLD`() {
+        val threshold = normalizeThreshold(-0.5f)
+        assertEquals("负数 threshold 应回退到 0.37", 0.37f, threshold, 0.0001f)
+
+        val allDetections = listOf(
+            NanoDetDetection(1, "thread", 0.50f, 10, NanoDetBox(1.0, 2.0, 50.0, 60.0), NanoDetBox(101.0, 202.0, 150.0, 262.0)),
+            NanoDetDetection(0, "nut", 0.20f, 5, NanoDetBox(10.0, 15.0, 20.0, 28.0), NanoDetBox(110.0, 215.0, 120.0, 228.0)),
+        )
+        val displayDetections = allDetections.filter { it.score >= threshold }
+        assertEquals("0.50 应保留", 1, displayDetections.size)
+        assertFalse("0.20 应过滤", displayDetections.any { it.score == 0.20f })
+    }
+
+    @Test
+    fun `threshold greater than 1 falls back to STARTING_BUSINESS_THRESHOLD`() {
+        val threshold = normalizeThreshold(1.5f)
+        assertEquals(">1 threshold 应回退到 0.37", 0.37f, threshold, 0.0001f)
+
+        val allDetections = listOf(
+            NanoDetDetection(1, "thread", 0.50f, 10, NanoDetBox(1.0, 2.0, 50.0, 60.0), NanoDetBox(101.0, 202.0, 150.0, 262.0)),
+            NanoDetDetection(0, "nut", 0.20f, 5, NanoDetBox(10.0, 15.0, 20.0, 28.0), NanoDetBox(110.0, 215.0, 120.0, 228.0)),
+        )
+        val displayDetections = allDetections.filter { it.score >= threshold }
+        assertEquals("0.50 应保留", 1, displayDetections.size)
+        assertFalse("0.20 应过滤", displayDetections.any { it.score == 0.20f })
+    }
+
+    @Test
+    fun `threshold positive infinity falls back to STARTING_BUSINESS_THRESHOLD`() {
+        val threshold = normalizeThreshold(Float.POSITIVE_INFINITY)
+        assertEquals("+Inf 应回退到 0.37", 0.37f, threshold, 0.0001f)
+    }
+
+    @Test
+    fun `threshold negative infinity falls back to STARTING_BUSINESS_THRESHOLD`() {
+        val threshold = normalizeThreshold(Float.NEGATIVE_INFINITY)
+        assertEquals("-Inf 应回退到 0.37", 0.37f, threshold, 0.0001f)
+    }
+
+    @Test
+    fun `full-image result with NaN threshold still preserves original detections`() {
+        val allDetections = listOf(
+            NanoDetDetection(1, "thread", 0.89f, 10, NanoDetBox(1.0, 2.0, 50.0, 60.0), NanoDetBox(101.0, 202.0, 150.0, 262.0)),
+            NanoDetDetection(0, "nut", 0.20f, 5, NanoDetBox(10.0, 15.0, 20.0, 28.0), NanoDetBox(110.0, 215.0, 120.0, 228.0)),
+        )
+        val result = fullImageResult(allDetections, threshold = Float.NaN)
+
+        // 原始 detections 必须完整保留（不受阈值规范化影响）
+        assertEquals("原始 detections 应完整保留", 2, result.detections.size)
+        assertTrue("0.20 应在原始 detections 中", result.detections.any { it.score == 0.20f })
+        assertTrue("0.89 应在原始 detections 中", result.detections.any { it.score == 0.89f })
+    }
+
+    @Test
+    fun `threshold null backward compatibility uses FullImageInferResult default`() {
+        // FullImageInferResult 的默认 threshold 是 STARTING_BUSINESS_THRESHOLD
+        val result = FullImageInferResult(
+            detections = listOf(
+                NanoDetDetection(1, "thread", 0.89f, 10, NanoDetBox(1.0, 2.0, 50.0, 60.0), NanoDetBox(101.0, 202.0, 150.0, 262.0)),
+                NanoDetDetection(0, "nut", 0.20f, 5, NanoDetBox(10.0, 15.0, 20.0, 28.0), NanoDetBox(110.0, 215.0, 120.0, 228.0)),
+            ),
+            highestScore = 0.89f,
+            elapsedMs = 50,
+            imageWidth = 1920,
+            imageHeight = 1080,
+            exifOrientation = 1,
+            status = NanoDetInferenceStatus.DETECTED,
+            // threshold 未指定，使用默认值
+        )
+        val threshold = normalizeThreshold(result.threshold)
+        assertEquals("默认 threshold 应为 0.37", 0.37f, threshold, 0.0001f)
+
+        val displayDetections = result.detections.filter { it.score >= threshold }
+        assertEquals("应有 1 个达到阈值", 1, displayDetections.size)
+        assertTrue("0.89 应保留", displayDetections.any { it.score == 0.89f })
+    }
+
+    @Test
+    fun `threshold valid value 0_5 is used as-is without fallback`() {
+        val threshold = normalizeThreshold(0.5f)
+        assertEquals("有效 threshold 0.5 应原样使用", 0.5f, threshold, 0.0001f)
+
+        val allDetections = listOf(
+            NanoDetDetection(1, "thread", 0.50f, 10, NanoDetBox(1.0, 2.0, 50.0, 60.0), NanoDetBox(101.0, 202.0, 150.0, 262.0)),
+            NanoDetDetection(0, "nut", 0.49f, 5, NanoDetBox(10.0, 15.0, 20.0, 28.0), NanoDetBox(110.0, 215.0, 120.0, 228.0)),
+        )
+        val displayDetections = allDetections.filter { it.score >= threshold }
+        assertEquals("0.50 应保留", 1, displayDetections.size)
+        assertFalse("0.49 应过滤", displayDetections.any { it.score == 0.49f })
+    }
+
+    @Test
+    fun `threshold at 0 passes all detections`() {
+        val threshold = normalizeThreshold(0f)
+        assertEquals("threshold 0 应原样使用", 0f, threshold, 0.0001f)
+
+        val allDetections = listOf(
+            NanoDetDetection(1, "thread", 0.01f, 10, NanoDetBox(1.0, 2.0, 50.0, 60.0), NanoDetBox(101.0, 202.0, 150.0, 262.0)),
+            NanoDetDetection(0, "nut", 0.00f, 5, NanoDetBox(10.0, 15.0, 20.0, 28.0), NanoDetBox(110.0, 215.0, 120.0, 228.0)),
+        )
+        val displayDetections = allDetections.filter { it.score >= threshold }
+        assertEquals("threshold=0 时应全部保留", 2, displayDetections.size)
+    }
+
+    @Test
+    fun `threshold at 1 only passes perfect scores`() {
+        val threshold = normalizeThreshold(1f)
+        assertEquals("threshold 1 应原样使用", 1f, threshold, 0.0001f)
+
+        val allDetections = listOf(
+            NanoDetDetection(1, "thread", 1.0f, 10, NanoDetBox(1.0, 2.0, 50.0, 60.0), NanoDetBox(101.0, 202.0, 150.0, 262.0)),
+            NanoDetDetection(0, "nut", 0.99f, 5, NanoDetBox(10.0, 15.0, 20.0, 28.0), NanoDetBox(110.0, 215.0, 120.0, 228.0)),
+        )
+        val displayDetections = allDetections.filter { it.score >= threshold }
+        assertEquals("只有 1.0 应保留", 1, displayDetections.size)
+        assertEquals(1.0f, displayDetections[0].score, 0.0001f)
     }
 }

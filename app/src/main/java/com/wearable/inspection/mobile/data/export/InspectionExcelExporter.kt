@@ -104,8 +104,16 @@ object InspectionExcelExporter {
                 .thenBy { it.confirm?.id ?: Long.MAX_VALUE }
         ).forEach { row ->
             val detections = parseDetections(row.confirm?.softwareDetectionsJson)
-            if (detections.isEmpty()) writeRow(writer, roiRow(batchId, partId, row, null, null))
-            else detections.forEachIndexed { index, detection -> writeRow(writer, roiRow(batchId, partId, row, index, detection)) }
+            // __FULL_IMAGE__ 行：只导出 score >= 业务阈值 的检测行；原始 detections/softwareDetectionsJson 已完整保存在确认实体中
+            val isFullImage = row.roi.id == "__FULL_IMAGE__"
+            val threshold = row.confirm?.softwareThreshold
+            val filteredDetections = if (isFullImage && threshold != null && detections.isNotEmpty()) {
+                detections.filter { det -> det.score.toDoubleOrNull()?.let { it >= threshold } == true }
+            } else {
+                detections
+            }
+            if (filteredDetections.isEmpty()) writeRow(writer, roiRow(batchId, partId, row, null, null))
+            else filteredDetections.forEachIndexed { index, detection -> writeRow(writer, roiRow(batchId, partId, row, index, detection)) }
         }
         dpmRows.sortedWith(
             compareBy<InspectionDpmExportRow> { it.evidence.scanSessionId }
