@@ -572,6 +572,7 @@ private fun CameraPreviewSection(
             modifier = Modifier.fillMaxSize(),
             active = active,
             templateImagePath = template?.mainImagePath,
+            templateId = template?.id,
             previewScaleType = previewScaleType,
             overlayAlpha = overlayAlpha,
             onCameraReady = {
@@ -1125,7 +1126,8 @@ private fun TemplateContent(
                         loadTemplateBitmap(
                             imageSource = template.mainImagePath,
                             contentResolver = context.contentResolver,
-                            maxTargetSize = 1024
+                            maxTargetSize = 1024,
+                            templateId = template.id
                         )
                     }
                     when (result) {

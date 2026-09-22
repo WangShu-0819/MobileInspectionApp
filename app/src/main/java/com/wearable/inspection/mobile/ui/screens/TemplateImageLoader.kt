@@ -11,6 +11,21 @@ import java.io.FileInputStream
 import java.io.InputStream
 
 /**
+ * 结构化日志条目，用于测试断言。
+ *
+ * @param tag 日志标签
+ * @param level 日志级别（"D"=debug, "E"=error）
+ * @param message 日志正文
+ * @param throwable 关联异常（可能为 null）
+ */
+data class TemplateLogEntry(
+    val tag: String,
+    val level: String,
+    val message: String,
+    val throwable: Throwable? = null,
+)
+
+/**
  * 模板图片加载结果，用于分类错误而非统一显示"模板图片加载失败"。
  */
 sealed class TemplateLoadResult {
@@ -41,13 +56,16 @@ internal enum class PathScheme {
  * @param imageSource   模板图片路径（可以是 content:// URI、file:// URI 或绝对文件路径）
  * @param contentResolver 用于解析 content:// URI；传 null 时遇到 content:// 会返回 Failure
  * @param maxTargetSize 解码后最大边长（像素），默认 2048；<=0 时回退为 2048
+ * @param templateId    模板 ID，用于诊断日志中标识来源模板；可为 null（旧调用兼容）
  */
 suspend fun loadTemplateBitmap(
     imageSource: String?,
     contentResolver: ContentResolver? = null,
     maxTargetSize: Int = 2048,
+    templateId: String? = null,
+    logEntries: MutableList<TemplateLogEntry>? = null,
 ): TemplateLoadResult {
-    return loadTemplateBitmapInternal(imageSource, contentResolver, maxTargetSize)
+    return loadTemplateBitmapInternal(imageSource, contentResolver, maxTargetSize, templateId = templateId, logEntries = logEntries)
 }
 
 /**
@@ -59,28 +77,35 @@ internal suspend fun loadTemplateBitmapInternal(
     contentResolver: ContentResolver? = null,
     maxTargetSize: Int = 2048,
     decodeFn: ((InputStream, BitmapFactory.Options) -> Bitmap?)? = null,
+    templateId: String? = null,
+    logEntries: MutableList<TemplateLogEntry>? = null,
 ): TemplateLoadResult {
     // ── 1. 路径为空 ──
     if (imageSource.isNullOrBlank()) {
+        logError("empty_path", "<blank>", PathScheme.PLAIN, templateId, null, logEntries)
         return TemplateLoadResult.Failure("模板路径为空")
     }
 
     val scheme = classifyPath(imageSource)
     if (BuildConfig.DEBUG) {
-        android.util.Log.d("TemplateImageLoader", "load: scheme=$scheme, source=$imageSource")
+        android.util.Log.d("TemplateImageLoader", "load: templateId=$templateId, stage=init, scheme=$scheme, source=$imageSource")
     }
 
     // ── 2. content:// 但没有 ContentResolver ──
     if (scheme == PathScheme.CONTENT && contentResolver == null) {
+        logError("no_resolver", imageSource, scheme, templateId, null, logEntries)
         return TemplateLoadResult.Failure("无法访问模板图片（缺少 ContentResolver）")
     }
 
     // ── 3. 文件预检（仅 file/plain） ──
     if (scheme != PathScheme.CONTENT) {
         val path = resolveFilePath(imageSource, scheme)
-            ?: return TemplateLoadResult.Failure("模板路径无效")
+        if (path == null) {
+            logError("invalid_path", imageSource, scheme, templateId, null, logEntries)
+            return TemplateLoadResult.Failure("模板路径无效")
+        }
         val file = File(path)
-        checkFileReadable(file)?.let { return it }
+        checkFileReadable(file, templateId, scheme, imageSource, logEntries)?.let { return it }
     }
 
     // ── 4. 第一次打开：读取 bounds ──
@@ -93,14 +118,12 @@ internal suspend fun loadTemplateBitmapInternal(
     } catch (e: kotlin.coroutines.cancellation.CancellationException) {
         throw e
     } catch (e: Exception) {
-        logError("bounds", imageSource, scheme, e)
+        logError("bounds", imageSource, scheme, templateId, e, logEntries)
         return TemplateLoadResult.Failure("模板图片打开失败", e)
     }
 
     if (width <= 0 || height <= 0) {
-        if (BuildConfig.DEBUG) {
-            android.util.Log.w("TemplateImageLoader", "Invalid image dimensions: ${width}x${height}")
-        }
+        logError("invalid_dimensions", imageSource, scheme, templateId, null, logEntries)
         return TemplateLoadResult.Failure("模板图片格式无法识别")
     }
 
@@ -118,12 +141,13 @@ internal suspend fun loadTemplateBitmapInternal(
                 BitmapFactory.decodeStream(stream, null, opts)
             }
             if (bitmap == null) {
+                logError("decode_null", imageSource, scheme, templateId, null, logEntries)
                 TemplateLoadResult.Failure("模板图片解码失败")
             } else {
                 if (BuildConfig.DEBUG) {
                     android.util.Log.d(
                         "TemplateImageLoader",
-                        "decoded: ${bitmap.width}x${bitmap.height}, sampleSize=$inSampleSize"
+                        "decoded: templateId=$templateId, ${bitmap.width}x${bitmap.height}, sampleSize=$inSampleSize, scheme=$scheme, source=$imageSource"
                     )
                 }
                 TemplateLoadResult.Success(bitmap)
@@ -132,7 +156,7 @@ internal suspend fun loadTemplateBitmapInternal(
     } catch (e: kotlin.coroutines.cancellation.CancellationException) {
         throw e
     } catch (e: Exception) {
-        logError("decode", imageSource, scheme, e)
+        logError("decode", imageSource, scheme, templateId, e, logEntries)
         TemplateLoadResult.Failure("模板图片解码失败", e)
     }
 }
@@ -178,14 +202,23 @@ private fun openStream(
 /**
  * 检查文件是否可读，返回 null 表示通过，否则返回 Failure。
  */
-private fun checkFileReadable(file: File): TemplateLoadResult.Failure? {
+private fun checkFileReadable(
+    file: File,
+    templateId: String?,
+    scheme: PathScheme,
+    source: String,
+    logEntries: MutableList<TemplateLogEntry>? = null,
+): TemplateLoadResult.Failure? {
     if (!file.exists()) {
+        logError("file_not_found", source, scheme, templateId, null, logEntries)
         return TemplateLoadResult.Failure("模板图片不存在")
     }
     if (file.length() == 0L) {
+        logError("file_empty", source, scheme, templateId, null, logEntries)
         return TemplateLoadResult.Failure("模板图片文件为空")
     }
     if (!file.canRead()) {
+        logError("file_not_readable", source, scheme, templateId, null, logEntries)
         return TemplateLoadResult.Failure("模板图片无法读取")
     }
     return null
@@ -222,12 +255,17 @@ internal fun calculateInSampleSize(
     return sample
 }
 
-private fun logError(stage: String, source: String, scheme: PathScheme, e: Exception) {
+private fun logError(
+    stage: String,
+    source: String,
+    scheme: PathScheme,
+    templateId: String?,
+    e: Exception?,
+    logEntries: MutableList<TemplateLogEntry>? = null,
+) {
+    val msg = "Template load failed: templateId=$templateId, stage=$stage, scheme=$scheme, source=$source"
+    logEntries?.add(TemplateLogEntry("TemplateImageLoader", "E", msg, e))
     if (BuildConfig.DEBUG) {
-        android.util.Log.e(
-            "TemplateImageLoader",
-            "Template load failed at stage=$stage, scheme=$scheme, source=$source",
-            e
-        )
+        android.util.Log.e("TemplateImageLoader", msg, e)
     }
 }

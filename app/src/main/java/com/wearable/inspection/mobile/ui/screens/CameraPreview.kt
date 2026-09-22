@@ -86,6 +86,7 @@ fun CameraPreview(
     cameraMode: CameraMode = CameraMode.INSPECTION,
     active: Boolean = true,
     templateImagePath: String? = null,
+    templateId: String? = null,
     overlayAlpha: Float = 0f,
     previewScaleType: PreviewView.ScaleType = PreviewView.ScaleType.FIT_CENTER,
     onCameraReady: () -> Unit = {},
@@ -127,7 +128,7 @@ fun CameraPreview(
         if (templateImagePath != null) {
             // CancellationException 由 LaunchedEffect 框架正确处理，不会进入 catch
             val result = withContext(Dispatchers.IO) {
-                loadTemplateBitmap(templateImagePath, context.contentResolver)
+                loadTemplateBitmap(templateImagePath, context.contentResolver, templateId = templateId)
             }
             when (result) {
                 is TemplateLoadResult.Success -> templateBitmap = result.bitmap

@@ -204,6 +204,40 @@ object RoiCoordinateMapper {
         return PhotoGeometry(opts.outWidth, opts.outHeight, orientation)
     }
 
+    /**
+     * 加载图片并应用 EXIF 旋转，返回 upright 方向的 Bitmap。
+     *
+     * 解码后的 Bitmap 像素方向与 NanoDet imageBox 坐标空间一致：
+     * - Orientation=NORMAL(1)：Bitmap 尺寸 = 原始宽高
+     * - Orientation=ROTATE_90(6)/ROTATE_270(8)：Bitmap 宽高互换
+     *
+     * @param photoPath 图片文件路径
+     * @param maxTargetSize 降采样目标最大边长；<=0 回退 2048
+     * @return upright Bitmap，失败返回 null
+     */
+    fun loadUprightBitmap(photoPath: String, maxTargetSize: Int = 2048): Bitmap? {
+        val file = File(photoPath)
+        if (!file.exists() || file.length() == 0L) return null
+
+        val geometry = getImageGeometry(photoPath) ?: return null
+        val safeMaxTarget = if (maxTargetSize <= 0) 2048 else maxTargetSize
+        val inSampleSize = calculateSampleSize(geometry.rawWidth, geometry.rawHeight, safeMaxTarget)
+
+        val opts = BitmapFactory.Options().apply { this.inSampleSize = inSampleSize }
+        val bitmap = BitmapFactory.decodeFile(photoPath, opts) ?: return null
+        return orientBitmap(bitmap, geometry.exifOrientation)
+    }
+
+    private fun calculateSampleSize(width: Int, height: Int, maxTarget: Int): Int {
+        if (width <= 0 || height <= 0) return 1
+        var sample = 1
+        val maxDim = maxOf(width, height)
+        while (maxDim / sample > maxTarget) {
+            sample *= 2
+        }
+        return sample
+    }
+
     private fun orientBitmap(bitmap: Bitmap, orientation: Int): Bitmap {
         if (orientation == ExifInterface.ORIENTATION_NORMAL) return bitmap
         val matrix = Matrix().apply {

@@ -78,6 +78,7 @@ fun CaptureComparisonScreen(
     partName: String,
     currentViewIndex: Int,
     totalViews: Int,
+    readOnly: Boolean = false,
     onBack: () -> Unit,
     onProceed: () -> Unit,
 ) {

@@ -6,7 +6,7 @@ import org.junit.Test
 import java.io.File
 
 /**
- * 拍后比对自动导航回归测试（源码结构测试）。
+ * 拍后只读对齐页面回归测试（源码结构测试）。
  *
  * 验证边界说明：
  * 本测试套件为源码结构测试（source-code structure tests），通过读取 Kotlin 源文件并验证关键模式的存在性、
@@ -17,17 +17,19 @@ import java.io.File
  * 运行时行为验证（如 NavController 调用序列、LaunchedEffect 触发时机）需要 instrumented 测试。
  *
  * 验证：
- * - registration 完成后才执行 SessionRoiRegistry.write()
+ * - 拍照后渲染 CaptureComparisonScreen（readOnly=true 仅标记语义，不隐藏控件）
+ * - ComparisonToolbar 不被 readOnly 条件隐藏（现场/模板/叠加、blink、透明度、缩放均保留）
+ * - 视图手势（拖拽平移）不被 readOnly 条件禁用
+ * - AppNavigation 层不包含 detectDragGestures/Slider（由 Screen 内部管理）
+ * - onProceed 回调中写入 SessionRoiRegistry
  * - write 使用 projectedRoisSnapshot
  * - 写入后才导航 ViewConfirmation
  * - 传递真实 isFullImageFallback
  * - popUpTo CaptureComparison 使用 inclusive=true
- * - 拍照后不渲染可见的 CaptureComparison UI（自动导航到 ViewConfirmation）
  * - 成功路径仍写入 projected ROI
  * - 失败/fallback 路径仍进入整图兜底
  * - 不回退到模板 normalizedRect
  * - isFullImageFallback 传递到 ViewConfirmation
- * - 不保留拍照后 ROI 拖动/缩放/四角调整入口
  */
 class CaptureComparisonAutoNavigationTest {
 
@@ -40,53 +42,57 @@ class CaptureComparisonAutoNavigationTest {
     private fun screenSource(): String =
         File("src/main/java/com/wearable/inspection/mobile/ui/screens/CaptureComparisonScreen.kt").readText()
 
-    // ── 自动导航：CaptureComparison 不渲染可见 UI ──
+    // ── 只读对齐页面：CaptureComparison 渲染 CaptureComparisonScreen ──
 
     @Test
-    fun `CaptureComparison composable auto-navigates on isLoaded`() {
+    fun `CaptureComparison composable renders CaptureComparisonScreen in readOnly mode`() {
         val source = navSource()
-        // 应有 LaunchedEffect 等待 comparisonViewModel.isLoaded
+        val routeBlock = extractCaptureComparisonBlock(source)
         assertTrue(
-            "应有 LaunchedEffect 监听 isLoaded",
+            "CaptureComparison 路由应渲染 CaptureComparisonScreen",
+            routeBlock.contains("CaptureComparisonScreen(")
+        )
+        assertTrue(
+            "应传入 readOnly = true",
+            routeBlock.contains("readOnly = true")
+        )
+    }
+
+    @Test
+    fun `CaptureComparison composable does not auto-navigate on isLoaded`() {
+        val source = navSource()
+        // 不应有自动导航的 LaunchedEffect
+        assertFalse(
+            "不应有 LaunchedEffect(comparisonViewModel.isLoaded) 自动导航",
             source.contains("LaunchedEffect(comparisonViewModel.isLoaded)")
         )
     }
 
     @Test
-    fun `CaptureComparison composable does not render CaptureComparisonScreen`() {
+    fun `CaptureComparison composable does not show loading indicator instead of screen`() {
         val source = navSource()
-        // 在 CaptureComparison 路由块中不应直接调用 CaptureComparisonScreen
         val routeBlock = extractCaptureComparisonBlock(source)
+        // 不应有独立的 CircularProgressIndicator（加载状态由 CaptureComparisonScreen 内部处理）
         assertFalse(
-            "CaptureComparison 路由不应渲染 CaptureComparisonScreen",
-            routeBlock.contains("CaptureComparisonScreen(")
-        )
-    }
-
-    @Test
-    fun `CaptureComparison composable shows only loading indicator`() {
-        val source = navSource()
-        val routeBlock = extractCaptureComparisonBlock(source)
-        assertTrue(
-            "应显示 CircularProgressIndicator",
+            "不应有独立的 CircularProgressIndicator 占位",
             routeBlock.contains("CircularProgressIndicator")
         )
     }
 
-    // ── SessionRoiRegistry 写入 ──
+    // ── SessionRoiRegistry 写入（onProceed 回调中） ──
 
     @Test
-    fun `auto-navigation writes to SessionRoiRegistry before navigating`() {
+    fun `onProceed writes to SessionRoiRegistry before navigating`() {
         val source = navSource()
         val routeBlock = extractCaptureComparisonBlock(source)
         assertTrue(
-            "应调用 SessionRoiRegistry.write",
+            "onProceed 回调中应调用 SessionRoiRegistry.write",
             routeBlock.contains("SessionRoiRegistry.write")
         )
     }
 
     @Test
-    fun `auto-navigation writes projectedRoisSnapshot to registry`() {
+    fun `onProceed writes projectedRoisSnapshot to registry`() {
         val source = navSource()
         val routeBlock = extractCaptureComparisonBlock(source)
         assertTrue(
@@ -172,53 +178,69 @@ class CaptureComparisonAutoNavigationTest {
         )
     }
 
-    // ── 不保留 ROI 拖动/缩放/四角调整 ──
+    // ── 只读门控：仅门控 ROI 编辑，保留查看控件 ──
 
     @Test
-    fun `auto-navigation path has no drag or resize entry points`() {
+    fun `AppNavigation does not embed gesture code in route block`() {
         val source = navSource()
         val routeBlock = extractCaptureComparisonBlock(source)
+        // AppNavigation 层面不应直接包含手势代码（由 CaptureComparisonScreen 内部管理）
         assertFalse(
-            "自动导航路径不应有拖动手势",
+            "AppNavigation 路由块不应包含 detectDragGestures",
             routeBlock.contains("detectDragGestures")
         )
         assertFalse(
-            "自动导航路径不应有 Slider",
+            "AppNavigation 路由块不应包含 Slider",
             routeBlock.contains("Slider")
+        )
+    }
+
+    @Test
+    fun `ComparisonToolbar is not gated by readOnly in CaptureComparisonScreen`() {
+        val source = screenSource()
+        // ComparisonToolbar 应始终渲染，不被 readOnly 条件隐藏
+        assertFalse(
+            "不应有 if (!readOnly) 隐藏 ComparisonToolbar",
+            source.contains("if (!readOnly)")
+        )
+        assertTrue(
+            "应直接调用 ComparisonToolbar（无条件守卫）",
+            source.contains("ComparisonToolbar(")
+        )
+    }
+
+    @Test
+    fun `viewport gestures are not gated by readOnly in CaptureComparisonScreen`() {
+        val source = screenSource()
+        // 视图拖拽平移手势应始终启用，不被 readOnly 条件禁用
+        assertFalse(
+            "不应有 if (readOnly) Modifier else Modifier.pointerInput 条件",
+            source.contains("if (readOnly) Modifier else Modifier.pointerInput")
+        )
+        assertTrue(
+            "ComparisonViewport 应包含 detectDragGestures 手势",
+            source.contains("detectDragGestures")
         )
     }
 
     // ── 调用顺序验证 ──
 
     @Test
-    fun `SessionRoiRegistry write appears before navigate in LaunchedEffect`() {
+    fun `SessionRoiRegistry write appears before navigate in onProceed`() {
         val source = navSource()
         val routeBlock = extractCaptureComparisonBlock(source)
         val writeIdx = routeBlock.indexOf("SessionRoiRegistry.write")
-        val navigateIdx = routeBlock.indexOf("navController.navigate")
-        assertTrue("LaunchedEffect 内应有 write", writeIdx > 0)
-        assertTrue("LaunchedEffect 内应有 navigate", navigateIdx > 0)
+        val navigateIdx = routeBlock.indexOf("Screen.ViewConfirmation.createRoute")
+        assertTrue("onProceed 内应有 write", writeIdx > 0)
+        assertTrue("onProceed 内应有 navigate", navigateIdx > 0)
         assertTrue(
-            "SessionRoiRegistry.write 必须在 navController.navigate 之前",
+            "SessionRoiRegistry.write 必须在 ViewConfirmation.createRoute 之前",
             writeIdx < navigateIdx
         )
     }
 
     @Test
-    fun `LaunchedEffect guards with isLoaded before executing`() {
-        val source = navSource()
-        val routeBlock = extractCaptureComparisonBlock(source)
-        val guardIdx = routeBlock.indexOf("if (!comparisonViewModel.isLoaded)")
-        val writeIdx = routeBlock.indexOf("SessionRoiRegistry.write")
-        assertTrue("应有 isLoaded 守卫", guardIdx > 0)
-        assertTrue(
-            "isLoaded 守卫必须在 write 之前",
-            guardIdx < writeIdx
-        )
-    }
-
-    @Test
-    fun `registration result read appears before write`() {
+    fun `registration result read appears before write in onProceed`() {
         val source = navSource()
         val routeBlock = extractCaptureComparisonBlock(source)
         val regStatusIdx = routeBlock.indexOf("registrationResult?.status")

@@ -5,15 +5,11 @@ import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.ui.Alignment
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -494,46 +490,44 @@ fun AppRoot() {
                     )
                 )
 
-                // 自动导航：注册完成后直接进入 ViewConfirmation，跳过可见的拍后比对 UI。
-                // 保留 CaptureComparisonViewModel 的注册逻辑和 SessionRoiRegistry 写入。
-                LaunchedEffect(comparisonViewModel.isLoaded) {
-                    if (!comparisonViewModel.isLoaded) return@LaunchedEffect
-                    val regStatus = comparisonViewModel.registrationResult?.status
-                    val useFullImageFallback = comparisonViewModel.isFullImageFallback
-                    com.wearable.inspection.mobile.ui.screens.SessionRoiRegistry.write(
-                        batchId = batchId,
-                        photoId = photoId,
-                        viewIndex = viewIndex,
-                        sessionRois = comparisonViewModel.projectedRoisSnapshot,
-                        registrationStatus = regStatus
-                            ?: com.wearable.inspection.mobile.registration.RegistrationStatus.FAILED,
-                    )
-                    navController.navigate(
-                        Screen.ViewConfirmation.createRoute(
+                // 只读对齐页面：保留模板/现场/叠加预览和自动 projected ROI，
+                // 隐藏 ROI 拖动、缩放、重绘等手动调整入口。
+                // 用户点击"继续"后写入 SessionRoiRegistry 并进入 ViewConfirmation。
+                CaptureComparisonScreen(
+                    viewModel = comparisonViewModel,
+                    partName = partName.value,
+                    currentViewIndex = viewIndex,
+                    totalViews = totalViews,
+                    readOnly = true,
+                    onBack = { navController.popBackStack() },
+                    onProceed = {
+                        val regStatus = comparisonViewModel.registrationResult?.status
+                        val useFullImageFallback = comparisonViewModel.isFullImageFallback
+                        com.wearable.inspection.mobile.ui.screens.SessionRoiRegistry.write(
                             batchId = batchId,
                             photoId = photoId,
-                            photoPath = photoPath,
                             viewIndex = viewIndex,
-                            templateId = templateId,
-                            templateName = templateName,
-                            partId = partId,
-                            totalViews = totalViews,
-                            isFullImageFallback = useFullImageFallback,
+                            sessionRois = comparisonViewModel.projectedRoisSnapshot,
+                            registrationStatus = regStatus
+                                ?: com.wearable.inspection.mobile.registration.RegistrationStatus.FAILED,
                         )
-                    ) {
-                        popUpTo(Screen.CaptureComparison.route) { inclusive = true }
-                    }
-                }
-
-                // 最小加载指示器（注册通常很快完成，用户几乎看不到）
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    CircularProgressIndicator(
-                        color = com.wearable.inspection.mobile.ui.theme.Primary
-                    )
-                }
+                        navController.navigate(
+                            Screen.ViewConfirmation.createRoute(
+                                batchId = batchId,
+                                photoId = photoId,
+                                photoPath = photoPath,
+                                viewIndex = viewIndex,
+                                templateId = templateId,
+                                templateName = templateName,
+                                partId = partId,
+                                totalViews = totalViews,
+                                isFullImageFallback = useFullImageFallback,
+                            )
+                        ) {
+                            popUpTo(Screen.CaptureComparison.route) { inclusive = true }
+                        }
+                    },
+                )
             }
 
             composable(

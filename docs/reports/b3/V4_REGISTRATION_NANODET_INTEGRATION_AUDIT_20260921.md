@@ -300,3 +300,137 @@ CaptureComparison 隐藏自动导航和模板图片加载实现已基本符合�
 - 当前任务状态更新为 **SOFTWARE_AUDIT_PASSED / USER_ACCEPTED**。这条用户验收记录不改变此前“未运行 ADB/instrumented/真机”的主协调审计事实；它记录的是用户对现场验收结果的明确确认。
 - 用户已明确授权当前 7 个已修改文件和 3 个未跟踪文件按路径选择性提交 Git，已完成提交 `aec66356`；5 个 DPM skipped 仍因外部样本/目录缺失保留，不作为本次用户验收阻塞项。
 - 模板加载日志缺少 `templateId`、整图模式缺少检测框叠加仍属于非阻塞后续增强；本次不启动新的代码任务。
+
+## 2026-09-22 下一阶段任务指针：诊断日志与整图检测框叠加
+
+当前 V4 已完成软件审计、用户验收和 Git 收口；下一阶段拆为两个顺序任务：
+
+1. **TemplateImageLoader 诊断日志增强**：给加载 API 和调用入口补充可追踪的 `templateId`，让空路径、bounds、decode、异常等阶段日志都能关联模板 ID、路径类型、阶段和原始异常；保持取消异常传播及现有图片加载语义。
+2. **fallback 整图检测框叠加**：在 `isFullImageMode` 确认页使用已有 `fullImageInferResult.detections[*].imageBox` 和整图宽高绘制检测框，处理 Compose 图片缩放/留白坐标映射；不改变检测模型、阈值、`aggregatedSuggestion = null`、人工总体 OK/NG 或 `__FULL_IMAGE__` 导出语义。
+
+本阶段允许触及模板加载入口、`ViewConfirmationScreen`、必要时的 `ViewConfirmationViewModel` 和对应测试；禁止修改 registration、NanoDet 模型/decoder/阈值/类别协议、CameraX、DPM、OCR、实体和 projected ROI 语义。只允许 JVM 单测、Kotlin 编译和 Debug APK 构建，禁止 ADB、instrumented、真机测试、OCR 和 Git 提交。Agent 指令已准备但尚未派发，等待用户后续安排。
+
+## 2026-09-22 后续增强 handback v1 审计
+
+### 本地实际证据
+
+- 实际代码变化为 6 个已修改文件、1 个未跟踪测试文件；主协调既有的 `tasks/` 和 `docs/reports/` 文档修改另行保留。
+- XML/HTML 实际汇总：`1171 tests / 0 failures / 0 errors / 5 skipped`；`TemplateImageLoaderTest=26`、`FullImageDetectionOverlayTest=10`、`ViewConfirmationModelResultComposeTest=6`、`ViewConfirmationViewModelStateTest=17`、`ViewConfirmationFlowTest=12` 均为 0 failures / 0 errors。
+- APK：`app/build/outputs/apk/debug/app-debug.apk`，2026-09-22 13:48:25，232224821 bytes，SHA-256 `7DCB552B5C25E733F6765BA7D0F711CDEBFA853E31B39DFF94D716888C4BAD4A`。
+- 未发现 registration、detection、DPM 或 OCR 禁止范围改动；未运行 ADB、instrumented、真机测试或 OCR；未提交 Git。
+
+### 审计阻塞
+
+1. `TemplateImageLoader` 的空路径和无效路径分支未统一输出带 `templateId` 的诊断日志，当前测试也未验证这些失败阶段的日志字段。
+2. `FullImageDetectionOverlay` 用普通 Bitmap 解码现场照片，而整图检测 `imageBox` 使用 upright 坐标；EXIF 非 1 时可能发生图片与检测框错位，必须复用现有 EXIF-aware upright 解码语义。
+3. `FullImageDetectionOverlayTest` 主要验证渲染不崩溃，缺少确定性像素到 Compose 坐标、ContentScale 留白和边界框映射断言。
+
+本轮结论：**SOFTWARE_AUDIT_BLOCKED / AWAITING_CORRECTION**。不提交当前代码，下一轮只修复上述三项并重新提供 XML/HTML、APK 和 Git diff 证据。
+
+## 2026-09-22 后续增强 handback v2 审计
+
+### 本地实际证据
+
+- 代码实际为 7 个已修改文件、1 个未跟踪测试文件；`tasks/` 与 `docs/reports/` 的文档修改由主协调维护，与 Agent 代码统计分开。
+- XML 实际路径为 `app/build/test-results/testDebugUnitTest/TEST-*.xml`，汇总 `1180 tests / 0 failures / 0 errors / 5 skipped`；重点测试 `TemplateImageLoaderTest=26`、`FullImageDetectionOverlayTest=19`、`ViewConfirmationModelResultComposeTest=6`、`ViewConfirmationViewModelStateTest=17`、`ViewConfirmationFlowTest=12` 均为 0 failures / 0 errors。
+- HTML 实际路径为 `app/build/reports/tests/testDebugUnitTest/index.html`，时间 2026-09-22 14:00:18，汇总 `1180 / 0 / 0 / 5`。
+- APK 实际路径为 `app/build/outputs/apk/debug/app-debug.apk`，时间 2026-09-22 14:01:41，大小 232974925 bytes，SHA-256 `5D900FF648BF844DF2C0618FA496AACC3955A5780816633F33D4A7607C4CBEC9`。
+- `git diff --check` 无错误；未发现 registration、detection、DPM 或 OCR 禁止范围文件被修改；未运行 ADB、instrumented、真机测试或 OCR；未提交 Git。
+
+### 审计阻塞
+
+1. `TemplateImageLoader` 已在空路径、无效路径、预检、bounds、decode 等失败分支统一调用包含 `templateId/stage/scheme/source/cause` 的日志函数，但 `TemplateImageLoaderTest` 没有稳定捕获并断言这些失败日志字段；新增测试只覆盖成功路径参数和取消异常传播。
+2. `FullImageDetectionOverlay` 已使用 `RoiCoordinateMapper.loadUprightBitmap`，实现上复用了 `getImageGeometry`/`orientBitmap` 的 upright 语义；但测试没有用真实 EXIF Orientation=6/8 文件验证解码结果，也没有把方向变化后的图片尺寸/坐标与 `imageBox` 做确定性关联。现有竖图测试只是直接提供 upright Bitmap。
+
+本轮结论：**SOFTWARE_AUDIT_BLOCKED / AWAITING_CORRECTION**。当前代码不提交。下一轮只补上述两项测试证据并重新 handback，不扩大生产修改范围。
+
+## 2026-09-22 后续增强 handback v3 审计
+
+### 本地实际证据
+
+- XML 实际路径为 `app/build/test-results/testDebugUnitTest/TEST-*.xml`，汇总 `1198 tests / 0 failures / 0 errors / 5 skipped`；`TemplateImageLoaderTest=37`、`ExifOrientationRegressionTest=7`、`FullImageDetectionOverlayTest=19`、`ViewConfirmationModelResultComposeTest=6`、`ViewConfirmationViewModelStateTest=17`、`ViewConfirmationFlowTest=12` 均为 0 failures / 0 errors。
+- HTML 实际路径为 `app/build/reports/tests/testDebugUnitTest/index.html`，时间 2026-09-22 14:44:11，汇总 `1198 / 0 / 0 / 5`。
+- APK 实际路径为 `app/build/outputs/apk/debug/app-debug.apk`，时间 2026-09-22 14:46:37，大小 232975986 bytes，SHA-256 `998818FC9F75BC86436AD1CC0956D4407A226EA11030EDFDA527436A7ECF3CFA`。
+- 当前代码为 7 个已修改源码/测试文件、2 个未跟踪测试文件；`git diff --check` 无实质错误。未发现 registration、detection、DPM 或 OCR 禁止范围改动；未运行 ADB、instrumented、真机测试或 OCR；未提交 Git。
+
+### 审计阻塞
+
+1. `TemplateImageLoaderTest.kt` 第 376–394 行的 `bounds exception logs ...` 测试体为空，没有任何断言；另一个 bounds 格式测试通过 `decodeFn` 验证的是 `decode` 阶段，不能证明 bounds 异常分支实际执行。
+2. 当前没有稳定结构化日志断言覆盖 `invalid_path` 和 `invalid_dimensions` 阶段。日志实现本身已接受 `TemplateLogEntry` 注入，但测试证据未覆盖所有关键早期/格式失败分支。
+3. handback 把 `FullImageDetectionOverlayTest` 写成 18 项，本地 XML/HTML 实际为 19 项；后续 handback 必须按本地实际统计回传。
+4. 用户已明确拍照后应保留模板/现场对齐界面，只隐藏 ROI 拖动、缩放和手动调整入口；当前 `AppNavigation` 仍自动跳过整个 `CaptureComparisonScreen`，该产品行为偏差尚未修正。
+
+本轮结论：**SOFTWARE_AUDIT_BLOCKED / AWAITING_CORRECTION**。当前代码不提交。下一轮只补真实 bounds、invalid_path、invalid_dimensions 日志测试并校正 handback 统计。
+
+## 2026-09-22 后续增强 handback 最新审计
+
+### 本地实际证据
+
+- XML 实际路径：`app/build/test-results/testDebugUnitTest/TEST-*.xml`；本地汇总为 `1200 tests / 0 failures / 0 errors / 5 skipped`。HTML：`app/build/reports/tests/testDebugUnitTest/index.html`，实际汇总同为 `1200 / 0 / 0 / 5`。重点测试：`TemplateImageLoaderTest=39`、`ExifOrientationRegressionTest=7`、`FullImageDetectionOverlayTest=19`、`CaptureComparisonAutoNavigationTest=20`，均 0 failures / 0 errors。handback 报告的 `1198` 与本地 XML/HTML 不一致。
+- APK：`app/build/outputs/apk/debug/app-debug.apk`；2026-09-22 15:13:10；232224821 bytes；SHA-256 `6680292CECDF53079296DA35C4467124C700AC2790613F6935AAF81FECA88AC4`。本地 APK 与 handback 一致。
+- `git diff --check` 无实质 whitespace 错误，仅有 Windows LF→CRLF 警告。当前工作区包含 10 个已修改代码/测试文件、2 个未跟踪测试文件，以及主协调维护的 `tasks/todo.md`、`tasks/plan.md`、本报告修改；未提交 Git。
+- TemplateImageLoader bounds 测试已使用 Mockito `ContentResolver`，首次 `openInputStream` 抛 IOException，第二次返回 PNG，真实触发 `bounds` 日志并断言 `templateId/stage/scheme/source/exception`。`invalid_path` 和 `invalid_dimensions` 仍通过源码结构测试，原因是当前 Robolectric 下相应分支不可达；该限制已在 handback 中说明。
+- 拍后对齐页已恢复可见：`AppNavigation` 以 `readOnly=true` 渲染 `CaptureComparisonScreen`；点击继续时先写 `SessionRoiRegistry`，再导航 `ViewConfirmation`；相关页面、ViewModel、路由、Session ROI 和 projected ROI 逻辑仍在。
+
+### 当前阻塞
+
+1. handback 全量测试统计必须更正为本地实际 `1200`，不能继续使用 `1198`。
+2. `CaptureComparisonScreen` 的 `readOnly` 当前隐藏整个 `ComparisonToolbar`，并禁用整个视口拖动。该工具栏和拖动包含现场/模板/叠加、blink、透明度、视图缩放/重置/平移等比对查看能力，并非 ROI 人工编辑入口；这超出用户要求的“保留拍照后模板对齐界面，只隐藏 ROI 拖动、缩放、重绘等人工编辑操作”。
+
+### 审计结论
+
+本轮构建、APK 和现有 JVM 测试结果通过，但因统计不一致及只读门控过宽，整体仍为 **SOFTWARE_AUDIT_BLOCKED / AWAITING_CORRECTION**，当前不提交 Git。下一轮只收窄 `readOnly` 门控到 ROI 编辑入口，保留比对查看控件，并同步更新回归测试与 handback 实际统计；不得修改 V4 registration、NanoDet、CameraX、DPM、OCR、数据库、`mainImagePath`、`SessionRoiRegistry` 或 projected ROI 语义。
+
+## 2026-09-22 后续增强 handback 只读门控修正最终审计
+
+### 本地实际证据
+
+- XML 实际路径：`app/build/test-results/testDebugUnitTest/TEST-*.xml`；本地汇总 `1201 tests / 0 failures / 0 errors / 5 skipped`。HTML：`app/build/reports/tests/testDebugUnitTest/index.html`，2026-09-22 15:28:49，实际汇总同为 `1201 / 0 / 0 / 5`。
+- 重点 XML：`TemplateImageLoaderTest=39`、`ExifOrientationRegressionTest=7`、`FullImageDetectionOverlayTest=19`、`CaptureComparisonAutoNavigationTest=21`、`CaptureComparisonGeometryTest=21`，均 0 failures / 0 errors。
+- APK：`app/build/outputs/apk/debug/app-debug.apk`；2026-09-22 15:28:56；232224821 bytes；SHA-256 `5AD754579320AEF172B9AFB3B6F02E37A0F26BF498B5DC6E4458DE051239128D`。本地 APK 与 handback 一致。
+- `CaptureComparisonScreen` 保留拍后模板/现场/叠加比对页面；`ComparisonToolbar` 始终渲染，视图拖动手势不再受 `readOnly` 条件禁用。当前页面没有独立 ROI 编辑入口，`SessionRoiOverlay` 继续作为纯只读绘制；页面、ViewModel、路由、registry 和 projected ROI 逻辑均未删除。
+- `AppNavigation` 的 `onProceed` 先调用 `SessionRoiRegistry.write`，再导航 `ViewConfirmation` 并清理 `CaptureComparison` 路由。未发现 registration、detection、CameraX、DPM、OCR、数据库实体、`mainImagePath` 或 projected ROI 禁止范围改动。
+- `git diff --check` 无实质 whitespace 错误，仅有 Windows LF→CRLF 警告；未运行 ADB、instrumented、真机测试或 OCR；未提交 Git。
+
+### 最终结论
+
+本轮只读门控修正、TemplateImageLoader 日志覆盖、EXIF/upright 整图检测框显示和坐标映射测试的源码、JVM、Kotlin 编译及 APK 审计均通过。5 个 skipped 仍来自 DPM 外部样本/目录缺失，不阻塞本阶段。状态更新为 **SOFTWARE_AUDIT_PASSED / AWAITING_USER_AUTHORIZATION**；当前没有新的 mimo 指令，待用户明确授权后按文件路径选择性提交 Git。
+
+## 2026-09-22 新需求方案：整图检测置信度阈值与采集 ZIP/Excel 记录
+
+本节仅记录方案，尚未启动实现或新的 Agent handback。
+
+### 已确认的现状
+
+- `FullImageInferResult` 已有 `threshold` 字段，默认沿用现有业务阈值 `0.37`；当前 `ViewConfirmationScreen` 将 `fullResult.detections` 全部传给 `FullImageDetectionOverlay`，因此低置信度框也会显示。
+- `NanoDetRoiInferenceService` 当前返回原始检测列表；本需求不应修改模型、decoder、candidate threshold 或推理服务语义。
+- `InspectionZipExportService` 当前已将现场照片写入 `views/.../photo...`，并将 Excel 兼容的 `inspection_result.csv` 写入 ZIP；`InspectionExcelExporter` 已记录业务阈值、检测分数、类别和 `detectionImageBox`。
+
+### 方案
+
+1. 复用 `FullImageInferResult.threshold`，以 `score >= 0.37` 作为整图确认页显示条件；框、标签和详情列表共用同一过滤结果，同时显示原始检出数、显示数、阈值和低于阈值隐藏数。
+2. 保留 `softwareDetectionsJson` 中的全部原始检测结果，但 ZIP/CSV 的整图 detection 行只保留 `score >= 0.37` 的检测，继续保留照片行和 `__FULL_IMAGE__` 记录。
+3. 不增加数据库字段或迁移，不修改图片路径、人工 OK/NG、`aggregatedSuggestion = null`、结果包 entry 命名或 projected ROI 语义；默认继续输出现有 Excel 兼容 CSV，不生成额外标注照片或真正 `.xlsx`。
+
+### 实施顺序与门禁
+
+- Task 1：阈值过滤纯逻辑和边界测试。
+- Task 2：确认页整图框/标签/详情过滤与数量提示。
+- Task 3：ZIP 照片与 CSV 检测记录闭环，验证原始 score、threshold、imageBox 和过滤状态。
+- Checkpoint：JVM、Kotlin 编译、Debug APK、XML/HTML、APK SHA-256 和 Git 状态全部复核；禁止 ADB、instrumented、真机测试、OCR 和 Git 提交。
+
+### 已确认决策
+
+- 阈值采用现有业务阈值 `0.37`，不新增模型阈值。
+- CSV 只保留达到阈值的检测记录；低分原始结果不写入 CSV detection 行，但不改变推理层和数据库原始 JSON。
+- “Excel”继续指现有 `inspection_result.csv`；不生成真正 `.xlsx`。
+- 用户已人工验收确认上一阶段拍照后存在模板/现场对齐界面；上一阶段代码仍保持未提交。
+
+当前状态：**PLAN_CONFIRMED / AWAITING_BASELINE_COMMIT**。上一阶段未提交 diff 需要先收口，本轮未修改生产代码、未运行构建或设备测试。
+
+## 2026-09-22 用户确认：诊断日志与 fallback 整图框为非阻塞增强
+
+- 用户将“模板加载日志补充 templateId”和“fallback 到整图检测时在整张照片绘制检测框”确认为下一步增强，并明确两项均不阻塞主流程。
+- 经主协调复核，这两项已经存在于当前未提交工作区：TemplateImageLoader 结构化日志、EXIF/upright 整图照片加载、`imageBox` 坐标叠加和对应 JVM/Compose 回归测试均已完成；上一轮本地全量为 `1201 / 0 / 0 / 5`，APK SHA-256 为 `5AD754579320AEF172B9AFB3B6F02E37A0F26BF498B5DC6E4458DE051239128D`。
+- 用户人工验收已确认拍照后模板/现场对齐界面存在。当前不应重复派发实现任务；如需交给 mimo，只安排只读核验和缺口修补。
+- 当前状态：**SOFTWARE_AUDIT_PASSED / AWAITING_BASELINE_COMMIT**。上一阶段代码保持未提交，下一步先完成基线收口，再单独启动已确认的 `0.37` 阈值与 CSV 过滤任务。

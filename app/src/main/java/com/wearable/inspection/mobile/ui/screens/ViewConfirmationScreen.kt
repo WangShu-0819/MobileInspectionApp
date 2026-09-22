@@ -1,6 +1,7 @@
 package com.wearable.inspection.mobile.ui.screens
 
 import android.graphics.Bitmap
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -39,24 +41,34 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextMeasurer
+import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.wearable.inspection.mobile.data.entity.RoiDefinitionEntity
 import com.wearable.inspection.mobile.data.entity.RoiTargetType
+import com.wearable.inspection.mobile.detection.NanoDetDetection
 import com.wearable.inspection.mobile.detection.NanoDetInferenceStatus
 import com.wearable.inspection.mobile.detection.NanoDetRoiInferenceResult
 import com.wearable.inspection.mobile.ui.theme.BackgroundVariant1
@@ -68,6 +80,10 @@ import com.wearable.inspection.mobile.ui.theme.Primary
 import com.wearable.inspection.mobile.ui.theme.SurfaceWhite
 import com.wearable.inspection.mobile.ui.theme.TextPrimary
 import com.wearable.inspection.mobile.ui.theme.TextSecondary
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlin.math.min
+import kotlin.math.roundToInt
 
 /**
  * View 人工确认页面
@@ -207,8 +223,29 @@ fun ViewConfirmationScreen(
                 }
             }
             viewModel.isFullImageMode -> {
-                // 整图确认模式：显示检测摘要，不渲染 per-ROI 卡片
+                // 整图确认模式：显示检测框叠加 + 检测摘要
                 val fullResult = viewModel.fullImageInferResult
+                val photoPath = viewModel.photoPath
+                val context = LocalContext.current
+
+                // 加载现场照片 Bitmap（EXIF-aware upright，与 NanoDet imageBox 坐标空间一致）
+                var photoBitmap by remember(photoPath) { mutableStateOf<Bitmap?>(null) }
+                var photoLoadError by remember(photoPath) { mutableStateOf<String?>(null) }
+                LaunchedEffect(photoPath) {
+                    if (photoPath != null) {
+                        val bitmap = withContext(Dispatchers.IO) {
+                            RoiCoordinateMapper.loadUprightBitmap(photoPath, maxTargetSize = 2048)
+                        }
+                        if (bitmap != null) {
+                            photoBitmap = bitmap
+                            photoLoadError = null
+                        } else {
+                            photoBitmap = null
+                            photoLoadError = "照片加载失败"
+                        }
+                    }
+                }
+
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
@@ -217,6 +254,19 @@ fun ViewConfirmationScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 8.dp)
                 ) {
+                    // 检测框叠加图片
+                    item {
+                        FullImageDetectionOverlay(
+                            photoBitmap = photoBitmap,
+                            photoLoadError = photoLoadError,
+                            detections = fullResult?.detections ?: emptyList(),
+                            imageWidth = fullResult?.imageWidth ?: 0,
+                            imageHeight = fullResult?.imageHeight ?: 0,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+
+                    // 检测摘要卡片
                     item {
                         Card(
                             modifier = Modifier.fillMaxWidth(),
@@ -454,6 +504,216 @@ internal fun RoiConfirmCard(
             }
         }
     }
+}
+
+/**
+ * 整图检测框叠加组件。
+ *
+ * 在现场照片上绘制检测框、类别标签和置信度。
+ * 使用 imageBox（整张 upright 现场照片中的像素坐标），不使用 roiBox。
+ *
+ * @param photoBitmap 已加载的 upright 现场照片 Bitmap；null 时不绘制图片
+ * @param photoLoadError 图片加载失败时的错误信息
+ * @param detections NanoDet 检测结果列表
+ * @param imageWidth 推理输入图片宽度（upright 像素）
+ * @param imageHeight 推理输入图片高度（upright 像素）
+ */
+@Composable
+internal fun FullImageDetectionOverlay(
+    photoBitmap: Bitmap?,
+    photoLoadError: String?,
+    detections: List<NanoDetDetection>,
+    imageWidth: Int,
+    imageHeight: Int,
+    modifier: Modifier = Modifier,
+) {
+    // 无图片、无尺寸信息时仅显示占位
+    if (photoBitmap == null || imageWidth <= 0 || imageHeight <= 0) {
+        Box(
+            modifier = modifier
+                .height(200.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(Color.Black),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (photoLoadError != null) {
+                Text(
+                    text = "照片加载失败：$photoLoadError",
+                    color = Color(0xFFB0B0B0),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            } else {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(32.dp),
+                    color = Color.White,
+                    strokeWidth = 2.dp,
+                )
+            }
+        }
+        return
+    }
+
+    val aspectRatio = imageWidth.toFloat() / imageHeight.toFloat()
+
+    // 每个类别对应一种颜色（与 roiBox 无关，仅用于视觉区分）
+    val classColors = listOf(
+        Color(0xFFFF4444), // 类别 0 — 红
+        Color(0xFF4488FF), // 类别 1 — 蓝
+        Color(0xFF44DDFF), // 类别 2 — 青
+        Color(0xFFFFBB33), // 类别 3 — 黄
+    )
+
+    // 预测量标签文字尺寸（在 Canvas 外测量，避免每帧重复测量）
+    val textMeasurer = rememberTextMeasurer()
+    val labelTexts = remember(detections) {
+        detections.map { "${it.className} ${(it.score * 100).toInt()}%" }
+    }
+    val labelStyle = MaterialTheme.typography.labelSmall.copy(
+        fontWeight = FontWeight.Bold,
+        fontSize = 9.sp,
+    )
+
+    // Box 宽高比与图片一致 → ContentScale.Fit 铺满，无留白
+    Box(
+        modifier = modifier
+            .aspectRatio(aspectRatio)
+            .clip(RoundedCornerShape(8.dp))
+            .background(Color.Black),
+        contentAlignment = Alignment.Center,
+    ) {
+        // 现场照片：ContentScale.Fit 在宽高比匹配的 Box 中铺满
+        Image(
+            bitmap = photoBitmap.asImageBitmap(),
+            contentDescription = "现场照片（整图检测）",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Fit,
+        )
+
+        // 检测框叠加层（框 + 标签全部在 Canvas 内绘制）
+        if (detections.isNotEmpty()) {
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                // Box 宽高比与图片一致 + ContentScale.Fit → fitScale 填满，offset 为零
+                val fitResult = mapImageBoxToCanvas(
+                    boxLeft = 0f, boxTop = 0f,
+                    canvasWidth = size.width, canvasHeight = size.height,
+                    imageWidth = imageWidth, imageHeight = imageHeight,
+                )
+                val sx = fitResult.scaleX
+                val sy = fitResult.scaleY
+                val ox = fitResult.offsetX
+                val oy = fitResult.offsetY
+                val strokeWidth = 2.dp.toPx()
+                val labelPaddingH = 3.dp.toPx()
+                val labelPaddingV = 1.dp.toPx()
+
+                detections.forEachIndexed { index, det ->
+                    val box = det.imageBox
+                    val color = classColors.getOrElse(det.classIndex % classColors.size) { Color.Cyan }
+
+                    val left = ox + (box.left * sx).toFloat()
+                    val top = oy + (box.top * sy).toFloat()
+                    val right = ox + (box.right * sx).toFloat()
+                    val bottom = oy + (box.bottom * sy).toFloat()
+                    val w = right - left
+                    val h = bottom - top
+
+                    if (w > 0f && h > 0f) {
+                        // 检测框
+                        drawRect(
+                            color = color,
+                            topLeft = Offset(left, top),
+                            size = Size(w, h),
+                            style = Stroke(width = strokeWidth),
+                        )
+
+                        // 类别 + 置信度标签
+                        val labelResult = textMeasurer.measure(
+                            text = labelTexts[index],
+                            style = labelStyle,
+                        )
+                        val labelW = labelResult.size.width + labelPaddingH * 2
+                        val labelH = labelResult.size.height + labelPaddingV * 2
+                        // 标签放在框上方；如果上方空间不足则放在框内顶部
+                        val labelTop = if (top >= labelH) {
+                            top - labelH
+                        } else {
+                            top
+                        }
+
+                        // 标签背景
+                        drawRect(
+                            color = color.copy(alpha = 0.85f),
+                            topLeft = Offset(left, labelTop),
+                            size = Size(minOf(labelW, w), labelH),
+                        )
+                        // 标签文字
+                        drawText(
+                            textLayoutResult = labelResult,
+                            topLeft = Offset(left + labelPaddingH, labelTop + labelPaddingV),
+                            color = Color.White,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * ContentScale.Fit 坐标映射结果。
+ */
+internal data class FitMappingResult(
+    val scaleX: Double,
+    val scaleY: Double,
+    val offsetX: Float,
+    val offsetY: Float,
+)
+
+/**
+ * 将 imageBox 像素坐标映射到 Canvas 显示坐标，遵循 ContentScale.Fit 语义。
+ *
+ * ContentScale.Fit: 等比缩放使图片完整放入容器，居中放置。
+ * - fitScale = min(canvasW / imageW, canvasH / imageH)
+ * - displayedW = imageW * fitScale
+ * - displayedH = imageH * fitScale
+ * - offsetX = (canvasW - displayedW) / 2
+ * - offsetY = (canvasH - displayedH) / 2
+ *
+ * 当容器宽高比与图片一致时，offsetX/offsetY 为零。
+ *
+ * @param boxLeft 容器左上角 x（通常 0）
+ * @param boxTop  容器左上角 y（通常 0）
+ * @param canvasWidth  容器宽度（px）
+ * @param canvasHeight 容器高度（px）
+ * @param imageWidth   图片宽度（upright px）
+ * @param imageHeight  图片高度（upright px）
+ */
+internal fun mapImageBoxToCanvas(
+    boxLeft: Float,
+    boxTop: Float,
+    canvasWidth: Float,
+    canvasHeight: Float,
+    imageWidth: Int,
+    imageHeight: Int,
+): FitMappingResult {
+    if (imageWidth <= 0 || imageHeight <= 0 || canvasWidth <= 0f || canvasHeight <= 0f) {
+        return FitMappingResult(1.0, 1.0, boxLeft, boxTop)
+    }
+    val iw = imageWidth.toDouble()
+    val ih = imageHeight.toDouble()
+    val cw = canvasWidth.toDouble()
+    val ch = canvasHeight.toDouble()
+    val fitScale = min(cw / iw, ch / ih)
+    val displayedW = iw * fitScale
+    val displayedH = ih * fitScale
+    val offsetX = boxLeft + ((cw - displayedW) / 2.0).toFloat()
+    val offsetY = boxTop + ((ch - displayedH) / 2.0).toFloat()
+    return FitMappingResult(
+        scaleX = fitScale,
+        scaleY = fitScale,
+        offsetX = offsetX,
+        offsetY = offsetY,
+    )
 }
 
 internal fun inferenceStatusLabel(status: NanoDetInferenceStatus): String = when (status) {

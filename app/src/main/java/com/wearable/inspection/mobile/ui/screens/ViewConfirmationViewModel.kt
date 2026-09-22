@@ -42,7 +42,8 @@ class ViewConfirmationViewModel(
     private val repository: InspectionRepository,
     private val batchId: String,
     private val photoId: Long,
-    private val photoPath: String,
+    /** 现场照片文件路径（供 UI 加载照片和检测框叠加） */
+    val photoPath: String,
     private val viewIndex: Int,
     private val templateId: String,
     private val templateName: String,

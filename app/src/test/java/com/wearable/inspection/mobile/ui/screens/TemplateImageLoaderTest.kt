@@ -246,6 +246,44 @@ class TemplateImageLoaderTest {
         assertSuccess(result)
     }
 
+    // ── templateId 参数 ──
+
+    @Test
+    fun `loadTemplateBitmap with templateId returns Success`() = runBlocking {
+        val imageFile = createValidTestImage("with_tid.png")
+        val result = loadTemplateBitmap(imageFile.absolutePath, templateId = "tpl_abc123")
+        assertSuccess(result)
+    }
+
+    @Test
+    fun `loadTemplateBitmap with null templateId returns Success`() = runBlocking {
+        val imageFile = createValidTestImage("null_tid.png")
+        val result = loadTemplateBitmap(imageFile.absolutePath, templateId = null)
+        assertSuccess(result)
+    }
+
+    @Test
+    fun `loadTemplateBitmapInternal with templateId and CancellationException propagates`(): Unit = runBlocking {
+        val imageFile = createValidTestImage("cancel_tid.png")
+        var result: TemplateLoadResult? = null
+        try {
+            coroutineScope {
+                result = loadTemplateBitmapInternal(
+                    imageSource = imageFile.absolutePath,
+                    maxTargetSize = 2048,
+                    decodeFn = { _, _ -> throw CancellationException("test cancel with tid") },
+                    templateId = "tpl_xyz"
+                )
+            }
+        } catch (e: CancellationException) {
+            // 预期
+        }
+        assertNull(
+            "CancellationException must propagate even with templateId. Got: $result",
+            result
+        )
+    }
+
     // ── 路径分类 ──
 
     @Test
@@ -270,6 +308,177 @@ class TemplateImageLoaderTest {
         val imageFile = createValidTestImage("large.png")
         val result = loadTemplateBitmap(imageFile.absolutePath, maxTargetSize = 50)
         assertSuccess(result)
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // 结构化日志断言（logEntries capture）
+    // ═══════════════════════════════════════════════════════════════════
+
+    @Test
+    fun `null path logs empty_path with templateId stage scheme source`() = runBlocking {
+        val log = mutableListOf<TemplateLogEntry>()
+        loadTemplateBitmap(null, templateId = "tpl_log_null", logEntries = log)
+        assertLogEntry(log, stage = "empty_path", scheme = "PLAIN", templateId = "tpl_log_null", source = "<blank>")
+    }
+
+    @Test
+    fun `blank path logs empty_path with templateId stage scheme source`() = runBlocking {
+        val log = mutableListOf<TemplateLogEntry>()
+        loadTemplateBitmap("   ", templateId = "tpl_log_blank", logEntries = log)
+        assertLogEntry(log, stage = "empty_path", scheme = "PLAIN", templateId = "tpl_log_blank", source = "<blank>")
+    }
+
+    @Test
+    fun `non-existent file logs file_not_found with templateId stage scheme source`() = runBlocking {
+        val log = mutableListOf<TemplateLogEntry>()
+        loadTemplateBitmap("/nonexistent/path.png", templateId = "tpl_log_404", logEntries = log)
+        assertLogEntry(log, stage = "file_not_found", scheme = "PLAIN", templateId = "tpl_log_404")
+    }
+
+    @Test
+    fun `file URI to non-existent file logs file_not_found with FILE_URI scheme`() = runBlocking {
+        val log = mutableListOf<TemplateLogEntry>()
+        loadTemplateBitmap("file:///nonexistent/path.png", templateId = "tpl_log_furi", logEntries = log)
+        assertLogEntry(log, stage = "file_not_found", scheme = "FILE_URI", templateId = "tpl_log_furi")
+    }
+
+    @Test
+    fun `empty file logs file_empty with templateId stage scheme source`() = runBlocking {
+        val emptyFile = File(tempDir, "empty_log.png")
+        emptyFile.createNewFile()
+        val log = mutableListOf<TemplateLogEntry>()
+        loadTemplateBitmap(emptyFile.absolutePath, templateId = "tpl_log_empty", logEntries = log)
+        assertLogEntry(log, stage = "file_empty", scheme = "PLAIN", templateId = "tpl_log_empty")
+    }
+
+    @Test
+    fun `content URI without resolver logs no_resolver with templateId stage scheme source`() = runBlocking {
+        val log = mutableListOf<TemplateLogEntry>()
+        loadTemplateBitmap("content://com.example/img/1", templateId = "tpl_log_nores", logEntries = log)
+        assertLogEntry(log, stage = "no_resolver", scheme = "CONTENT", templateId = "tpl_log_nores")
+    }
+
+    @Test
+    fun `source has invalid_path log call with structured fields`() {
+        // Robolectric 的 Uri.parse("file://").path 返回空串而非 null，
+        // invalid_path 分支（resolveFilePath 返回 null）在 Robolectric 中不可达。
+        // 此处验证源码中存在 invalid_path 的 logError 调用及路径解析逻辑。
+        val source = File("src/main/java/com/wearable/inspection/mobile/ui/screens/TemplateImageLoader.kt").readText()
+        assertTrue("应有 invalid_path 阶段的日志调用", source.contains("logError(\"invalid_path\""))
+        assertTrue("invalid_path 应在 resolveFilePath 返回 null 后触发", source.contains("resolveFilePath(imageSource, scheme)"))
+    }
+
+    @Test
+    fun `source has invalid_dimensions log call with structured fields`() {
+        // Robolectric shadow BitmapFactory 对任意字节都返回有效 outWidth/outHeight，
+        // invalid_dimensions 分支在 Robolectric 中不可达。
+        // 此处验证源码中存在 invalid_dimensions 的 logError 调用及字段结构。
+        val source = File("src/main/java/com/wearable/inspection/mobile/ui/screens/TemplateImageLoader.kt").readText()
+        assertTrue("应有 invalid_dimensions 阶段的日志调用", source.contains("logError(\"invalid_dimensions\""))
+        assertTrue("invalid_dimensions 应在 width/height 校验后触发", source.contains("width <= 0 || height <= 0"))
+    }
+
+    @Test
+    fun `decode_null logs decode_null with templateId stage scheme source`() = runBlocking {
+        val imageFile = createValidTestImage("decode_null_log.png")
+        val log = mutableListOf<TemplateLogEntry>()
+        loadTemplateBitmapInternal(
+            imageSource = imageFile.absolutePath,
+            maxTargetSize = 2048,
+            decodeFn = { _, _ -> null },
+            templateId = "tpl_log_dnull",
+            logEntries = log,
+        )
+        assertLogEntry(log, stage = "decode_null", scheme = "PLAIN", templateId = "tpl_log_dnull")
+    }
+
+    @Test
+    fun `bounds exception logs bounds with templateId stage scheme source and exception`() = runBlocking {
+        // bounds 阶段：content:// + mock resolver 第一次 openInputStream 抛 IOException。
+        // mock 的 stub 优先于 Robolectric shadow，因此可以可靠触发 bounds 阶段异常。
+        val pngBytes = createValidPngBytes()
+        val callCount = java.util.concurrent.atomic.AtomicInteger(0)
+        val mockResolver = org.mockito.Mockito.mock(ContentResolver::class.java)
+        org.mockito.Mockito.`when`(mockResolver.openInputStream(org.mockito.ArgumentMatchers.any(Uri::class.java)))
+            .thenAnswer {
+                val n = callCount.incrementAndGet()
+                if (n == 1) throw java.io.IOException("simulated bounds open failure")
+                ByteArrayInputStream(pngBytes)
+            }
+        val log = mutableListOf<TemplateLogEntry>()
+        val result = loadTemplateBitmap(
+            "content://com.example.provider/templates/bounds_ex",
+            contentResolver = mockResolver,
+            templateId = "tpl_bounds_ex",
+            logEntries = log,
+        )
+        assertFailure(result, "模板图片打开失败")
+        assertLogEntry(log, stage = "bounds", scheme = "CONTENT", templateId = "tpl_bounds_ex", expectException = true)
+    }
+
+    @Test
+    fun `bounds stage log format is consistent - verified via decode stage`() = runBlocking {
+        // 验证 logError 函数对不同 stage 生成格式一致的日志。
+        // bounds 阶段和 decode 阶段使用同一个 logError 函数，格式相同。
+        // 此测试通过 decode 阶段的异常日志间接验证 bounds 格式。
+        val boom = java.io.IOException("bounds-equivalent stream error")
+        val imageFile = createValidTestImage("bounds_format.png")
+        val log = mutableListOf<TemplateLogEntry>()
+        loadTemplateBitmapInternal(
+            imageSource = imageFile.absolutePath,
+            maxTargetSize = 2048,
+            decodeFn = { _, _ -> throw boom },
+            templateId = "tpl_bounds_fmt",
+            logEntries = log,
+        )
+        // decode 阶段日志格式 = bounds 阶段日志格式（同一 logError 函数）
+        assertLogEntry(log, stage = "decode", scheme = "PLAIN", templateId = "tpl_bounds_fmt", expectException = true, expectedCause = boom)
+        // 验证日志消息包含所有必填字段
+        val entry = log.first { it.message.contains("stage=decode") }
+        assertTrue("must contain templateId", entry.message.contains("templateId=tpl_bounds_fmt"))
+        assertTrue("must contain scheme", entry.message.contains("scheme=PLAIN"))
+        assertTrue("must contain source", entry.message.contains("source="))
+    }
+
+    @Test
+    fun `decode exception logs decode with templateId stage scheme source and exception`() = runBlocking {
+        val imageFile = createValidTestImage("decode_ex_log.png")
+        val boom = RuntimeException("decode exploded")
+        val log = mutableListOf<TemplateLogEntry>()
+        loadTemplateBitmapInternal(
+            imageSource = imageFile.absolutePath,
+            maxTargetSize = 2048,
+            decodeFn = { _, _ -> throw boom },
+            templateId = "tpl_log_decode",
+            logEntries = log,
+        )
+        assertLogEntry(log, stage = "decode", scheme = "PLAIN", templateId = "tpl_log_decode", expectException = true, expectedCause = boom)
+    }
+
+    @Test
+    fun `CancellationException propagates and does not produce log entries as Failure`(): Unit = runBlocking {
+        val imageFile = createValidTestImage("cancel_log.png")
+        val log = mutableListOf<TemplateLogEntry>()
+        var result: TemplateLoadResult? = null
+        try {
+            coroutineScope {
+                result = loadTemplateBitmapInternal(
+                    imageSource = imageFile.absolutePath,
+                    maxTargetSize = 2048,
+                    decodeFn = { _, _ -> throw CancellationException("test cancel") },
+                    templateId = "tpl_log_cancel",
+                    logEntries = log,
+                )
+            }
+        } catch (_: CancellationException) {
+            // expected
+        }
+        assertNull("CancellationException must propagate, not return Failure", result)
+        // CancellationException 被 re-throw，不走 logError → 不应有 decode 阶段的 error 日志
+        assertTrue(
+            "CancellationException should not produce a decode failure log entry",
+            log.none { it.message.contains("stage=decode") }
+        )
     }
 
     // ── 辅助方法 ──
@@ -326,5 +535,46 @@ class TemplateImageLoaderTest {
                 ByteArrayInputStream(pngBytes)
             }
         return resolver
+    }
+
+    /**
+     * 断言 [log] 中至少有一条包含所有必填字段的日志条目：
+     * templateId、stage、scheme、source。
+     * 当 [expectException] 为 true 时，还验证 throwable 不为 null；
+     * 当 [expectedCause] 非 null 时，验证原始异常信息出现在日志中。
+     */
+    private fun assertLogEntry(
+        log: List<TemplateLogEntry>,
+        stage: String,
+        scheme: String,
+        templateId: String,
+        source: String? = null,
+        expectException: Boolean = false,
+        expectedCause: Throwable? = null,
+    ) {
+        val match = log.find { entry ->
+            entry.message.contains("stage=$stage") &&
+                entry.message.contains("scheme=$scheme") &&
+                entry.message.contains("templateId=$templateId") &&
+                (source == null || entry.message.contains("source=$source"))
+        }
+        assertNotNull(
+            "Expected log entry with stage=$stage, scheme=$scheme, templateId=$templateId" +
+                (source?.let { ", source=$it" } ?: "") +
+                " but got: ${log.map { it.message }}",
+            match
+        )
+        if (expectException) {
+            assertNotNull(
+                "Log entry for stage=$stage should carry a non-null throwable",
+                match!!.throwable
+            )
+        }
+        if (expectedCause != null) {
+            assertTrue(
+                "Log entry throwable should contain original message '${expectedCause.message}'",
+                match!!.throwable?.message?.contains(expectedCause.message!!) == true
+            )
+        }
     }
 }
