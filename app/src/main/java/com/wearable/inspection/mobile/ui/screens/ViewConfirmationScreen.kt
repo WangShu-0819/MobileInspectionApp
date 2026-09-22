@@ -68,12 +68,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.wearable.inspection.mobile.data.entity.RoiDefinitionEntity
 import com.wearable.inspection.mobile.data.entity.RoiTargetType
+import com.wearable.inspection.mobile.detection.FullImageInferResult
 import com.wearable.inspection.mobile.detection.NanoDetDetection
 import com.wearable.inspection.mobile.detection.NanoDetInferenceStatus
 import com.wearable.inspection.mobile.detection.NanoDetModelContract
 import com.wearable.inspection.mobile.detection.NanoDetRoiInferenceResult
 import com.wearable.inspection.mobile.ui.theme.BackgroundVariant1
-import androidx.compose.material3.HorizontalDivider
 import com.wearable.inspection.mobile.ui.theme.DividerColor
 import com.wearable.inspection.mobile.ui.theme.FailColor
 import com.wearable.inspection.mobile.ui.theme.PassColor
@@ -224,146 +224,14 @@ fun ViewConfirmationScreen(
                 }
             }
             viewModel.isFullImageMode -> {
-                // 整图确认模式：显示检测框叠加 + 检测摘要
-                val fullResult = viewModel.fullImageInferResult
-                val photoPath = viewModel.photoPath
-                val context = LocalContext.current
-
-                // 加载现场照片 Bitmap（EXIF-aware upright，与 NanoDet imageBox 坐标空间一致）
-                var photoBitmap by remember(photoPath) { mutableStateOf<Bitmap?>(null) }
-                var photoLoadError by remember(photoPath) { mutableStateOf<String?>(null) }
-                LaunchedEffect(photoPath) {
-                    if (photoPath != null) {
-                        val bitmap = withContext(Dispatchers.IO) {
-                            RoiCoordinateMapper.loadUprightBitmap(photoPath, maxTargetSize = 2048)
-                        }
-                        if (bitmap != null) {
-                            photoBitmap = bitmap
-                            photoLoadError = null
-                        } else {
-                            photoBitmap = null
-                            photoLoadError = "照片加载失败"
-                        }
-                    }
-                }
-
-                // 业务阈值过滤：只显示 score >= threshold 的检测框和标签
-                // 有限且在 0..1 时使用原值；NaN、无穷、负数或 >1 时回退到 STARTING_BUSINESS_THRESHOLD
-                val rawThreshold = fullResult?.threshold
-                val threshold = if (rawThreshold != null && rawThreshold.isFinite() && rawThreshold in 0f..1f) {
-                    rawThreshold
-                } else {
-                    NanoDetModelContract.STARTING_BUSINESS_THRESHOLD
-                }
-                val allDetections = fullResult?.detections ?: emptyList()
-                val displayDetections = allDetections.filter { it.score >= threshold }
-
-                LazyColumn(
+                FullImageConfirmContent(
+                    fullResult = viewModel.fullImageInferResult,
+                    photoPath = viewModel.photoPath,
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues)
                         .padding(horizontal = 12.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 8.dp)
-                ) {
-                    // 检测框叠加图片（只绘制达到阈值的检测框）
-                    item {
-                        FullImageDetectionOverlay(
-                            photoBitmap = photoBitmap,
-                            photoLoadError = photoLoadError,
-                            detections = displayDetections,
-                            imageWidth = fullResult?.imageWidth ?: 0,
-                            imageHeight = fullResult?.imageHeight ?: 0,
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                    }
-
-                    // 检测摘要卡片
-                    item {
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-                            shape = RoundedCornerShape(8.dp),
-                        ) {
-                            Column(
-                                modifier = Modifier.fillMaxWidth().padding(12.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp),
-                            ) {
-                                Text(
-                                    text = "整图检测模式",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = TextPrimary,
-                                )
-                                Text(
-                                    text = "配准不可靠，已对整张照片运行 NanoDet 检测。请根据检测结果人工判定。",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = TextSecondary,
-                                )
-                                HorizontalDivider()
-                                if (fullResult != null) {
-                                    val rawCount = allDetections.size
-                                    val displayedCount = displayDetections.size
-                                    val hiddenCount = rawCount - displayedCount
-                                    Text(
-                                        text = "原始检出：$rawCount 个 | 显示：$displayedCount 个（阈值 ≥ ${"%.0f".format(threshold * 100)}%）| 隐藏：$hiddenCount 个",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = TextPrimary,
-                                    )
-                                    val displayHighestScore = displayDetections.maxOfOrNull { it.score }
-                                    if (displayHighestScore != null) {
-                                        Text(
-                                            text = "最高置信度：${"%.1f".format(displayHighestScore * 100)}%",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = TextPrimary,
-                                        )
-                                    }
-                                    Text(
-                                        text = "推理耗时：${fullResult.elapsedMs} ms",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = TextSecondary,
-                                    )
-                                    if (displayDetections.isNotEmpty()) {
-                                        Text(
-                                            text = "检测详情：",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            fontWeight = FontWeight.SemiBold,
-                                            color = TextPrimary,
-                                        )
-                                        displayDetections.take(20).forEachIndexed { index, det ->
-                                            Text(
-                                                text = "  ${index + 1}. ${det.className} — ${"%.1f".format(det.score * 100)}%",
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = TextSecondary,
-                                            )
-                                        }
-                                        if (displayDetections.size > 20) {
-                                            Text(
-                                                text = "  … 共 ${displayDetections.size} 个检出",
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = TextSecondary,
-                                            )
-                                        }
-                                    }
-                                    if (fullResult.status == NanoDetInferenceStatus.INFERENCE_ERROR) {
-                                        Text(
-                                            text = "推理异常：${fullResult.detail ?: "未知错误"}",
-                                            color = FailColor,
-                                            style = MaterialTheme.typography.bodySmall,
-                                        )
-                                    }
-                                } else {
-                                    Text(
-                                        text = "整图检测结果不可用",
-                                        color = FailColor,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
+                )
             }
             else -> {
                 // ROI 列表（可滚动）；Scaffold 的 bottomBar 会为底部操作栏预留空间。
@@ -516,6 +384,105 @@ internal fun RoiConfirmCard(
                     testTag = "human-result-${roi.id}-NG",
                     onClick = { onSelect("NG") }
                 )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * 整图确认模式内容：检测框叠加 + 检测摘要卡片。
+ *
+ * 从 [ViewConfirmationScreen] 的 isFullImageMode 分支提取，便于独立测试。
+ *
+ * @param fullResult 整图推理结果；null 时显示"整图检测结果不可用"
+ * @param photoPath 现场照片路径；null 时跳过照片加载
+ * @param modifier 外层修饰符（由调用方传入 padding 等）
+ */
+@Composable
+internal fun FullImageConfirmContent(
+    fullResult: FullImageInferResult?,
+    photoPath: String?,
+    modifier: Modifier = Modifier,
+) {
+    // 加载现场照片 Bitmap（EXIF-aware upright，与 NanoDet imageBox 坐标空间一致）
+    var photoBitmap by remember(photoPath) { mutableStateOf<Bitmap?>(null) }
+    var photoLoadError by remember(photoPath) { mutableStateOf<String?>(null) }
+    LaunchedEffect(photoPath) {
+        if (photoPath != null) {
+            val bitmap = withContext(Dispatchers.IO) {
+                RoiCoordinateMapper.loadUprightBitmap(photoPath, maxTargetSize = 2048)
+            }
+            if (bitmap != null) {
+                photoBitmap = bitmap
+                photoLoadError = null
+            } else {
+                photoBitmap = null
+                photoLoadError = "照片加载失败"
+            }
+        }
+    }
+
+    // 业务阈值过滤：只显示 score >= threshold 的检测框和标签
+    // 有限且在 0..1 时使用原值；NaN、无穷、负数或 >1 时回退到 STARTING_BUSINESS_THRESHOLD
+    val rawThreshold = fullResult?.threshold
+    val threshold = if (rawThreshold != null && rawThreshold.isFinite() && rawThreshold in 0f..1f) {
+        rawThreshold
+    } else {
+        NanoDetModelContract.STARTING_BUSINESS_THRESHOLD
+    }
+    val allDetections = fullResult?.detections ?: emptyList()
+    val displayDetections = allDetections.filter { it.score >= threshold }
+
+    LazyColumn(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 8.dp)
+    ) {
+        // 检测框叠加图片（只绘制达到阈值的检测框）
+        item {
+            FullImageDetectionOverlay(
+                photoBitmap = photoBitmap,
+                photoLoadError = photoLoadError,
+                detections = displayDetections,
+                imageWidth = fullResult?.imageWidth ?: 0,
+                imageHeight = fullResult?.imageHeight ?: 0,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+
+        // 检测摘要卡片
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                shape = RoundedCornerShape(8.dp),
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    if (fullResult != null) {
+                        Text(
+                            text = "整图检出：${displayDetections.size} 个 · 阈值 ${"%.0f".format(threshold * 100)}%",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = TextPrimary,
+                        )
+                        if (fullResult.status == NanoDetInferenceStatus.INFERENCE_ERROR) {
+                            Text(
+                                text = "推理异常：${fullResult.detail ?: "未知错误"}",
+                                color = FailColor,
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                        }
+                    } else {
+                        Text(
+                            text = "整图检测结果不可用",
+                            color = FailColor,
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
                 }
             }
         }
@@ -816,7 +783,7 @@ private fun ResultChip(
  * 固定显示：总体 OK/NG + 确认按钮
  */
 @Composable
-private fun BottomConfirmBar(
+internal fun BottomConfirmBar(
     overallResult: String?,
     onOverallSelect: (String) -> Unit,
     isAllConfirmed: Boolean,

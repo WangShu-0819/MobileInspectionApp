@@ -1,6 +1,143 @@
-# 当前唯一任务：整图检测置信度阈值与采集 ZIP/CSV 记录增强
+# 当前唯一任务：模板/整图确认界面精简与业务阈值调整
 
-状态：**SOFTWARE_AUDIT_PASSED / AWAITING_USER_AUTHORIZATION**（2026-09-22；上一阶段基线已由 `a66d8f5d` 和 `613ca2d1` 收口；本轮实现已通过复核但尚未提交）
+状态：**SOFTWARE_AUDIT_PASSED / BASELINE_COMMITTED**（2026-09-22；上一任务为 `480ab793`；本轮已按文件路径选择性提交，当前提交见 Git `HEAD`）
+
+## 本轮 handback v2 本地审计结论
+
+- 本地 XML：`app/build/test-results/testDebugUnitTest/TEST-*.xml` 汇总 **1238 tests / 0 failures / 0 errors / 5 skipped**；新增 `FullImageConfirmContentComposeTest=13/0/0/0`，`ViewConfirmationModelResultComposeTest=8/0/0/0`，`InspectionExcelExporterTest=20/0/0/0`，`ViewConfirmationModelResultTest=28/0/0/0`，`InspectionZipExportArchiveTest=3/0/0/0`。
+- 本地 HTML：`app/build/reports/tests/testDebugUnitTest/index.html` 首页为 **1238 tests / 0 failures**；最后写入 `2026-09-22 17:39:48`。
+- 本地 APK：`app/build/outputs/apk/debug/app-debug.apk`；最后写入 `2026-09-22 17:40:21`；`232975917` bytes；SHA-256 `3CF8B2B1E5A612098DF1B111D4A4DDCB9F0A67079661608601EE366A8A563138`。
+- 实际工作区为 19 个文件：3 个生产文件、13 个测试文件（含 2 个 `app/src/androidTest` 文件）和 3 个协调文档；其中新增 `FullImageConfirmContentComposeTest.kt` 仍未跟踪；无其他未跟踪文件；分支 `main...origin/main [ahead 24]`。
+- `ViewConfirmationScreen` 仅抽取 `FullImageConfirmContent` 和 `BottomConfirmBar` 为 `internal` 以便测试，整图过滤、upright/imageBox、原始 detections/JSON、人工确认和导航语义未改变。
+- 新测试直接渲染生产 `FullImageConfirmContent` 与 `BottomConfirmBar`，覆盖摘要、0.50 过滤、错误态、旧长文案消失、OK/NG 入口、点击回调和确认按钮；上一轮 UI 证据阻塞已解除。
+- Git 收口：已选择性提交本轮 19 个文件，当前提交见 Git `HEAD`；未使用 `git add .`，无未跟踪文件。
+
+结论：**SOFTWARE_AUDIT_PASSED / BASELINE_COMMITTED**。当前不需要新的 mimo 指令。
+
+## 本轮 handback v1 本地审计
+
+- 本地 XML：`app/build/test-results/testDebugUnitTest/TEST-*.xml` 汇总 **1225 tests / 0 failures / 0 errors / 5 skipped**；重点为 `InspectionExcelExporterTest=20/0/0/0`、`ViewConfirmationModelResultTest=28/0/0/0`、`InspectionZipExportArchiveTest=3/0/0/0`、`ViewConfirmationModelResultComposeTest=8/0/0/0`。
+- 本地 HTML：`app/build/reports/tests/testDebugUnitTest/index.html` 首页计数为 **1225 tests**；目录最后写入 `2026-09-22 17:19:58`。
+- 本地 APK：`app/build/outputs/apk/debug/app-debug.apk`；最后写入 `2026-09-22 17:21:29`；`232224821` bytes；SHA-256 `E0979C345A73FBEE16592DEB4ABFDE0D718147D52C8B495F66B050ABEB66EF8C`。
+- 实际工作区为 18 个已修改文件：3 个生产文件、12 个测试文件（含 2 个 `app/src/androidTest` 文件）和 3 个协调文档；无未跟踪文件；分支 `main...origin/main [ahead 24]`；`git diff --check` 仅有 LF→CRLF 警告。
+- 生产差异静态复核：业务阈值为 `0.50f`，候选阈值仍为 `0.05f`；模板对齐页保留比对控件；整图页保留 EXIF/upright 照片、`imageBox` overlay、人工 `BottomConfirmBar` 和原始 detections/JSON。
+- 阻塞原因：`ViewConfirmationModelResultTest` 的整图摘要测试只是复制生产字符串拼接逻辑；`ViewConfirmationModelResultComposeTest` 新增测试只渲染普通 `RoiConfirmCard`，没有实际渲染 `ViewConfirmationScreen` 的整图分支，也没有断言“整图检出：…·阈值 50%”。handback 还未逐项准确列出实际 18 个文件。
+
+在 mimo 补齐真实 UI 证据并重新回传前，不允许提交本轮代码和文档差异。
+
+## 下一条 mimo 最小指令
+
+```text
+请只做当前 handback 的最小验收补强，不要重新实现阈值或 UI。
+
+1. 为 ViewConfirmationScreen 的 isFullImageMode 分支增加真实 Compose/JVM UI 断言：实际渲染整图确认内容，断言出现“整图检出：… · 阈值 50%”、保留人工 OK/NG 确认入口，并断言旧长文案（整图检测模式、原始/显示/隐藏、最高置信度、推理耗时、检测详情）不出现。不要用复制生产字符串拼接逻辑的测试代替 UI 断言。
+2. 如果现有 ViewModel/Repository 初始化成本过高，可抽取最小无副作用的整图摘要/确认内容 Composable 供测试，但不得改变 full-image 的过滤、人工确认、原始 detections/JSON、Session ROI 或导航语义；不要删除生产断言或改成 skip。
+3. 保留当前业务阈值 0.50、CANDIDATE_THRESHOLD 0.05；不要修改 decoder、模型、registration、CameraX、DPM、OCR、数据库迁移、ZIP/CSV 语义。不要运行 ADB、instrumented、真机测试或 OCR。
+4. handback 必须准确列出全部实际修改文件；特别说明 AppDatabaseTest 的当前 fixture 改动和 NanoDetRoiRuntimeInstrumentedTest 的未运行状态。不要修改 tasks/todo.md、tasks/plan.md、docs/reports，不要 Git commit。
+
+只允许运行：
+./gradlew.bat :app:testDebugUnitTest --no-daemon --rerun-tasks --console=plain
+./gradlew.bat :app:compileDebugKotlin --no-daemon --rerun-tasks
+./gradlew.bat :app:assembleDebug --no-daemon
+
+handback 必须按本地 XML/HTML 实际统计，并提供全部修改文件、git diff --stat、git diff --check、Git 状态、重点 XML、APK 时间/大小/SHA-256。
+```
+
+## 新任务产品契约
+
+- 模板对齐页和整图确认页减少解释性长文案，视觉密度接近现有人工 ROI 确认卡片；保留必要的图片、检测框、状态、导航和人工 OK/NG 操作。
+- 新业务阈值统一为 `0.50`：普通 ROI `score >= 0.50` 时模型建议 OK，`score < 0.50` 时模型建议 NG。
+- `NanoDetModelContract.CANDIDATE_THRESHOLD = 0.05` 保持不变；不修改 decoder、模型、registration 或其他无关阈值。
+- 整图 fallback 仍不自动决定最终 OK/NG，`aggregatedSuggestion` 保持 `null`，最终结果继续由人工确认。
+- 新产生的确认结果记录业务阈值 `0.50`；已有历史记录中的 `softwareThreshold` 不回写、不迁移，导出继续尊重已保存阈值和 `threshold=null` 兼容语义。
+- 不新增数据库实体/迁移，不修改照片路径、ZIP entry、原始 detections、`softwareDetectionsJson`、Session ROI 或 projected ROI 语义。
+
+## 实施任务
+
+### Task 1：业务阈值切换到 0.50
+
+- [x] 将 `NanoDetModelContract.STARTING_BUSINESS_THRESHOLD` 从 `0.37f` 改为 `0.50f`；普通 ROI 的 OK/NG 边界严格采用 `>=`。
+- [x] 更新当前业务测试和新结果 fixture 到 0.50，补充 `<0.50`、`==0.50`、`>0.50` 边界测试；保留历史迁移/旧数据 fixture 的原值语义。
+- [x] 明确候选阈值仍为 `0.05f`，不得修改 NanoDet decoder、模型和推理流程。
+
+依赖：无。规模：S。
+
+### Task 2：模板对齐页文案精简
+
+- [x] 保留现场/模板/叠加、闪烁、透明度、缩放/平移/重置、ROI 绘制、返回和继续操作；只精简冗余文字，不删除比对能力。
+- [x] 顶部标题、配准状态和 fallback 提示改为短文案；移除重复的“拍后比对”、详细内部实现说明、长句错误解释和非必要手势说明。
+- [x] `readOnly`、SessionRoiRegistry 写入顺序、导航和 projected ROI 语义保持不变。
+
+依赖：无。规模：S。
+
+### Task 3：整图确认页文案精简
+
+- [x] 页面视觉结构和人工 ROI 确认卡片一致：保留现场照片/检测框、简短检测摘要和共享的人工 OK/NG 确认栏。
+- [x] 删除长段 NanoDet/配准解释、逐条重复检测详情、原始/显示/隐藏四段式解释和非必要推理技术信息；保留一行简短检出摘要及必要错误状态。
+- [x] 仍只显示 `score >= 0.50` 的框/标签/可见结果；原始 `FullImageInferResult.detections` 和 `softwareDetectionsJson` 完整保留。
+
+依赖：Task 1。规模：M。
+
+### Checkpoint：JVM、编译和 APK
+
+- [x] 全量 JVM：`:app:testDebugUnitTest --no-daemon --rerun-tasks --console=plain`。
+- [x] Kotlin 编译：`:app:compileDebugKotlin --no-daemon --rerun-tasks`。
+- [x] Debug APK：`:app:assembleDebug --no-daemon`。
+- [x] 核对 XML/HTML、APK 时间/大小/SHA-256、Git diff/status；不运行 ADB、instrumented、真机测试或 OCR，不提交 Git。
+
+## 当前 mimo 指令
+
+完整指令如下；主协调只提供指令，不主动联系 mimo。
+
+```text
+请在已提交基线 480ab793 之上，单独处理“模板对齐页/整图确认页文案精简 + 业务阈值切换到 0.50”。不要重做上一任务的 CSV/ZIP 过滤、EXIF/upright 检测框或 CaptureComparison 导航修正。
+
+产品契约：
+1. 新业务阈值为 0.50。将 NanoDetModelContract.STARTING_BUSINESS_THRESHOLD 从 0.37f 改为 0.50f；普通 ROI score >= 0.50 为模型建议 OK，score < 0.50 为模型建议 NG，边界严格使用 >=。
+2. NanoDetModelContract.CANDIDATE_THRESHOLD 保持 0.05f；不得修改 decoder、模型、registration 质量阈值或其他无关阈值。
+3. 整图 fallback 不自动决定最终 OK/NG，aggregatedSuggestion 继续为 null；最终整体结果仍由人工确认。
+4. 新结果记录软件业务阈值 0.50；不得回写或迁移旧记录中的 softwareThreshold。CSV/ZIP 继续尊重已保存阈值和 threshold=null 兼容语义。
+
+模板对齐页（CaptureComparisonScreen.kt）：
+5. 保留现场/模板/叠加切换、闪烁、透明度、缩放/平移/重置、Session ROI 纯绘制、返回和继续按钮。
+6. 只精简文字：顶部保留零件名和视角；去掉“拍后比对”等重复标题，配准状态改为短标签（如“配准成功”“配准失败”“图片不可用”），fallback 只保留“整图检测”短提示；删除长段内部实现说明和非必要“手势说明”。
+7. 不改变 readOnly 语义、SessionRoiRegistry 写入顺序、导航栈和 projected ROI 坐标语义。
+
+整图确认页（ViewConfirmationScreen.kt）：
+8. 保留现场照片、upright imageBox 检测框/标签和共享 BottomConfirmBar 的人工 OK/NG 操作，整体密度接近 RoiConfirmCard。
+9. 删除长段“配准不可靠/NanoDet/人工判定”解释、逐条重复检测详情、原始/显示/隐藏四段式技术摘要和非必要推理耗时信息；改为一行简短摘要（例如“整图检出：N 个 · 阈值 50%”或等价短文案），错误时保留一条短错误提示。
+10. 可见框/标签/摘要严格使用 score >= 0.50；FullImageInferResult.detections 和 softwareDetectionsJson 必须完整保留。
+
+测试要求：
+11. 更新当前业务测试/fixture 到 0.50，覆盖普通 ROI score<0.50、==0.50、>0.50；覆盖整图显示边界和原始 detections 保留；保留历史迁移/旧记录兼容测试的历史值。
+12. 增加或更新 Compose/JVM UI 测试：断言模板对齐页和整图页不再显示旧长文案，保留必要控制、检测框入口和人工 OK/NG；不要只用复制生产逻辑的测试替代 UI 断言。
+13. 用 rg 检查 0.37 引用，逐项判断是当前业务阈值、历史数据库 fixture 还是无关坐标/OCR/registration 数值；不得机械替换无关阈值。
+
+允许修改：
+- app/src/main/java/com/wearable/inspection/mobile/detection/NanoDetInferenceModels.kt（仅业务阈值常量）
+- app/src/main/java/com/wearable/inspection/mobile/ui/screens/CaptureComparisonScreen.kt
+- app/src/main/java/com/wearable/inspection/mobile/ui/screens/ViewConfirmationScreen.kt
+- 必要时对应 ViewModel 及当前业务测试/Compose 测试/导出测试
+
+禁止修改：
+- CANDIDATE_THRESHOLD、NanoDet decoder、模型文件、registration 质量阈值、CameraX、DPM、OCR
+- 数据库实体/迁移、照片路径、mainImagePath、SessionRoiRegistry、projected ROI 语义
+- ZIP entry 命名、CSV 字段语义、原始 detections/softwareDetectionsJson、人工 OK/NG 保存语义
+- tasks/todo.md、tasks/plan.md、docs/reports；禁止 Git commit
+
+只允许运行：
+./gradlew.bat :app:testDebugUnitTest --no-daemon --rerun-tasks --console=plain
+./gradlew.bat :app:compileDebugKotlin --no-daemon --rerun-tasks
+./gradlew.bat :app:assembleDebug --no-daemon
+
+禁止 ADB、instrumented、真机测试和 OCR。handback 必须按本地 XML/HTML 实际统计，提供修改文件、git diff --stat、git diff --check、git status --short --branch、重点阈值/UI XML、APK 时间/大小/SHA-256，并明确未运行禁止命令、未提交 Git。
+```
+
+---
+
+## 已完成任务：整图检测置信度阈值与采集 ZIP/CSV 记录增强
+
+状态：**SOFTWARE_AUDIT_PASSED / COMMITTED**（2026-09-22；提交 `480ab793`；本节仅保留历史证据）
 
 ## 最新 handback 审计结论（2026-09-22）
 

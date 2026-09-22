@@ -285,7 +285,7 @@ class AppDatabaseTest {
             overallConfirmTime = 1001,
             softwareTargetClass = "THREAD",
             softwareScore = 0.91f,
-            softwareThreshold = 0.37f,
+            softwareThreshold = 0.50f,
             softwareDetectionsJson = "[{\"className\":\"thread\"}]",
             softwareStatus = "DETECTED",
             softwareModelVersion = "nanodet-opt2",

@@ -33,24 +33,24 @@ class NanoDetInferenceContractTest {
     fun `score exactly at business threshold suggests OK`() {
         val decision = NanoDetDecisionPolicy.decide(
             RoiTargetType.NUT,
-            listOf(candidate(classIndex = 0, score = 0.37f)),
-            threshold = 0.37f
+            listOf(candidate(classIndex = 0, score = 0.50f)),
+            threshold = 0.50f
         )
         assertEquals(NanoDetInferenceStatus.DETECTED, decision.status)
         assertEquals(NanoDetSuggestion.OK, decision.suggestion)
-        assertEquals(0.37f, decision.matchingScore)
+        assertEquals(0.50f, decision.matchingScore)
     }
 
     @Test
     fun `matching candidate below threshold suggests NG and preserves its score`() {
         val decision = NanoDetDecisionPolicy.decide(
             RoiTargetType.THREAD,
-            listOf(candidate(classIndex = 1, score = 0.369f)),
-            threshold = 0.37f
+            listOf(candidate(classIndex = 1, score = 0.49f)),
+            threshold = 0.50f
         )
         assertEquals(NanoDetInferenceStatus.DETECTED_BELOW_THRESHOLD, decision.status)
         assertEquals(NanoDetSuggestion.NG, decision.suggestion)
-        assertEquals(0.369f, decision.matchingScore)
+        assertEquals(0.49f, decision.matchingScore)
     }
 
     @Test
@@ -72,7 +72,7 @@ class NanoDetInferenceContractTest {
                 candidate(classIndex = 0, score = 0.95f),
                 candidate(classIndex = 2, score = 0.80f)
             ),
-            threshold = 0.37f
+            threshold = 0.50f
         )
         assertEquals(NanoDetInferenceStatus.DETECTED, decision.status)
         assertEquals(NanoDetSuggestion.OK, decision.suggestion)
@@ -88,7 +88,7 @@ class NanoDetInferenceContractTest {
                 candidate(classIndex = 0, score = 0.95f),
                 candidate(classIndex = 3, score = 0.30f)
             ),
-            threshold = 0.37f
+            threshold = 0.50f
         )
         assertEquals(NanoDetInferenceStatus.DETECTED_BELOW_THRESHOLD, decision.status)
         assertEquals(NanoDetSuggestion.NG, decision.suggestion)

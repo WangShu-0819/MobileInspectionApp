@@ -124,7 +124,7 @@ fun CaptureComparisonScreen(
                 title = {
                     Column {
                         Text(partName, color = TextPrimary, fontWeight = FontWeight.SemiBold)
-                        Text("拍后比对 · 视角 ${currentViewIndex + 1}/$totalViews", color = TextSecondary, style = MaterialTheme.typography.bodySmall)
+                        Text("视角 ${currentViewIndex + 1}/$totalViews", color = TextSecondary, style = MaterialTheme.typography.bodySmall)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = SurfaceWhite),
@@ -174,7 +174,7 @@ fun CaptureComparisonScreen(
             RegistrationSummary(result = result, errorMessage = viewModel.errorMessage)
             if (viewModel.isLoaded && viewModel.isFullImageFallback && viewModel.canProceed) {
                 Text(
-                    text = "配准不可靠，将使用整图检测模式",
+                    text = "整图检测",
                     color = FailColor,
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.fillMaxWidth(),
@@ -230,7 +230,6 @@ private fun ComparisonToolbar(
             )
             Text("${(overlayAlpha * 100).toInt()}%", color = TextSecondary, style = MaterialTheme.typography.labelSmall)
         }
-        Text("双指缩放/平移", color = TextSecondary, style = MaterialTheme.typography.labelSmall)
     }
 }
 
@@ -249,8 +248,8 @@ private fun RegistrationSummary(
 ) {
     val text = when {
         result == null && errorMessage == null -> "未执行配准"
-        result?.isSuccess == true -> "静态配准成功：已自动投影 Session ROI"
-        result != null -> "静态配准未通过：${result.failureReason ?: "未知原因"}；当前不伪造对齐结果"
+        result?.isSuccess == true -> "配准成功"
+        result != null -> "配准失败：${result.failureReason ?: "未知原因"}"
         else -> errorMessage ?: "图片不可用"
     }
     Text(

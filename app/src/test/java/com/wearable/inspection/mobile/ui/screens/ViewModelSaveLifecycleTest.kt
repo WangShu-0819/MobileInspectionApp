@@ -289,7 +289,7 @@ class ViewModelSaveLifecycleTest {
             infResults1["roi-thread"] = NanoDetRoiInferenceResult(
                 roiId = "roi-thread", status = NanoDetInferenceStatus.DETECTED,
                 modelSuggestion = NanoDetSuggestion.OK, matchingScore = 0.91f,
-                targetClassIndex = 1, threshold = 0.37f
+                targetClassIndex = 1, threshold = 0.50f
             )
 
             vm.saveConfirmation()
@@ -351,12 +351,12 @@ class ViewModelSaveLifecycleTest {
             infResults["roi-thread"] = NanoDetRoiInferenceResult(
                 roiId = "roi-thread", status = NanoDetInferenceStatus.DETECTED,
                 modelSuggestion = NanoDetSuggestion.OK, matchingScore = 0.91f,
-                targetClassIndex = 1, threshold = 0.37f
+                targetClassIndex = 1, threshold = 0.50f
             )
             infResults["roi-feature"] = NanoDetRoiInferenceResult(
                 roiId = "roi-feature", status = NanoDetInferenceStatus.FEATURE_UNSUPPORTED,
                 modelSuggestion = null, matchingScore = null,
-                targetClassIndex = null, threshold = 0.37f
+                targetClassIndex = null, threshold = 0.50f
             )
 
             vm.saveConfirmation()
@@ -487,7 +487,7 @@ class ViewModelSaveLifecycleTest {
             infResults["roi-thread"] = NanoDetRoiInferenceResult(
                 roiId = "roi-thread", status = NanoDetInferenceStatus.DETECTED,
                 modelSuggestion = NanoDetSuggestion.OK, matchingScore = 0.91f,
-                targetClassIndex = 1, threshold = 0.37f
+                targetClassIndex = 1, threshold = 0.50f
             )
 
             // 注入 ROI 裁剪图（真实 Bitmap），使 saveRoiEvidence 能被 ViewModel 调用

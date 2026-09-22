@@ -196,7 +196,7 @@ class InspectionZipExportArchiveTest {
             softwareResult = software, humanResult = human, confirmTime = 1000,
             overallResult = overall, overallConfirmTime = 1001,
             softwareTargetClass = software?.let { roi.targetType },
-            softwareScore = software?.let { score }, softwareThreshold = software?.let { 0.37f },
+            softwareScore = software?.let { score }, softwareThreshold = software?.let { 0.50f },
             softwareDetectionsJson = detectionsJson,
             softwareStatus = softwareStatus, softwareModelVersion = "nanodet-test", softwareModelSummary = "{\"candidateThreshold\":0.05}",
             softwareElapsedMs = software?.let { 12 }, humanChangedModel = software != null && software != human,

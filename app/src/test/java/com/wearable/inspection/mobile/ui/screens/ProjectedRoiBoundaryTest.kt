@@ -220,12 +220,16 @@ class ProjectedRoiBoundaryTest {
     // ───────────────────────────────────────────────
 
     @Test
-    fun `RegistrationSummary shows projected text not adjustable text`() {
+    fun `RegistrationSummary shows concise success text not verbose text`() {
         val source = File("src/main/java/com/wearable/inspection/mobile/ui/screens/CaptureComparisonScreen.kt")
             .readText()
         assertTrue(
+            source.contains("\"配准成功\""),
+            "RegistrationSummary should say '配准成功' for success",
+        )
+        assertFalse(
             source.contains("已自动投影 Session ROI"),
-            "RegistrationSummary should say '已自动投影' for success",
+            "RegistrationSummary should NOT contain old verbose '已自动投影' text",
         )
         assertFalse(
             source.contains("可调整 Session ROI"),

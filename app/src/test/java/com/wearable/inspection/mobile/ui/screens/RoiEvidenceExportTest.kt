@@ -70,7 +70,7 @@ class RoiEvidenceExportTest {
         softwareResult = software, humanResult = human, confirmTime = 1000,
         overallResult = overall, overallConfirmTime = 1001,
         softwareTargetClass = software?.let { roi.targetType },
-        softwareScore = software?.let { 0.85f }, softwareThreshold = software?.let { 0.37f },
+        softwareScore = software?.let { 0.85f }, softwareThreshold = software?.let { 0.50f },
         softwareDetectionsJson = null, softwareStatus = "DETECTED",
         softwareModelVersion = "nanodet-test", softwareModelSummary = """{"candidateThreshold":0.05}""",
         softwareElapsedMs = software?.let { 12 },

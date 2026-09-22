@@ -54,7 +54,7 @@ class NanoDetRoiRuntimeInstrumentedTest {
                 assertEquals("[1,3,416,416]", result.inputShape)
                 assertEquals("out0", result.outputBlob)
                 assertEquals("[0,0,${result.imageWidth},${result.imageHeight}]", result.roiBounds.toString().replace(" ", ""))
-                assertEquals(0.37f, result.threshold)
+                assertEquals(0.50f, result.threshold)
                 assertEquals(0.05f, result.candidateThreshold)
                 val expectedTotalCount = CLASS_NAMES.sumOf { expected.getJSONArray(it).length() }
                 assertEquals(expectedTotalCount, result.detections.size)
@@ -121,7 +121,7 @@ class NanoDetRoiRuntimeInstrumentedTest {
                 val bestThreadScore = (0 until expectedThread.length())
                     .map { expectedThread.getJSONObject(it).getDouble("score") }
                     .maxOrNull()
-                val expectedSuggestion = if (bestThreadScore != null && bestThreadScore >= 0.37) {
+                val expectedSuggestion = if (bestThreadScore != null && bestThreadScore >= 0.50) {
                     NanoDetSuggestion.OK
                 } else {
                     NanoDetSuggestion.NG

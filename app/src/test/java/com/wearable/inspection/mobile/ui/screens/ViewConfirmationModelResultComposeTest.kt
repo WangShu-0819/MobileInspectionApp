@@ -60,7 +60,7 @@ class ViewConfirmationModelResultComposeTest {
             modelSuggestion = NanoDetSuggestion.OK,
             matchingScore = 0.89f,
             targetClassIndex = 1,
-            threshold = 0.37f,
+            threshold = 0.50f,
             roiBounds = listOf(0, 0, 100, 100),
             detections = listOf(
                 NanoDetDetection(
@@ -126,7 +126,7 @@ class ViewConfirmationModelResultComposeTest {
             modelSuggestion = NanoDetSuggestion.NG,
             matchingScore = 0.2f,
             targetClassIndex = 1,
-            threshold = 0.37f
+            threshold = 0.50f
         )
         // selectedResult="NG" 模拟 ViewModel applyDefaultSelections 传入模型默认值
         composeRule.setContent {
@@ -149,7 +149,7 @@ class ViewConfirmationModelResultComposeTest {
             modelSuggestion = NanoDetSuggestion.NG,
             matchingScore = null,
             targetClassIndex = 1,
-            threshold = 0.37f
+            threshold = 0.50f
         )
         composeRule.setContent {
             MaterialTheme { RoiConfirmCard(threadRoi, null, result, "NG") {} }
@@ -175,7 +175,7 @@ class ViewConfirmationModelResultComposeTest {
             modelSuggestion = null,
             matchingScore = null,
             targetClassIndex = null,
-            threshold = 0.37f
+            threshold = 0.50f
         )
         // selectedResult=null 模拟 ViewModel 不对 FEATURE 设置默认选中
         composeRule.setContent {
@@ -225,7 +225,7 @@ class ViewConfirmationModelResultComposeTest {
             modelSuggestion = NanoDetSuggestion.OK,
             matchingScore = 0.89f,
             targetClassIndex = 1,
-            threshold = 0.37f
+            threshold = 0.50f
         )
         // selectedResult="NG" 模拟 ViewModel restoreManualSelections 传入已保存值
         composeRule.setContent {
@@ -237,5 +237,64 @@ class ViewConfirmationModelResultComposeTest {
         // 已保存 NG 优先于模型 OK
         ok.assertIsNotSelected()
         ng.assertIsSelected()
+    }
+
+    // --- 文案精简验证：旧长文案不再出现 ---
+
+    @Test
+    fun roiCardDoesNotShowOldVerboseModelDetails() {
+        val result = NanoDetRoiInferenceResult(
+            roiId = threadRoi.id,
+            status = NanoDetInferenceStatus.DETECTED,
+            modelSuggestion = NanoDetSuggestion.OK,
+            matchingScore = 0.89f,
+            targetClassIndex = 1,
+            threshold = 0.50f,
+            roiBounds = listOf(0, 0, 100, 100),
+            detections = listOf(
+                NanoDetDetection(
+                    classIndex = 1, className = "thread", score = 0.89f, point = 10,
+                    roiBox = NanoDetBox(4.0, 5.0, 50.0, 60.0),
+                    imageBox = NanoDetBox(4.0, 5.0, 50.0, 60.0)
+                )
+            )
+        )
+        val bitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888)
+        composeRule.setContent {
+            MaterialTheme {
+                RoiConfirmCard(threadRoi, bitmap, result, "OK") {}
+            }
+        }
+
+        // 旧长文案不应出现
+        composeRule.onNodeWithText("检测状态：已检出，达到模型阈值").assertDoesNotExist()
+        composeRule.onNodeWithText("最高匹配分数：").assertDoesNotExist()
+        composeRule.onNodeWithText("阈值起始值").assertDoesNotExist()
+        composeRule.onNodeWithText("检测框").assertDoesNotExist()
+        composeRule.onNodeWithText("目标类别").assertDoesNotExist()
+        composeRule.onNodeWithText("模型建议").assertDoesNotExist()
+        composeRule.onNodeWithText("模型版本").assertDoesNotExist()
+        composeRule.onNodeWithText("ID: roi-compose").assertDoesNotExist()
+    }
+
+    @Test
+    fun roiCardDoesNotShowOldVerboseUnsupportedText() {
+        val result = NanoDetRoiInferenceResult(
+            roiId = featureRoi.id,
+            status = NanoDetInferenceStatus.FEATURE_UNSUPPORTED,
+            modelSuggestion = null,
+            matchingScore = null,
+            targetClassIndex = null,
+            threshold = 0.50f
+        )
+        composeRule.setContent {
+            MaterialTheme { RoiConfirmCard(featureRoi, null, result, null) {} }
+        }
+
+        // 旧长文案不应出现
+        composeRule.onNodeWithText("检测状态：部件类别暂不支持").assertDoesNotExist()
+        composeRule.onNodeWithText("目标类别").assertDoesNotExist()
+        composeRule.onNodeWithText("最高匹配分数").assertDoesNotExist()
+        composeRule.onNodeWithText("阈值起始值").assertDoesNotExist()
     }
 }

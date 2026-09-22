@@ -1,10 +1,52 @@
 # V4 RegistrationResult → NanoDet 检测集成和结果包：主协调审计
 
 日期：2026-09-22
-状态：**SOFTWARE_AUDIT_PASSED / AWAITING_USER_ACCEPTANCE**（最终证据修正已复核）
-范围：只读审计 handback、源码差异、JVM XML/HTML 和 APK 现场；未运行 ADB、instrumented 或真机。V4 基线提交为 `a690fa15`，当前模板加载和自动导航修正仍未提交。
+状态：**SOFTWARE_AUDIT_PASSED / BASELINE_COMMITTED**（2026-09-22 新任务 handback v2 的整图 UI 验收证据已补齐；本轮提交见 Git `HEAD`）
+范围：只读审计 handback、源码差异、JVM XML/HTML 和 APK 现场；未运行 ADB、instrumented 或真机。本轮基线提交见 Git `HEAD`，上一阶段基线为 `480ab793`。
 
 > 说明：本报告前面的 handback 章节按时间顺序保留，仅用于追溯；当前有效结论以文末“最终证据修正审计”为准。
+
+## 2026-09-22 新任务 handback v2：整图 UI 验收证据补齐
+
+### 本地实际证据
+
+- XML：`app/build/test-results/testDebugUnitTest/TEST-*.xml` 汇总 **1238 tests / 0 failures / 0 errors / 5 skipped**；`FullImageConfirmContentComposeTest=13/0/0/0`、`ViewConfirmationModelResultComposeTest=8/0/0/0`、`InspectionExcelExporterTest=20/0/0/0`、`ViewConfirmationModelResultTest=28/0/0/0`、`InspectionZipExportArchiveTest=3/0/0/0`。
+- HTML：`app/build/reports/tests/testDebugUnitTest/index.html` 首页计数 **1238 tests / 0 failures**，最后写入 `2026-09-22 17:39:48`。
+- APK：`app/build/outputs/apk/debug/app-debug.apk`；时间 `2026-09-22 17:40:21`；`232975917` bytes；SHA-256 `3CF8B2B1E5A612098DF1B111D4A4DDCB9F0A67079661608601EE366A8A563138`。
+- Git：`main...origin/main [ahead 24]`；3 个生产文件、13 个测试文件、3 个协调文档已修改；`app/src/test/java/com/wearable/inspection/mobile/ui/screens/FullImageConfirmContentComposeTest.kt` 为新增未跟踪文件；无其他未跟踪文件；`git diff --check` 仅有 LF→CRLF 警告。
+
+### 复核通过项
+
+- `ViewConfirmationScreen` 的 `isFullImageMode` 分支仅改为调用抽取后的 `FullImageConfirmContent`；`FullImageConfirmContent` 和 `BottomConfirmBar` 改为 `internal`，便于测试，未改变整图过滤、照片加载、overlay、人工确认或导航逻辑。
+- 新增 `FullImageConfirmContentComposeTest` 直接渲染生产 composable，13 项测试覆盖摘要阈值 50%、低分过滤、全低分/全高分、错误态、结果不可用、旧长文案和旧 37% 文案；另覆盖 `BottomConfirmBar` 的 OK/NG 入口、回调、确认按钮和错误提示。
+- `STARTING_BUSINESS_THRESHOLD=0.50f`、`CANDIDATE_THRESHOLD=0.05f` 保持产品契约；未发现 decoder、模型、registration、CameraX、DPM、OCR、数据库迁移或 ZIP/CSV 语义改动。
+- Git 收口：已按文件路径选择性提交本轮 19 个文件，当前提交见 Git `HEAD`；未使用 `git add .`，无未跟踪文件。
+
+结论：**SOFTWARE_AUDIT_PASSED / BASELINE_COMMITTED**。当前不需要新的 mimo 指令。未运行 ADB、instrumented、真机测试或 OCR。
+
+## 2026-09-22 新任务 handback v1：模板/整图确认界面精简与阈值 0.50
+
+### 本地实际证据
+
+- XML：`app/build/test-results/testDebugUnitTest/TEST-*.xml` 汇总 **1225 tests / 0 failures / 0 errors / 5 skipped**；`InspectionExcelExporterTest=20/0/0/0`、`ViewConfirmationModelResultTest=28/0/0/0`、`InspectionZipExportArchiveTest=3/0/0/0`、`ViewConfirmationModelResultComposeTest=8/0/0/0`。
+- HTML：`app/build/reports/tests/testDebugUnitTest/index.html` 首页计数 **1225 tests**，目录最后写入 `2026-09-22 17:19:58`。
+- APK：`app/build/outputs/apk/debug/app-debug.apk`；时间 `2026-09-22 17:21:29`；`232224821` bytes；SHA-256 `E0979C345A73FBEE16592DEB4ABFDE0D718147D52C8B495F66B050ABEB66EF8C`。
+- Git：`main...origin/main [ahead 24]`；18 个已修改文件（3 个生产文件、12 个测试文件、3 个协调文档）；无未跟踪文件；`git diff --check` 仅 LF→CRLF 警告。
+
+### 已复核通过
+
+- `NanoDetModelContract.STARTING_BUSINESS_THRESHOLD` 已为 `0.50f`，`CANDIDATE_THRESHOLD` 仍为 `0.05f`；普通 ROI 的 `>=` 判定语义未见改变。
+- `CaptureComparisonScreen` 仅精简标题、配准状态、fallback 和手势说明；现场/模板/叠加、透明度、缩放/平移/重置、ROI 绘制、返回/继续能力仍在。
+- `ViewConfirmationScreen` 整图分支保留现场 upright 照片、`imageBox` overlay、人工 `BottomConfirmBar`，可见 detection 仍按 `score >= threshold` 过滤，原始 detections/JSON 未改写。
+- 未发现生产代码对 decoder、模型、registration 质量门禁、CameraX、DPM、OCR、数据库迁移或 ZIP/CSV 语义的改动。
+
+### 阻塞原因
+
+- `ViewConfirmationModelResultTest` 的新增整图摘要测试只是复制生产代码拼接摘要字符串，并未渲染 UI。
+- `ViewConfirmationModelResultComposeTest` 的新增测试实际渲染的是普通 `RoiConfirmCard`，不是 `ViewConfirmationScreen` 的 `isFullImageMode` 分支；没有断言“整图检出：… · 阈值 50%”在界面中出现，也没有在实际整图页面断言旧长文案消失。
+- handback 未逐项列出实际 18 个修改文件；本地还发现 `app/src/androidTest/.../AppDatabaseTest.kt` 和 `NanoDetRoiRuntimeInstrumentedTest.kt` 两个变更，虽未运行 instrumented，但必须在 handback 中准确说明。
+
+结论：**SOFTWARE_AUDIT_BLOCKED / AWAITING_MIMO_CORRECTION**。当前不允许提交；下一轮只要求补齐真实整图 UI Compose/JVM 断言、准确回传文件清单和同等本地证据。主协调不主动联系 mimo。
 
 ## 第一版 handback 复核（16:51 APK）
 
@@ -481,3 +523,12 @@ CaptureComparison 隐藏自动导航和模板图片加载实现已基本符合�
 - 未发现禁止范围改动；未运行 ADB、instrumented、真机测试或 OCR；未提交 Git。
 
 结论：**SOFTWARE_AUDIT_PASSED / AWAITING_USER_AUTHORIZATION**。当前允许用户明确授权后按文件路径选择性提交；当前不需要新的 mimo 指令。
+
+## 2026-09-22 新任务方案：模板/整图确认界面精简与业务阈值调整
+
+- 上一任务已由 `480ab793` 提交；本轮尚未修改生产代码，当前只记录新的用户需求和 mimo 指令。
+- 用户要求模板对齐页减少冗余说明，保留比对能力但使标题、配准状态和 fallback 提示简短清晰。
+- 用户要求整图确认页接近人工 ROI 确认卡片的简洁度，保留现场照片、检测框和人工 OK/NG，删除长段解释、逐条重复详情和非必要技术摘要。
+- 新业务阈值确定为 `0.50`：普通 ROI `score >= 0.50` 为模型建议 OK，`score < 0.50` 为模型建议 NG；候选阈值 `0.05` 不变。
+- 整图 fallback 仍不自动判定最终 OK/NG，继续由人工确认；历史数据阈值不回写、不迁移。
+- 完整可复制的 mimo 修改指令已写入 `tasks/todo.md` 和 `tasks/plan.md`；mimo 不得修改协调文档或提交 Git。

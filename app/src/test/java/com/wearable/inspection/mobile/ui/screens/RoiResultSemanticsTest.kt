@@ -37,19 +37,19 @@ class RoiResultSemanticsTest {
     private fun modelOk() = NanoDetRoiInferenceResult(
         roiId = "roi-t1", status = NanoDetInferenceStatus.DETECTED,
         modelSuggestion = NanoDetSuggestion.OK, matchingScore = 0.91f,
-        targetClassIndex = 1, threshold = 0.37f
+        targetClassIndex = 1, threshold = 0.50f
     )
 
     private fun modelNg() = NanoDetRoiInferenceResult(
         roiId = "roi-t1", status = NanoDetInferenceStatus.NO_DETECTION,
         modelSuggestion = NanoDetSuggestion.NG, matchingScore = null,
-        targetClassIndex = 1, threshold = 0.37f
+        targetClassIndex = 1, threshold = 0.50f
     )
 
     private fun featureUnsupported() = NanoDetRoiInferenceResult(
         roiId = "roi-f1", status = NanoDetInferenceStatus.FEATURE_UNSUPPORTED,
         modelSuggestion = null, matchingScore = null,
-        targetClassIndex = null, threshold = 0.37f
+        targetClassIndex = null, threshold = 0.50f
     )
 
     // --- Entity 新字段默认值 ---

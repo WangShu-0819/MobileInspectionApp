@@ -50,19 +50,19 @@ class ViewConfirmationViewModelStateTest {
     private fun modelOk(roiId: String = "roi-thread") = NanoDetRoiInferenceResult(
         roiId = roiId, status = NanoDetInferenceStatus.DETECTED,
         modelSuggestion = NanoDetSuggestion.OK, matchingScore = 0.91f,
-        targetClassIndex = 1, threshold = 0.37f
+        targetClassIndex = 1, threshold = 0.50f
     )
 
     private fun modelNg(roiId: String = "roi-thread") = NanoDetRoiInferenceResult(
         roiId = roiId, status = NanoDetInferenceStatus.NO_DETECTION,
         modelSuggestion = NanoDetSuggestion.NG, matchingScore = null,
-        targetClassIndex = 1, threshold = 0.37f
+        targetClassIndex = 1, threshold = 0.50f
     )
 
     private fun featureUnsupported() = NanoDetRoiInferenceResult(
         roiId = "roi-feature", status = NanoDetInferenceStatus.FEATURE_UNSUPPORTED,
         modelSuggestion = null, matchingScore = null,
-        targetClassIndex = null, threshold = 0.37f
+        targetClassIndex = null, threshold = 0.50f
     )
 
     /**
@@ -129,7 +129,7 @@ class ViewConfirmationViewModelStateTest {
         val noSuggestion = NanoDetRoiInferenceResult(
             roiId = "roi-thread", status = NanoDetInferenceStatus.INFERENCE_ERROR,
             modelSuggestion = null, matchingScore = null,
-            targetClassIndex = null, threshold = 0.37f
+            targetClassIndex = null, threshold = 0.50f
         )
         val inferenceResults = mapOf("roi-thread" to noSuggestion)
         applyDefaultSelections(listOf(threadRoi), roiResults, inferenceResults)
@@ -202,7 +202,7 @@ class ViewConfirmationViewModelStateTest {
         val boltResult = NanoDetRoiInferenceResult(
             roiId = "roi-bolt", status = NanoDetInferenceStatus.DETECTED,
             modelSuggestion = NanoDetSuggestion.OK, matchingScore = 0.85f,
-            targetClassIndex = 2, threshold = 0.37f
+            targetClassIndex = 2, threshold = 0.50f
         )
         val roiResults = mutableMapOf<String, String>()
         val inferenceResults = mapOf("roi-bolt" to boltResult)
@@ -215,7 +215,7 @@ class ViewConfirmationViewModelStateTest {
         val nutsertResult = NanoDetRoiInferenceResult(
             roiId = "roi-nutsert", status = NanoDetInferenceStatus.NO_DETECTION,
             modelSuggestion = NanoDetSuggestion.NG, matchingScore = null,
-            targetClassIndex = 3, threshold = 0.37f
+            targetClassIndex = 3, threshold = 0.50f
         )
         val roiResults = mutableMapOf<String, String>()
         val inferenceResults = mapOf("roi-nutsert" to nutsertResult)
@@ -228,7 +228,7 @@ class ViewConfirmationViewModelStateTest {
         val boltResult = NanoDetRoiInferenceResult(
             roiId = "roi-bolt", status = NanoDetInferenceStatus.DETECTED,
             modelSuggestion = NanoDetSuggestion.OK, matchingScore = 0.85f,
-            targetClassIndex = 2, threshold = 0.37f
+            targetClassIndex = 2, threshold = 0.50f
         )
         val entity = buildViewRoiConfirmEntity(
             batchId = "b1", photoId = 1, photoPath = "/p.jpg", viewIndex = 0,
@@ -245,7 +245,7 @@ class ViewConfirmationViewModelStateTest {
         val nutsertResult = NanoDetRoiInferenceResult(
             roiId = "roi-nutsert", status = NanoDetInferenceStatus.DETECTED,
             modelSuggestion = NanoDetSuggestion.OK, matchingScore = 0.77f,
-            targetClassIndex = 3, threshold = 0.37f
+            targetClassIndex = 3, threshold = 0.50f
         )
         val entity = buildViewRoiConfirmEntity(
             batchId = "b1", photoId = 1, photoPath = "/p.jpg", viewIndex = 0,

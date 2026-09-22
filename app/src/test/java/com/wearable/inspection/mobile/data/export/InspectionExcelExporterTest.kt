@@ -261,7 +261,7 @@ class InspectionExcelExporterTest {
     private fun createFullImageRoiRow(
         batchId: String = "batch-fi",
         detectionsJson: String,
-        threshold: Float = 0.37f,
+        threshold: Float = 0.50f,
     ): InspectionRoiExportRow {
         val photo = CapturedPhotoEntity(
             photoId = 100, batchId = batchId,
@@ -293,9 +293,9 @@ class InspectionExcelExporterTest {
 
     @Test
     fun `__FULL_IMAGE__ CSV only includes detections above threshold`() {
-        val detectionsJson = """[{"classIndex":1,"className":"thread","score":0.89,"roiBox":{"left":1},"imageBox":{"left":2}},{"classIndex":0,"className":"nut","score":0.20,"roiBox":{"left":3},"imageBox":{"left":4}},{"classIndex":2,"className":"bolt","score":0.45,"roiBox":{"left":5},"imageBox":{"left":6}}]"""
+        val detectionsJson = """[{"classIndex":1,"className":"thread","score":0.89,"roiBox":{"left":1},"imageBox":{"left":2}},{"classIndex":0,"className":"nut","score":0.20,"roiBox":{"left":3},"imageBox":{"left":4}},{"classIndex":2,"className":"bolt","score":0.55,"roiBox":{"left":5},"imageBox":{"left":6}}]"""
         val photoRows = listOf(createFullImagePhotoRow())
-        val roiRows = listOf(createFullImageRoiRow(detectionsJson = detectionsJson, threshold = 0.37f))
+        val roiRows = listOf(createFullImageRoiRow(detectionsJson = detectionsJson, threshold = 0.50f))
         val os = ByteArrayOutputStream()
 
         InspectionExcelExporter.exportUnifiedToStream(
@@ -308,7 +308,7 @@ class InspectionExcelExporterTest {
         val lines = csv.removePrefix("﻿").trimEnd().lines()
         val dataLines = lines.drop(1) // skip header
 
-        // 检测行：score=0.89 和 score=0.45 均 >=0.37，应保留；score=0.20 <0.37，应过滤
+        // 检测行：score=0.89 和 score=0.55 均 >=0.50，应保留；score=0.20 <0.50，应过滤
         val detectionLines = dataLines.filter { line ->
             val fields = parseCsvLine(line)
             fields.size > 34 && fields[0] == "ROI" && fields[32].isNotBlank()
@@ -320,7 +320,7 @@ class InspectionExcelExporterTest {
             parseCsvLine(line)[34].toDouble()
         }
         assertTrue("0.89 应保留", scores.any { kotlin.math.abs(it - 0.89) < 0.01 })
-        assertTrue("0.45 应保留", scores.any { kotlin.math.abs(it - 0.45) < 0.01 })
+        assertTrue("0.55 应保留", scores.any { kotlin.math.abs(it - 0.55) < 0.01 })
         assertFalse("0.20 不应出现", scores.any { kotlin.math.abs(it - 0.20) < 0.01 })
     }
 
@@ -328,7 +328,7 @@ class InspectionExcelExporterTest {
     fun `__FULL_IMAGE__ CSV with all detections below threshold writes single empty-detection row`() {
         val detectionsJson = """[{"classIndex":0,"className":"nut","score":0.10,"roiBox":{"left":1},"imageBox":{"left":2}},{"classIndex":1,"className":"thread","score":0.30,"roiBox":{"left":3},"imageBox":{"left":4}}]"""
         val photoRows = listOf(createFullImagePhotoRow())
-        val roiRows = listOf(createFullImageRoiRow(detectionsJson = detectionsJson, threshold = 0.37f))
+        val roiRows = listOf(createFullImageRoiRow(detectionsJson = detectionsJson, threshold = 0.50f))
         val os = ByteArrayOutputStream()
 
         InspectionExcelExporter.exportUnifiedToStream(
@@ -426,7 +426,7 @@ class InspectionExcelExporterTest {
             softwareResult = "OK", humanResult = "OK",
             confirmTime = 1693824001000L,
             overallResult = "OK", overallConfirmTime = 1693824001000L,
-            softwareThreshold = 0.37f,
+            softwareThreshold = 0.50f,
             softwareDetectionsJson = detectionsJson,
             softwareStatus = "DETECTED",
         )
