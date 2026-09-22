@@ -1,6 +1,6 @@
 # 当前唯一任务：V4 RegistrationResult → NanoDet 检测集成和结果包
 
-状态：**SOFTWARE_COMPLETE / AWAITING_USER_ACCEPTANCE**（2026-09-22；投影快照、拍照后手调入口、结果坐标回退和测试夹具均已收口，未提交 Git）
+状态：**SOFTWARE_COMPLETE / AWAITING_USER_ACCEPTANCE**（2026-09-22；投影快照、拍照后手调入口、结果坐标回退和测试夹具均已收口，已提交 `a690fa15`，等待最终用户验收）
 
 ## 当前审计结论
 
@@ -16,7 +16,7 @@
 - [x] 整图 `aggregatedSuggestion` 保持 null；确认页要求人工总体 OK/NG，不伪造模型 OK/NG。
 - [x] 确认记录继续使用 `ViewRoiConfirmEntity`；`__FULL_IMAGE__` 仅作为已知 synthetic ROI 进入现有 ZIP/CSV 行，未知 ROI 不导出并记录 warning。
 - [x] 目标回归套件：`V4NanoDetIntegrationTest=54`、`SessionRoiRegistryTest=9`、`ProjectedRoiBoundaryTest=6`、`InspectionZipExportServiceTest=17`、`ViewModelSaveLifecycleTest=4`、`CaptureComparisonGeometryTest=21`，本地 XML 均 0 failures / 0 errors。
-- [x] 未运行 ADB、instrumented 或真机测试；软件状态完成，等待用户验收决定和明确 Git 提交授权。
+- [x] 未运行 ADB、instrumented 或真机测试；软件状态完成，Git 已选择性提交为 `a690fa15`，等待最终用户验收。
 
 详细审计见 [`docs/reports/b3/V4_REGISTRATION_NANODET_INTEGRATION_AUDIT_20260921.md`](../docs/reports/b3/V4_REGISTRATION_NANODET_INTEGRATION_AUDIT_20260921.md)。
 

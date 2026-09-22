@@ -2,7 +2,7 @@
 
 日期：2026-09-21
 状态：**SOFTWARE_COMPLETE / AWAITING_USER_ACCEPTANCE**（2026-09-22 最新 handback 复核后）
-范围：只读审计 handback 及工作区差异；未运行 ADB、instrumented 或真机；未提交 Git。
+范围：只读审计 handback 及工作区差异；未运行 ADB、instrumented 或真机；当前 V4 代码已选择性提交。
 
 ## 第一版 handback 复核（16:51 APK）
 
@@ -95,7 +95,7 @@
 - `./gradlew.bat :app:compileDebugKotlin --no-daemon --rerun-tasks`：`BUILD SUCCESSFUL`。
 - `./gradlew.bat :app:assembleDebug --no-daemon`：`BUILD SUCCESSFUL`。
 - APK：`app/build/outputs/apk/debug/app-debug.apk`；2026-09-21 18:08:08 +08:00；232888143 bytes；SHA-256 `0668688DEDA908BB86EF83B3B6228BDA055A67D319DBFC9C90D6CC5C358F2838`。
-- 未运行 ADB、instrumented 或真机测试；未提交 Git。
+- 未运行 ADB、instrumented 或真机测试；当前 V4 代码已选择性提交为 `a690fa15`。
 
 ### 收口与限制
 
@@ -124,7 +124,7 @@
 
 - 当前本地 `app/build/test-results/testDebugUnitTest/*.xml` 和 `app/build/reports/tests/testDebugUnitTest/index.html` 汇总为 `1109 tests / 0 failures / 0 errors / 5 skipped`，不是 handback 声称的 `1114 tests`；5 个 skipped 仍全部来自 `DpmScannerTest` 外部样本或目录缺失。
 - 目标 XML 实际包含：`V4NanoDetIntegrationTest=54`、`SessionRoiRegistryTest=9`、`InspectionZipExportServiceTest=17`、`ViewModelSaveLifecycleTest=4`、`CaptureComparisonGeometryTest=21`，均为 0 failures / 0 errors。
-- 本轮主协调未重新执行 Gradle；未运行 ADB、instrumented 或真机测试；未提交 Git。`compileDebugKotlin` 和 `assembleDebug` 仅记录为 handback 报告结果，APK 由主协调现场复核。
+- 本轮主协调未重新执行 Gradle；未运行 ADB、instrumented 或真机测试；当前 V4 代码已选择性提交为 `a690fa15`。`compileDebugKotlin` 和 `assembleDebug` 仅记录为 handback 报告结果，APK 由主协调现场复核。
 
 ### 当前仍未收口的阻塞
 
@@ -150,7 +150,7 @@
 - `ViewModelSaveLifecycleTest=4/4`，`ProjectedRoiBoundaryTest=6/6`；此前两个保存生命周期失败已通过测试夹具补充 `photoGeometry` 和 `projectedPixelRects` 注入后消除。该注入是针对 Robolectric 无法从真实文件路径解码 Bitmap 的测试环境适配，不改变生产逻辑。
 - 5 个 skipped 均为 `DpmScannerTest` 外部 DPM 样本或目录缺失：`frame960Decodes`、`capturedF26Decodes`、`batchDecodeCache20260820`、`userSpecifiedFrameDecodes`、`probeRootDumpCandidatesF23ToF37`。
 - 最新 handback 报告 `compileDebugKotlin` 成功；当前 APK 现场为 `app/build/outputs/apk/debug/app-debug.apk`，2026-09-22 10:25:42 +08:00，232208437 bytes，SHA-256 `C99F87FD8F26139DB2F97EFB6443D9D7461A82374C1D0381F7B408F0B24EF5A9`。最新改动仅涉及测试夹具，未改变生产 APK 内容。
-- 未运行 ADB、instrumented 或真机测试；未提交 Git。
+- 未运行 ADB、instrumented 或真机测试；当前 V4 代码已选择性提交为 `a690fa15`。
 
 ### 最终软件结论
 
@@ -158,4 +158,4 @@
 - 模板对齐失败、状态不一致、registry 缺失或 projected ROI 不完整：进入整图 NanoDet；确认页显示整图检测摘要，不显示逐 ROI 卡片；`aggregatedSuggestion` 保持 null，由人工确认总体 OK/NG；结果包使用唯一 `__FULL_IMAGE__` synthetic ROI。
 - 手动 ROI 操作只存在于模板 ROI 编辑阶段，不参与拍照后比对、NanoDet 或结果包。
 
-当前任务状态：**SOFTWARE_COMPLETE / AWAITING_USER_ACCEPTANCE**。无新的 Agent 代码指令；下一步只等待用户验收决定，以及用户明确授权后由主协调选择性提交当前任务相关 Git 文件。
+当前任务状态：**SOFTWARE_COMPLETE / AWAITING_USER_ACCEPTANCE**。V4 代码已选择性提交为 `a690fa15`；无新的 Agent 代码指令，下一步只等待最终用户验收。

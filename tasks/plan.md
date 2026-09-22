@@ -14,7 +14,7 @@
 - 结果包坐标已收口：`saveRoiConfirms()` 使用 `projectedPixelRects`；缺失时 fail-closed，不回退模板 `normalizedRect`。
 - 整图结果不生成 `aggregatedSuggestion`；人工总体结果继续由现有确认实体保存。导出器仅对已知 `__FULL_IMAGE__` synthetic ID 构造虚拟定义，未知 ID 跳过并告警。
 - 主协调已完成源码审计、全量 JVM XML/HTML 和 Debug APK 现场复核；最新 handback 报告 `compileDebugKotlin` 成功；未运行 ADB、instrumented 或真机。
-- 2026-09-22 复核实际工作区为 16 个已修改文件、6 个未跟踪文件（含本审计报告和 ProjectedRoiBoundaryTest）；APK 现场为 `C99F87FD8F26139DB2F97EFB6443D9D7461A82374C1D0381F7B408F0B24EF5A9`，最新测试夹具修改不改变生产 APK 内容。
+- 2026-09-22 复核实际工作区为 16 个已修改文件、6 个未跟踪文件（含本审计报告和 ProjectedRoiBoundaryTest）；APK 现场为 `C99F87FD8F26139DB2F97EFB6443D9D7461A82374C1D0381F7B408F0B24EF5A9`，最新测试夹具修改不改变生产 APK 内容；当前任务已选择性提交为 `a690fa15`。
 
 ### 本轮实际收口
 
@@ -22,13 +22,13 @@
 2. 已完成 ViewModel fail-closed：成功只接受 projected Session ROI；其余路径只调用整图推理，禁止模板 ROI 检测。
 3. 已完成整图摘要与人工总体确认语义，整图模型建议保持空值。
 4. 已复用 `ViewRoiConfirmEntity` 和既有导出行模型；`__FULL_IMAGE__` 进入 ZIP/CSV，未知 synthetic/旧 ROI 不被静默导出；成功 ROI 像素坐标与 projected ROI 同源。
-5. 已通过全量 `testDebugUnitTest`：1115 tests / 0 failures / 0 errors / 5 skipped；目标边界回归和保存生命周期回归均通过。当前等待用户验收和明确 Git 提交授权。
+5. 已通过全量 `testDebugUnitTest`：1115 tests / 0 failures / 0 errors / 5 skipped；目标边界回归和保存生命周期回归均通过。Git 已提交为 `a690fa15`，当前等待最终用户验收。
 
-禁止新增模型、decoder、阈值、类别协议、实体、CameraX、DPM、OCR、实时配准或自动跟踪；本轮不提交 Git。
+禁止新增模型、decoder、阈值、类别协议、实体、CameraX、DPM、OCR、实时配准或自动跟踪；本轮 Git 已按当前任务范围提交。
 
 ### 后续未完成项（仅在用户明确要求时启动）
 
-- V4 → NanoDet 软件闭环已完成；下一步仅等待用户验收和 Git 提交授权；未授权前不运行 ADB、instrumented 或真机测试。
+- V4 → NanoDet 软件闭环已完成；下一步仅等待最终用户验收；不运行 ADB、instrumented 或真机测试，除非用户另行明确授权。
 - DPM 绑定码切件人工验收已由用户确认完成，不再作为待办任务。
 - legacy ROI 迁移、`imageFiles[]` 多图处理、模板 EXIF 方向补证：后续独立任务。
 - 更大独立数据集上的 NanoDet 阈值和现场鲁棒性验证：交付后的增强验证，不阻塞当前版本交付。
@@ -37,7 +37,7 @@
 
 ### 当前 Agent 状态
 
-当前无新的代码修正指令。软件边界和 JVM 回归已经收口；只等待用户验收决定，以及用户明确授权后由主协调选择性暂存和提交当前任务相关文件。
+当前无新的代码修正指令。软件边界、JVM 回归和 Git 收口已经完成，提交为 `a690fa15`；只等待最终用户验收。
 
 详细证据见 [`docs/reports/b3/V4_REGISTRATION_NANODET_INTEGRATION_AUDIT_20260921.md`](../docs/reports/b3/V4_REGISTRATION_NANODET_INTEGRATION_AUDIT_20260921.md)。
 
