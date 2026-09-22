@@ -171,9 +171,9 @@ fun CaptureComparisonScreen(
             }
 
             RegistrationSummary(result = result, errorMessage = viewModel.errorMessage)
-            if (viewModel.isLoaded && !viewModel.canProceed) {
+            if (viewModel.isLoaded && viewModel.isFullImageFallback && viewModel.canProceed) {
                 Text(
-                    text = "配准失败，需整图检测或重新拍摄",
+                    text = "配准不可靠，将使用整图检测模式",
                     color = FailColor,
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.fillMaxWidth(),
@@ -189,7 +189,7 @@ fun CaptureComparisonScreen(
                     enabled = viewModel.canProceed,
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(containerColor = Primary),
-                ) { Text("进入人工确认") }
+                ) { Text(if (viewModel.isFullImageFallback) "整图检测确认" else "进入人工确认") }
             }
         }
     }
@@ -229,7 +229,7 @@ private fun ComparisonToolbar(
             )
             Text("${(overlayAlpha * 100).toInt()}%", color = TextSecondary, style = MaterialTheme.typography.labelSmall)
         }
-        Text("双指缩放/平移；拖动 ROI 框或四角可调整本次会话位置", color = TextSecondary, style = MaterialTheme.typography.labelSmall)
+        Text("双指缩放/平移", color = TextSecondary, style = MaterialTheme.typography.labelSmall)
     }
 }
 
@@ -248,7 +248,7 @@ private fun RegistrationSummary(
 ) {
     val text = when {
         result == null && errorMessage == null -> "未执行配准"
-        result?.isSuccess == true -> "静态配准成功：可调整 Session ROI"
+        result?.isSuccess == true -> "静态配准成功：已自动投影 Session ROI"
         result != null -> "静态配准未通过：${result.failureReason ?: "未知原因"}；当前不伪造对齐结果"
         else -> errorMessage ?: "图片不可用"
     }
@@ -328,8 +328,6 @@ private fun ComparisonViewport(
                     width = drawWidth,
                     height = drawHeight,
                     density = density,
-                    onMove = { dx, dy -> viewModel.moveRoi(roi.id, dx / drawWidth, dy / drawHeight) },
-                    onResize = { corner, dx, dy -> viewModel.resizeRoiByDelta(roi.id, corner, dx / drawWidth, dy / drawHeight) },
                 )
             }
         }
@@ -344,27 +342,18 @@ private fun SessionRoiOverlay(
     width: Float,
     height: Float,
     density: androidx.compose.ui.unit.Density,
-    onMove: (dx: Float, dy: Float) -> Unit,
-    onResize: (corner: Int, dx: Float, dy: Float) -> Unit,
 ) {
     val rectLeft = left + roi.rect.left * width
     val rectTop = top + roi.rect.top * height
     val rectWidth = (roi.rect.right - roi.rect.left) * width
     val rectHeight = (roi.rect.bottom - roi.rect.top) * height
-    val handlePx = with(density) { 18.dp.toPx() }
     val border = BorderStroke(2.dp, Color.Yellow)
 
     Box(
         modifier = Modifier
             .offset { IntOffset(rectLeft.toInt(), rectTop.toInt()) }
             .size(with(density) { rectWidth.toDp() }, with(density) { rectHeight.toDp() })
-            .border(border)
-            .pointerInput(roi.id) {
-                detectDragGestures { change, dragAmount ->
-                    change.consume()
-                    onMove(dragAmount.x, dragAmount.y)
-                }
-            },
+            .border(border),
     ) {
         Text(
             text = roi.name,
@@ -372,24 +361,5 @@ private fun SessionRoiOverlay(
             style = MaterialTheme.typography.labelSmall,
             modifier = Modifier.background(Color.Black.copy(alpha = 0.45f)).padding(horizontal = 3.dp),
         )
-        listOf(
-            0 to IntOffset((-handlePx / 2).toInt(), (-handlePx / 2).toInt()),
-            1 to IntOffset((rectWidth - handlePx / 2).toInt(), (-handlePx / 2).toInt()),
-            2 to IntOffset((-handlePx / 2).toInt(), (rectHeight - handlePx / 2).toInt()),
-            3 to IntOffset((rectWidth - handlePx / 2).toInt(), (rectHeight - handlePx / 2).toInt()),
-        ).forEach { (corner, offset) ->
-            Box(
-                modifier = Modifier
-                    .offset { offset }
-                    .size(18.dp)
-                    .background(Color.Yellow, RoundedCornerShape(50))
-                    .pointerInput(roi.id to corner) {
-                        detectDragGestures { change, dragAmount ->
-                            change.consume()
-                            onResize(corner, dragAmount.x, dragAmount.y)
-                        }
-                    },
-            )
-        }
     }
 }

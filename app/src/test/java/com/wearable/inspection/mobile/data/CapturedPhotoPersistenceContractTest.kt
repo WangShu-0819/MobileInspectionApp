@@ -40,7 +40,7 @@ class CapturedPhotoPersistenceContractTest {
     @Test
     fun `confirmation never invents roi result and rejects empty roi confirmation`() {
         val source = read("src/main/java/com/wearable/inspection/mobile/ui/screens/ViewConfirmationViewModel.kt")
-        assertTrue(source.contains("if (rois.isEmpty())"))
+        assertTrue(source.contains("rois.isEmpty()"))
         assertTrue(source.contains("humanResult = roiResults.getValue(roi.id)"))
         assertFalse(source.contains("humanResult = roiResults[roi.id] ?: \"OK\""))
     }

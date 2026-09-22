@@ -1,4 +1,45 @@
-# 当前唯一任务：V1-3 静态拍后模板与实拍比对页面
+# 当前唯一任务：V4 RegistrationResult → NanoDet 检测集成和结果包
+
+状态：**SOFTWARE_COMPLETE / AWAITING_USER_ACCEPTANCE**（2026-09-22；投影快照、拍照后手调入口、结果坐标回退和测试夹具均已收口，未提交 Git）
+
+## 当前审计结论
+
+- [x] 已复核实际差异：16 个已修改文件、5 个未跟踪文件（含本审计报告）；未改动 `registration/`。
+- [x] 本地 `testDebugUnitTest` XML/HTML 实际汇总：`1115 tests / 0 failures / 0 errors / 5 skipped`。
+- [x] 5 个 skipped 均为 `DpmScannerTest` 外部样本/目录缺失：`frame960Decodes`、`capturedF26Decodes`、`batchDecodeCache20260820`、`userSpecifiedFrameDecodes`、`probeRootDumpCandidatesF23ToF37`。
+- [x] `compileDebugKotlin`、`assembleDebug`：`BUILD SUCCESSFUL`。
+- [x] APK 现场：`app/build/outputs/apk/debug/app-debug.apk`，2026-09-22 10:25:42 +08:00，232208437 bytes，SHA-256 `C99F87FD8F26139DB2F97EFB6443D9D7461A82374C1D0381F7B408F0B24EF5A9`。最新修复仅修改测试夹具，未改变生产 APK 内容。
+- [x] `AppNavigation` 已改为把 `projectedRoisSnapshot` 写入 registry，NanoDet 检测交接不再直接读取可变 `sessionRois`。
+- [x] 成功路径 UI 边界已收口：拍照后 `CaptureComparisonScreen` 只读显示 registration 自动 projected ROI；手动框选、拖动、缩放仅保留在模板 ROI 编辑阶段。
+- [x] 结果包坐标边界已收口：`saveRoiConfirms()` 使用 projected 像素坐标；缺失时 fail-closed，不回退模板 `normalizedRect`。
+- [x] registry 缺失、状态不一致、空投影、显式失败/fallback 和部分投影均 fail-closed 到整图，不再调用模板 ROI 检测。
+- [x] 整图 `aggregatedSuggestion` 保持 null；确认页要求人工总体 OK/NG，不伪造模型 OK/NG。
+- [x] 确认记录继续使用 `ViewRoiConfirmEntity`；`__FULL_IMAGE__` 仅作为已知 synthetic ROI 进入现有 ZIP/CSV 行，未知 ROI 不导出并记录 warning。
+- [x] 目标回归套件：`V4NanoDetIntegrationTest=54`、`SessionRoiRegistryTest=9`、`ProjectedRoiBoundaryTest=6`、`InspectionZipExportServiceTest=17`、`ViewModelSaveLifecycleTest=4`、`CaptureComparisonGeometryTest=21`，本地 XML 均 0 failures / 0 errors。
+- [x] 未运行 ADB、instrumented 或真机测试；软件状态完成，等待用户验收决定和明确 Git 提交授权。
+
+详细审计见 [`docs/reports/b3/V4_REGISTRATION_NANODET_INTEGRATION_AUDIT_20260921.md`](../docs/reports/b3/V4_REGISTRATION_NANODET_INTEGRATION_AUDIT_20260921.md)。
+
+## 当前交付边界
+
+1. 只修当前集成闭环；不得修改 V4 registration、NanoDet 模型/decoder/阈值/类别协议、CameraX、DPM、OCR。
+2. 使 `FAILED`/`FALLBACK_FULL_IMAGE` 从比对页可达确认页；路由必须传真实 fallback 状态，Session ROI 缓存失败态不得被当作模板 ROI。
+3. 手动框选/拖动/缩放只发生在模板 ROI 编辑阶段；拍照后比对页只显示 registration 自动产生的 projected ROI 快照。缓存缺失、状态不一致或投影失败 fail-closed 到整图，不调用模板 ROI 检测，也不在保存时回退到模板坐标。
+4. 整图结果仅作为整图证据和人工复核输入；检测不足、无检测或类别/数量有歧义时不得生成模型 OK/NG 建议。
+5. 复用 `ViewRoiConfirmEntity`、既有照片字段、路径和导出模型；让 `__FULL_IMAGE__` 记录在 ZIP/CSV 中可追溯，不创建第二套实体。
+6. `roiPixelRect` 已与实际拍照后 projected ROI 同源，并有成功路径字段回归；模板 ROI 的手动编辑不属于拍照后检测输入；DPM 绑定码切件人工验收已由用户确认完成；OCR 真实钢印样品验收明确延期，除非用户再次提出，不得创建或启动该任务；Git 仍等待用户明确授权。
+
+## 后续未完成项（不自动启动）
+
+- V4 → NanoDet 当前先处理模板手动 ROI 与拍照后自动 projected ROI 的边界、结果包坐标一致性，再进入用户验收和 Git 收口；未授权前不运行 ADB、instrumented 或真机测试。
+- legacy ROI 迁移、`imageFiles[]` 多图处理、模板 EXIF 方向补证：后续独立任务，暂不启动。
+- 更大独立数据集上的 NanoDet 阈值和现场鲁棒性验证：属于交付后的增强验证，不阻塞当前版本交付。
+- 更完整的 manifest/Excel/模型框结果包扩展：后续独立任务，暂不启动。
+- OCR 真实钢印样品拍照、识别和人工确认：**明确延期**；除非用户明确提出，否则不得安排 agent、设备测试或代码修改。
+
+---
+
+# 历史任务：V1-3 静态拍后模板与实拍比对页面
 
 状态：**SOFTWARE_COMPLETE / AWAITING_USER_ACCEPTANCE**（2026-09-21；V4 基线 `6bae6a13` 已提交并冻结）
 

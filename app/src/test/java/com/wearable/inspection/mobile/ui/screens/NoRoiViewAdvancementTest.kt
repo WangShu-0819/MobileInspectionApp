@@ -345,7 +345,7 @@ class NoRoiViewAdvancementTest {
         val source = File("src/main/java/com/wearable/inspection/mobile/ui/screens/ViewConfirmationViewModel.kt")
             .readText()
 
-        assertTrue("saveConfirmation 应检查 rois.isEmpty()", source.contains("if (rois.isEmpty())"))
+        assertTrue("saveConfirmation 应检查 rois.isEmpty()", source.contains("rois.isEmpty()"))
         assertTrue("空 ROI 应返回错误信息", source.contains("当前视角无 ROI，无需人工确认"))
     }
 

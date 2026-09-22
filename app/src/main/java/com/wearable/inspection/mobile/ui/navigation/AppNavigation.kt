@@ -497,6 +497,18 @@ fun AppRoot() {
                     totalViews = totalViews,
                     onBack = { navController.popBackStack() },
                     onProceed = {
+                        // 将投影 ROI 不可变快照写入进程级缓存
+                        // 使用 projectedRoisSnapshot（配准引擎产出），而非 sessionRois（可能被 UI 手调）
+                        val regStatus = comparisonViewModel.registrationResult?.status
+                        val useFullImageFallback = comparisonViewModel.isFullImageFallback
+                        com.wearable.inspection.mobile.ui.screens.SessionRoiRegistry.write(
+                            batchId = batchId,
+                            photoId = photoId,
+                            viewIndex = viewIndex,
+                            sessionRois = comparisonViewModel.projectedRoisSnapshot,
+                            registrationStatus = regStatus
+                                ?: com.wearable.inspection.mobile.registration.RegistrationStatus.FAILED,
+                        )
                         navController.navigate(
                             Screen.ViewConfirmation.createRoute(
                                 batchId = batchId,
@@ -507,6 +519,7 @@ fun AppRoot() {
                                 templateName = templateName,
                                 partId = partId,
                                 totalViews = totalViews,
+                                isFullImageFallback = useFullImageFallback,
                             )
                         )
                     },
@@ -523,7 +536,11 @@ fun AppRoot() {
                     navArgument(Screen.ViewConfirmation.ARG_TEMPLATE_ID) { type = NavType.StringType },
                     navArgument(Screen.ViewConfirmation.ARG_TEMPLATE_NAME) { type = NavType.StringType },
                     navArgument(Screen.ViewConfirmation.ARG_PART_ID) { type = NavType.StringType },
-                    navArgument(Screen.ViewConfirmation.ARG_TOTAL_VIEWS) { type = NavType.IntType }
+                    navArgument(Screen.ViewConfirmation.ARG_TOTAL_VIEWS) { type = NavType.IntType },
+                    navArgument(Screen.ViewConfirmation.ARG_IS_FULL_IMAGE_FALLBACK) {
+                        type = NavType.BoolType
+                        defaultValue = false
+                    }
                 )
             ) { backStackEntry ->
                 val args = backStackEntry.arguments ?: return@composable
@@ -535,6 +552,7 @@ fun AppRoot() {
                 val templateName = args.getString(Screen.ViewConfirmation.ARG_TEMPLATE_NAME) ?: ""
                 val partId = args.getString(Screen.ViewConfirmation.ARG_PART_ID) ?: return@composable
                 val totalViews = args.getInt(Screen.ViewConfirmation.ARG_TOTAL_VIEWS)
+                val isFullImageFallback = args.getBoolean(Screen.ViewConfirmation.ARG_IS_FULL_IMAGE_FALLBACK, false)
 
                 val context = LocalContext.current
                 val repository = remember { MobileInspectionApp.repository(context) }
@@ -560,7 +578,8 @@ fun AppRoot() {
                         partId = partId,
                         totalViews = totalViews,
                         inferenceService = inferenceService,
-                        imageStore = imageStore
+                        imageStore = imageStore,
+                        isFullImageFallback = isFullImageFallback,
                     )
                 )
 

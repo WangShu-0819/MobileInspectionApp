@@ -1,5 +1,6 @@
 package com.wearable.inspection.mobile.data.export
 
+import com.wearable.inspection.mobile.data.export.InspectionZipExportService
 import org.junit.Assert.*
 import org.junit.Test
 import java.io.File
@@ -156,5 +157,78 @@ class InspectionZipExportServiceTest {
         assertTrue("卡片应根据 endTime 判断完成状态", source.contains("completed = batch.endTime != null"))
         assertTrue("未完成批次不能点击导出", source.contains("enabled = !exporting && completed"))
         assertTrue("未完成批次应显示完成后导出提示", source.contains("采集中，拍完全部视角后才能导出 ZIP"))
+    }
+
+    // ───────────────────────────────────────────────
+    // __FULL_IMAGE__ 导出回链测试
+    // ───────────────────────────────────────────────
+
+    @Test
+    fun `__FULL_IMAGE__ is recognized as known synthetic ROI ID`() {
+        assertTrue(
+            "Export service must recognize __FULL_IMAGE__ as a valid synthetic ROI ID",
+            "__FULL_IMAGE__" in InspectionZipExportService.KNOWN_SYNTHETIC_ROI_IDS,
+        )
+    }
+
+    @Test
+    fun `unknown roiIds are not in known synthetic set`() {
+        val unknownIds = listOf("stale_roi_abc", "old_def_123", "random", "", "roi_that_was_deleted")
+        for (id in unknownIds) {
+            assertFalse(
+                "Unknown roiId '$id' must not be treated as synthetic",
+                id in InspectionZipExportService.KNOWN_SYNTHETIC_ROI_IDS,
+            )
+        }
+    }
+
+    @Test
+    fun `export code creates synthetic defs only for known synthetic IDs`() {
+        val source = File("src/main/java/com/wearable/inspection/mobile/data/export/InspectionZipExportService.kt")
+            .readText()
+        // Must gate on KNOWN_SYNTHETIC_ROI_IDS before creating synthetic RoiDefinitionEntity
+        assertTrue(
+            "Export code must check KNOWN_SYNTHETIC_ROI_IDS",
+            source.contains("confirm.roiId in KNOWN_SYNTHETIC_ROI_IDS")
+        )
+        // Must skip unknown unmatched confirms
+        assertTrue(
+            "Export code must skip unknown unmatched confirms",
+            source.contains("Skipping unmatched confirm")
+        )
+    }
+
+    @Test
+    fun `export source reads confirms before matching to definitions`() {
+        val source = File("src/main/java/com/wearable/inspection/mobile/data/export/InspectionZipExportService.kt")
+            .readText()
+        val confirmsRead = source.indexOf("val confirms = repository.getViewRoiConfirms(batchId)")
+        val unmatchedFilter = source.indexOf("it.roiId !in matchedConfirmKeys")
+        assertTrue("Confirms must be read before unmatched filter", confirmsRead < unmatchedFilter)
+        assertTrue("Must filter by matchedConfirmKeys", unmatchedFilter > 0)
+    }
+
+    @Test
+    fun `export code does not silently skip __FULL_IMAGE__ confirms`() {
+        val source = File("src/main/java/com/wearable/inspection/mobile/data/export/InspectionZipExportService.kt")
+            .readText()
+        // __FULL_IMAGE__ confirms must enter the export path, not be silently dropped
+        assertTrue(
+            "Export must handle known synthetic IDs",
+            source.contains("confirm.roiId in KNOWN_SYNTHETIC_ROI_IDS")
+        )
+        // The synthetic def creation must preserve confirm fields
+        assertTrue(
+            "Synthetic def must use confirm.roiId",
+            source.contains("id = confirm.roiId")
+        )
+        assertTrue(
+            "Synthetic def must use confirm.roiName",
+            source.contains("name = confirm.roiName")
+        )
+        assertTrue(
+            "Synthetic def must use confirm.roiNormalizedRect",
+            source.contains("normalizedRect = confirm.roiNormalizedRect")
+        )
     }
 }

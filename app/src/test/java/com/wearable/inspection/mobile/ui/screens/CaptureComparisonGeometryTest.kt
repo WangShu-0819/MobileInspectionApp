@@ -114,16 +114,16 @@ class CaptureComparisonGeometryTest {
     }
 
     @Test
-    fun `FAILED registration blocks proceed`() {
+    fun `FAILED registration allows proceed for full-image fallback`() {
         val rois = listOf(roiDef("r1") to NormalizedRect(0.1f, 0.1f, 0.5f, 0.5f))
         val reg = makeRegistration(RegistrationStatus.FAILED)
         val sessionRois = CaptureComparisonViewModel.buildSessionRois(rois, reg) {
             NormalizedRect(0.2f, 0.2f, 0.6f, 0.6f)
         }
 
-        assertFalse(
+        assertTrue(
             CaptureComparisonViewModel.canProceedToConfirmation(reg, sessionRois),
-            "FAILED registration must block proceed even with valid-looking project lambda",
+            "FAILED registration must allow proceed for full-image fallback",
         )
     }
 
@@ -141,14 +141,14 @@ class CaptureComparisonGeometryTest {
     }
 
     @Test
-    fun `FALLBACK_FULL_IMAGE blocks proceed`() {
+    fun `FALLBACK_FULL_IMAGE allows proceed for full-image fallback`() {
         val rois = listOf(roiDef("r1") to NormalizedRect(0.1f, 0.1f, 0.5f, 0.5f))
         val reg = makeRegistration(RegistrationStatus.FALLBACK_FULL_IMAGE)
         val sessionRois = CaptureComparisonViewModel.buildSessionRois(rois, reg) {
             NormalizedRect(0.2f, 0.2f, 0.6f, 0.6f)
         }
 
-        assertFalse(CaptureComparisonViewModel.canProceedToConfirmation(reg, sessionRois))
+        assertTrue(CaptureComparisonViewModel.canProceedToConfirmation(reg, sessionRois))
     }
 
     // ───────────────────────────────────────────────
@@ -189,7 +189,7 @@ class CaptureComparisonGeometryTest {
     }
 
     @Test
-    fun `mixed projection null blocks proceed`() {
+    fun `mixed projection null still allows proceed via fallback`() {
         val rois = listOf(
             roiDef("r1") to NormalizedRect(0.1f, 0.1f, 0.3f, 0.3f),
             roiDef("r2") to NormalizedRect(0.5f, 0.5f, 0.8f, 0.8f),
@@ -201,9 +201,9 @@ class CaptureComparisonGeometryTest {
             if (callIndex++ == 0) null else NormalizedRect(0.2f, 0.2f, 0.5f, 0.5f)
         }
 
-        assertFalse(
+        assertTrue(
             CaptureComparisonViewModel.canProceedToConfirmation(reg, sessionRois),
-            "Partial projection failure must block proceed",
+            "Partial projection failure allows proceed (will use fallback path)",
         )
     }
 
@@ -300,19 +300,19 @@ class CaptureComparisonGeometryTest {
     // ───────────────────────────────────────────────
 
     @Test
-    fun `single null projection blocks proceed`() {
+    fun `single null projection allows proceed via fallback`() {
         val rois = listOf(roiDef("r1") to NormalizedRect(0.1f, 0.2f, 0.4f, 0.5f))
         val reg = makeRegistration(RegistrationStatus.SUCCESS, identityHomography)
         val sessionRois = CaptureComparisonViewModel.buildSessionRois(rois, reg) { null }
 
-        assertFalse(
+        assertTrue(
             CaptureComparisonViewModel.canProceedToConfirmation(reg, sessionRois),
-            "Single null projection must block proceed",
+            "Single null projection allows proceed (will use fallback path)",
         )
     }
 
     @Test
-    fun `empty validRois blocks proceed on SUCCESS`() {
+    fun `empty validRois allows proceed via fallback`() {
         val reg = makeRegistration(RegistrationStatus.SUCCESS, identityHomography)
         val sessionRois = CaptureComparisonViewModel.buildSessionRois(
             validRois = emptyList(),
@@ -320,9 +320,9 @@ class CaptureComparisonGeometryTest {
             project = { NormalizedRect(0.2f, 0.2f, 0.5f, 0.5f) },
         )
 
-        assertFalse(
+        assertTrue(
             CaptureComparisonViewModel.canProceedToConfirmation(reg, sessionRois),
-            "Empty validRois must yield empty sessionRois and block proceed",
+            "Empty validRois allows proceed (will use fallback path)",
         )
     }
 
@@ -338,5 +338,32 @@ class CaptureComparisonGeometryTest {
 
         assertEquals(first, second, "Repeated canProceedToConfirmation must be stable")
         assertTrue(first, "All projections succeed → must allow proceed")
+    }
+
+    // ───────────────────────────────────────────────
+    // null registration → blocks proceed
+    // ───────────────────────────────────────────────
+
+    @Test
+    fun `null registration blocks proceed`() {
+        assertFalse(
+            CaptureComparisonViewModel.canProceedToConfirmation(null, emptyList()),
+            "Null registration (not attempted) must block proceed",
+        )
+    }
+
+    // ───────────────────────────────────────────────
+    // All status values allow proceed (registration != null)
+    // ───────────────────────────────────────────────
+
+    @Test
+    fun `all registration statuses allow proceed`() {
+        for (status in RegistrationStatus.entries) {
+            val reg = makeRegistration(status)
+            assertTrue(
+                CaptureComparisonViewModel.canProceedToConfirmation(reg, emptyList()),
+                "Status $status must allow proceed",
+            )
+        }
     }
 }

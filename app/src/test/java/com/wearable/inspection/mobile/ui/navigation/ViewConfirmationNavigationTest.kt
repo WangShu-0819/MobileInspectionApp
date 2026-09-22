@@ -69,7 +69,7 @@ class ViewConfirmationNavigationTest {
 
         // 使用足够大的窗口覆盖整个 composable 块（约70行，~3500字符）
         // ViewConfirmation composable 参数列表+lambda 体约80行(~5000字符)
-        val block = source.substring(viewConfirmStart, (viewConfirmStart + 5000).coerceAtMost(source.length))
+        val block = source.substring(viewConfirmStart, (viewConfirmStart + 8000).coerceAtMost(source.length))
         val onBackIdx = block.indexOf("onBack = {")
         assertTrue("onBack 应存在", onBackIdx > 0)
 

@@ -351,6 +351,164 @@ class NanoDetRoiInferenceService(
         return results
     }
 
+    /**
+     * 整图 NanoDet 推理：不做 ROI 裁剪，将整张照片作为输入。
+     *
+     * 当配准状态为 FALLBACK_FULL_IMAGE 或 FAILED 时使用此方法。
+     * 返回所有检出目标及聚合建议，供人工审阅。
+     */
+    @Synchronized
+    fun inferFullImage(photoPath: String): FullImageInferResult {
+        val startedAt = System.nanoTime()
+
+        if (!Build.SUPPORTED_ABIS.contains("arm64-v8a")) {
+            return FullImageInferResult(
+                detections = emptyList(), aggregatedSuggestion = null, highestScore = null,
+                elapsedMs = elapsedMillis(startedAt), imageWidth = 0, imageHeight = 0,
+                exifOrientation = null, status = NanoDetInferenceStatus.ABI_UNSUPPORTED,
+            )
+        }
+        val openCvReady = try { OpenCVLoader.initLocal() } catch (_: Exception) { false }
+        if (!openCvReady) {
+            return FullImageInferResult(
+                detections = emptyList(), aggregatedSuggestion = null, highestScore = null,
+                elapsedMs = elapsedMillis(startedAt), imageWidth = 0, imageHeight = 0,
+                exifOrientation = null, status = NanoDetInferenceStatus.RUNTIME_UNAVAILABLE,
+                detail = "OpenCV 初始化失败",
+            )
+        }
+
+        val photoGeometry = RoiCoordinateMapper.getImageGeometry(photoPath)
+        if (photoGeometry == null) {
+            return FullImageInferResult(
+                detections = emptyList(), aggregatedSuggestion = null, highestScore = null,
+                elapsedMs = elapsedMillis(startedAt), imageWidth = 0, imageHeight = 0,
+                exifOrientation = null, status = NanoDetInferenceStatus.IMAGE_UNREADABLE,
+            )
+        }
+
+        val rawImage = try {
+            Imgcodecs.imread(photoPath, Imgcodecs.IMREAD_COLOR or Imgcodecs.IMREAD_IGNORE_ORIENTATION)
+        } catch (e: LinkageError) {
+            return FullImageInferResult(
+                detections = emptyList(), aggregatedSuggestion = null, highestScore = null,
+                elapsedMs = elapsedMillis(startedAt), imageWidth = photoGeometry.width,
+                imageHeight = photoGeometry.height, exifOrientation = photoGeometry.exifOrientation,
+                status = NanoDetInferenceStatus.RUNTIME_UNAVAILABLE,
+                detail = e.message ?: "OpenCV native runtime 不可用",
+            )
+        } catch (e: Exception) {
+            return FullImageInferResult(
+                detections = emptyList(), aggregatedSuggestion = null, highestScore = null,
+                elapsedMs = elapsedMillis(startedAt), imageWidth = photoGeometry.width,
+                imageHeight = photoGeometry.height, exifOrientation = photoGeometry.exifOrientation,
+                status = NanoDetInferenceStatus.IMAGE_UNREADABLE,
+                detail = e.message ?: "无法解码照片",
+            )
+        }
+        if (rawImage.empty()) {
+            rawImage.release()
+            return FullImageInferResult(
+                detections = emptyList(), aggregatedSuggestion = null, highestScore = null,
+                elapsedMs = elapsedMillis(startedAt), imageWidth = photoGeometry.width,
+                imageHeight = photoGeometry.height, exifOrientation = photoGeometry.exifOrientation,
+                status = NanoDetInferenceStatus.IMAGE_UNREADABLE,
+            )
+        }
+
+        val uprightImage = try {
+            orientBgrMat(rawImage, photoGeometry.exifOrientation)
+        } catch (e: Exception) {
+            rawImage.release()
+            return FullImageInferResult(
+                detections = emptyList(), aggregatedSuggestion = null, highestScore = null,
+                elapsedMs = elapsedMillis(startedAt), imageWidth = photoGeometry.width,
+                imageHeight = photoGeometry.height, exifOrientation = photoGeometry.exifOrientation,
+                status = NanoDetInferenceStatus.IMAGE_UNREADABLE,
+                detail = "照片方向处理失败: ${e.message}",
+            )
+        }
+
+        try {
+            val activeRuntime = try {
+                runtime ?: createRuntime().also { runtime = it }
+            } catch (e: LinkageError) {
+                return FullImageInferResult(
+                    detections = emptyList(), aggregatedSuggestion = null, highestScore = null,
+                    elapsedMs = elapsedMillis(startedAt), imageWidth = photoGeometry.width,
+                    imageHeight = photoGeometry.height, exifOrientation = photoGeometry.exifOrientation,
+                    status = NanoDetInferenceStatus.RUNTIME_UNAVAILABLE,
+                    detail = e.message ?: "NCNN native runtime 不可用",
+                )
+            } catch (e: Exception) {
+                return FullImageInferResult(
+                    detections = emptyList(), aggregatedSuggestion = null, highestScore = null,
+                    elapsedMs = elapsedMillis(startedAt), imageWidth = photoGeometry.width,
+                    imageHeight = photoGeometry.height, exifOrientation = photoGeometry.exifOrientation,
+                    status = NanoDetInferenceStatus.MODEL_UNAVAILABLE,
+                    detail = e.message ?: "NanoDet 模型不可用",
+                )
+            }
+
+            val preprocessed = NanoDetImagePreprocessor.preprocess(uprightImage)
+            val output = try {
+                activeRuntime.infer(preprocessed.tensorNchw)
+            } catch (e: Exception) {
+                return FullImageInferResult(
+                    detections = emptyList(), aggregatedSuggestion = null, highestScore = null,
+                    elapsedMs = elapsedMillis(startedAt), imageWidth = photoGeometry.width,
+                    imageHeight = photoGeometry.height, exifOrientation = photoGeometry.exifOrientation,
+                    status = NanoDetInferenceStatus.INFERENCE_ERROR,
+                    detail = e.message ?: "NCNN 推理失败",
+                )
+            }
+            val candidates = try {
+                NanoDetOutputDecoder.decode(output, preprocessed.transform)
+            } catch (e: IllegalArgumentException) {
+                return FullImageInferResult(
+                    detections = emptyList(), aggregatedSuggestion = null, highestScore = null,
+                    elapsedMs = elapsedMillis(startedAt), imageWidth = photoGeometry.width,
+                    imageHeight = photoGeometry.height, exifOrientation = photoGeometry.exifOrientation,
+                    status = NanoDetInferenceStatus.INFERENCE_ERROR,
+                    detail = e.message ?: "NCNN 输出格式无效",
+                )
+            }
+
+            val fullImageBounds = com.wearable.inspection.mobile.ui.screens.ContentRectBounds(
+                0, 0, photoGeometry.width, photoGeometry.height,
+            )
+            val detections = candidates.mapNotNull { candidate ->
+                NanoDetCoordinateMapper.mapRoiBoxToPhoto(
+                    candidate.box, fullImageBounds, photoGeometry.width, photoGeometry.height,
+                )?.let { mapped ->
+                    NanoDetDetection(
+                        classIndex = candidate.classIndex,
+                        className = candidate.className,
+                        score = candidate.score,
+                        point = candidate.point,
+                        roiBox = mapped.roiBox,
+                        imageBox = mapped.imageBox,
+                    )
+                }
+            }
+            val highestScore = detections.maxOfOrNull { it.score }
+
+            return FullImageInferResult(
+                detections = detections,
+                aggregatedSuggestion = null,
+                highestScore = highestScore,
+                elapsedMs = elapsedMillis(startedAt),
+                imageWidth = photoGeometry.width,
+                imageHeight = photoGeometry.height,
+                exifOrientation = photoGeometry.exifOrientation,
+                status = if (detections.isNotEmpty()) NanoDetInferenceStatus.DETECTED else NanoDetInferenceStatus.NO_DETECTION,
+            )
+        } finally {
+            if (uprightImage !== rawImage) uprightImage.release()
+            rawImage.release()
+        }
+    }
+
     private fun createRuntime(): NanoDetTensorRuntime {
         val paramFile = ensureModel("nanodet.ncnn.param", NanoDetModelContract.PARAM_SHA256)
         val modelFile = ensureModel("nanodet.ncnn.bin", NanoDetModelContract.MODEL_SHA256)

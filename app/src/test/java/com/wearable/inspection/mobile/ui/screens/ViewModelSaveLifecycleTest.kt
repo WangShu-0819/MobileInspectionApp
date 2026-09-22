@@ -79,6 +79,7 @@ class ViewModelSaveLifecycleTest {
         repo = Mockito.mock(InspectionRepository::class.java)
         imageStore = Mockito.mock(MobileImageStore::class.java)
         inferenceService = Mockito.mock(NanoDetRoiInferenceService::class.java)
+        SessionRoiRegistry.clearAll()
     }
 
     @After
@@ -95,7 +96,7 @@ class ViewModelSaveLifecycleTest {
      */
     private fun createTestPhoto(dir: File): String {
         val photoFile = File(dir, "test_photo.jpg")
-        val bitmap = android.graphics.Bitmap.createBitmap(1, 1, android.graphics.Bitmap.Config.ARGB_8888)
+        val bitmap = android.graphics.Bitmap.createBitmap(100, 100, android.graphics.Bitmap.Config.ARGB_8888)
         try {
             java.io.FileOutputStream(photoFile).use { fos ->
                 bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 90, fos)
@@ -147,6 +148,25 @@ class ViewModelSaveLifecycleTest {
         )
     }
 
+    /**
+     * Robolectric 的 BitmapFactory 无法解码真实文件路径，导致 loadData() 在
+     * getImageGeometry(photoPath) 返回 null 时提前退出，photoGeometry 和
+     * projectedPixelRects 均未填充。此方法通过反射注入这些字段，
+     * 使 saveRoiConfirms() 能正常走完。
+     */
+    private fun injectGeometryAndProjectedRects(vm: ViewConfirmationViewModel) {
+        val geometry = RoiCoordinateMapper.PhotoGeometry(100, 100, 1)
+        setVmField(vm, "photoGeometry", geometry)
+
+        @Suppress("UNCHECKED_CAST")
+        val projectedPixelRects = vm.javaClass.getDeclaredField("projectedPixelRects").apply {
+            isAccessible = true
+        }.get(vm) as MutableMap<String, ContentRectBounds>
+        // 与 threadRoi / featureRoi 的 normalizedRect 对应的像素坐标
+        projectedPixelRects["roi-thread"] = ContentRectBounds(10, 20, 60, 80)
+        projectedPixelRects["roi-feature"] = ContentRectBounds(10, 10, 50, 50)
+    }
+
     private fun injectSavedOverrideEvidence(vm: ViewConfirmationViewModel, roiId: String, path: String, time: Long) {
         val evidenceRefClass = Class.forName(
             "com.wearable.inspection.mobile.ui.screens.ViewConfirmationViewModel\$EvidenceRef"
@@ -171,6 +191,37 @@ class ViewModelSaveLifecycleTest {
         `when`(repo.getRois(templateId)).thenReturn(listOf(threadRoi, featureRoi))
         `when`(repo.getTemplate(templateId)).thenReturn(null)
 
+        // Stub inferFullImage for FULL_IMAGE path (cached == null && !isFullImageFallback)
+        Mockito.doReturn(
+            com.wearable.inspection.mobile.detection.FullImageInferResult(
+                detections = emptyList(),
+                highestScore = null,
+                elapsedMs = 10L,
+                imageWidth = 100,
+                imageHeight = 100,
+                exifOrientation = 1,
+                status = NanoDetInferenceStatus.NO_DETECTION,
+            )
+        ).`when`(inferenceService).inferFullImage(Mockito.anyString())
+
+        // Stub inferSavedPhoto for PROJECTED path (cached != null && SUCCESS)
+        Mockito.doReturn(
+            mapOf(
+                "roi-thread" to NanoDetRoiInferenceResult(
+                    roiId = "roi-thread", status = NanoDetInferenceStatus.NO_DETECTION,
+                    modelSuggestion = null, matchingScore = null, targetClassIndex = 1,
+                ),
+                "roi-feature" to NanoDetRoiInferenceResult(
+                    roiId = "roi-feature", status = NanoDetInferenceStatus.NO_DETECTION,
+                    modelSuggestion = null, matchingScore = null, targetClassIndex = null,
+                ),
+            )
+        ).`when`(inferenceService).inferSavedPhoto(
+            Mockito.anyString(),
+            Mockito.anyList(),
+            Mockito.anyInt(),
+        )
+
         // stub replaceViewRoiConfirmsForPhoto via Java helper (suspend, final class)
         if (replaceAnswer != null) {
             MockitoSuspendStubber.stubReplace(repo, replaceAnswer)
@@ -188,6 +239,18 @@ class ViewModelSaveLifecycleTest {
         })
     }
 
+    /** 写入 registry 缓存，使 ViewModel 走 PROJECTED 路径（per-ROI 模式）。 */
+    private fun writeRegistryCache() {
+        SessionRoiRegistry.write(
+            batchId, photoId, viewIndex,
+            listOf(
+                SessionRoi("roi-thread", "螺纹", NormalizedRect(0.1f, 0.2f, 0.6f, 0.8f)),
+                SessionRoi("roi-feature", "部件", NormalizedRect(0.1f, 0.1f, 0.5f, 0.5f)),
+            ),
+            com.wearable.inspection.mobile.registration.RegistrationStatus.SUCCESS,
+        )
+    }
+
     // ===== 1. 重复确认保留原值 =====
 
     @Test
@@ -203,9 +266,11 @@ class ViewModelSaveLifecycleTest {
 
             val savedConfirmsRef = mutableListOf<List<ViewRoiConfirmEntity>>(emptyList())
             setupRepo(savedConfirmsRef)
+            writeRegistryCache()
 
             val vm = createVm()
             advanceUntilIdle()
+            injectGeometryAndProjectedRects(vm)
 
             setVmField(vm, "roiResults", mutableStateMapOf<String, String>().also {
                 it["roi-thread"] = "NG"; it["roi-feature"] = "OK"
@@ -230,7 +295,7 @@ class ViewModelSaveLifecycleTest {
             vm.saveConfirmation()
             advanceUntilIdle()
 
-            assertTrue("saveCompleted 应为 true", vm.saveCompleted)
+            assertTrue("saveCompleted 应为 true, errorMessage=${vm.errorMessage}", vm.saveCompleted)
             assertNull("errorMessage 应为 null", vm.errorMessage)
             val threadConfirm = savedConfirmsRef[0].first { it.roiId == "roi-thread" }
             assertEquals("overrideTime 应保留原值", originalTime, threadConfirm.overrideTime)
@@ -264,9 +329,11 @@ class ViewModelSaveLifecycleTest {
 
             val savedConfirmsRef = mutableListOf<List<ViewRoiConfirmEntity>>(emptyList())
             setupRepo(savedConfirmsRef)
+            writeRegistryCache()
 
             val vm = createVm()
             advanceUntilIdle()
+            injectGeometryAndProjectedRects(vm)
 
             setVmField(vm, "roiResults", mutableStateMapOf<String, String>().also {
                 it["roi-thread"] = "OK"; it["roi-feature"] = "OK"
@@ -338,9 +405,11 @@ class ViewModelSaveLifecycleTest {
             setupRepo(savedConfirmsRef, replaceAnswer = org.mockito.stubbing.Answer {
                 throw RuntimeException("DB write failed")
             })
+            writeRegistryCache()
 
             val vm = createVm()
             advanceUntilIdle()
+            injectGeometryAndProjectedRects(vm)
 
             setVmField(vm, "roiResults", mutableStateMapOf<String, String>().also {
                 it["roi-thread"] = "NG"; it["roi-feature"] = "OK"
@@ -391,6 +460,7 @@ class ViewModelSaveLifecycleTest {
             setupRepo(savedConfirmsRef, replaceAnswer = org.mockito.stubbing.Answer {
                 throw RuntimeException("DB constraint violation")
             })
+            writeRegistryCache()
 
             // 使用真实 imageStore 构造 ViewModel
             val vm = ViewConfirmationViewModel(
@@ -400,6 +470,7 @@ class ViewModelSaveLifecycleTest {
                 imageStore = realImageStore
             )
             advanceUntilIdle()
+            injectGeometryAndProjectedRects(vm)
 
             setVmField(vm, "roiResults", mutableStateMapOf<String, String>().also {
                 it["roi-thread"] = "NG"; it["roi-feature"] = "OK"

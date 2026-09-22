@@ -55,6 +55,13 @@ class CaptureComparisonViewModel(
         private set
     var sessionRois by mutableStateOf<List<SessionRoi>>(emptyList())
         private set
+    /**
+     * 配准引擎产生的投影 ROI 不可变快照。
+     * 与 [sessionRois] 不同，此字段不受 UI 手动拖拽/缩放影响，
+     * 用于 NanoDet 检测和确认结果保存。
+     */
+    var projectedRoisSnapshot by mutableStateOf<List<SessionRoi>>(emptyList())
+        private set
     var registrationResult by mutableStateOf<RegistrationResult?>(null)
         private set
     var isLoaded by mutableStateOf(false)
@@ -62,35 +69,18 @@ class CaptureComparisonViewModel(
     var errorMessage by mutableStateOf<String?>(null)
         private set
 
-    /** 配准成功且存在有效投影 ROI 时方可进入 ROI 确认页 */
+    /** 配准已尝试即可进入确认页 */
     val canProceed: Boolean
-        get() = canProceedToConfirmation(registrationResult, sessionRois)
+        get() = canProceedToConfirmation(registrationResult, projectedRoisSnapshot)
+
+    /** 是否需要整图检测回退（非 SUCCESS 或无投影 ROI） */
+    val isFullImageFallback: Boolean
+        get() = registrationResult == null ||
+            registrationResult?.status != RegistrationStatus.SUCCESS ||
+            projectedRoisSnapshot.isEmpty()
 
     init {
         loadComparison()
-    }
-
-    fun moveRoi(roiId: String, deltaNormX: Float, deltaNormY: Float) {
-        sessionRois = sessionRois.map { roi ->
-            if (roi.id == roiId) roi.copy(rect = roi.rect.move(deltaNormX, deltaNormY)) else roi
-        }
-    }
-
-    fun resizeRoiByDelta(roiId: String, cornerIndex: Int, deltaNormX: Float, deltaNormY: Float) {
-        sessionRois = sessionRois.map { roi ->
-            if (roi.id != roiId) {
-                roi
-            } else {
-                val rect = roi.rect
-                val (x, y) = when (cornerIndex) {
-                    0 -> rect.left + deltaNormX to rect.top + deltaNormY
-                    1 -> rect.right + deltaNormX to rect.top + deltaNormY
-                    2 -> rect.left + deltaNormX to rect.bottom + deltaNormY
-                    else -> rect.right + deltaNormX to rect.bottom + deltaNormY
-                }
-                roi.copy(rect = rect.resize(cornerIndex, x, y))
-            }
-        }
     }
 
     private fun loadComparison() {
@@ -101,6 +91,7 @@ class CaptureComparisonViewModel(
                 photoBitmap = loaded.photoBitmap
                 alignedTemplateBitmap = loaded.alignedTemplateBitmap
                 sessionRois = loaded.sessionRois
+                projectedRoisSnapshot = loaded.projectedRoisSnapshot
                 registrationResult = loaded.registrationResult
             } catch (error: Exception) {
                 errorMessage = error.message ?: "比对图片加载失败"
@@ -142,6 +133,7 @@ class CaptureComparisonViewModel(
                 photoBitmap = photoImage,
                 alignedTemplateBitmap = null,
                 sessionRois = emptyList(),
+                projectedRoisSnapshot = emptyList(),
                 registrationResult = null,
             )
         }
@@ -178,6 +170,7 @@ class CaptureComparisonViewModel(
                 null
             },
             sessionRois = sessionRects,
+            projectedRoisSnapshot = sessionRects,  // 同一份投影数据，不可变快照
             registrationResult = registration,
         )
     }
@@ -306,6 +299,7 @@ class CaptureComparisonViewModel(
         val photoBitmap: Bitmap,
         val alignedTemplateBitmap: Bitmap?,
         val sessionRois: List<SessionRoi>,
+        val projectedRoisSnapshot: List<SessionRoi>,
         val registrationResult: RegistrationResult?,
     )
 
@@ -314,13 +308,16 @@ class CaptureComparisonViewModel(
 
         /**
          * 纯门禁函数：判断是否可以进入 ROI 确认页。
-         * 配准成功且存在有效投影 ROI 时返回 true；否则返回 false。
+         * 配准已尝试（status 非 null）即可进入：
+         * - SUCCESS → 使用投影 Session ROI 进行 per-ROI 检测
+         * - FAILED / FALLBACK_FULL_IMAGE → 整图检测 + 人工审阅
+         * - registration 为 null（配准未执行）→ 不可进入
          */
         fun canProceedToConfirmation(
             registration: RegistrationResult?,
             sessionRois: List<SessionRoi>,
         ): Boolean =
-            registration?.status == RegistrationStatus.SUCCESS && sessionRois.isNotEmpty()
+            registration != null
 
         /**
          * 纯函数：将模板 ROI 投影到现场坐标系（全量一致性策略）。

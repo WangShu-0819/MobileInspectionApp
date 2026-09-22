@@ -101,12 +101,29 @@ class InspectionZipExportService(
                         val zipPath = confirm?.let { roiEvidenceZipPaths[it.id] }.orEmpty()
                         roiRows += InspectionRoiExportRow(photo, roi, confirm, zipPath)
                     }
-                    // 只有稳定 photoId + roiId + template/view/path 全部匹配的确认行才导出。
+                    // 未匹配到 ROI 定义的确认行：仅已知合成 ID 导出，其余跳过
                     photoConfirms.filter { it.roiId !in matchedConfirmKeys }.forEach { confirm ->
                         val matchingDefinition = definitions.firstOrNull { it.id == confirm.roiId }
+                        val zipPath = roiEvidenceZipPaths[confirm.id].orEmpty()
                         if (matchingDefinition != null) {
-                            val zipPath = roiEvidenceZipPaths[confirm.id].orEmpty()
                             roiRows += InspectionRoiExportRow(photo, matchingDefinition, confirm, zipPath)
+                        } else if (confirm.roiId in KNOWN_SYNTHETIC_ROI_IDS) {
+                            // 已知合成 ID（如整图确认）：构造虚拟定义用于导出
+                            val syntheticDef = RoiDefinitionEntity(
+                                id = confirm.roiId,
+                                templateId = confirm.templateId,
+                                name = confirm.roiName,
+                                order = 0,
+                                normalizedRect = confirm.roiNormalizedRect,
+                                inspectionType = "VISUAL",
+                                enabled = true,
+                                targetType = confirm.roiTargetType,
+                            )
+                            roiRows += InspectionRoiExportRow(photo, syntheticDef, confirm, zipPath)
+                        } else {
+                            // 未知 roiId：可能是旧版模板残留，跳过不导出
+                            Log.w(TAG, "Skipping unmatched confirm roiId=${confirm.roiId} " +
+                                "(not in definitions, not a known synthetic ID)")
                         }
                     }
                 }
@@ -212,6 +229,8 @@ class InspectionZipExportService(
 
     companion object {
         private const val TAG = "InspectionZipExport"
+        /** 已知的合成 ROI ID（不在模板定义中，但需要导出） */
+        internal val KNOWN_SYNTHETIC_ROI_IDS = setOf("__FULL_IMAGE__")
     }
 }
 

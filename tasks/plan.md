@@ -1,5 +1,46 @@
 # Implementation Plan: MobileInspectionApp 当前阶段
 
+## 2026-09-21 当前唯一任务：V4 RegistrationResult → NanoDet 检测集成和结果包
+
+状态：**SOFTWARE_COMPLETE / AWAITING_USER_ACCEPTANCE**。V4/AKAZE 基线 `6bae6a13` 冻结，不修改；V1-3 基线 `c81391b1` 保持不回滚。
+
+### 主协调 handback 审计结论
+
+- 本地现有 XML/HTML 实为 `1115 / 0 / 0 / 5`；5 项均为 `DpmScannerTest` 外部样本/目录缺失。
+- 失败/`FALLBACK_FULL_IMAGE` 主链已接通：`canProceedToConfirmation()` 允许已完成配准尝试，`AppNavigation` 传递真实 fallback 状态，确认页整图摘要和 synthetic ROI 导出路径已加入。
+- `ViewConfirmationViewModel.loadData()` 通过 `resolveLoadingPath()` fail-closed；缓存缺失、状态不一致、空投影和显式 fallback 均转整图，`loadWithTemplateRois()` 不再是可达路径。
+- `loadWithProjectedRois()` 对投影 ROI 做全量覆盖检查；缺少任一 ROI 时整体转整图，不保留原模板 `normalizedRect`，不形成 projected/template 混合检测。
+- 投影交接已收口：`AppNavigation` 写入 `projectedRoisSnapshot`，拍照后比对页移除 ROI 拖动/缩放入口，模板手动编辑不进入 NanoDet。
+- 结果包坐标已收口：`saveRoiConfirms()` 使用 `projectedPixelRects`；缺失时 fail-closed，不回退模板 `normalizedRect`。
+- 整图结果不生成 `aggregatedSuggestion`；人工总体结果继续由现有确认实体保存。导出器仅对已知 `__FULL_IMAGE__` synthetic ID 构造虚拟定义，未知 ID 跳过并告警。
+- 主协调已完成源码审计、全量 JVM XML/HTML 和 Debug APK 现场复核；最新 handback 报告 `compileDebugKotlin` 成功；未运行 ADB、instrumented 或真机。
+- 2026-09-22 复核实际工作区为 16 个已修改文件、6 个未跟踪文件（含本审计报告和 ProjectedRoiBoundaryTest）；APK 现场为 `C99F87FD8F26139DB2F97EFB6443D9D7461A82374C1D0381F7B408F0B24EF5A9`，最新测试夹具修改不改变生产 APK 内容。
+
+### 本轮实际收口
+
+1. 已完成失败/fallback 可达性、真实导航状态和 projected ROI snapshot registry 传递。
+2. 已完成 ViewModel fail-closed：成功只接受 projected Session ROI；其余路径只调用整图推理，禁止模板 ROI 检测。
+3. 已完成整图摘要与人工总体确认语义，整图模型建议保持空值。
+4. 已复用 `ViewRoiConfirmEntity` 和既有导出行模型；`__FULL_IMAGE__` 进入 ZIP/CSV，未知 synthetic/旧 ROI 不被静默导出；成功 ROI 像素坐标与 projected ROI 同源。
+5. 已通过全量 `testDebugUnitTest`：1115 tests / 0 failures / 0 errors / 5 skipped；目标边界回归和保存生命周期回归均通过。当前等待用户验收和明确 Git 提交授权。
+
+禁止新增模型、decoder、阈值、类别协议、实体、CameraX、DPM、OCR、实时配准或自动跟踪；本轮不提交 Git。
+
+### 后续未完成项（仅在用户明确要求时启动）
+
+- V4 → NanoDet 软件闭环已完成；下一步仅等待用户验收和 Git 提交授权；未授权前不运行 ADB、instrumented 或真机测试。
+- DPM 绑定码切件人工验收已由用户确认完成，不再作为待办任务。
+- legacy ROI 迁移、`imageFiles[]` 多图处理、模板 EXIF 方向补证：后续独立任务。
+- 更大独立数据集上的 NanoDet 阈值和现场鲁棒性验证：交付后的增强验证，不阻塞当前版本交付。
+- 更完整的 manifest/Excel/模型框结果包扩展：后续独立任务。
+- OCR 真实钢印样品拍照、识别和人工确认：**明确延期**，除非用户再次提出，不得主动启动。
+
+### 当前 Agent 状态
+
+当前无新的代码修正指令。软件边界和 JVM 回归已经收口；只等待用户验收决定，以及用户明确授权后由主协调选择性暂存和提交当前任务相关文件。
+
+详细证据见 [`docs/reports/b3/V4_REGISTRATION_NANODET_INTEGRATION_AUDIT_20260921.md`](../docs/reports/b3/V4_REGISTRATION_NANODET_INTEGRATION_AUDIT_20260921.md)。
+
 ## 2026-09-21 当前唯一任务：V1-3 静态拍后模板与实拍比对页面
 
 状态：**SOFTWARE_COMPLETE / AWAITING_USER_ACCEPTANCE**。V4/AKAZE 基线为 `6bae6a13`，`app/src/main/java/com/wearable/inspection/mobile/registration/` 冻结，不修改、不重提交。
@@ -463,9 +504,9 @@ Task 4 已完成全部验收项：会话安全快门、capture request token 机
 
 ### B2：DPM 迁移
 
-- [x] **Task 1：旧 DPM 识别链迁移与实时扫码闭环** — **SOFTWARE_COMPLETE / PHYSICAL_ACCEPTANCE_PENDING**（2026-09-02）。APK SHA-256 `6e2ca7d3f573c1da1af7f9180c23a0dbe8f2f9081eafff5ccf466dcb09c051cc`。JVM 208 项（203 passed / 0 failed / 5 skipped），Instrumented 30/30 passed，冷启动 10/10 passed。4 项物理验收标记为 `PENDING_PHYSICAL_DPM_SAMPLE`。
+- [x] **Task 1：旧 DPM 识别链迁移与实时扫码闭环** — **USER_ACCEPTED / PHYSICAL_ACCEPTANCE_COMPLETE**（2026-09-21 用户确认人工验收完毕；原有 JVM 208 项、Instrumented 30/30、冷启动 10/10 证据保留）。
 - [x] **Task 2：旧模板导入 + 模板透明叠加 MVP** — **SOFTWARE_COMPLETE**（2026-09-02，提交 `bdf1bd89`）。V1-1 导入 + V1-2 overlay + alpha slider 完成。JVM 242 项（237 passed / 0 failed / 5 skipped）。遗留：legacy ROI 未迁移、imageFiles[] 仅取首图。
-- [ ] **Task 3：DPM 绑定、已绑定码切件和冲突处理** — 源码路由已接入；模板配置绑定保存、冲突拒绝和未知码提示已有自动化/流程证据；同一最终 APK 的已绑定码实际切换、切换后从 View 1/N 重新开始及完整累积 instrumented 回归待补。物理 DPM 样本验收仍为 `PENDING_PHYSICAL_DPM_SAMPLE`。
+- [x] **Task 3：DPM 绑定、已绑定码切件和冲突处理** — **USER_ACCEPTED / MANUAL_PHYSICAL_ACCEPTANCE_COMPLETE**（2026-09-21 用户确认人工验收完毕）。源码路由、模板配置绑定保存、冲突拒绝和未知码提示已有自动化/流程证据；本次状态依据用户人工验收确认收口。详细真机 handback/instrumented XML 未保存，不能补写具体设备日志或测试数字。
 
 B2 Task 1 固定边界：使用唯一 CameraController 的 `DPM_SCAN` 模式，忠实迁移旧工程已经可用的生产识别链。顺序固定为中心 ROI/全图的 ZXing `DataMatrixReader` 主解码（含旧预处理策略与双极性尝试）→ ML Kit DATA_MATRIX 兜底 → 满足旧门控条件时执行网格重建兜底；同时保留帧节流、single-flight、响应门、连续 miss 对焦、取消和停止后不回调。”扫一扫”只进入实时扫码，不提供 DPM 相册选图、码图导入或对应权限/路由。
 

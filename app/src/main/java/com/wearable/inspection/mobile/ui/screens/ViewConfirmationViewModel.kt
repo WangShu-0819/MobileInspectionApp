@@ -12,12 +12,16 @@ import com.wearable.inspection.mobile.data.entity.RoiDefinitionEntity
 import com.wearable.inspection.mobile.data.entity.RoiTargetType
 import com.wearable.inspection.mobile.data.entity.ViewRoiConfirmEntity
 import com.wearable.inspection.mobile.data.repository.InspectionRepository
+import com.wearable.inspection.mobile.detection.FullImageInferResult
 import com.wearable.inspection.mobile.detection.NanoDetDecisionPolicy
 import com.wearable.inspection.mobile.detection.NanoDetInferenceStatus
+import com.wearable.inspection.mobile.detection.NanoDetModelContract
 import com.wearable.inspection.mobile.detection.NanoDetRoiInferenceResult
 import com.wearable.inspection.mobile.detection.NanoDetRoiInferenceService
 import com.wearable.inspection.mobile.detection.NanoDetSuggestion
 import com.wearable.inspection.mobile.data.image.MobileImageStore
+import com.wearable.inspection.mobile.registration.RegistrationStatus
+import android.util.Log
 import org.json.JSONArray
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -45,7 +49,8 @@ class ViewConfirmationViewModel(
     private val partId: String,
     private val totalViews: Int,
     private val inferenceService: NanoDetRoiInferenceService,
-    private val imageStore: MobileImageStore
+    private val imageStore: MobileImageStore,
+    private val isFullImageFallback: Boolean = false,
 ) : ViewModel() {
 
     /** 当前 View 的 ROI 定义列表 */
@@ -88,6 +93,14 @@ class ViewConfirmationViewModel(
     private data class EvidenceRef(val path: String, val overrideTime: Long)
     private val savedOverrideEvidence = mutableMapOf<String, EvidenceRef>()
 
+    /** 整图推理结果（FALLBACK_FULL_IMAGE 或 FAILED 路径） */
+    var fullImageInferResult by mutableStateOf<FullImageInferResult?>(null)
+        private set
+
+    /** 当前是否为整图确认模式 */
+    var isFullImageMode by mutableStateOf(false)
+        private set
+
     /** 加载完成 */
     var isLoaded by mutableStateOf(false)
         private set
@@ -95,6 +108,13 @@ class ViewConfirmationViewModel(
     private var photoGeometry: RoiCoordinateMapper.PhotoGeometry? = null
     private var templateExifOrientation: Int? = null
     private var photoAssociationValid = false
+
+    /**
+     * 投影 ROI 像素坐标缓存（roiId → ContentRectBounds）。
+     * 在 PROJECTED 路径推理时填充，saveRoiConfirms() 直接复用，
+     * 确保保存的 roiPixelRect 与 NanoDet 检测输入完全一致。
+     */
+    private val projectedPixelRects = mutableMapOf<String, ContentRectBounds>()
 
     init {
         loadData()
@@ -122,7 +142,6 @@ class ViewConfirmationViewModel(
                 rois = roiList
                 restoreManualSelections(repository.getViewRoiConfirmsByPhoto(batchId, photoId), roiList)
 
-                // 图片尺寸读取和 ROI 裁剪都可能访问/解码大 JPEG，必须离开主线程。
                 val geometry = withContext(Dispatchers.IO) {
                     RoiCoordinateMapper.getImageGeometry(photoPath)
                 }
@@ -133,53 +152,34 @@ class ViewConfirmationViewModel(
                     return@launch
                 }
                 photoGeometry = geometry
-                val templateGeometry = withContext(Dispatchers.IO) {
-                    repository.getTemplate(templateId)?.mainImagePath?.let(RoiCoordinateMapper::getImageGeometry)
-                }
-                templateExifOrientation = templateGeometry?.exifOrientation
-                val displayTemplateOrientation = templateExifOrientation
-                    ?: android.media.ExifInterface.ORIENTATION_NORMAL
 
-                val loadedBitmaps = withContext(Dispatchers.IO) {
-                    buildMap {
-                        // 为每个 ROI 裁剪子图
-                        for (roi in roiList) {
-                            val normalizedRect = RoiCoordinateMapper.parseNormalizedRect(roi.normalizedRect)
-                            if (normalizedRect != null) {
-                                val pixelRect = RoiCoordinateMapper.mapTemplateRoiToPhotoPixels(
-                                    normalizedRect,
-                                    displayTemplateOrientation,
-                                    geometry
-                                )
-                                val bitmap = RoiCoordinateMapper.cropRoiBitmap(photoPath, pixelRect, inSampleSize = 2)
-                                if (bitmap != null) {
-                                    put(roi.id, bitmap)
-                                }
-                            }
+                // 读取进程级 Session ROI 缓存
+                val cached = SessionRoiRegistry.readAndConsume(batchId, photoId, viewIndex)
+                val path = resolveLoadingPath(cached, isFullImageFallback)
+
+                when (path) {
+                    LoadingPath.PROJECTED -> {
+                        loadWithProjectedRois(roiList, geometry, cached!!.sessionRois)
+                    }
+                    LoadingPath.FULL_IMAGE -> {
+                        if (cached != null && cached.registrationStatus != RegistrationStatus.SUCCESS) {
+                            Log.w(TAG, "Registry status=${cached.registrationStatus}, using full-image fallback")
                         }
+                        if (cached != null && cached.sessionRois.isEmpty()) {
+                            Log.w(TAG, "Registry sessionRois empty, using full-image fallback")
+                        }
+                        if (cached == null && !isFullImageFallback) {
+                            Log.w(TAG, "Registry cache miss (batchId=$batchId, photoId=$photoId, viewIndex=$viewIndex); " +
+                                "fail-closed to full-image mode")
+                        }
+                        loadFullImageFallback(geometry)
+                    }
+                    LoadingPath.TEMPLATE -> {
+                        // 理论上不应到达（resolveLoadingPath 不返回 TEMPLATE）
+                        Log.w(TAG, "Unexpected TEMPLATE path — falling back to full-image mode")
+                        loadFullImageFallback(geometry)
                     }
                 }
-                roiBitmaps.putAll(loadedBitmaps)
-
-                try {
-                    val detected = withContext(Dispatchers.IO) {
-                        inferenceService.inferSavedPhoto(photoPath, roiList, templateExifOrientation)
-                    }
-                    roiList.forEach { roi ->
-                        inferenceResults[roi.id] = detected[roi.id] ?: NanoDetRoiInferenceResult(
-                            roiId = roi.id,
-                            status = NanoDetInferenceStatus.INFERENCE_ERROR,
-                            modelSuggestion = null,
-                            matchingScore = null,
-                            targetClassIndex = NanoDetDecisionPolicy.classIndex(RoiTargetType.fromName(roi.targetType)),
-                            detail = "推理服务未返回该 ROI 结果"
-                        )
-                    }
-                } catch (e: Exception) {
-                    errorMessage = "NanoDet 推理失败：${e.message ?: "未知错误"}"
-                    setInferenceFailure(NanoDetInferenceStatus.INFERENCE_ERROR, errorMessage!!)
-                }
-                applyDefaultSelections(roiList)
                 isLoaded = true
             } catch (e: Exception) {
                 errorMessage = "加载失败：${e.message ?: "未知错误"}"
@@ -187,6 +187,158 @@ class ViewConfirmationViewModel(
                 isLoaded = true
             }
         }
+    }
+
+    /** SUCCESS 路径：使用 Session ROI 投影坐标裁剪和推理。 */
+    private suspend fun loadWithProjectedRois(
+        roiList: List<RoiDefinitionEntity>,
+        geometry: RoiCoordinateMapper.PhotoGeometry,
+        sessionRois: List<SessionRoi>,
+    ) {
+        val sessionRoiMap = sessionRois.associateBy { it.id }
+
+        // 全量覆盖检查：所有可检测 ROI 都必须有对应的投影 SessionRoi
+        val missingRois = roiList.filter { it.id !in sessionRoiMap }
+        if (missingRois.isNotEmpty()) {
+            // 缺少任一 ROI 的投影坐标 → 整体拒绝，绝不保留原模板 normalizedRect
+            Log.w(TAG, "Projected ROIs missing for ${missingRois.size}/${roiList.size} ROIs: " +
+                "${missingRois.take(5).map { it.id }} — rejecting batch, falling back to full-image mode")
+            loadFullImageFallback(geometry)
+            return
+        }
+
+        // 使用投影坐标裁剪 ROI 子图，并缓存像素坐标供 saveRoiConfirms() 复用
+        val loadedBitmaps = withContext(Dispatchers.IO) {
+            buildMap {
+                for (roi in roiList) {
+                    val sessionRoi = sessionRoiMap[roi.id]!!
+                    val pixelRect = RoiCoordinateMapper.mapToImagePixels(sessionRoi.rect, geometry.width, geometry.height)
+                    projectedPixelRects[roi.id] = pixelRect  // 缓存：与 NanoDet 输入一致
+                    val bitmap = RoiCoordinateMapper.cropRoiBitmap(photoPath, pixelRect, inSampleSize = 2)
+                    if (bitmap != null) put(roi.id, bitmap)
+                }
+            }
+        }
+        roiBitmaps.putAll(loadedBitmaps)
+
+        // 构造投影坐标版本的 RoiDefinitionEntity 列表
+        // normalizedRect 替换为投影坐标 JSON，templateExifOrientation 设为 NORMAL
+        // 这样 mapTemplateRoiToPhotoPixels 内部的 transformNormalizedRect 成为单位变换
+        val projectedRoiList = roiList.map { roi ->
+            val sessionRoi = sessionRoiMap[roi.id]!!
+            roi.copy(normalizedRect = sessionRoi.rect.toJsonString())
+        }
+
+        try {
+            val detected = withContext(Dispatchers.IO) {
+                inferenceService.inferSavedPhoto(
+                    photoPath,
+                    projectedRoiList,
+                    android.media.ExifInterface.ORIENTATION_NORMAL,
+                )
+            }
+            roiList.forEach { roi ->
+                inferenceResults[roi.id] = detected[roi.id] ?: NanoDetRoiInferenceResult(
+                    roiId = roi.id,
+                    status = NanoDetInferenceStatus.INFERENCE_ERROR,
+                    modelSuggestion = null,
+                    matchingScore = null,
+                    targetClassIndex = NanoDetDecisionPolicy.classIndex(RoiTargetType.fromName(roi.targetType)),
+                    detail = "推理服务未返回该 ROI 结果"
+                )
+            }
+        } catch (e: Exception) {
+            errorMessage = "NanoDet 推理失败：${e.message ?: "未知错误"}"
+            setInferenceFailure(NanoDetInferenceStatus.INFERENCE_ERROR, errorMessage!!)
+        }
+        applyDefaultSelections(roiList)
+    }
+
+    /** FALLBACK 路径：整图推理。 */
+    private suspend fun loadFullImageFallback(geometry: RoiCoordinateMapper.PhotoGeometry) {
+        isFullImageMode = true
+        try {
+            val result = withContext(Dispatchers.IO) {
+                inferenceService.inferFullImage(photoPath)
+            }
+            fullImageInferResult = result
+
+            // 为所有 ROI 设置推理失败状态（整图模式不按 ROI 分析）
+            rois.forEach { roi ->
+                inferenceResults[roi.id] = NanoDetRoiInferenceResult(
+                    roiId = roi.id,
+                    status = NanoDetInferenceStatus.NO_DETECTION,
+                    modelSuggestion = result.aggregatedSuggestion,
+                    matchingScore = result.highestScore,
+                    targetClassIndex = NanoDetDecisionPolicy.classIndex(RoiTargetType.fromName(roi.targetType)),
+                    threshold = result.threshold,
+                    imageWidth = result.imageWidth,
+                    imageHeight = result.imageHeight,
+                    exifOrientation = result.exifOrientation,
+                    detail = "整图检测模式（${result.detections.size} 个检出）",
+                )
+            }
+        } catch (e: Exception) {
+            errorMessage = "整图推理失败：${e.message ?: "未知错误"}"
+            fullImageInferResult = FullImageInferResult(
+                detections = emptyList(), aggregatedSuggestion = null, highestScore = null,
+                elapsedMs = 0, imageWidth = geometry.width, imageHeight = geometry.height,
+                exifOrientation = geometry.exifOrientation,
+                status = NanoDetInferenceStatus.INFERENCE_ERROR,
+                detail = e.message,
+            )
+        }
+    }
+
+    /** 默认路径：使用模板坐标裁剪和推理（原有逻辑）。 */
+    private suspend fun loadWithTemplateRois(
+        roiList: List<RoiDefinitionEntity>,
+        geometry: RoiCoordinateMapper.PhotoGeometry,
+    ) {
+        val templateGeometry = withContext(Dispatchers.IO) {
+            repository.getTemplate(templateId)?.mainImagePath?.let(RoiCoordinateMapper::getImageGeometry)
+        }
+        templateExifOrientation = templateGeometry?.exifOrientation
+        val displayTemplateOrientation = templateExifOrientation
+            ?: android.media.ExifInterface.ORIENTATION_NORMAL
+
+        val loadedBitmaps = withContext(Dispatchers.IO) {
+            buildMap {
+                for (roi in roiList) {
+                    val normalizedRect = RoiCoordinateMapper.parseNormalizedRect(roi.normalizedRect)
+                    if (normalizedRect != null) {
+                        val pixelRect = RoiCoordinateMapper.mapTemplateRoiToPhotoPixels(
+                            normalizedRect,
+                            displayTemplateOrientation,
+                            geometry,
+                        )
+                        val bitmap = RoiCoordinateMapper.cropRoiBitmap(photoPath, pixelRect, inSampleSize = 2)
+                        if (bitmap != null) put(roi.id, bitmap)
+                    }
+                }
+            }
+        }
+        roiBitmaps.putAll(loadedBitmaps)
+
+        try {
+            val detected = withContext(Dispatchers.IO) {
+                inferenceService.inferSavedPhoto(photoPath, roiList, templateExifOrientation)
+            }
+            roiList.forEach { roi ->
+                inferenceResults[roi.id] = detected[roi.id] ?: NanoDetRoiInferenceResult(
+                    roiId = roi.id,
+                    status = NanoDetInferenceStatus.INFERENCE_ERROR,
+                    modelSuggestion = null,
+                    matchingScore = null,
+                    targetClassIndex = NanoDetDecisionPolicy.classIndex(RoiTargetType.fromName(roi.targetType)),
+                    detail = "推理服务未返回该 ROI 结果"
+                )
+            }
+        } catch (e: Exception) {
+            errorMessage = "NanoDet 推理失败：${e.message ?: "未知错误"}"
+            setInferenceFailure(NanoDetInferenceStatus.INFERENCE_ERROR, errorMessage!!)
+        }
+        applyDefaultSelections(roiList)
     }
 
     private fun restoreManualSelections(
@@ -254,6 +406,8 @@ class ViewConfirmationViewModel(
     fun isAllConfirmed(): Boolean {
         if (!isLoaded || !photoAssociationValid) return false
         if (overallResult == null) return false
+        // 整图模式只需要总体结果
+        if (isFullImageMode) return true
         return rois.all { roiResults.containsKey(it.id) }
     }
 
@@ -266,12 +420,12 @@ class ViewConfirmationViewModel(
             errorMessage = "照片关联无效，不能保存人工终审"
             return
         }
-        if (rois.isEmpty()) {
-            errorMessage = "当前视角无 ROI，无需人工确认"
-            return
-        }
         if (!isAllConfirmed()) {
             errorMessage = "请完成所有选择"
+            return
+        }
+        if (!isFullImageMode && rois.isEmpty()) {
+            errorMessage = "当前视角无 ROI，无需人工确认"
             return
         }
 
@@ -279,108 +433,76 @@ class ViewConfirmationViewModel(
         errorMessage = null
 
         viewModelScope.launch {
-            // 本轮新建的证据文件路径，DB 失败时需清理
             val newEvidenceFiles = mutableListOf<String>()
             try {
                 val now = System.currentTimeMillis()
                 val overall = overallResult!!
                 val geometry = photoGeometry
 
-                // 预计算每个 ROI 的改判证据状态
-                data class OverrideState(
-                    val roiId: String,
-                    val humanChangedModel: Boolean,
-                    val overrideTime: Long?,
-                    val roiEvidencePath: String?,
-                    val isNewEvidence: Boolean
-                )
-                val overrideStates = mutableListOf<OverrideState>()
-                var evidenceSaveError: String? = null
-
-                for (roi in rois) {
-                    val human = roiResults.getValue(roi.id)
-                    val suggestion = inferenceResults[roi.id]?.modelSuggestion
-                    val changed = suggestion != null && suggestion.name != human
-                    val existingRef = savedOverrideEvidence[roi.id]
-                    val existingValid = existingRef != null && imageStore.roiEvidenceFileValid(existingRef.path)
-
-                    if (!changed) {
-                        // 未改判：旧证据保留到 DB 成功后再删除，此处只记录状态
-                        overrideStates += OverrideState(roi.id, false, null, null, false)
-                    } else {
-                        if (existingValid) {
-                            // 改判未变：保留已有证据和原始改判时间
-                            overrideStates += OverrideState(roi.id, true, existingRef!!.overrideTime, existingRef.path, false)
-                        } else {
-                            // 新改判：生成并保存 ROI 证据图
-                            val roiBitmap = roiBitmaps[roi.id]
-                            if (roiBitmap == null) {
-                                evidenceSaveError = "ROI 裁剪图不可用，无法保存改判证据"
-                                overrideStates += OverrideState(roi.id, true, null, null, true)
-                                continue
-                            }
-                            val evidenceFileName = "roi_${batchId.take(8)}_${photoId}_${templateId.take(8)}_${viewIndex}_${roi.id.take(8)}_$now.jpg"
-                            val savedPath = withContext(Dispatchers.IO) {
-                                imageStore.saveRoiEvidence(roiBitmap, evidenceFileName)
-                            }
-                            if (savedPath == null) {
-                                evidenceSaveError = "改判证据图写入失败"
-                                overrideStates += OverrideState(roi.id, true, null, null, true)
-                                continue
-                            }
-                            newEvidenceFiles += savedPath
-                            overrideStates += OverrideState(roi.id, true, now, savedPath, true)
-                        }
-                    }
-                }
-
-                // 新改判证据写入失败时中止：清理本轮新建文件
-                val hasNewEvidenceFailure = overrideStates.any { it.isNewEvidence && it.roiEvidencePath == null }
-                if (hasNewEvidenceFailure) {
-                    newEvidenceFiles.forEach { imageStore.deleteRoiEvidence(it) }
-                    errorMessage = evidenceSaveError ?: "改判证据保存失败"
-                    isSaving = false
-                    return@launch
-                }
-
-                val confirms = rois.map { roi ->
-                    val normalizedRect = RoiCoordinateMapper.parseNormalizedRect(roi.normalizedRect)
-                    val pixelRect = if (normalizedRect != null && geometry != null) {
-                        RoiCoordinateMapper.mapTemplateRoiToPhotoPixels(
-                            normalizedRect,
-                            templateExifOrientation ?: android.media.ExifInterface.ORIENTATION_NORMAL,
-                            geometry
-                        )
-                    } else {
-                        ContentRectBounds(0, 0, 0, 0)
-                    }
-                    val pixelRectJson = JSONObject().apply {
-                        put("left", pixelRect.left)
-                        put("top", pixelRect.top)
-                        put("right", pixelRect.right)
-                        put("bottom", pixelRect.bottom)
-                    }.toString()
-
-                    val os = overrideStates.first { it.roiId == roi.id }
-                    buildViewRoiConfirmEntity(
-                        batchId = batchId,
-                        photoId = photoId,
-                        photoPath = photoPath,
-                        viewIndex = viewIndex,
+                val confirms = if (isFullImageMode) {
+                    // ── 整图模式：创建单条 __FULL_IMAGE__ 确认记录 ──
+                    val fullResult = fullImageInferResult
+                    val fullImageRoi = RoiDefinitionEntity(
+                        id = FULL_IMAGE_ROI_ID,
                         templateId = templateId,
-                        templateName = templateName,
-                        roi = roi,
-                        roiPixelRect = pixelRectJson,
-                        inference = inferenceResults[roi.id],
-                        humanResult = roiResults.getValue(roi.id),
-                        overallResult = overall,
-                        confirmedAt = now,
-                        overrideTime = os.overrideTime,
-                        roiEvidencePath = os.roiEvidencePath
+                        name = "整图检测",
+                        order = 0,
+                        normalizedRect = NORMALIZED_FULL_IMAGE_RECT,
+                        inspectionType = "VISUAL",
+                        enabled = true,
+                        targetType = null,
                     )
+                    val pixelRectJson = if (geometry != null) {
+                        JSONObject().apply {
+                            put("left", 0); put("top", 0)
+                            put("right", geometry.width); put("bottom", geometry.height)
+                        }.toString()
+                    } else ContentRectBounds(0, 0, 0, 0).let {
+                        JSONObject().apply {
+                            put("left", it.left); put("top", it.top)
+                            put("right", it.right); put("bottom", it.bottom)
+                        }.toString()
+                    }
+                    // 构造一个模拟推理结果，包含整图检测的所有 detections
+                    val syntheticInference = NanoDetRoiInferenceResult(
+                        roiId = FULL_IMAGE_ROI_ID,
+                        status = fullResult?.status ?: NanoDetInferenceStatus.INFERENCE_ERROR,
+                        modelSuggestion = fullResult?.aggregatedSuggestion,
+                        matchingScore = fullResult?.highestScore,
+                        targetClassIndex = null,
+                        threshold = fullResult?.threshold ?: NanoDetModelContract.STARTING_BUSINESS_THRESHOLD,
+                        elapsedMs = fullResult?.elapsedMs ?: 0,
+                        imageWidth = fullResult?.imageWidth,
+                        imageHeight = fullResult?.imageHeight,
+                        exifOrientation = fullResult?.exifOrientation,
+                        detections = fullResult?.detections ?: emptyList(),
+                        detail = fullResult?.detail,
+                        modelVersion = fullResult?.modelVersion ?: NanoDetModelContract.VERSION,
+                        modelParamSha256 = fullResult?.modelParamSha256 ?: NanoDetModelContract.PARAM_SHA256,
+                        modelSha256 = fullResult?.modelSha256 ?: NanoDetModelContract.MODEL_SHA256,
+                    )
+                    listOf(
+                        buildViewRoiConfirmEntity(
+                            batchId = batchId,
+                            photoId = photoId,
+                            photoPath = photoPath,
+                            viewIndex = viewIndex,
+                            templateId = templateId,
+                            templateName = templateName,
+                            roi = fullImageRoi,
+                            roiPixelRect = pixelRectJson,
+                            inference = syntheticInference,
+                            humanResult = overall,
+                            overallResult = overall,
+                            confirmedAt = now,
+                        )
+                    )
+                } else {
+                    // ── ROI 模式：按 ROI 逐条保存 ──
+                    saveRoiConfirms(now, geometry, newEvidenceFiles)
                 }
 
-                // 先保存数据库
+                // 保存数据库
                 repository.replaceViewRoiConfirmsForPhoto(batchId, photoId, confirms)
                 val persisted = repository.getViewRoiConfirmsByPhoto(batchId, photoId)
                 check(persisted.size == confirms.size && confirms.all { expected ->
@@ -402,29 +524,128 @@ class ViewConfirmationViewModel(
                     }
                 }) { "确认记录保存校验失败" }
 
-                // DB 成功后：删除不再需要的旧证据文件
-                for (roi in rois) {
-                    val os = overrideStates.first { it.roiId == roi.id }
-                    if (!os.humanChangedModel) {
-                        val oldRef = savedOverrideEvidence[roi.id]
-                        if (oldRef != null) imageStore.deleteRoiEvidence(oldRef.path)
+                if (!isFullImageMode) {
+                    // DB 成功后：删除不再需要的旧证据文件
+                    for (roi in rois) {
+                        val os = roiOverrideStates.firstOrNull { it.roiId == roi.id } ?: continue
+                        if (!os.humanChangedModel) {
+                            val oldRef = savedOverrideEvidence[roi.id]
+                            if (oldRef != null) imageStore.deleteRoiEvidence(oldRef.path)
+                        }
                     }
-                }
-
-                // DB 成功后：更新证据缓存
-                savedOverrideEvidence.clear()
-                overrideStates.filter { it.humanChangedModel && it.roiEvidencePath != null }.forEach {
-                    savedOverrideEvidence[it.roiId] = EvidenceRef(it.roiEvidencePath!!, it.overrideTime!!)
+                    savedOverrideEvidence.clear()
+                    roiOverrideStates.filter { it.humanChangedModel && it.roiEvidencePath != null }.forEach {
+                        savedOverrideEvidence[it.roiId] = EvidenceRef(it.roiEvidencePath!!, it.overrideTime!!)
+                    }
                 }
 
                 saveCompleted = true
             } catch (e: Exception) {
-                // DB 保存失败：清理本轮新建证据，保留旧证据和缓存不变
                 newEvidenceFiles.forEach { imageStore.deleteRoiEvidence(it) }
                 errorMessage = "保存失败：${e.message}"
             } finally {
                 isSaving = false
             }
+        }
+    }
+
+    /** ROI 模式的 override 状态缓存 */
+    private data class OverrideState(
+        val roiId: String,
+        val humanChangedModel: Boolean,
+        val overrideTime: Long?,
+        val roiEvidencePath: String?,
+        val isNewEvidence: Boolean,
+    )
+    private var roiOverrideStates = listOf<OverrideState>()
+
+    /** 按 ROI 逐条构建确认记录（ROI 模式）。 */
+    private suspend fun saveRoiConfirms(
+        now: Long,
+        geometry: RoiCoordinateMapper.PhotoGeometry?,
+        newEvidenceFiles: MutableList<String>,
+    ): List<ViewRoiConfirmEntity> {
+        val overall = overallResult!!
+        val overrideStates = mutableListOf<OverrideState>()
+        var evidenceSaveError: String? = null
+
+        for (roi in rois) {
+            val human = roiResults.getValue(roi.id)
+            val suggestion = inferenceResults[roi.id]?.modelSuggestion
+            val changed = suggestion != null && suggestion.name != human
+            val existingRef = savedOverrideEvidence[roi.id]
+            val existingValid = existingRef != null && imageStore.roiEvidenceFileValid(existingRef.path)
+
+            if (!changed) {
+                overrideStates += OverrideState(roi.id, false, null, null, false)
+            } else {
+                if (existingValid) {
+                    overrideStates += OverrideState(roi.id, true, existingRef!!.overrideTime, existingRef.path, false)
+                } else {
+                    val roiBitmap = roiBitmaps[roi.id]
+                    if (roiBitmap == null) {
+                        evidenceSaveError = "ROI 裁剪图不可用，无法保存改判证据"
+                        overrideStates += OverrideState(roi.id, true, null, null, true)
+                        continue
+                    }
+                    val evidenceFileName = "roi_${batchId.take(8)}_${photoId}_${templateId.take(8)}_${viewIndex}_${roi.id.take(8)}_$now.jpg"
+                    val savedPath = withContext(Dispatchers.IO) {
+                        imageStore.saveRoiEvidence(roiBitmap, evidenceFileName)
+                    }
+                    if (savedPath == null) {
+                        evidenceSaveError = "改判证据图写入失败"
+                        overrideStates += OverrideState(roi.id, true, null, null, true)
+                        continue
+                    }
+                    newEvidenceFiles += savedPath
+                    overrideStates += OverrideState(roi.id, true, now, savedPath, true)
+                }
+            }
+        }
+
+        val hasNewEvidenceFailure = overrideStates.any { it.isNewEvidence && it.roiEvidencePath == null }
+        if (hasNewEvidenceFailure) {
+            newEvidenceFiles.forEach { imageStore.deleteRoiEvidence(it) }
+            throw IllegalStateException(evidenceSaveError ?: "改判证据保存失败")
+        }
+
+        roiOverrideStates = overrideStates
+
+        return rois.map { roi ->
+            // 使用 projected 路径缓存的像素坐标（与 NanoDet 检测输入一致）
+            // projected 坐标缺失时 fail-closed：整图 bounds 或中止保存
+            val pixelRect = projectedPixelRects[roi.id]
+                ?: if (geometry != null) {
+                    ContentRectBounds(0, 0, geometry.width, geometry.height)
+                } else {
+                    throw IllegalStateException(
+                        "saveRoiConfirms: projectedPixelRects missing for roiId=${roi.id} and geometry is null"
+                    )
+                }
+            val pixelRectJson = JSONObject().apply {
+                put("left", pixelRect.left)
+                put("top", pixelRect.top)
+                put("right", pixelRect.right)
+                put("bottom", pixelRect.bottom)
+            }.toString()
+
+            val os = overrideStates.first { it.roiId == roi.id }
+            buildViewRoiConfirmEntity(
+                batchId = batchId,
+                photoId = photoId,
+                photoPath = photoPath,
+                viewIndex = viewIndex,
+                templateId = templateId,
+                templateName = templateName,
+                roi = roi,
+                roiPixelRect = pixelRectJson,
+                inference = inferenceResults[roi.id],
+                humanResult = roiResults.getValue(roi.id),
+                overallResult = overall,
+                confirmedAt = now,
+                overrideTime = os.overrideTime,
+                roiEvidencePath = os.roiEvidencePath,
+            )
         }
     }
 
@@ -444,6 +665,12 @@ class ViewConfirmationViewModel(
     }
 
     companion object {
+        private const val TAG = "ViewConfirmVM"
+        /** 整图确认模式使用的虚拟 ROI ID */
+        const val FULL_IMAGE_ROI_ID = "__FULL_IMAGE__"
+        /** 整图确认模式使用的归一化矩形（覆盖全图） */
+        private const val NORMALIZED_FULL_IMAGE_RECT = """{"left":0.0,"top":0.0,"right":1.0,"bottom":1.0}"""
+
         fun factory(
             repository: InspectionRepository,
             batchId: String,
@@ -455,7 +682,8 @@ class ViewConfirmationViewModel(
             partId: String,
             totalViews: Int,
             inferenceService: NanoDetRoiInferenceService,
-            imageStore: MobileImageStore
+            imageStore: MobileImageStore,
+            isFullImageFallback: Boolean = false,
         ) = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -470,11 +698,53 @@ class ViewConfirmationViewModel(
                     partId = partId,
                     totalViews = totalViews,
                     inferenceService = inferenceService,
-                    imageStore = imageStore
+                    imageStore = imageStore,
+                    isFullImageFallback = isFullImageFallback,
                 ) as T
             }
         }
     }
+}
+
+/** 加载路径枚举，用于测试验证分支路由。 */
+internal enum class LoadingPath { PROJECTED, FULL_IMAGE, TEMPLATE }
+
+/**
+ * 根据 registry 缓存状态和 fallback 标志决定加载路径。
+ *
+ * 规则：
+ * - SUCCESS + 非空 sessionRois → PROJECTED
+ * - isFullImageFallback 或 registry 存在但非 SUCCESS → FULL_IMAGE
+ * - 缓存缺失 + 非 fallback → FULL_IMAGE（fail-closed，禁止静默回退到模板坐标）
+ *
+ * 禁止在 registry 缺失/不一致时调用 TEMPLATE 路径。
+ */
+internal fun resolveLoadingPath(
+    cached: SessionRoiRegistry.Entry?,
+    isFullImageFallback: Boolean,
+): LoadingPath = when {
+    // isFullImageFallback 是导航层的权威信号：显式标记时始终使用整图
+    isFullImageFallback -> LoadingPath.FULL_IMAGE
+    // SUCCESS + 有投影 ROI → 使用投影坐标
+    cached != null &&
+        cached.registrationStatus == RegistrationStatus.SUCCESS &&
+        cached.sessionRois.isNotEmpty() -> LoadingPath.PROJECTED
+    // registry 存在但状态不一致 → fail-closed 到整图
+    cached != null -> LoadingPath.FULL_IMAGE
+    // 缓存缺失 + 非 fallback → fail-closed 到整图（禁止回退到模板）
+    else -> LoadingPath.FULL_IMAGE
+}
+
+/**
+ * 验证所有可检测 ROI 是否都有对应的投影 SessionRoi。
+ * 缺少任一 ROI 时返回 false（整体拒绝）。
+ */
+internal fun allRoisProjected(
+    roiIds: List<String>,
+    sessionRois: List<SessionRoi>,
+): Boolean {
+    val projectedIds = sessionRois.map { it.id }.toSet()
+    return roiIds.all { it in projectedIds }
 }
 
 internal fun buildViewRoiConfirmEntity(

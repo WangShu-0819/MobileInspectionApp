@@ -100,7 +100,7 @@ sealed class Screen(val route: String) {
 
     /** View 人工确认 */
     object ViewConfirmation : Screen(
-        "view_confirmation/{batchId}/{photoId}/{photoPath}/{viewIndex}/{templateId}/{templateName}/{partId}/{totalViews}"
+        "view_confirmation/{batchId}/{photoId}/{photoPath}/{viewIndex}/{templateId}/{templateName}/{partId}/{totalViews}?isFullImageFallback={isFullImageFallback}"
     ) {
         const val ARG_BATCH_ID = "batchId"
         const val ARG_PHOTO_ID = "photoId"
@@ -110,6 +110,7 @@ sealed class Screen(val route: String) {
         const val ARG_TEMPLATE_NAME = "templateName"
         const val ARG_PART_ID = "partId"
         const val ARG_TOTAL_VIEWS = "totalViews"
+        const val ARG_IS_FULL_IMAGE_FALLBACK = "isFullImageFallback"
 
         fun createRoute(
             batchId: String,
@@ -119,11 +120,12 @@ sealed class Screen(val route: String) {
             templateId: String,
             templateName: String,
             partId: String,
-            totalViews: Int
+            totalViews: Int,
+            isFullImageFallback: Boolean = false,
         ): String {
             val encodedPath = android.net.Uri.encode(photoPath)
             val encodedTemplateName = android.net.Uri.encode(templateName)
-            return "view_confirmation/$batchId/$photoId/$encodedPath/$viewIndex/$templateId/$encodedTemplateName/$partId/$totalViews"
+            return "view_confirmation/$batchId/$photoId/$encodedPath/$viewIndex/$templateId/$encodedTemplateName/$partId/$totalViews?isFullImageFallback=$isFullImageFallback"
         }
     }
 

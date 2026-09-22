@@ -60,6 +60,7 @@ import com.wearable.inspection.mobile.data.entity.RoiTargetType
 import com.wearable.inspection.mobile.detection.NanoDetInferenceStatus
 import com.wearable.inspection.mobile.detection.NanoDetRoiInferenceResult
 import com.wearable.inspection.mobile.ui.theme.BackgroundVariant1
+import androidx.compose.material3.HorizontalDivider
 import com.wearable.inspection.mobile.ui.theme.DividerColor
 import com.wearable.inspection.mobile.ui.theme.FailColor
 import com.wearable.inspection.mobile.ui.theme.PassColor
@@ -144,7 +145,7 @@ fun ViewConfirmationScreen(
             )
         },
         bottomBar = {
-            if (isLoaded && rois.isNotEmpty() && !saveCompleted && !completionHandled.value) {
+            if (isLoaded && (rois.isNotEmpty() || viewModel.isFullImageMode) && !saveCompleted && !completionHandled.value) {
                 // 保存完成后先移除本页操作栏，再通知导航层离开，避免确认按钮残留一帧。
                 BottomConfirmBar(
                     overallResult = overallResult,
@@ -203,6 +204,99 @@ fun ViewConfirmationScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text("当前视角无 ROI，无需人工确认", color = TextSecondary)
+                }
+            }
+            viewModel.isFullImageMode -> {
+                // 整图确认模式：显示检测摘要，不渲染 per-ROI 卡片
+                val fullResult = viewModel.fullImageInferResult
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .padding(horizontal = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 8.dp)
+                ) {
+                    item {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                            shape = RoundedCornerShape(8.dp),
+                        ) {
+                            Column(
+                                modifier = Modifier.fillMaxWidth().padding(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                Text(
+                                    text = "整图检测模式",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = TextPrimary,
+                                )
+                                Text(
+                                    text = "配准不可靠，已对整张照片运行 NanoDet 检测。请根据检测结果人工判定。",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = TextSecondary,
+                                )
+                                HorizontalDivider()
+                                if (fullResult != null) {
+                                    Text(
+                                        text = "检出目标：${fullResult.detections.size} 个",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = TextPrimary,
+                                    )
+                                    if (fullResult.highestScore != null) {
+                                        Text(
+                                            text = "最高置信度：${"%.1f".format(fullResult.highestScore * 100)}%",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = TextPrimary,
+                                        )
+                                    }
+                                    Text(
+                                        text = "推理耗时：${fullResult.elapsedMs} ms",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = TextSecondary,
+                                    )
+                                    if (fullResult.detections.isNotEmpty()) {
+                                        Text(
+                                            text = "检测详情：",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = TextPrimary,
+                                        )
+                                        fullResult.detections.take(20).forEachIndexed { index, det ->
+                                            Text(
+                                                text = "  ${index + 1}. ${det.className} — ${"%.1f".format(det.score * 100)}%",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = TextSecondary,
+                                            )
+                                        }
+                                        if (fullResult.detections.size > 20) {
+                                            Text(
+                                                text = "  … 共 ${fullResult.detections.size} 个检出",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = TextSecondary,
+                                            )
+                                        }
+                                    }
+                                    if (fullResult.status == NanoDetInferenceStatus.INFERENCE_ERROR) {
+                                        Text(
+                                            text = "推理异常：${fullResult.detail ?: "未知错误"}",
+                                            color = FailColor,
+                                            style = MaterialTheme.typography.bodySmall,
+                                        )
+                                    }
+                                } else {
+                                    Text(
+                                        text = "整图检测结果不可用",
+                                        color = FailColor,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             }
             else -> {
