@@ -424,13 +424,13 @@ CaptureComparison 隐藏自动导航和模板图片加载实现已基本符合�
 - 阈值采用现有业务阈值 `0.37`，不新增模型阈值。
 - CSV 只保留达到阈值的检测记录；低分原始结果不写入 CSV detection 行，但不改变推理层和数据库原始 JSON。
 - “Excel”继续指现有 `inspection_result.csv`；不生成真正 `.xlsx`。
-- 用户已人工验收确认上一阶段拍照后存在模板/现场对齐界面；上一阶段代码仍保持未提交。
+- 用户已人工验收确认上一阶段拍照后存在模板/现场对齐界面；上一阶段代码已由 `a66d8f5d` 选择性提交。
 
-当前状态：**PLAN_CONFIRMED / AWAITING_BASELINE_COMMIT**。上一阶段未提交 diff 需要先收口，本轮未修改生产代码、未运行构建或设备测试。
+当前状态：**PLAN_CONFIRMED / BASELINE_COMMITTED**。上一阶段差异已由 `a66d8f5d` 按文件路径选择性提交；本轮未修改生产代码、未运行构建或设备测试。
 
 ## 2026-09-22 用户确认：诊断日志与 fallback 整图框为非阻塞增强
 
 - 用户将“模板加载日志补充 templateId”和“fallback 到整图检测时在整张照片绘制检测框”确认为下一步增强，并明确两项均不阻塞主流程。
-- 经主协调复核，这两项已经存在于当前未提交工作区：TemplateImageLoader 结构化日志、EXIF/upright 整图照片加载、`imageBox` 坐标叠加和对应 JVM/Compose 回归测试均已完成；上一轮本地全量为 `1201 / 0 / 0 / 5`，APK SHA-256 为 `5AD754579320AEF172B9AFB3B6F02E37A0F26BF498B5DC6E4458DE051239128D`。
+- 经主协调复核，这两项已完成并提交：TemplateImageLoader 结构化日志、EXIF/upright 整图照片加载、`imageBox` 坐标叠加和对应 JVM/Compose 回归测试均已完成；上一轮本地全量为 `1201 / 0 / 0 / 5`，APK SHA-256 为 `5AD754579320AEF172B9AFB3B6F02E37A0F26BF498B5DC6E4458DE051239128D`。
 - 用户人工验收已确认拍照后模板/现场对齐界面存在。当前不应重复派发实现任务；如需交给 mimo，只安排只读核验和缺口修补。
-- 当前状态：**SOFTWARE_AUDIT_PASSED / AWAITING_BASELINE_COMMIT**。上一阶段代码保持未提交，下一步先完成基线收口，再单独启动已确认的 `0.37` 阈值与 CSV 过滤任务。
+- 当前状态：**SOFTWARE_AUDIT_PASSED / BASELINE_COMMITTED**。基线提交为 `a66d8f5d`；下一步仅在用户明确启动后，单独开始已确认的 `0.37` 阈值与 CSV 过滤任务。

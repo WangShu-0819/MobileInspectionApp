@@ -2,7 +2,7 @@
 
 ## 2026-09-22 当前唯一任务：模板加载 templateId 诊断增强与 fallback 整图检测框叠加
 
-状态：**SOFTWARE_AUDIT_PASSED / AWAITING_BASELINE_COMMIT**。用户确认这两项增强不阻塞主流程；当前未提交工作区已经包含实现和审计证据，人工验收已确认拍照后存在模板/现场对齐界面，不重复实现。
+状态：**SOFTWARE_AUDIT_PASSED / BASELINE_COMMITTED**。用户已确认这两项增强不阻塞主流程；实现和审计证据已按文件路径提交为 `a66d8f5d`，人工验收已确认拍照后存在模板/现场对齐界面，不重复实现。
 
 ### 当前复核结论
 
@@ -11,14 +11,14 @@
 - 当前本地基线为 `1201 / 0 / 0 / 5`，APK SHA-256 为 `5AD754579320AEF172B9AFB3B6F02E37A0F26BF498B5DC6E4458DE051239128D`。
 - `CaptureComparisonScreen`、模板/现场/叠加工具栏和 Session ROI 纯绘制仍保留；人工 ROI 编辑入口暂不开放但没有删除。
 
-### 当前 Agent 核验门禁
+### 上一轮 Agent 核验门禁（已完成）
 
-- [ ] 先只读核验当前工作区，不重复实现已完成的日志和 overlay。
-- [ ] 只有发现真实缺口时，才在允许文件内做最小补丁。
-- [ ] 运行 JVM、Kotlin 编译、Debug APK；不运行 ADB/instrumented/真机/OCR，不提交 Git。
-- [ ] handback 按本地 XML/HTML 和 APK 实际证据回传，不修改协调文档。
+- [x] 先只读核验当前工作区，不重复实现已完成的日志和 overlay。
+- [x] 只有发现真实缺口时，才在允许文件内做最小补丁。
+- [x] 运行 JVM、Kotlin 编译、Debug APK；不运行 ADB/instrumented/真机/OCR，不提交 Git。
+- [x] handback 按本地 XML/HTML 和 APK 实际证据回传，不修改协调文档。
 
-当前 Agent 指令已写入 `tasks/todo.md`，基线收口前不重复派发生产实现。
+上一轮 Agent 指令已完成；当前基线已收口，不重复派发上一轮生产实现。
 
 ---
 
@@ -79,13 +79,13 @@
 
 ### 当前 Agent 状态
 
-方案已确认；上一阶段未提交 diff 先冻结或选择性提交后，才能开始本阶段实现。基线收口前不生成 mimo 指令。
+方案已确认；上一阶段已由 `a66d8f5d` 收口。本阶段尚未启动，待用户明确启动后再生成 mimo 指令。
 
 ---
 
 ## 上一阶段：2026-09-22 V4 后续增强——模板加载 templateId 诊断日志与 fallback 整图检测框叠加
 
-状态：**SOFTWARE_AUDIT_PASSED / AWAITING_USER_AUTHORIZATION**。V4 软件审计、真实设备用户验收和上一阶段 Git 收口已完成；本轮 handback 的 APK、XML/HTML 和只读门控修正均已通过本地复核。当前代码未提交，等待用户明确授权后选择性提交。
+状态：**SOFTWARE_AUDIT_PASSED / BASELINE_COMMITTED**。V4 软件审计、真实设备用户验收和上一阶段 Git 收口已完成；本轮 handback 的 APK、XML/HTML 和只读门控修正均已通过本地复核，当前代码已提交为 `a66d8f5d`。
 
 ### 2026-09-22 只读门控修正最终复核
 
@@ -96,7 +96,7 @@
 
 ### 当前状态
 
-软件审计已通过，当前没有新的 mimo 修正指令。下一步仅等待用户明确授权，主协调按文件路径选择性提交代码、测试和本阶段文档；不使用 `git add .`。
+软件审计已通过，当前没有新的 mimo 修正指令。基线已按文件路径选择性提交为 `a66d8f5d`；后续 0.37/CSV 任务待用户明确启动后再单独生成 mimo 指令。
 
 ### 2026-09-22 最新 handback 主协调复核
 
