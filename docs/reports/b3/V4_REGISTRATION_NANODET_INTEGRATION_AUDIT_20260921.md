@@ -298,5 +298,5 @@ CaptureComparison 隐藏自动导航和模板图片加载实现已基本符合�
 
 - 用户已确认完成真实设备验收，确认范围包括：Compose `LaunchedEffect` 实际自动导航、`NavController.popUpTo` 栈清理、`SessionRoiRegistry` 运行时写入、失败/fallback 整图检测现场效果，以及模板图片真实设备加载表现。
 - 当前任务状态更新为 **SOFTWARE_AUDIT_PASSED / USER_ACCEPTED**。这条用户验收记录不改变此前“未运行 ADB/instrumented/真机”的主协调审计事实；它记录的是用户对现场验收结果的明确确认。
-- 用户已明确授权当前 7 个已修改文件和 3 个未跟踪文件按路径选择性提交 Git；5 个 DPM skipped 仍因外部样本/目录缺失保留，不作为本次用户验收阻塞项。
+- 用户已明确授权当前 7 个已修改文件和 3 个未跟踪文件按路径选择性提交 Git，已完成提交 `aec66356`；5 个 DPM skipped 仍因外部样本/目录缺失保留，不作为本次用户验收阻塞项。
 - 模板加载日志缺少 `templateId`、整图模式缺少检测框叠加仍属于非阻塞后续增强；本次不启动新的代码任务。

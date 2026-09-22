@@ -2,7 +2,7 @@
 
 ## 2026-09-21 当前唯一任务：V4 RegistrationResult → NanoDet 检测集成和结果包
 
-状态：**SOFTWARE_AUDIT_PASSED / USER_ACCEPTED**（2026-09-22 用户已完成真实设备验收；模板图片加载修正和 CaptureComparison 自动导航已获明确 Git 提交授权）。V4/AKAZE 基线 `6bae6a13` 冻结，不修改；V1-3 基线 `c81391b1` 保持不回滚。
+状态：**SOFTWARE_AUDIT_PASSED / USER_ACCEPTED / COMMITTED**（2026-09-22 用户已完成真实设备验收；模板图片加载修正和 CaptureComparison 自动导航已提交为 `aec66356`）。V4/AKAZE 基线 `6bae6a13` 冻结，不修改；V1-3 基线 `c81391b1` 保持不回滚。
 
 ### 主协调 handback 审计结论
 
@@ -49,7 +49,7 @@
 
 ### 当前 Agent 状态
 
-当前无新的 Agent 修正指令；主协调已完成最终源码、XML/HTML、APK、Git diff 审计和用户验收记录，正在按用户授权进行选择性 Git 提交。不得主动运行新的 ADB、instrumented、真机测试或 OCR。
+当前无新的 Agent 修正指令；主协调已完成最终源码、XML/HTML、APK、Git diff 审计和用户验收记录，并已按用户授权完成选择性 Git 提交 `aec66356`。不得主动运行新的 ADB、instrumented、真机测试或 OCR。
 
 详细证据见 [`docs/reports/b3/V4_REGISTRATION_NANODET_INTEGRATION_AUDIT_20260921.md`](../docs/reports/b3/V4_REGISTRATION_NANODET_INTEGRATION_AUDIT_20260921.md)。
 

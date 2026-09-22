@@ -1,6 +1,6 @@
 # 当前唯一任务：V4 RegistrationResult → NanoDet 检测集成和结果包
 
-状态：**SOFTWARE_AUDIT_PASSED / USER_ACCEPTED**（2026-09-22；用户已确认完成真实设备验收；模板图片加载修正和拍照后 CaptureComparison 自动导航已获明确 Git 提交授权）
+状态：**SOFTWARE_AUDIT_PASSED / USER_ACCEPTED / COMMITTED**（2026-09-22；用户已确认完成真实设备验收；模板图片加载修正和拍照后 CaptureComparison 自动导航已提交为 `aec66356`）
 
 ## 当前审计结论
 
@@ -21,7 +21,7 @@
 - [x] `CameraPreview` 与 `TemplateContent` 已共用 `TemplateImageLoader`；支持纯路径、`file://`、`content://`，两遍独立流解码并传播 `CancellationException`。
 - [x] 最终 handback 实际统计：`TemplateImageLoaderTest=23/0/0/0`、`NoRoiViewAdvancementTest=18/0/0/0`、`CaptureComparisonAutoNavigationTest=20/0/0/0`；全量 `1158/0/0/5`。自动导航测试为源码结构测试，未替代禁止运行的 instrumented/真机验证。
 - [x] 用户已确认完成真实设备验收：Compose `LaunchedEffect` 自动导航、`NavController.popUpTo` 栈清理、`SessionRoiRegistry` 运行时写入、失败/fallback 整图检测和模板图片加载均已在现场确认。
-- [x] 用户已明确授权当前修正按文件路径选择性提交 Git；DPM 的 5 个 skipped 仍因外部样本/目录缺失保留，不影响本次用户验收结论。
+- [x] 用户已明确授权当前修正按文件路径选择性提交 Git；已提交为 `aec66356`。DPM 的 5 个 skipped 仍因外部样本/目录缺失保留，不影响本次用户验收结论。
 
 详细审计见 [`docs/reports/b3/V4_REGISTRATION_NANODET_INTEGRATION_AUDIT_20260921.md`](../docs/reports/b3/V4_REGISTRATION_NANODET_INTEGRATION_AUDIT_20260921.md)。
 
