@@ -25,6 +25,16 @@ import org.mockito.Mockito.`when`
 import org.mockito.ArgumentMatchers.anyString
 
 /**
+ * Mockito any() 返回 null，Kotlin 非空参数不接受。
+ * 使用此辅助函数绕过类型限制。
+ */
+private fun <T> anyNonNull(type: Class<T>): T {
+    org.mockito.ArgumentMatchers.any(type)
+    @Suppress("UNCHECKED_CAST")
+    return null as T
+}
+
+/**
  * NormalizedRect 和 ROI 编辑逻辑测试
  *
  * 覆盖：序列化/反序列化、move、resize、边界约束、最小尺寸、四角索引、
@@ -1065,5 +1075,217 @@ class RoiEditorViewModelTest {
         assertFalse("取消后应退出绘制模式", viewModel.isDrawingMode)
         assertNull(viewModel.drawingRect)
         assertNull(viewModel.drawingTargetType)
+    }
+
+    // ══════════════════════════════════════════
+    // 延迟持久化：拖拽预览与最终一次写入
+    // ══════════════════════════════════════════
+
+    @Test
+    fun `moveRoi 仅更新内存不写数据库`() = runTest {
+        val roi1 = createTestRoi("roi_1", normalizedRect = """{"left":0.2,"top":0.2,"right":0.6,"bottom":0.6}""")
+        `when`(mockRepository.getRois("tpl_001")).thenReturn(listOf(roi1))
+
+        val viewModel = RoiEditorViewModel(mockRepository, "tpl_001")
+        advanceUntilIdle()
+
+        // 模拟拖拽多帧
+        viewModel.beginRoiDrag("roi_1")
+        viewModel.moveRoi("roi_1", 0.05f, 0.05f)
+        viewModel.moveRoi("roi_1", 0.05f, 0.05f)
+        viewModel.moveRoi("roi_1", 0.05f, 0.05f)
+
+        // 内存状态应已更新
+        val moved = NormalizedRect.fromJsonString(viewModel.rois[0].normalizedRect)!!
+        assertEquals(0.35f, moved.left, 0.001f)
+        assertEquals(0.35f, moved.top, 0.001f)
+
+        // 数据库不应被调用（未 commit）
+        verify(mockRepository, never()).updateRoi(anyNonNull(RoiDefinitionEntity::class.java))
+    }
+
+    @Test
+    fun `commitRoiDrag 持久化一次到数据库`() = runTest {
+        val roi1 = createTestRoi("roi_1", normalizedRect = """{"left":0.2,"top":0.2,"right":0.6,"bottom":0.6}""")
+        `when`(mockRepository.getRois("tpl_001")).thenReturn(listOf(roi1))
+
+        val viewModel = RoiEditorViewModel(mockRepository, "tpl_001")
+        advanceUntilIdle()
+
+        viewModel.beginRoiDrag("roi_1")
+        viewModel.moveRoi("roi_1", 0.1f, 0.1f)
+        viewModel.moveRoi("roi_1", 0.05f, 0.05f)
+        viewModel.commitRoiDrag("roi_1")
+        advanceUntilIdle()
+
+        // 应只调用一次 updateRoi
+        verify(mockRepository, org.mockito.Mockito.times(1)).updateRoi(anyNonNull(RoiDefinitionEntity::class.java))
+
+        // 内存状态应保持最终位置
+        val final = NormalizedRect.fromJsonString(viewModel.rois[0].normalizedRect)!!
+        assertEquals(0.35f, final.left, 0.001f)
+        assertEquals(0.35f, final.top, 0.001f)
+        assertEquals(0.75f, final.right, 0.001f)
+        assertEquals(0.75f, final.bottom, 0.001f)
+    }
+
+    @Test
+    fun `resizeRoi 仅更新内存不写数据库`() = runTest {
+        val roi1 = createTestRoi("roi_1", normalizedRect = """{"left":0.2,"top":0.2,"right":0.6,"bottom":0.6}""")
+        `when`(mockRepository.getRois("tpl_001")).thenReturn(listOf(roi1))
+
+        val viewModel = RoiEditorViewModel(mockRepository, "tpl_001")
+        advanceUntilIdle()
+
+        viewModel.beginRoiDrag("roi_1")
+        viewModel.resizeRoi("roi_1", 3, 0.8f, 0.8f)
+
+        val resized = NormalizedRect.fromJsonString(viewModel.rois[0].normalizedRect)!!
+        assertEquals(0.8f, resized.right, 0.001f)
+        assertEquals(0.8f, resized.bottom, 0.001f)
+
+        verify(mockRepository, never()).updateRoi(anyNonNull(RoiDefinitionEntity::class.java))
+    }
+
+    @Test
+    fun `resizeRoi 后 commitRoiDrag 持久化一次`() = runTest {
+        val roi1 = createTestRoi("roi_1", normalizedRect = """{"left":0.2,"top":0.2,"right":0.6,"bottom":0.6}""")
+        `when`(mockRepository.getRois("tpl_001")).thenReturn(listOf(roi1))
+
+        val viewModel = RoiEditorViewModel(mockRepository, "tpl_001")
+        advanceUntilIdle()
+
+        viewModel.beginRoiDrag("roi_1")
+        viewModel.resizeRoi("roi_1", 3, 0.8f, 0.8f)
+        viewModel.commitRoiDrag("roi_1")
+        advanceUntilIdle()
+
+        verify(mockRepository, org.mockito.Mockito.times(1)).updateRoi(anyNonNull(RoiDefinitionEntity::class.java))
+    }
+
+    // ══════════════════════════════════════════
+    // 取消拖拽回滚与已保存 ROI 安全
+    // ══════════════════════════════════════════
+
+    @Test
+    fun `cancelRoiDrag 回滚到拖拽前快照`() = runTest {
+        val roi1 = createTestRoi("roi_1", normalizedRect = """{"left":0.2,"top":0.2,"right":0.6,"bottom":0.6}""")
+        `when`(mockRepository.getRois("tpl_001")).thenReturn(listOf(roi1))
+
+        val viewModel = RoiEditorViewModel(mockRepository, "tpl_001")
+        advanceUntilIdle()
+
+        viewModel.beginRoiDrag("roi_1")
+        viewModel.moveRoi("roi_1", 0.1f, 0.1f)
+        // 拖拽中途取消
+        viewModel.cancelRoiDrag("roi_1")
+
+        val reverted = NormalizedRect.fromJsonString(viewModel.rois[0].normalizedRect)!!
+        assertEquals(0.2f, reverted.left, 0.001f)
+        assertEquals(0.2f, reverted.top, 0.001f)
+        assertEquals(0.6f, reverted.right, 0.001f)
+        assertEquals(0.6f, reverted.bottom, 0.001f)
+
+        // 不应写数据库
+        verify(mockRepository, never()).updateRoi(anyNonNull(RoiDefinitionEntity::class.java))
+    }
+
+    @Test
+    fun `cancelRoiDrag 不删除已保存的 ROI`() = runTest {
+        val roi1 = createTestRoi("roi_1", normalizedRect = """{"left":0.2,"top":0.2,"right":0.6,"bottom":0.6}""")
+        val roi2 = createTestRoi("roi_2", normalizedRect = """{"left":0.5,"top":0.5,"right":0.9,"bottom":0.9}""")
+        `when`(mockRepository.getRois("tpl_001")).thenReturn(listOf(roi1, roi2))
+
+        val viewModel = RoiEditorViewModel(mockRepository, "tpl_001")
+        advanceUntilIdle()
+
+        assertEquals(2, viewModel.rois.size)
+
+        // 拖拽 roi_1 然后取消
+        viewModel.beginRoiDrag("roi_1")
+        viewModel.moveRoi("roi_1", 0.1f, 0.1f)
+        viewModel.cancelRoiDrag("roi_1")
+
+        // 两个 ROI 都应保留
+        assertEquals("取消不应删除 ROI", 2, viewModel.rois.size)
+        assertEquals("roi_1", viewModel.rois[0].id)
+        assertEquals("roi_2", viewModel.rois[1].id)
+    }
+
+    @Test
+    fun `cancelRoiDrag 后可再次拖拽并提交`() = runTest {
+        val roi1 = createTestRoi("roi_1", normalizedRect = """{"left":0.2,"top":0.2,"right":0.6,"bottom":0.6}""")
+        `when`(mockRepository.getRois("tpl_001")).thenReturn(listOf(roi1))
+
+        val viewModel = RoiEditorViewModel(mockRepository, "tpl_001")
+        advanceUntilIdle()
+
+        // 第一次拖拽 → 取消
+        viewModel.beginRoiDrag("roi_1")
+        viewModel.moveRoi("roi_1", 0.1f, 0.1f)
+        viewModel.cancelRoiDrag("roi_1")
+
+        // 第二次拖拽 → 提交
+        viewModel.beginRoiDrag("roi_1")
+        viewModel.moveRoi("roi_1", 0.05f, 0.05f)
+        viewModel.commitRoiDrag("roi_1")
+        advanceUntilIdle()
+
+        val final = NormalizedRect.fromJsonString(viewModel.rois[0].normalizedRect)!!
+        assertEquals(0.25f, final.left, 0.001f)
+        assertEquals(0.25f, final.top, 0.001f)
+
+        verify(mockRepository, org.mockito.Mockito.times(1)).updateRoi(anyNonNull(RoiDefinitionEntity::class.java))
+    }
+
+    @Test
+    fun `未 beginRoiDrag 时 cancelRoiDrag 不执行操作`() = runTest {
+        val roi1 = createTestRoi("roi_1", normalizedRect = """{"left":0.2,"top":0.2,"right":0.6,"bottom":0.6}""")
+        `when`(mockRepository.getRois("tpl_001")).thenReturn(listOf(roi1))
+
+        val viewModel = RoiEditorViewModel(mockRepository, "tpl_001")
+        advanceUntilIdle()
+
+        // 未 begin 直接 cancel
+        viewModel.cancelRoiDrag("roi_1")
+
+        // 状态应不变
+        val rect = NormalizedRect.fromJsonString(viewModel.rois[0].normalizedRect)!!
+        assertEquals(0.2f, rect.left, 0.001f)
+        assertEquals(0.6f, rect.right, 0.001f)
+    }
+
+    @Test
+    fun `点按未拖动时 cancelRoiDrag 清理快照且不影响状态`() = runTest {
+        val roi1 = createTestRoi("roi_1", normalizedRect = """{"left":0.2,"top":0.2,"right":0.6,"bottom":0.6}""")
+        `when`(mockRepository.getRois("tpl_001")).thenReturn(listOf(roi1))
+
+        val viewModel = RoiEditorViewModel(mockRepository, "tpl_001")
+        advanceUntilIdle()
+
+        // 模拟点按：begin → 无 move → cancel
+        viewModel.beginRoiDrag("roi_1")
+        viewModel.cancelRoiDrag("roi_1")
+
+        // 坐标应保持不变
+        val rect = NormalizedRect.fromJsonString(viewModel.rois[0].normalizedRect)!!
+        assertEquals(0.2f, rect.left, 0.001f)
+        assertEquals(0.2f, rect.top, 0.001f)
+        assertEquals(0.6f, rect.right, 0.001f)
+        assertEquals(0.6f, rect.bottom, 0.001f)
+
+        // 不应写数据库
+        verify(mockRepository, never()).updateRoi(anyNonNull(RoiDefinitionEntity::class.java))
+
+        // 再次 begin + commit 应正常工作（快照已清理，无残留）
+        viewModel.beginRoiDrag("roi_1")
+        viewModel.moveRoi("roi_1", 0.05f, 0.05f)
+        viewModel.commitRoiDrag("roi_1")
+        advanceUntilIdle()
+
+        val moved = NormalizedRect.fromJsonString(viewModel.rois[0].normalizedRect)!!
+        assertEquals(0.25f, moved.left, 0.001f)
+        assertEquals(0.25f, moved.top, 0.001f)
+        verify(mockRepository, org.mockito.Mockito.times(1)).updateRoi(anyNonNull(RoiDefinitionEntity::class.java))
     }
 }

@@ -166,35 +166,71 @@ class RoiEditorViewModel(
         }
     }
 
-    /** 移动选中 ROI（delta 为 normalized 偏移量） */
+    /**
+     * 拖拽开始前保存快照，用于取消时回滚。
+     * key = roiId，value = normalizedRect JSON
+     */
+    private val dragSnapshots = mutableMapOf<String, String>()
+
+    /**
+     * 标记拖拽开始：保存当前 ROI 坐标快照。
+     * 拖拽期间 moveRoi/resizeRoi 仅更新内存；手势结束时调用 commitRoiDrag 持久化一次。
+     * 手势取消时调用 cancelRoiDrag 回滚到快照。
+     */
+    fun beginRoiDrag(roiId: String) {
+        val roi = _rois.find { it.id == roiId } ?: return
+        dragSnapshots[roiId] = roi.normalizedRect
+    }
+
+    /**
+     * 移动选中 ROI（仅更新内存预览，不写数据库）。
+     * 拖拽过程中每帧调用，手势结束后必须调用 [commitRoiDrag]。
+     */
     fun moveRoi(roiId: String, deltaNormX: Float, deltaNormY: Float) {
         val index = _rois.indexOfFirst { it.id == roiId }
         if (index < 0) return
         val old = NormalizedRect.fromJsonString(_rois[index].normalizedRect) ?: return
         val clamped = old.move(deltaNormX, deltaNormY)
-        viewModelScope.launch {
-            val updated = _rois[index].copy(normalizedRect = clamped.toJsonString())
-            repository.updateRoi(updated)
-            _rois[index] = updated
-        }
+        _rois[index] = _rois[index].copy(normalizedRect = clamped.toJsonString())
     }
 
     /**
-     * 缩放选中 ROI
+     * 缩放选中 ROI（仅更新内存预览，不写数据库）。
+     * 拖拽过程中每帧调用，手势结束后必须调用 [commitRoiDrag]。
      *
      * @param cornerIndex 0=topLeft, 1=topRight, 2=bottomLeft, 3=bottomRight
-     * @param newCornerNorm 新角点的 normalized 坐标
+     * @param newCornerNormX 新角点的 normalized X 坐标
+     * @param newCornerNormY 新角点的 normalized Y 坐标
      */
     fun resizeRoi(roiId: String, cornerIndex: Int, newCornerNormX: Float, newCornerNormY: Float) {
         val index = _rois.indexOfFirst { it.id == roiId }
         if (index < 0) return
         val old = NormalizedRect.fromJsonString(_rois[index].normalizedRect) ?: return
         val clamped = old.resize(cornerIndex, newCornerNormX, newCornerNormY)
+        _rois[index] = _rois[index].copy(normalizedRect = clamped.toJsonString())
+    }
+
+    /**
+     * 拖拽正常结束：将当前内存中的 ROI 坐标持久化到数据库（仅一次）。
+     */
+    fun commitRoiDrag(roiId: String) {
+        dragSnapshots.remove(roiId)
+        val index = _rois.indexOfFirst { it.id == roiId }
+        if (index < 0) return
+        val roi = _rois[index]
         viewModelScope.launch {
-            val updated = _rois[index].copy(normalizedRect = clamped.toJsonString())
-            repository.updateRoi(updated)
-            _rois[index] = updated
+            repository.updateRoi(roi)
         }
+    }
+
+    /**
+     * 拖拽取消：回滚到 [beginRoiDrag] 时的快照，确保屏幕坐标与数据库一致。
+     */
+    fun cancelRoiDrag(roiId: String) {
+        val snapshot = dragSnapshots.remove(roiId) ?: return
+        val index = _rois.indexOfFirst { it.id == roiId }
+        if (index < 0) return
+        _rois[index] = _rois[index].copy(normalizedRect = snapshot)
     }
 
     companion object {

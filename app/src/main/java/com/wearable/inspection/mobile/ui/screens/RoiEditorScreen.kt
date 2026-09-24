@@ -66,6 +66,8 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.wearable.inspection.mobile.MobileInspectionApp
@@ -188,12 +190,15 @@ fun RoiEditorScreen(
                     isDrawingMode = isDrawingMode,
                     onDrawingRectUpdate = { viewModel.updateDrawingRect(it) },
                     onRoiSelected = { viewModel.selectRoi(it) },
+                    onRoiDragBegin = { roiId -> viewModel.beginRoiDrag(roiId) },
                     onRoiMoved = { roiId, deltaNormX, deltaNormY ->
                         viewModel.moveRoi(roiId, deltaNormX, deltaNormY)
                     },
                     onRoiResized = { roiId, cornerIndex, newCornerNormX, newCornerNormY ->
                         viewModel.resizeRoi(roiId, cornerIndex, newCornerNormX, newCornerNormY)
                     },
+                    onRoiCommit = { roiId -> viewModel.commitRoiDrag(roiId) },
+                    onRoiDragCancel = { roiId -> viewModel.cancelRoiDrag(roiId) },
                 )
             }
 
@@ -318,8 +323,12 @@ fun RoiEditorScreen(
                             Button(
                                 onClick = { viewModel.cancelDrawing() },
                                 modifier = Modifier.weight(1f),
-                                colors = ButtonDefaults.buttonColors(containerColor = DividerColor),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = SurfaceWhite,
+                                    contentColor = TextPrimary,
+                                ),
                                 shape = RoundedCornerShape(8.dp),
+                                elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp),
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Cancel,
@@ -403,17 +412,23 @@ private fun RoiCanvas(
     isDrawingMode: Boolean,
     onDrawingRectUpdate: (NormalizedRect?) -> Unit,
     onRoiSelected: (String?) -> Unit,
+    onRoiDragBegin: (String) -> Unit,
     onRoiMoved: (String, Float, Float) -> Unit,
     onRoiResized: (String, Int, Float, Float) -> Unit,
+    onRoiCommit: (String) -> Unit,
+    onRoiDragCancel: (String) -> Unit,
 ) {
-    // 加载图片
-    val bitmap = remember(imagePath) {
-        try {
-            val opts = android.graphics.BitmapFactory.Options().apply {
-                inSampleSize = 2
-            }
-            android.graphics.BitmapFactory.decodeFile(imagePath, opts)
-        } catch (_: Exception) { null }
+    // 异步加载模板位图（避免 UI 线程解码大图卡顿）
+    var bitmap by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
+    LaunchedEffect(imagePath) {
+        bitmap = withContext(Dispatchers.IO) {
+            try {
+                val opts = android.graphics.BitmapFactory.Options().apply {
+                    inSampleSize = 2
+                }
+                android.graphics.BitmapFactory.decodeFile(imagePath, opts)
+            } catch (_: Exception) { null }
+        }
     }
 
     // 绘制模式拖拽状态
@@ -529,36 +544,53 @@ private fun RoiCanvas(
                             if (actionCornerIndex >= 0 || isMoveAction) {
                                 // 命中了 ROI 或控制柄 → 跟踪拖拽直到释放
                                 var didDrag = false
-                                while (true) {
-                                    val event = awaitPointerEvent()
-                                    val change = event.changes.firstOrNull() ?: break
-                                    if (!change.pressed) {
-                                        // 指针释放
-                                        change.consume()
-                                        break
-                                    }
-
-                                    val dragDx = change.position.x - change.previousPosition.x
-                                    val dragDy = change.position.y - change.previousPosition.y
-                                    if (dragDx == 0f && dragDy == 0f) continue
-
-                                    didDrag = true
-                                    if (cr != null) {
-                                        if (actionCornerIndex >= 0) {
-                                            val normX = ((change.position.x - cr.left) / cr.width).coerceIn(0f, 1f)
-                                            val normY = ((change.position.y - cr.top) / cr.height).coerceIn(0f, 1f)
-                                            onRoiResized(actionRoiId!!, actionCornerIndex, normX, normY)
-                                        } else if (isMoveAction) {
-                                            val deltaNormX = dragDx / cr.width
-                                            val deltaNormY = dragDy / cr.height
-                                            onRoiMoved(actionRoiId!!, deltaNormX, deltaNormY)
+                                val dragRoiId = actionRoiId!!
+                                onRoiDragBegin(dragRoiId)
+                                try {
+                                    while (true) {
+                                        val event = awaitPointerEvent()
+                                        val change = event.changes.firstOrNull() ?: break
+                                        if (!change.pressed) {
+                                            // 指针释放
+                                            change.consume()
+                                            break
                                         }
+
+                                        val dragDx = change.position.x - change.previousPosition.x
+                                        val dragDy = change.position.y - change.previousPosition.y
+                                        if (dragDx == 0f && dragDy == 0f) continue
+
+                                        didDrag = true
+                                        if (cr != null) {
+                                            if (actionCornerIndex >= 0) {
+                                                val normX = ((change.position.x - cr.left) / cr.width).coerceIn(0f, 1f)
+                                                val normY = ((change.position.y - cr.top) / cr.height).coerceIn(0f, 1f)
+                                                onRoiResized(dragRoiId, actionCornerIndex, normX, normY)
+                                            } else if (isMoveAction) {
+                                                val deltaNormX = dragDx / cr.width
+                                                val deltaNormY = dragDy / cr.height
+                                                onRoiMoved(dragRoiId, deltaNormX, deltaNormY)
+                                            }
+                                        }
+                                        change.consume()
                                     }
-                                    change.consume()
+
+                                    // 正常释放 → 持久化一次
+                                    if (didDrag) {
+                                        onRoiCommit(dragRoiId)
+                                    }
+                                } catch (_: androidx.compose.ui.input.pointer.PointerEventTimeoutCancellationException) {
+                                    // 手势超时取消 → 回滚到拖拽前快照
+                                    onRoiDragCancel(dragRoiId)
+                                } catch (e: kotlinx.coroutines.CancellationException) {
+                                    // 协程取消（composable 移除等） → 回滚
+                                    onRoiDragCancel(dragRoiId)
+                                    throw e
                                 }
 
-                                // 释放后：如果是短拖拽（即点击），选中 ROI
+                                // 释放后：如果是短拖拽（即点击），选中 ROI 并清理快照
                                 if (!didDrag && actionRoiId != null) {
+                                    onRoiDragCancel(actionRoiId)
                                     onRoiSelected(actionRoiId)
                                 }
                             } else {
@@ -578,13 +610,14 @@ private fun RoiCanvas(
                     }
                 }
         ) {
-            val cr = calculateContentRect(bitmap, size)
+            val currentBitmap = bitmap
+            val cr = calculateContentRect(currentBitmap, size)
             contentRect = cr
 
             // 绘制图片
-            if (bitmap != null && cr != null) {
+            if (currentBitmap != null && cr != null) {
                 drawImage(
-                    image = bitmap.asImageBitmap(),
+                    image = currentBitmap.asImageBitmap(),
                     dstOffset = IntOffset(cr.left.toInt(), cr.top.toInt()),
                     dstSize = IntSize(cr.width.toInt(), cr.height.toInt()),
                 )
