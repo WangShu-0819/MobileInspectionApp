@@ -109,7 +109,7 @@ class RoiEditorViewModel(
             _rois.add(roi)
             drawingRect = null
             drawingTargetType = null
-            isDrawingMode = false
+            // 保持绘制模式：用户可继续绘制下一块 ROI
         }
         return true
     }

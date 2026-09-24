@@ -502,6 +502,7 @@ fun LiveInspectionScreen(
             TemplateReferenceSection(
                 modifier = Modifier.weight(0.60f),
                 template = inspectionState.selectedTemplate,
+                rois = inspectionState.rois,
                 templates = inspectionState.templates,
                 viewIndex = inspectionState.currentViewIndex,
                 totalViews = inspectionState.totalViews,
@@ -833,6 +834,7 @@ internal data class OverlayRect(
 private fun TemplateReferenceSection(
     modifier: Modifier = Modifier,
     template: InspectionTemplateEntity?,
+    rois: List<RoiDefinitionEntity> = emptyList(),
     templates: List<InspectionTemplateEntity> = emptyList(),
     viewIndex: Int = 0,
     totalViews: Int = 0,
@@ -920,6 +922,7 @@ private fun TemplateReferenceSection(
             TemplateContent(
                 modifier = Modifier.weight(1f),
                 template = template,
+                rois = rois,
                 fillImage = referenceFill,
                 showName = templates.size <= 1,
             )
@@ -1094,6 +1097,7 @@ private fun TemplateEmptyState(
 private fun TemplateContent(
     modifier: Modifier = Modifier,
     template: InspectionTemplateEntity,
+    rois: List<RoiDefinitionEntity> = emptyList(),
     fillImage: Boolean = false,
     showName: Boolean = true,
 ) {
@@ -1150,6 +1154,41 @@ private fun TemplateContent(
                         modifier = Modifier.fillMaxSize(),
                         contentScale = if (fillImage) ContentScale.Crop else ContentScale.Fit
                     )
+                    // ROI 框叠加层
+                    if (rois.isNotEmpty()) {
+                        androidx.compose.foundation.Canvas(
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            val imageRect = computeTemplateImageRect(
+                                bitmapWidth = currentBitmap.width,
+                                bitmapHeight = currentBitmap.height,
+                                containerWidth = size.width,
+                                containerHeight = size.height,
+                                fillImage = fillImage,
+                            ) ?: return@Canvas
+
+                            rois.filter { it.shapeType.equals("RECT", ignoreCase = true) && it.enabled }
+                                .forEach { roi ->
+                                    val roiRect = parseNormalizedRect(roi.normalizedRect)
+                                        ?: return@forEach
+                                    val overlayRect = mapRoiToTemplateOverlay(roiRect, imageRect)
+                                        ?: return@forEach
+
+                                    val left = overlayRect.left.coerceIn(0f, size.width)
+                                    val top = overlayRect.top.coerceIn(0f, size.height)
+                                    val right = overlayRect.right.coerceIn(0f, size.width)
+                                    val bottom = overlayRect.bottom.coerceIn(0f, size.height)
+                                    if (right > left && bottom > top) {
+                                        drawRect(
+                                            color = Primary,
+                                            style = Stroke(width = 2.dp.toPx()),
+                                            topLeft = Offset(left, top),
+                                            size = Size(right - left, bottom - top),
+                                        )
+                                    }
+                                }
+                        }
+                    }
                 } else if (currentError != null) {
                     // 模板图片加载失败：显示安全的分类错误提示
                     Column(
@@ -1421,3 +1460,75 @@ private fun TemplateOverlayControls(
 
 
 // NormalizedRect 已移至 RoiEditorViewModel.kt
+
+/**
+ * 计算模板图片在容器中的实际内容矩形（像素坐标）。
+ *
+ * @param bitmapWidth 图片宽度（px）
+ * @param bitmapHeight 图片高度（px）
+ * @param containerWidth 容器宽度（px）
+ * @param containerHeight 容器高度（px）
+ * @param fillImage true=Crop 模式（裁剪填满），false=Fit 模式（完整显示留白）
+ * @return 图片实际显示区域，若参数无效返回 null
+ */
+internal fun computeTemplateImageRect(
+    bitmapWidth: Int,
+    bitmapHeight: Int,
+    containerWidth: Float,
+    containerHeight: Float,
+    fillImage: Boolean,
+): OverlayRect? {
+    if (bitmapWidth <= 0 || bitmapHeight <= 0) return null
+    if (containerWidth <= 0f || containerHeight <= 0f) return null
+
+    val imageAspect = bitmapWidth.toFloat() / bitmapHeight.toFloat()
+    val containerAspect = containerWidth / containerHeight
+
+    return if (!fillImage) {
+        // FIT: 整图可见，可能有留白
+        val scale = if (imageAspect > containerAspect) {
+            containerWidth / bitmapWidth.toFloat()
+        } else {
+            containerHeight / bitmapHeight.toFloat()
+        }
+        val scaledW = bitmapWidth * scale
+        val scaledH = bitmapHeight * scale
+        val offsetX = (containerWidth - scaledW) / 2f
+        val offsetY = (containerHeight - scaledH) / 2f
+        OverlayRect(offsetX, offsetY, offsetX + scaledW, offsetY + scaledH)
+    } else {
+        // CROP: 填满容器，裁剪超出部分
+        val scale = if (imageAspect < containerAspect) {
+            containerWidth / bitmapWidth.toFloat()
+        } else {
+            containerHeight / bitmapHeight.toFloat()
+        }
+        val scaledW = bitmapWidth * scale
+        val scaledH = bitmapHeight * scale
+        val offsetX = (containerWidth - scaledW) / 2f
+        val offsetY = (containerHeight - scaledH) / 2f
+        OverlayRect(offsetX, offsetY, offsetX + scaledW, offsetY + scaledH)
+    }
+}
+
+/**
+ * 将归一化 ROI 矩形映射到模板图片容器中的像素坐标。
+ *
+ * @param roiRect 归一化矩形 (0-1)
+ * @param imageRect 图片在容器中的实际内容矩形（由 computeTemplateImageRect 计算）
+ * @return 容器中的像素矩形；若映射失败返回 null
+ */
+internal fun mapRoiToTemplateOverlay(
+    roiRect: NormalizedRect,
+    imageRect: OverlayRect,
+): OverlayRect? {
+    val w = imageRect.right - imageRect.left
+    val h = imageRect.bottom - imageRect.top
+    if (w <= 0f || h <= 0f) return null
+    return OverlayRect(
+        left = imageRect.left + roiRect.left * w,
+        top = imageRect.top + roiRect.top * h,
+        right = imageRect.left + roiRect.right * w,
+        bottom = imageRect.top + roiRect.bottom * h,
+    )
+}

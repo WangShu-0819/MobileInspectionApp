@@ -1,4 +1,30 @@
-# 当前唯一任务：模板/整图确认界面精简与业务阈值调整
+# 当前唯一任务：现场采集双视图 ROI 引导
+
+状态：**SOFTWARE_AUDIT_PASSED / AWAITING_COMMIT_OR_NEXT_TASK**（2026-09-24）
+
+## Task 3 handback 本地审计结论
+
+- 生产接入已核对：`inspectionState.rois` 传入 `TemplateReferenceSection`，继续传入 `TemplateContent`，下方模板图 Canvas 绘制当前视角启用的 RECT ROI。
+- 坐标映射已核对：`computeTemplateImageRect()` 支持 FIT/Crop 的实际图片内容矩形；`mapRoiToTemplateOverlay()` 使用归一化 ROI 映射；无效图片尺寸、容器尺寸、JSON、越界或零面积数据不绘制虚假框。
+- 本地 XML：**1314 tests / 0 failures / 0 errors / 5 skipped**。`TemplateRoiOverlayTest=20/0/0/0`、`TemplateCaptureViewModelTest=18/0/0/0`、`RoiEditorViewModelTest=71/0/0/0`、`RoiSafetyMarginTest=32/0/0/0`、`TemplateCaptureConcurrencyTest=1/0/0/0`。
+- 本地 HTML：**1314 tests / 0 failures / 5 ignored**，成功率 100%。handback 中“跳过 0”与本地 XML/HTML 不一致，以本地证据为准。
+- APK：`app/build/outputs/apk/debug/app-debug.apk`；`2026-09-24 13:04:04 +08:00`；`232978112` bytes；SHA-256 `D993B29424FDB3AD24792F0BCEF268A8E0F79E88952C0D11AC570064E0F26749`。
+- 当前 Git：8 个已修改源码/测试文件，3 个未跟踪测试文件；`tasks/todo.md`、`tasks/plan.md` 为本协调审计更新；`docs/reports` 未修改；尚未提交。
+
+## 审计结论
+
+- Task 1/2/3/4：软件审计通过。
+- 可以提交，但当前仅具备“可提交条件”，尚未获得明确的 Git 提交授权。
+- 不需要为 Task 3 继续调用 mimo；下一轮若继续开发，应先由用户确认提交或提出新需求。
+
+## 提交前选择性文件范围
+
+- Task 1/2/4 生产与测试差异：7 个已跟踪文件 + 2 个未跟踪测试文件。
+- Task 3：`app/src/main/java/com/wearable/inspection/mobile/ui/screens/LiveInspectionScreen.kt`、`app/src/test/java/com/wearable/inspection/mobile/ui/screens/TemplateRoiOverlayTest.kt`。
+- 协调文档：`tasks/todo.md`、`tasks/plan.md`。
+- 禁止使用 `git add .`；等待用户明确授权后按文件路径提交。
+
+---
 
 状态：**SOFTWARE_AUDIT_PASSED / BASELINE_COMMITTED**（2026-09-22；上一任务为 `480ab793`；本轮已按文件路径选择性提交，当前提交见 Git `HEAD`）
 

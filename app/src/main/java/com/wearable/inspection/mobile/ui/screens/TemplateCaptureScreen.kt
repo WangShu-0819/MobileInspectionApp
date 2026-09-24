@@ -78,7 +78,7 @@ fun TemplateCaptureScreen(
     partId: String,
     templateId: String?,
     onBack: () -> Unit,
-    onCaptureSuccess: () -> Unit,
+    onCaptureSuccess: (templateId: String) -> Unit,
 ) {
     val context = LocalContext.current
     val repository = remember { MobileInspectionApp.repository(context) }
@@ -93,11 +93,12 @@ fun TemplateCaptureScreen(
 
     var sessionId by remember { mutableStateOf<String?>(null) }
 
-    // 拍摄成功后返回
+    // 拍摄成功后自动进入 ROI 编辑器
     LaunchedEffect(captureState) {
-        if (captureState is TemplateCaptureViewModel.CaptureState.Saved) {
+        val saved = captureState as? TemplateCaptureViewModel.CaptureState.Saved
+        if (saved != null) {
             kotlinx.coroutines.delay(800) // 短暂显示成功状态
-            onCaptureSuccess()
+            onCaptureSuccess(saved.templateId)
         }
     }
 

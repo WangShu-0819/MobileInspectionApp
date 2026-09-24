@@ -440,7 +440,11 @@ fun AppRoot() {
                     partId = partId,
                     templateId = templateId,
                     onBack = { navController.popBackStack() },
-                    onCaptureSuccess = { navController.popBackStack() },
+                    onCaptureSuccess = { savedTemplateId ->
+                        navController.navigate(Screen.RoiEditor.createRoute(savedTemplateId)) {
+                            popUpTo(Screen.TemplateCapture.route) { inclusive = true }
+                        }
+                    },
                 )
             }
 

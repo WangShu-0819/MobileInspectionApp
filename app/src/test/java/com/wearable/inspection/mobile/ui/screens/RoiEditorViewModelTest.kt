@@ -928,4 +928,142 @@ class RoiEditorViewModelTest {
         // tpl_B 的 ROI 不受影响
         assertNull(viewModelB.rois[0].targetType)
     }
+
+    // ══════════════════════════════════════════
+    // 连续绘制模式（Task 2）
+    // ══════════════════════════════════════════
+
+    @Test
+    fun `保存后保持绘制模式`() = runTest {
+        `when`(mockRepository.getRois("tpl_001")).thenReturn(emptyList())
+
+        val viewModel = RoiEditorViewModel(mockRepository, "tpl_001")
+        advanceUntilIdle()
+
+        viewModel.toggleDrawingMode()
+        assertTrue(viewModel.isDrawingMode)
+
+        viewModel.updateDrawingRect(NormalizedRect(0.1f, 0.1f, 0.5f, 0.5f))
+        viewModel.updateDrawingTargetType(RoiTargetType.THREAD)
+        val saved = viewModel.saveDrawingRect()
+        advanceUntilIdle()
+
+        assertTrue(saved)
+        assertTrue("保存后应保持绘制模式", viewModel.isDrawingMode)
+    }
+
+    @Test
+    fun `保存后清空临时矩形和临时属性`() = runTest {
+        `when`(mockRepository.getRois("tpl_001")).thenReturn(emptyList())
+
+        val viewModel = RoiEditorViewModel(mockRepository, "tpl_001")
+        advanceUntilIdle()
+
+        viewModel.toggleDrawingMode()
+        viewModel.updateDrawingRect(NormalizedRect(0.1f, 0.1f, 0.5f, 0.5f))
+        viewModel.updateDrawingTargetType(RoiTargetType.FEATURE)
+        viewModel.saveDrawingRect()
+        advanceUntilIdle()
+
+        assertNull("保存后 drawingRect 应清空", viewModel.drawingRect)
+        assertNull("保存后 drawingTargetType 应清空", viewModel.drawingTargetType)
+    }
+
+    @Test
+    fun `连续保存两块 ROI 不需要重新进入绘制模式`() = runTest {
+        `when`(mockRepository.getRois("tpl_001")).thenReturn(emptyList())
+
+        val viewModel = RoiEditorViewModel(mockRepository, "tpl_001")
+        advanceUntilIdle()
+
+        // 进入绘制模式（仅一次）
+        viewModel.toggleDrawingMode()
+
+        // 第一块 ROI
+        viewModel.updateDrawingRect(NormalizedRect(0.1f, 0.1f, 0.3f, 0.3f))
+        viewModel.updateDrawingTargetType(RoiTargetType.THREAD)
+        val saved1 = viewModel.saveDrawingRect()
+        advanceUntilIdle()
+        assertTrue(saved1)
+        assertTrue("第一块保存后应保持绘制模式", viewModel.isDrawingMode)
+
+        // 第二块 ROI（无需再次 toggleDrawingMode）
+        viewModel.updateDrawingRect(NormalizedRect(0.5f, 0.5f, 0.8f, 0.8f))
+        viewModel.updateDrawingTargetType(RoiTargetType.FEATURE)
+        val saved2 = viewModel.saveDrawingRect()
+        advanceUntilIdle()
+        assertTrue(saved2)
+        assertTrue("第二块保存后应保持绘制模式", viewModel.isDrawingMode)
+
+        assertEquals("应有两块 ROI", 2, viewModel.rois.size)
+    }
+
+    @Test
+    fun `连续保存后 ROI order 递增`() = runTest {
+        `when`(mockRepository.getRois("tpl_001")).thenReturn(emptyList())
+
+        val viewModel = RoiEditorViewModel(mockRepository, "tpl_001")
+        advanceUntilIdle()
+
+        viewModel.toggleDrawingMode()
+
+        viewModel.updateDrawingRect(NormalizedRect(0.1f, 0.1f, 0.3f, 0.3f))
+        viewModel.updateDrawingTargetType(RoiTargetType.THREAD)
+        viewModel.saveDrawingRect()
+        advanceUntilIdle()
+
+        viewModel.updateDrawingRect(NormalizedRect(0.5f, 0.5f, 0.8f, 0.8f))
+        viewModel.updateDrawingTargetType(RoiTargetType.FEATURE)
+        viewModel.saveDrawingRect()
+        advanceUntilIdle()
+
+        assertEquals(0, viewModel.rois[0].order)
+        assertEquals(1, viewModel.rois[1].order)
+    }
+
+    @Test
+    fun `连续保存时已保存 ROI 不受影响`() = runTest {
+        `when`(mockRepository.getRois("tpl_001")).thenReturn(emptyList())
+
+        val viewModel = RoiEditorViewModel(mockRepository, "tpl_001")
+        advanceUntilIdle()
+
+        viewModel.toggleDrawingMode()
+
+        // 保存第一块
+        viewModel.updateDrawingRect(NormalizedRect(0.1f, 0.1f, 0.3f, 0.3f))
+        viewModel.updateDrawingTargetType(RoiTargetType.THREAD)
+        viewModel.saveDrawingRect()
+        advanceUntilIdle()
+        val firstRoi = viewModel.rois[0]
+
+        // 保存第二块
+        viewModel.updateDrawingRect(NormalizedRect(0.5f, 0.5f, 0.8f, 0.8f))
+        viewModel.updateDrawingTargetType(RoiTargetType.FEATURE)
+        viewModel.saveDrawingRect()
+        advanceUntilIdle()
+
+        // 第一块 ROI 的数据不应被修改
+        assertEquals(firstRoi.id, viewModel.rois[0].id)
+        assertEquals(firstRoi.normalizedRect, viewModel.rois[0].normalizedRect)
+        assertEquals(firstRoi.targetType, viewModel.rois[0].targetType)
+    }
+
+    @Test
+    fun `取消绘制退出绘制模式`() = runTest {
+        `when`(mockRepository.getRois("tpl_001")).thenReturn(emptyList())
+
+        val viewModel = RoiEditorViewModel(mockRepository, "tpl_001")
+        advanceUntilIdle()
+
+        viewModel.toggleDrawingMode()
+        viewModel.updateDrawingRect(NormalizedRect(0.1f, 0.1f, 0.5f, 0.5f))
+        viewModel.updateDrawingTargetType(RoiTargetType.THREAD)
+
+        viewModel.cancelDrawing()
+
+        assertFalse("取消后应退出绘制模式", viewModel.isDrawingMode)
+        assertNull(viewModel.drawingRect)
+        assertNull(viewModel.drawingTargetType)
+    }
 }

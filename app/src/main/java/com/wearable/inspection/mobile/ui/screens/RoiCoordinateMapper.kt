@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import androidx.exifinterface.media.ExifInterface
+import com.wearable.inspection.mobile.registration.ProjectedPoint
 import org.json.JSONObject
 import java.io.File
 import kotlin.math.ceil
@@ -271,4 +272,85 @@ object RoiCoordinateMapper {
     )
 
     private const val PIXEL_ROUNDING_TOLERANCE = 0.01
+
+    /**
+     * Boundary tolerance for projected corner containment check (in normalized [0,1] units).
+     * Allows floating-point noise from Homography arithmetic (~1e-5 relative) without
+     * falsely rejecting corners that are effectively on the scene boundary.
+     */
+    private const val PROJECTION_BOUNDARY_TOLERANCE = 1e-4f
+
+    /**
+     * Compute the projected normalized rect from four projected scene-space corners.
+     *
+     * Pure function: validates containment → AABB → safety margin → min-size check.
+     * Returns null when any corner falls outside the scene boundary (triggers fallback).
+     *
+     * @param projectedCorners Four projected corner points in scene pixel space.
+     * @param sceneWidth Scene image width in pixels.
+     * @param sceneHeight Scene image height in pixels.
+     * @param marginRatio Safety margin ratio to expand the AABB (0 = no expansion).
+     * @param minSize Minimum normalized width/height to accept (reject smaller).
+     * @return The projected NormalizedRect, or null if corners are outside scene or ROI too small.
+     */
+    fun computeProjectedRect(
+        projectedCorners: List<ProjectedPoint>,
+        sceneWidth: Int,
+        sceneHeight: Int,
+        marginRatio: Float,
+        minSize: Float,
+    ): NormalizedRect? {
+        // All four projected corners must be within scene boundary (with floating-point tolerance).
+        // If any corner is outside, the target is not fully captured → fail to trigger fallback.
+        if (projectedCorners.any { corner ->
+                corner.x < -PROJECTION_BOUNDARY_TOLERANCE * sceneWidth ||
+                    corner.y < -PROJECTION_BOUNDARY_TOLERANCE * sceneHeight ||
+                    corner.x > sceneWidth * (1.0 + PROJECTION_BOUNDARY_TOLERANCE) ||
+                    corner.y > sceneHeight * (1.0 + PROJECTION_BOUNDARY_TOLERANCE)
+            }
+        ) return null
+
+        val left = projectedCorners.minOf { it.x } / sceneWidth
+        val top = projectedCorners.minOf { it.y } / sceneHeight
+        val right = projectedCorners.maxOf { it.x } / sceneWidth
+        val bottom = projectedCorners.maxOf { it.y } / sceneHeight
+
+        // Clamp to [0,1] (absorbs boundary tolerance noise)
+        val tight = NormalizedRect(
+            left.coerceIn(0.0, 1.0).toFloat(),
+            top.coerceIn(0.0, 1.0).toFloat(),
+            right.coerceIn(0.0, 1.0).toFloat(),
+            bottom.coerceIn(0.0, 1.0).toFloat(),
+        )
+
+        // Expand by safety margin so threads/small parts near edges are not clipped
+        val expanded = expandNormalizedRect(tight, marginRatio)
+
+        return expanded.takeIf {
+            it.right - it.left >= minSize && it.bottom - it.top >= minSize
+        }
+    }
+
+    /**
+     * Expand a normalized rect by a safety margin ratio on each side, clamped to [0,1].
+     *
+     * The margin is proportional to the rect's own width/height, so small ROIs get
+     * proportionally the same padding as large ones.  The expansion is symmetric:
+     * each edge moves outward by `marginRatio * dimension / 2`.
+     *
+     * @param rect The source normalized rect (0–1).
+     * @param marginRatio Fraction of width/height to add as total padding (e.g. 0.10 = 10%).
+     * @return A new rect expanded on all four sides, clamped to [0,1].
+     */
+    fun expandNormalizedRect(rect: NormalizedRect, marginRatio: Float): NormalizedRect {
+        require(marginRatio >= 0f) { "marginRatio must be non-negative" }
+        val dw = (rect.right - rect.left) * marginRatio / 2f
+        val dh = (rect.bottom - rect.top) * marginRatio / 2f
+        return NormalizedRect(
+            left = (rect.left - dw).coerceIn(0f, 1f),
+            top = (rect.top - dh).coerceIn(0f, 1f),
+            right = (rect.right + dw).coerceIn(0f, 1f),
+            bottom = (rect.bottom + dh).coerceIn(0f, 1f),
+        )
+    }
 }

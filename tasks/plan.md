@@ -1,5 +1,26 @@
 # Implementation Plan: MobileInspectionApp 当前阶段
 
+## 2026-09-24 Task 3：现场采集双视图 ROI 引导
+
+状态：**SOFTWARE_AUDIT_PASSED / AWAITING_COMMIT_OR_NEXT_TASK**。Task 1（拍照后自动进入 ROI 编辑）、Task 2（保存后连续绘制）、Task 3（下方模板图 ROI 引导）和 Task 4（ROI 安全边距）已完成本地审计；当前尚未提交 Git。
+
+### Task 3 本地复核
+
+- `inspectionState.rois` 已进入 `TemplateReferenceSection` 和 `TemplateContent`，仅绘制当前视角启用的 RECT ROI。
+- `computeTemplateImageRect()` 按模板 bitmap 与容器尺寸计算 FIT/Crop 实际内容矩形；`mapRoiToTemplateOverlay()` 映射归一化 ROI；无效输入和非法 ROI 不绘制。
+- `TemplateRoiOverlayTest` 实际 XML 为 20 tests、0 failures；覆盖 FIT/Crop、留白、裁剪、边界和 JSON 映射。
+- 全量 XML：**1314 tests / 0 failures / 0 errors / 5 skipped**；HTML：**1314 tests / 0 failures / 5 ignored / 100% successful**。
+- APK：`app/build/outputs/apk/debug/app-debug.apk`；`2026-09-24 13:04:04 +08:00`；`232978112` bytes；SHA-256 `D993B29424FDB3AD24792F0BCEF268A8E0F79E88952C0D11AC570064E0F26749`。
+- handback 的“跳过 0”与本地实际不一致，已按本地 XML/HTML 记录为 5 skipped。
+
+### 当前收口决策
+
+- 技术上允许选择性提交；主协调尚未执行 commit，因为用户尚未明确授权提交。
+- 当前不需要新的 mimo 指令；Task 3 已通过软件审计。
+- 若用户明确授权，提交时只使用逐文件路径，不使用 `git add .`、`git reset`、`git clean` 或 `git stash`。
+
+---
+
 ## 2026-09-22 当前唯一任务：模板/整图确认界面精简与业务阈值调整
 
 状态：**SOFTWARE_AUDIT_PASSED / BASELINE_COMMITTED**。上一任务为 `480ab793`；本轮整图 UI 已通过本地 Compose/JVM 证据复核，并已按文件路径选择性提交，当前提交见 Git `HEAD`。

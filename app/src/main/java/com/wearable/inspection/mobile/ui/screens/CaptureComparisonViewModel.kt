@@ -232,17 +232,13 @@ class CaptureComparisonViewModel(
         val corners = templateCorners(normalizedRect, templateExifOrientation, templateImage)
         val projected = RegistrationQualityGates.transformPoints(homography, corners)
         if (projected.any { !it.x.isFinite() || !it.y.isFinite() }) return null
-        val left = projected.minOf { it.x } / sceneImage.width
-        val top = projected.minOf { it.y } / sceneImage.height
-        val right = projected.maxOf { it.x } / sceneImage.width
-        val bottom = projected.maxOf { it.y } / sceneImage.height
-        val rect = NormalizedRect(
-            left.coerceIn(0.0, 1.0).toFloat(),
-            top.coerceIn(0.0, 1.0).toFloat(),
-            right.coerceIn(0.0, 1.0).toFloat(),
-            bottom.coerceIn(0.0, 1.0).toFloat(),
+        return RoiCoordinateMapper.computeProjectedRect(
+            projectedCorners = projected,
+            sceneWidth = sceneImage.width,
+            sceneHeight = sceneImage.height,
+            marginRatio = ROI_SAFETY_MARGIN_RATIO,
+            minSize = MIN_SESSION_ROI_SIZE.toFloat(),
         )
-        return rect.takeIf { it.right - it.left >= MIN_SESSION_ROI_SIZE && it.bottom - it.top >= MIN_SESSION_ROI_SIZE }
     }
 
     private fun warpTemplate(
@@ -305,6 +301,8 @@ class CaptureComparisonViewModel(
 
     companion object {
         private const val MIN_SESSION_ROI_SIZE = 0.02
+        /** Safety margin ratio applied to projected ROI AABB (10% of width/height total). */
+        internal const val ROI_SAFETY_MARGIN_RATIO = 0.10f
 
         /**
          * 纯门禁函数：判断是否可以进入 ROI 确认页。

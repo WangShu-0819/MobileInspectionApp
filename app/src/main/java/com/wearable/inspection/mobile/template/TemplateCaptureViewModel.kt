@@ -88,9 +88,9 @@ class TemplateCaptureViewModel(
                 onSuccess = { file ->
                     val stored = repository.storeTemplateImage(file)
                     if (stored != null) {
-                        val saveResult = saveToDatabase(stored)
-                        if (saveResult) {
-                            _state.value = CaptureState.Saved(templateId ?: "new")
+                        val savedId = saveToDatabase(stored)
+                        if (savedId != null) {
+                            _state.value = CaptureState.Saved(savedId)
                         } else {
                             // DB 写入失败，清理已存储的图片
                             repository.deleteTemplateImage(stored.finalPath)
@@ -115,9 +115,9 @@ class TemplateCaptureViewModel(
      * 重拍：更新已有 View 的 mainImagePath，成功后删除旧图。
      * 新增：创建新 View，displayOrder = 现有数量。
      *
-     * @return true 保存成功
+     * @return 保存成功的 templateId；失败返回 null
      */
-    private suspend fun saveToDatabase(stored: StoredImageResult): Boolean {
+    internal suspend fun saveToDatabase(stored: StoredImageResult): String? {
         return try {
             if (templateId != null) {
                 // 重拍模式：替换已有 View 的图片
@@ -140,20 +140,22 @@ class TemplateCaptureViewModel(
                     repository.deleteTemplateImage(oldPath)
                 }
                 existingTemplate = old.copy(mainImagePath = stored.finalPath, updatedAt = now)
-                true
+                templateId
             } else {
                 // 新增模式
                 insertNewView(stored.finalPath)
             }
         } catch (e: Exception) {
-            false
+            null
         }
     }
 
     /**
      * 新增 View 到数据库
+     *
+     * @return 新生成的 templateId，失败返回 null
      */
-    private suspend fun insertNewView(imagePath: String): Boolean {
+    internal suspend fun insertNewView(imagePath: String): String? {
         return try {
             val existing = repository.getTemplatesByPart(partId)
             val newOrder = existing.size
@@ -170,9 +172,9 @@ class TemplateCaptureViewModel(
                     updatedAt = now,
                 )
             )
-            true
+            newId
         } catch (e: Exception) {
-            false
+            null
         }
     }
 
@@ -196,6 +198,25 @@ class TemplateCaptureViewModel(
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
                 return TemplateCaptureViewModel(repository, partId, templateId) as T
             }
+        }
+
+        /**
+         * 纯函数：根据当前状态计算导航目标。
+         *
+         * @return 目标 templateId 用于 RoiEditor 导航；null 表示不导航。
+         */
+        fun resolveNavigationTarget(captureState: CaptureState): String? {
+            return (captureState as? CaptureState.Saved)?.templateId
+        }
+
+        /**
+         * 纯函数：构造 ROI Editor 的导航路由。
+         *
+         * @param savedTemplateId 保存成功后的 templateId
+         * @return 路由字符串
+         */
+        fun buildRoiEditorRoute(savedTemplateId: String): String {
+            return "roi_editor/${java.net.URLEncoder.encode(savedTemplateId, "UTF-8")}"
         }
     }
 }
