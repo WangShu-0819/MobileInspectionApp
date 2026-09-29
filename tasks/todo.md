@@ -1,32 +1,165 @@
-# 当前唯一任务：现场采集双视图 ROI 引导
+# 当前软件交付状态（2026-09-28；本节为唯一有效的任务状态）
 
-状态：**SOFTWARE_AUDIT_PASSED / AWAITING_COMMIT_OR_NEXT_TASK**（2026-09-24）
+软件目标是完成并交付可供现场工人使用的数据采集与人工确认功能。以下按日期记录的 handback 是历史证据；与本节冲突时，以本节和用户最新指示为准。
 
-## Task 3 handback 本地审计结论
+## T1–T6 状态
+
+- **T1 零件颜色、ID、模板关联和模型路由：已完成。**先前 handback 报告实现及 JVM/设备 UI 验证通过；除非当前证据显示问题，不重复实现。
+- **T2 exp22/exp23 模型资产、来源与 Android parity：已完成（2026-09-29）。**来源/导出审计 `PASS_WITH_RECORDED_LIMITATION`。官方 PNNX 20260526 Windows ZIP SHA-256 为 `4e188e7606c887ac550820322f34b144140df877b73292b25e48a2ba38f297df`；ZIP 内 exe 与现有 PyPI wheel exe 字节一致，SHA-256 均为 `16165dc5fcc53d31f0339b996c15fd2dc26b8d7db43753f72eeab0a0e576116e`。CI 日志没有逐文件记录二进制 SHA-256，按 `PASS_WITH_RECORDED_LIMITATION` 处理。exp22/exp23 `assetsVerified` 已设为 `true`；生产 `NanoDetRoiInferenceService` 正向路由已在 SEA-AL10 验证：Black_ 四类（THREAD→0, NUTSERT→1, NUT→2, BOLT→3）、White_ 两类（NUT→0, THREAD→1）、White_ BOLT/NUTSERT 返回 `MODEL_TARGET_UNSUPPORTED` 且不回退 exp09、无前缀 legacy 继续走 exp09。设备：SEA-AL10 / Android 10 / API 29 / arm64-v8a。Gradle `connectedDebugAndroidTest` XML：6 tests / 0 failures / 0 errors / 0 skipped。证据路径：`app/build/t2_asset_enable_route_20260929T010000/TEST-NanoDetRoiRuntimeInstrumentedTest.xml`、`app/build/t2_asset_enable_route_20260929T010000/gradle-connected-output.txt`。运行历史：早先合并筛选有 5 个 ClassNotFoundException；六项随后分别运行通过；后续 Gradle connectedAndroidTest 生成了上述 XML。
+- **T3 离线 ROI 配准与相似度实验：离线实验已完成。**历史 48 个清洁几何案例有 46 个达到当时实验候选值，276 个合成遮挡评分案例中 0 个达到当时候选值。这些结果不构成 Android 生产验证，也不能校准真实现场风险。
+- **T4 Android ROI 相似度兜底：软件实现与回归测试已完成（按 2026-09-28 handback）。**四类小件统一使用灰度 SSIM 阈值 `0.75`；Lowe 配准比率 `0.75` 是独立参数。handback 报告 103 个 XML、1,505 项 JVM 测试、0 失败、0 错误、5 跳过，构建退出码 0。当前 APK SHA-256：`AC85E49F793FBF8B294E5946D76711AE2FA0F6089584069D60E4ADFD0CD8A66D`。本轮未重跑测试或构建。
+- **T5 真实现场数据与人工标签：软件交付后的现场工作。**交付功能后由现场工人采集模板/ROI、真实样本和人工标签；这不是当前 Codex/Mimo 的软件实现任务。
+- **T6 校准集与独立留出集：软件交付后的现场工作。**现场数据形成后，由现场/质量工作流按实物、批次或会话拆分并评估；这不是当前软件收尾的阻塞项。
+
+## 当前待办与协作边界
+
+1. **T2 启用与验证（已完成）：**`assetsVerified` 已设为 `true`；Black_ 四类、White_ 两类、White_ BOLT/NUTSERT `MODEL_TARGET_UNSUPPORTED`、legacy exp09 路径均在 SEA-AL10 验证通过。Gradle connectedDebugAndroidTest XML 6/0/0/0。详见上方 T2 状态及证据路径。
+2. **Git 路径审阅与选择性提交评估：**最近复核快照为 `main...origin/main [ahead 2]`、31 个已修改跟踪文件、100 个未跟踪文件、0 staged；新轮必须重新核对。工作区混有多项任务和受保护文件，不得整体暂存或提交。
+3. 软件交付后再启动 T5/T6 现场采集与校准工作。
+
+- 项目代码修改、测试、构建、APK 和设备操作由外部执行者 Mimo 完成；用户手动转交指令并回传 handback。协调 Codex 负责拆解任务、只读审查当前工作区和 handback，并在用户明确要求时更新指定文档。**不联系 Mimo，不调用子 agent、delegation 或 collaboration 工具，不自行改生产代码或运行项目测试、Gradle、ADB、设备操作或 OCR。**
+- 不把旧 XML/APK 当成本轮结果；每轮区分 handback 声明与本轮实际复核，并在结束前重新检查完整 Git 状态。`tasks/plan.md`、`tasks/todo.md`、`docs/reports/`、`commonMain/`、`tools/roi_similarity/` 和既有 `.npz` 默认受保护；只有用户明确指定并要求更新文档时才能编辑。
+- 用户问“可以提交了吗”时只审计并给结论，不视为提交授权。只有用户明确要求提交且文件范围明确时才选择性暂存和提交；绝不 push。禁止 `git add .`、`git reset`、`git clean`、`git stash`。
+
+---
+
+## 历史记录：黑白件模型路由与相似度工作（以下状态按当时记录理解）
+
+状态：**T1_IMPLEMENTATION_JVM_AND_DEVICE_UI_PASS / T2_FIXED_IMAGE_PRODUCTION_JNI_PARITY_PASS / T2_SERVICE_ROUTE_FAIL_CLOSED_AND_EXP09_PATH_PASS / T2_ASSET_PROVENANCE_INCOMPLETE / T4_SOFTWARE_AUDIT_PENDING / FIELD_VALIDATION_PENDING**（2026-09-28）。最新 SEA-AL10 service-route XML 为 5 / 0 / 0 / 0：White_/Black_ 实际 service 入口均 fail-closed 且不附 exp09 元数据；无前缀 exp09 经 service、生产 JNI 对两张真图与桌面参考一致。exp22/exp23 service 本轮没有进入 JNI 推理；它们此前的生产 JNI 固定图 parity 结果未重跑。来源 checkpoint/config 到精确 NCNN 导出的可复核绑定仍不完整，两个模型保持 assetsVerified=false。提交问题按路径拆分审阅，不把整个混合工作区作为一个批次。
+
+### 历史快照：T2 exporter 尚未安全运行（已被后续成功重跑 handback 取代）
+
+- **Exporter 未运行：**exp22/exp23 脚本把 `OUTPUT_DIR` 固定到已有 `android_export` 目录，没有 CLI 或环境变量覆盖选项；目录内已有 ONNX 与 NCNN 输出。按避免覆盖既有产物的要求停止，因此没有新输出或 exporter 运行日志。PNNX 转换未运行、版本未知；清单虽记录 PNNX 可执行文件哈希，当前粘贴内容未提供该哈希值。
+- **已有输入哈希：**exp22 config `55f81b9f91e62f50b18eca52ed0dbfac474d65196745ca698ab0805c03f275fb`、checkpoint `22aea13b043d5f28ecbe9c82a1e0d1ef52266391918eef07059f6fb132faeb79`、脚本 `2a8911b27e92550178e6669845ddc845097898720f2ee7845996c8e6a667f1be`；exp23 config `9aa9d1517836cb2d5c98d58b23d7a9cff3087d96ed6744f37d8e589c373fba2f`、checkpoint `fc18f39cc8736f0bca223dcc3c03e90440adbca7049129e3231a6601d6f9274e`、脚本 `796acb9f0a4270c4ee34cd560fbcde9a1c1678756f87a7f228a27908c822f6c3`。Python 3.11.13、torch 2.2.2+cu118、onnx 1.17.0、onnxsim 0.7.3；预期 PNNX 参数为 `inputshape=[1,3,416,416]f32 fp16=0 optlevel=2`，该命令本轮未执行。
+- **已有产物比较：**Mimo handback 报告已有 ONNX/NCNN 文件与 app assets、debug APK 对应 param/bin 哈希一致。本地独立重算了 exp22/exp23 checkpoint、config、exporter、ONNX、NCNN param/bin 及 app assets；本地可访问的输入/输出哈希相符。exp22 ONNX `eb3ed8b83b82ab04af65998aca03604fe1ea51c9c51ca864a256d633822629ed`、param `b81b824fea9ff949f72f3715a8f20c6ebe96c2792370dd80b7a7a69a65335960`、bin `d3a16edb715050b376f40b5f396fc748b984d781590aa1bf07b3f42a3d92a3d7`；exp23 ONNX `0322e2d1dd54202accafbf29f9a6a0227a5a126e1cd40b60b0ce8c8b553f235a`、param `ad45e2f3fcb6777a5e924aa9a3095c23b2c5f900632720c389d7816a1a390bdd`、bin `1b662094ce94f4a3a8c899f40e1cb449e01aa10ae7a1addabcb92bfef18da35d`。本地 `app-debug.apk` 不存在，故 APK archive 条目部分仅按 handback 记录，未能本地复算。没有本轮重新导出，来源到产物的实际执行绑定仍 `INCOMPLETE`，两模型保持 `assetsVerified=false`。
+- **本轮范围与本地差异：**按 handback，测试、构建和设备项目均未运行；Mimo 报告本轮没有 repo 文件变更、暂存、提交或 push。Mimo 称 `git_status.txt` 为 631 行；当前本地 `git status --short --branch --untracked-files=all` 为 629 行（含分支行），21 个已跟踪修改、607 个未跟踪。`evidence.json`、`execution_log.txt`、`git_status.txt`、`git_diff_check.txt` 的可访问路径未出现在粘贴内容中，无法比较两份原始清单。
+
+## 前一 handback（2026-09-28；T2 service route 复核）
+
+- **设备 XML：**`t2-service-route-sea-al10.xml` 为 5 tests / 0 failures / 0 errors / 0 skipped，时间 `2026-09-28T06:09:24Z`，耗时 1.882s；HUAWEI SEA-AL10 / arm64-v8a / SDK 29。用例包含前缀模型 fail-closed、EXIF 处理、runtime/inference 错误状态及两张真图的 legacy service parity。
+- **exp22/exp23 service 行为：**`White_BOLT_001` 路由 `EXP23_WHITE`，`Black_NUT_002` 路由 `EXP22_BLACK`；full-image 与 ROI 入口均返回 `MODEL_UNAVAILABLE`，不附带 exp09 模型版本、哈希、类别索引或张量 shape。因 `assetsVerified=false`，这两条 service 路径按门禁没有调用对应模型 JNI。
+- **legacy 生产 service 链路：**无前缀 ID `legacy_T2_service_route` 从 `NanoDetRoiInferenceService` 经 `NanoDetNcnnNative` 调用生产 `libnanodet_ncnn_runtime.so`。两张图均与桌面参考一致：`frame_00106_f1060.jpg` 2 个检测，最大分数差 `2.6077032e-8`、最大框差 `2.0160e-5 px`；`frame_00045_f450.jpg` 6 个检测，最大分数差 `1.7881393e-7`、最大框差 `3.5829e-5 px`。
+- **本轮范围：**exp22/exp23 固定真图 production JNI parity 的既有 XML 为 2 / 0 / 0 / 0（`2026-09-28T05:17:02Z`），本轮未重跑；PartColor UI 与 zero/synthetic XML 也未重跑。JVM 102 suites / 1491 tests / 0 failures / 0 errors / 5 skipped 是既有结果，本轮 JVM 未运行。
+- **资产来源：**checkpoint/config、导出脚本及导出文件哈希已重新核对；四个 NCNN 导出文件与 app assets、debug APK 对应条目的哈希相同。但 exporter 本轮未运行，未找到将 exporter 实际读取的 checkpoint/config 哈希绑定到这些输出哈希的执行日志或不可变 manifest；来源链仍为 `INCOMPLETE`，不能仅凭文件哈希相同将 `assetsVerified` 设为 true。
+- **构建与 APK：**Mimo 报告 `:app:connectedDebugAndroidTest` 成功（BUILD SUCCESSFUL in 24s）；本轮 JVM、exp22/exp23 固定真图测试、PartColorUITest、exporter 均未运行。debug APK：`2026-09-28T05:52:32.7553695Z`，241653133 bytes，SHA-256 `37AC1396CC5F7C9D98DF7D18A8CCC98B8F625273FD79DB412B3367A0F6BEA579`；androidTest APK：`2026-09-28T06:09:05.8257113Z`，12026702 bytes，SHA-256 `BC04C0CC36596CAE791B42E06F891057617638F3BCEA27EEE01D690370A8F43B`。
+- **Git：**`main...origin/main [ahead 2]`，0 staged、21 个已跟踪修改、607 个未跟踪文件；本地状态与 handback 保存的 final snapshot 完全一致。service 测试源文件在 Mimo 本轮开始前已是修改状态，handback 报告本轮没有新增或消失的状态项；当前工作区仍包含未审阅的混合改动及受保护文件。
+
+## 更早 handback（2026-09-28；T2 生产 JNI 固定真图 parity 复核）
+
+- **设备 XML：**最新生产 JNI 真图 XML 为 2 / 0 / 0 / 0，SEA-AL10 / Android 10，时间 2026-09-28T05:17:02Z，耗时 2.047s。PartColor UI 12 / 0 / 0 / 0（03:53:34Z）和模型加载/合成候选 4 / 0 / 0 / 0（03:58:37Z）是已有结果，本轮未重跑；三份选定 XML 合计 18 项，不是全量 instrumentation 汇总。
+- **生产 JNI 真图 parity：**固定图 `frame_00000_f0.jpg` 为 720×1280、SHA-256 `f9fcc75a2f4047db35fcd2b884e1bdf5bab3ce7addce8610c40a99469942ded6`、EXIF orientation=1。SEA-AL10 / arm64-v8a / SDK 29 上调用生产 `libnanodet_ncnn_runtime.so`，并使用生产 Kotlin 预处理和 decoder。生产 JNI 输出 exp22/exp23 分别为 129528 / 122332 元素；test-only Mat 探针从实际 NCNN Mat 读取 `[2,36,3598,4]` / `[2,34,3598,4]`，探针张量与生产 JNI 张量逐元素差为 0。
+- **桌面比较：**输入张量 519168 个元素，最大差 0；生产 JNI 输出对桌面参考最大差 exp22 `3.3080578e-6`、exp23 `3.2186508e-6`，容差均 `1e-5`。每模型各 3 个 NMS survivor 的类别/point 集合一致；分数最大差 `6.5565e-7` / `5.9605e-8`，框坐标最大差 `1.5759e-5` / `1.4481e-5 px`，低于 `0.01 px` 容差。
+- **覆盖边界：**生产 JNI 在一张固定图上通过；生产 JNI 只返回输出张量并在 native 内校验 Mat shape，Mat 元数据由 test-only 探针读取。此测试未经过 `NanoDetRoiInferenceService` 路由/服务入口，不代表多图泛化或业务准确率。
+- **其他修正：**桌面 JSON 已将输入差值字段明确命名为 `inputTensorMaxAbsoluteDifferenceTolerance`，容差 `0.0175080028` 与实测最大差 `0` 分开记录；exp23 合同注释已注明 Mat.w=34 的 Android 实测。两模型 `assetsVerified=false` 未改变。
+- **JVM 与 APK：**本轮 JVM 未运行；最近 XML 仍为 102 suites / 1491 tests / 0 failures / 0 errors / 5 skipped（最新文件 2026-09-28 10:40:31），NmsBehaviorTest 为 7 / 0 / 0 / 0。Mimo 报告 `:app:connectedDebugAndroidTest` 构建/运行成功。debug APK：2026-09-28 12:14:58 +08，241653133 bytes，SHA-256 `37AC1396CC5F7C9D98DF7D18A8CCC98B8F625273FD79DB412B3367A0F6BEA579`；androidTest APK：12:58:00 +08，11974449 bytes，SHA-256 `4714FFBD4534B1D6A808799DE9ECFA1D7BEBD68CB91D43E9BBCE69ED18F5C80C`。
+- **来源与 Git：**handback 报告 checkpoint/config 哈希可对应源文件和各自 exporter 输出目录；但缺少把源 checkpoint/config 哈希绑定到确切 NCNN 导出哈希的不可变清单，因此来源身份仍待复核。handback 起始/结束 Git 状态一致；当前 `main...origin/main [ahead 2]`，0 staged、21 个已跟踪修改、607 个未跟踪文件。本轮无提交或 push。
+
+## 前一 handback 快照（T1/T2 早期证据审阅）
+
+- **Android instrumentation：**设备 XML 的属性显示 SEA-AL10 / Android 10。真图 XML 为 2 tests / 0 failures / 0 errors / 0 skipped，时间 2026-09-28T04:34:07Z；exp22/exp23 模型加载及合成候选 XML 为 4 / 0 / 0 / 0，时间 03:58:37Z；PartColorUITest XML 为 12 / 0 / 0 / 0，时间 03:53:34Z。三份选定 XML 共 18 项通过；这不是全量 instrumentation 测试套件汇总。PartColor UI 本轮已在设备复验通过。
+- **固定真图 parity：**固定图为 app/src/androidTest/assets/ncnn_parity/frame_00000_f0.jpg，720×1280，SHA-256 f9fcc75a2f4047db35fcd2b884e1bdf5bab3ce7addce8610c40a99469942ded6，EXIF orientation=1。Windows 桌面 NCNN 1.0.20260526 与 Android SEA-AL10 对照同一图像；生产 NanoDetImagePreprocessor 和 NanoDetOutputDecoder 被调用，Android 推理由 androidTest 专用 libncnn_smoke.so 执行。
+- **Android 与桌面比较：**预处理张量 519168 个元素，实际最大差为 0，SHA-256 同为 1780011d72d18eb5c6f68cb6695b009dbfee350fe92f81a2cd4b4eaad7ee1f6b。两个 Android NCNN Mat 的实测信息均由输出 Mat 读取：exp22 [dims=2,w=36,h=3598,elemsize=4]，exp23 [2,34,3598,4]。原始输出张量逐元素比较：exp22 129528 项、最大差 3.3080578e-6；exp23 122332 项、最大差 3.2186508e-6；容差均为 1e-5。两边各有 3 个 NMS survivor，(classIndex, point) 集合和类别名精确匹配；分数最大差分别 6.5565e-7 / 5.9605e-8，框坐标最大差 1.5759e-5 / 1.4481e-5 px，分别小于 1e-5 / 0.01 px 门限。
+- **Parity 边界：**测试使用生产 Kotlin 预处理器和 decoder，但 JNI 调用 androidTest 的 libncnn_smoke.so，不是生产 nanodet_ncnn_runtime.so，也没有通过 NanoDetRoiInferenceService 的实际路由/服务入口。因此固定图组件级 parity 通过；生产 JNI/service 集成 parity 仍待补。该证据只覆盖一张固定图，不是多图泛化或业务正确性验证。
+- **参考数据审阅：**桌面参考 JSON 与图像、输入/输出 .f32 已存在，类别顺序与合同一致。JSON 字段 inputTensorMaxAbsoluteDifference 当前保存的是允许差值上限 0.017508...，而不是本次实测差值；Android 报告中的实际差值为 0。字段名称及测试读取键应由后续改为明确的 tolerance 名称，避免把门限误读为实测值。NanoDetInferenceModels.kt 中 exp23 宽度注释仍称待 Android 实际输出核验，与本轮 Mat.w=34 实测相矛盾，需更新注释；不可据此把 assetsVerified 改为 true。
+- **NMS 与 JVM：**本轮 handback 未运行 JVM。当前可见最近 JVM XML 为 102 suites / 1491 tests / 0 failures / 0 errors / 5 skipped，时间 2026-09-28 10:40:31；NmsBehaviorTest 为 7 / 0 / 0 / 0，包含异类高 IoU 重叠候选。此结果是既有 XML，不计成本轮新运行。
+- **构建与 APK：**Mimo 报告 connectedDebugAndroidTest 编译/运行成功，arm64 JNI 编译有 -lncnn linker 配置警告但未阻断。assembleDebug 为 UP-TO-DATE；testDebugUnitTest 本轮未运行。当前 app-debug.apk 本地重算为 2026-09-28 12:14:58 +08、241653133 bytes、SHA-256 37AC1396CC5F7C9D98DF7D18A8CCC98B8F625273FD79DB412B3367A0F6BEA579；androidTest APK 为 12:33:48 +08、11974449 bytes、SHA-256 0142B17E93C401BE56039951128C57F5B775C32C6B9FC5F81D92B76C94AA114E。
+- **资产验证状态：**四个 NCNN 资产哈希在桌面参考及既有源文件/主 APK 核对中一致；固定图测试中的 assetsVerified 明确为 false。文件哈希对应当前资产，不等于独立证明训练 checkpoint/config 来源身份；不得启用资产。
+- **当前 Git：**main...origin/main [ahead 2]，0 staged；21 个已跟踪修改文件，607 个未跟踪文件（含 app 测试/模型 fixture、commonMain 2 个、docs/reports 574 个及工具文件）。工作区包含此前混合的 T1/T2 实现和离线实验；本轮只读审计并更新任务文档，没有提交、push、测试、Gradle 或设备操作。
+
+## 此前进展（截至 2026-09-27 21:30；由上文最新 handback 更新）
+
+- **T1：**功能实现和 JVM 回归完成。当前本地 XML 汇总为 **101 suites / 1484 tests / 0 failures / 0 errors / 5 skipped**。`compileDebugKotlin`、`compileDebugUnitTestKotlin`、`assembleDebug` 均由 Mimo handback 报告通过。APK：`2026-09-27 21:01:20`，`233029151` bytes，SHA-256 `F63128CF441A74E94820F150737028FBB920BC2A19F583DB19A5C263912B5E1E`。
+- **T1+T2 最新软件验证：**Mimo 报告构建成功（约 23 秒）、1484 项 unit tests 通过；本地 XML 汇总 **101 suites / 1484 tests / 0 failures / 0 errors / 5 skipped**，关键 T1/T2 测试 XML 均为 0 failure/error。APK 已本地核实为 `2026-09-27 21:30:21`、`242416706` bytes，SHA-256 `76F80286D97025825234083FF58E94AF0E7EF75435E6F67EE90D2B4EA0762997`；其时间晚于 T2 源码和资产，可作为集成构建证据。
+- **T2 Android instrumentation handback：**Mimo 报告 `compileDebugAndroidTestKotlin` 因 `PartColorUITest.kt` 已知问题失败，称本轮 parity 相关代码没有新增编译错误；真机推理未执行。当前无 exp22/exp23 Python/ONNX/桌面 NCNN 参考 JSON、checkpoint/config 或桌面推理脚本，故张量及 decoder 比较未完成。
+- **Parity 测试源码审计：**`ExpModelParityInstrumentedTest` 目前把整个参考读取/解析/比较放在 `catch (Exception)` 中，任何解析/比较异常也会被记成参考缺失；即使参考存在，比较结果 `passed=false` 只写入 JSON，测试没有断言失败。参考缺失时也会正常返回。因此当前 instrumentation 测试不能作为 parity 通过门禁；需缩窄缺失处理、校验参考张量长度并对 mismatch 断言失败，缺参考时明确标为 skipped/incomplete。
+- **T1 Android UI 测试限制：**`PartColorUITest.kt` 编译失败，未运行；handback 指出 androidTest 缺少 Compose UI 测试依赖。它不作为 T1 通过证据，也不纳入 T1 选择性提交候选。`PartColorComposeTest` 的生产表单字段覆盖不等于生产入口 Dialog 外壳验证；Robolectric 像素采样也没有形成稳定证据。
+- **T2 离线 handback：**Mimo 报告 exp22 输出 `[3598,36]`、exp23 输出 `[3598,34]`；ONNX/NCNN max diff 分别为 `3.81e-06` 和 `4.47e-06`，并报告类别顺序、预处理和 decoder 参数已核验。其 PT/ONNX 约 `7.13` 差异按 handback 解释为 ONNX 导出时 class score 增加 sigmoid，而 PyTorch `forward()` 返回 logits。
+- **T2 集成状态：**JNI `create()` 接收 `outputWidth` 并从模型合同传入 36/34；exp22/exp23 资产、SHA-256 常量和输出 shape 已接入。本地四个资产哈希与 handback 和合同常量一致；APK 内四个 `assets/nanodet/exp22|exp23/` 条目也已逐项检查并重算哈希，全部匹配。两模型 `assetsVerified=false`，生产路由仍 fail-closed；当前尚无真机 parity 证据。
+- **T2 报告来源：**完整离线报告文件 `T2_MODEL_ASSET_VERIFICATION_REPORT.md` 本次本地工作区检查未找到；离线导出、ONNX/桌面 NCNN parity、类别顺序、预处理/decoder 和 PT/ONNX 差异解释按用户提供的 handback 记录。Android 集成的 XML/APK 结果已在本地核对；真机 Python/桌面 NCNN 对照仍待 Mimo 提交证据。
+- **当前 Git 快照：**`main...origin/main [ahead 2]`，0 staged、20 个已跟踪修改（18 个 App 文件及本文件/`tasks/plan.md`）、594 个未跟踪文件（16 个 App 文件、574 个 `docs/reports/` 文件、2 个 `commonMain/` 文件、2 个工具文件）；无 commit/push。App 未跟踪项含 T2 的 4 个模型资产、新增 parity instrumentation 测试和编译失败的 `PartColorUITest.kt`。T1/T2 共用源码已有混合改动，不能把旧 T1 清单整体提交。
+- 本轮只更新协调文档；未提交或 push。完整任务依赖、NCNN 资产哈希及 Android 后续门禁见 `tasks/plan.md`。
+
+## 确认的业务规则
+
+- 新建零件必选白件/黑件；PartEntity.id 保存 White_<基础ID>/Black_<基础ID>，模板 partId 使用最终 ID；旧无前缀零件继续 exp09。
+- Black_ 路由 exp22 B 四类；White_ 路由 exp23 B，两类仅 White Nut/White Thread。
+- V4 配准门禁失败：不算相似度，继续全图检测。
+- **当前实现状态：**生产确认链路尚未实现 ROI 相似度兜底。确认保存时每个 ROI 都有表格记录；仅当人工最终结果不同于已有模型建议时保存对应 ROI 图片，并在导出表格记录图片 ZIP 路径。该路径不会因为 NanoDet NG/无检测而自动计算或记录相似度候选。
+- **待实现的兜底与证据：**V4 配准门禁通过后，所有小件 ROI 目标类别都必须有相似度兜底：NanoDet 判 NG/无检测时进入兜底；所选模型不支持的目标也要有入口。候选通过记 OK，未通过记 NG；两种候选都允许人工改判，并分别记录 NanoDet 状态/结果、相似度分数/阈值、相似度候选、人工最终结果及是否改判。每次实际运行相似度都保存对应 ROI 图片，无论候选通过或不通过，并在表格记录图片 ZIP 路径。各类别阈值分别评估；目前只有 Black Thread 有灰度 SSIM 0.95 人工监督候选，其他类别阈值待验证。
+- 白件 BOLT/NUTSERT 暂不由 exp23 检测，但仍属于相似度兜底覆盖目标；MODEL_TARGET_UNSUPPORTED 时应进入相似度辅助路径。Black Thread 的 0.95 不可迁移到其他件色或目标。
+- NanoDet 候选阈值 0.05；业务建议阈值 0.50，score ≥0.50 建议 OK；当前 NMS IoU 0.60。
+- 黑件数据的离线实验得到灰度 SSIM `0.95` 起始候选：48 个清洁几何案例中 46 个通过；评分通过的 ≥75% 合成遮挡案例为 0/276 通过。该值仅用于 Black Thread 人工监督试点，不代表业务阈值已校准。
+- `Key_role` 有 42 张孔位照片、无标签或可核验的同工位在位配对映射；孔位预期状态不确定，不作为真实缺件负样本或阈值真值。
+
+## 任务顺序
+
+- [x] T1：件色选择、前缀 ID、主键校验、模板 partId 关联、模型路由、fail-closed 和 JVM 回归完成；SEA-AL10 上 PartColorUITest 12 / 0 / 0 / 0，通过本轮设备复验。
+- [x] T2：exp22/exp23 来源/导出审计 `PASS_WITH_RECORDED_LIMITATION`；`assetsVerified` 已启用；Black_ 四类、White_ 两类、White_ BOLT/NUTSERT `MODEL_TARGET_UNSUPPORTED`、legacy exp09 路径均在 SEA-AL10 验证通过；Gradle connectedDebugAndroidTest XML 6/0/0/0。详见 `app/build/t2_asset_enable_route_20260929T010000/HAND_BACK.md`。
+- [x] T3：用 Black Thread 项目原图进行同源几何和标记为 synthetic 的 ROI 遮挡实验，记录分数响应与配准门禁；产出人工监督试点候选 `SSIM ≥0.95`，不宣称业务校准完成。
+- [ ] T4：核验所有小件类别的 Android V4→NanoDet/相似度兜底链路及 unsupported 目标入口；验证相似度通过记 OK、未通过记 NG，且两种候选均支持人工改判并留痕。确认每次实际运行相似度都保存 ROI 图片，并在表格记录 NanoDet 状态/结果、分数/阈值、相似度候选、人工最终结果、是否改判和图片 ZIP 路径。Black Thread 以 0.95 作为人工监督候选；其他类别需先按类验证阈值，再分别开展经授权的人工监督试点。
+- [ ] T5：按件色和小件目标类别采集带人工真值的真实模板/现场 ROI；缺件使用同工位实拍空位并确认原本应装件，质量缺陷使用真实缺陷件及质检标签。
+- [ ] T6：按物理零件/批次/会话拆分校准集与独立留出集，并按件色/目标类别报告混淆矩阵和错误 OK 风险；分别决定各类别 ROI 相似度阈值是否可推广。
+
+相似度门禁、试点流程、校准步骤及 exp22/exp23 权重配置身份见 tasks/plan.md 顶部。离线实验完整记录位于 `docs/reports/b3/roi_similarity/synthetic_occlusion_20260927/REPORT.md`；旧的离线报告和其他历史记录保留在下方。
+
+---
+
+## 已完成探索：ROI 配准后相似度离线可行性评估
+
+状态：**T1_IMPLEMENTATION_JVM_AND_DEVICE_UI_PASS / T2_FIXED_IMAGE_ANDROID_PREPROCESS_DECODER_PARITY_PASS_WITH_TEST_NCNN_RUNTIME / T2_PRODUCTION_JNI_PARITY_PENDING / T2_ASSET_PROVENANCE_REVIEW_PENDING / T4_SOFTWARE_AUDIT_PENDING / FIELD_VALIDATION_PENDING**（2026-09-28）。SEA-AL10 上本轮可见的三份 instrumentation XML 共 18 tests / 0 failures / 0 errors / 0 skipped：PartColor UI 12 项、模型加载与合成候选 4 项、固定真图 parity 2 项。固定真图证明生产 Kotlin 预处理与 decoder 在 Android NCNN 测试 JNI runtime 上和 Windows 桌面参考匹配；测试没有调用生产 JNI 库 nanodet_ncnn_runtime，且只覆盖一张图。exp23 的 Android 实际 Mat 宽度已在该固定图测试中读为 34。资产来源身份仍未独立核验，两个模型保持 assetsVerified=false。提交问题按路径拆分审阅，不把整个混合工作区作为一个批次。
+
+## 本地结果核对
+
+- 数据：33 张 JPG、33 个 YOLO 标注文件、45 个标注框；类别目录计数 nut 11、Nutsert 6、thread 16；EXIF orientation 均缺省。
+- `pair_results.csv` 有 1,089 条数据行：561 个同源合成变换、190 个同类别异源对照、338 个跨类别异源对照。561 个变换的 mask 均存在；成功和失败接触图均存在。
+- 合成组 561/561 估出 Homography；538 通过 Python 质量门禁，23 回退（21 越过 50 px 边界余量、2 投影 ROI 面积低于 0.005）。这不是 Android App 的通过率保证。
+- 全体合成组 ROI 灰度 SSIM 均值 `0.4035 → 0.9722 → 0.9745`（未对齐、估计 H、已知矩阵参照）；只看门禁通过的 538 例，估计 H 后均值为 `0.9724`。23 个门禁拒绝例的估计 H 后均值为 `0.9671`，仅为诊断结果，不代表 App 会采纳。
+- 梯度 SSIM 均值 `0.2125 → 0.9375 → 0.9447`；估计角点误差中位数 `0.292 px`，有效全图重叠中位数 `0.9674`。
+- 异源配对仅描述配准行为：同类别 190 对中 53 对通过，跨类别 338 对中 0 对通过。它们不是缺陷/缺件负样本，不可推算业务误报率。
+- 报告、CSV、JSON、清单、561 个 mask、两张接触图均在 `docs/reports/b3/roi_similarity/`；脚本在 `tools/roi_similarity/evaluate_roi_similarity.py`。
+
+## 审计判断与限制
+
+- 可用于支持“同一张图像在这些合成几何扰动下，经特征配准后 ROI 结构相似度恢复”的离线可行性结论；不可作为把 NanoDet `NG`/无检测自动翻为 `OK` 的依据，也没有证据支持任何 SSIM 阈值。
+- 数据只有 33 张原图的合成变换，不包含独立的现场重复拍摄、真实缺陷/缺件标签、光照/反光/模糊变化或缺陷最小尺寸评估。数据集 YOLO 框是空间标注，需另行确认其与 App 用户配置 ROI 的业务语义一致。
+- Python 实验未复现 App 自定义 GMS，且 OpenCV 4.13.0 与 Android 目标 4.10.0 不同；估计 H 和质量门禁通过率不能视为 App V4 真实表现。估计 H 对 23 个门禁拒绝样本仍计算了诊断相似度。
+- 保持业务阈值 `0.50`、候选阈值 `0.05`、人工确认和安全回退语义不变；没有 App 代码、测试或数据库修改。
+- mimo 把完整运行写回既有 `roi_similarity/` 路径，而不是此前要求的独立输出目录；原有部分未跟踪产物被同路径运行覆盖。当前完整结果已保留，未尝试回滚。
+
+下一步如要评估产品化，先取得同一真实零件的重复现场照片、已标记 OK/真实缺陷与缺件的样本，以及对应的 App ROI；在独立数据上评估错误翻转风险，再决定是否设计仅供人工参考的功能。当前不需要新的 mimo 实现指令。
+
+---
+
+## 最近完成修复：ROI 编辑器拖拽响应与取消按钮
+
+- Git 已核实 `main` 的 HEAD 为 `e8f87372`，相对 `origin/main` ahead 2；未 push。
+- 本地 XML：**1323 tests / 0 failures / 0 errors / 5 skipped**；`RoiEditorViewModelTest=80/0/0/0`。HTML 首页：**1323 tests / 0 failures / 5 ignored / 100% successful**，最后写入 `2026-09-24 15:03:03 +08:00`。
+- APK：`app/build/outputs/apk/debug/app-debug.apk`；`2026-09-24 15:19:06 +08:00`；`232241205` bytes；SHA-256 `AAC9096F8B48B6E057D9628838246F43E8E9917F37750D3E27DDC79ACE75575F`。
+- 提交已包含内存拖拽预览、手势结束一次持久化、取消时回滚快照、模板位图移至 IO 解码、取消按钮可辨认度改进及对应 JVM 测试。本轮仅复核现有 XML/HTML/APK，没有重跑测试或构建。
+
+## 前一项已完成任务：现场采集双视图 ROI 引导
+
+状态：**T1_IMPLEMENTATION_JVM_AND_DEVICE_UI_PASS / T2_FIXED_IMAGE_ANDROID_PREPROCESS_DECODER_PARITY_PASS_WITH_TEST_NCNN_RUNTIME / T2_PRODUCTION_JNI_PARITY_PENDING / T2_ASSET_PROVENANCE_REVIEW_PENDING / T4_SOFTWARE_AUDIT_PENDING / FIELD_VALIDATION_PENDING**（2026-09-28）。SEA-AL10 上本轮可见的三份 instrumentation XML 共 18 tests / 0 failures / 0 errors / 0 skipped：PartColor UI 12 项、模型加载与合成候选 4 项、固定真图 parity 2 项。固定真图证明生产 Kotlin 预处理与 decoder 在 Android NCNN 测试 JNI runtime 上和 Windows 桌面参考匹配；测试没有调用生产 JNI 库 nanodet_ncnn_runtime，且只覆盖一张图。exp23 的 Android 实际 Mat 宽度已在该固定图测试中读为 34。资产来源身份仍未独立核验，两个模型保持 assetsVerified=false。提交问题按路径拆分审阅，不把整个混合工作区作为一个批次。
+
+## Task 1–4 本地审计与基线收口
 
 - 生产接入已核对：`inspectionState.rois` 传入 `TemplateReferenceSection`，继续传入 `TemplateContent`，下方模板图 Canvas 绘制当前视角启用的 RECT ROI。
 - 坐标映射已核对：`computeTemplateImageRect()` 支持 FIT/Crop 的实际图片内容矩形；`mapRoiToTemplateOverlay()` 使用归一化 ROI 映射；无效图片尺寸、容器尺寸、JSON、越界或零面积数据不绘制虚假框。
 - 本地 XML：**1314 tests / 0 failures / 0 errors / 5 skipped**。`TemplateRoiOverlayTest=20/0/0/0`、`TemplateCaptureViewModelTest=18/0/0/0`、`RoiEditorViewModelTest=71/0/0/0`、`RoiSafetyMarginTest=32/0/0/0`、`TemplateCaptureConcurrencyTest=1/0/0/0`。
 - 本地 HTML：**1314 tests / 0 failures / 5 ignored**，成功率 100%。handback 中“跳过 0”与本地 XML/HTML 不一致，以本地证据为准。
 - APK：`app/build/outputs/apk/debug/app-debug.apk`；`2026-09-24 13:04:04 +08:00`；`232978112` bytes；SHA-256 `D993B29424FDB3AD24792F0BCEF268A8E0F79E88952C0D11AC570064E0F26749`。
-- 当前 Git：8 个已修改源码/测试文件，3 个未跟踪测试文件；`tasks/todo.md`、`tasks/plan.md` 为本协调审计更新；`docs/reports` 未修改；尚未提交。
+- 本轮开始时 `main` 指向 `1642e018`，相对 `origin/main` ahead 1；代码工作区干净，无暂存、未提交或未跟踪文件。此提交已包含 Task 1–4 的源码、测试及协调文档。
 
 ## 审计结论
 
 - Task 1/2/3/4：软件审计通过。
-- 可以提交，但当前仅具备“可提交条件”，尚未获得明确的 Git 提交授权。
-- 不需要为 Task 3 继续调用 mimo；下一轮若继续开发，应先由用户确认提交或提出新需求。
+- Task 1–4 已完成并提交；本地审计通过。该记录结束时没有待处理的 mimo 指令。
 
-## 提交前选择性文件范围
-
-- Task 1/2/4 生产与测试差异：7 个已跟踪文件 + 2 个未跟踪测试文件。
-- Task 3：`app/src/main/java/com/wearable/inspection/mobile/ui/screens/LiveInspectionScreen.kt`、`app/src/test/java/com/wearable/inspection/mobile/ui/screens/TemplateRoiOverlayTest.kt`。
-- 协调文档：`tasks/todo.md`、`tasks/plan.md`。
-- 禁止使用 `git add .`；等待用户明确授权后按文件路径提交。
+- 本轮只更新协调状态记录；未执行 Git commit 或 push。
 
 ---
 
-状态：**SOFTWARE_AUDIT_PASSED / BASELINE_COMMITTED**（2026-09-22；上一任务为 `480ab793`；本轮已按文件路径选择性提交，当前提交见 Git `HEAD`）
+状态：**T1_IMPLEMENTATION_JVM_AND_DEVICE_UI_PASS / T2_FIXED_IMAGE_ANDROID_PREPROCESS_DECODER_PARITY_PASS_WITH_TEST_NCNN_RUNTIME / T2_PRODUCTION_JNI_PARITY_PENDING / T2_ASSET_PROVENANCE_REVIEW_PENDING / T4_SOFTWARE_AUDIT_PENDING / FIELD_VALIDATION_PENDING**（2026-09-28）。SEA-AL10 上本轮可见的三份 instrumentation XML 共 18 tests / 0 failures / 0 errors / 0 skipped：PartColor UI 12 项、模型加载与合成候选 4 项、固定真图 parity 2 项。固定真图证明生产 Kotlin 预处理与 decoder 在 Android NCNN 测试 JNI runtime 上和 Windows 桌面参考匹配；测试没有调用生产 JNI 库 nanodet_ncnn_runtime，且只覆盖一张图。exp23 的 Android 实际 Mat 宽度已在该固定图测试中读为 34。资产来源身份仍未独立核验，两个模型保持 assetsVerified=false。提交问题按路径拆分审阅，不把整个混合工作区作为一个批次。
 
 ## 本轮 handback v2 本地审计结论
 
@@ -163,7 +296,7 @@ handback 必须按本地 XML/HTML 实际统计，并提供全部修改文件、g
 
 ## 已完成任务：整图检测置信度阈值与采集 ZIP/CSV 记录增强
 
-状态：**SOFTWARE_AUDIT_PASSED / COMMITTED**（2026-09-22；提交 `480ab793`；本节仅保留历史证据）
+状态：**T1_IMPLEMENTATION_JVM_AND_DEVICE_UI_PASS / T2_FIXED_IMAGE_ANDROID_PREPROCESS_DECODER_PARITY_PASS_WITH_TEST_NCNN_RUNTIME / T2_PRODUCTION_JNI_PARITY_PENDING / T2_ASSET_PROVENANCE_REVIEW_PENDING / T4_SOFTWARE_AUDIT_PENDING / FIELD_VALIDATION_PENDING**（2026-09-28）。SEA-AL10 上本轮可见的三份 instrumentation XML 共 18 tests / 0 failures / 0 errors / 0 skipped：PartColor UI 12 项、模型加载与合成候选 4 项、固定真图 parity 2 项。固定真图证明生产 Kotlin 预处理与 decoder 在 Android NCNN 测试 JNI runtime 上和 Windows 桌面参考匹配；测试没有调用生产 JNI 库 nanodet_ncnn_runtime，且只覆盖一张图。exp23 的 Android 实际 Mat 宽度已在该固定图测试中读为 34。资产来源身份仍未独立核验，两个模型保持 assetsVerified=false。提交问题按路径拆分审阅，不把整个混合工作区作为一个批次。
 
 ## 最新 handback 审计结论（2026-09-22）
 
@@ -336,7 +469,7 @@ handback 必须按本地 XML/HTML 实际统计，并提供全部修改文件、g
 
 ## 上一阶段记录：V4 后续增强——模板加载 templateId 诊断日志与 fallback 整图检测框叠加
 
-状态：**SOFTWARE_AUDIT_PASSED / AWAITING_USER_AUTHORIZATION**（2026-09-22；后续增强 handback 最新复核通过，当前代码未提交，等待用户明确授权后按文件路径选择性提交）
+状态：**T1_IMPLEMENTATION_JVM_AND_DEVICE_UI_PASS / T2_FIXED_IMAGE_ANDROID_PREPROCESS_DECODER_PARITY_PASS_WITH_TEST_NCNN_RUNTIME / T2_PRODUCTION_JNI_PARITY_PENDING / T2_ASSET_PROVENANCE_REVIEW_PENDING / T4_SOFTWARE_AUDIT_PENDING / FIELD_VALIDATION_PENDING**（2026-09-28）。SEA-AL10 上本轮可见的三份 instrumentation XML 共 18 tests / 0 failures / 0 errors / 0 skipped：PartColor UI 12 项、模型加载与合成候选 4 项、固定真图 parity 2 项。固定真图证明生产 Kotlin 预处理与 decoder 在 Android NCNN 测试 JNI runtime 上和 Windows 桌面参考匹配；测试没有调用生产 JNI 库 nanodet_ncnn_runtime，且只覆盖一张图。exp23 的 Android 实际 Mat 宽度已在该固定图测试中读为 34。资产来源身份仍未独立核验，两个模型保持 assetsVerified=false。提交问题按路径拆分审阅，不把整个混合工作区作为一个批次。
 
 ## 本轮 handback 只读门控修正审计结论（2026-09-22）
 
@@ -445,7 +578,7 @@ handback 必须按本地实际 XML/HTML 报告汇总，尤其不要手填测试�
 
 （历史完成记录；当前唯一任务见本文件顶部。）
 
-状态：**SOFTWARE_AUDIT_PASSED / USER_ACCEPTED / COMMITTED**（2026-09-22；用户已确认完成真实设备验收；模板图片加载修正和拍照后 CaptureComparison 自动导航已提交为 `aec66356`）
+状态：**T1_IMPLEMENTATION_JVM_AND_DEVICE_UI_PASS / T2_FIXED_IMAGE_ANDROID_PREPROCESS_DECODER_PARITY_PASS_WITH_TEST_NCNN_RUNTIME / T2_PRODUCTION_JNI_PARITY_PENDING / T2_ASSET_PROVENANCE_REVIEW_PENDING / T4_SOFTWARE_AUDIT_PENDING / FIELD_VALIDATION_PENDING**（2026-09-28）。SEA-AL10 上本轮可见的三份 instrumentation XML 共 18 tests / 0 failures / 0 errors / 0 skipped：PartColor UI 12 项、模型加载与合成候选 4 项、固定真图 parity 2 项。固定真图证明生产 Kotlin 预处理与 decoder 在 Android NCNN 测试 JNI runtime 上和 Windows 桌面参考匹配；测试没有调用生产 JNI 库 nanodet_ncnn_runtime，且只覆盖一张图。exp23 的 Android 实际 Mat 宽度已在该固定图测试中读为 34。资产来源身份仍未独立核验，两个模型保持 assetsVerified=false。提交问题按路径拆分审阅，不把整个混合工作区作为一个批次。
 
 ## 当前审计结论
 
@@ -496,7 +629,7 @@ handback 必须按本地实际 XML/HTML 报告汇总，尤其不要手填测试�
 
 # 历史任务：V1-3 静态拍后模板与实拍比对页面
 
-状态：**SOFTWARE_COMPLETE / AWAITING_USER_ACCEPTANCE**（2026-09-21；V4 基线 `6bae6a13` 已提交并冻结）
+状态：**T1_IMPLEMENTATION_JVM_AND_DEVICE_UI_PASS / T2_FIXED_IMAGE_ANDROID_PREPROCESS_DECODER_PARITY_PASS_WITH_TEST_NCNN_RUNTIME / T2_PRODUCTION_JNI_PARITY_PENDING / T2_ASSET_PROVENANCE_REVIEW_PENDING / T4_SOFTWARE_AUDIT_PENDING / FIELD_VALIDATION_PENDING**（2026-09-28）。SEA-AL10 上本轮可见的三份 instrumentation XML 共 18 tests / 0 failures / 0 errors / 0 skipped：PartColor UI 12 项、模型加载与合成候选 4 项、固定真图 parity 2 项。固定真图证明生产 Kotlin 预处理与 decoder 在 Android NCNN 测试 JNI runtime 上和 Windows 桌面参考匹配；测试没有调用生产 JNI 库 nanodet_ncnn_runtime，且只覆盖一张图。exp23 的 Android 实际 Mat 宽度已在该固定图测试中读为 34。资产来源身份仍未独立核验，两个模型保持 assetsVerified=false。提交问题按路径拆分审阅，不把整个混合工作区作为一个批次。
 
 ## 验收清单
 
@@ -540,7 +673,7 @@ NanoDet、检测阈值、结果判定、ZIP/CSV、CameraX、DPM、OCR、实时�
 
 # 历史任务：V4/AKAZE 单张照片配准引擎
 
-状态：**SOFTWARE_COMPLETE / AWAITING_USER_ACCEPTANCE**（2026-09-21；实现完成，61/61 测试通过，编译/构建成功，等待用户验收）
+状态：**T1_IMPLEMENTATION_JVM_AND_DEVICE_UI_PASS / T2_FIXED_IMAGE_ANDROID_PREPROCESS_DECODER_PARITY_PASS_WITH_TEST_NCNN_RUNTIME / T2_PRODUCTION_JNI_PARITY_PENDING / T2_ASSET_PROVENANCE_REVIEW_PENDING / T4_SOFTWARE_AUDIT_PENDING / FIELD_VALIDATION_PENDING**（2026-09-28）。SEA-AL10 上本轮可见的三份 instrumentation XML 共 18 tests / 0 failures / 0 errors / 0 skipped：PartColor UI 12 项、模型加载与合成候选 4 项、固定真图 parity 2 项。固定真图证明生产 Kotlin 预处理与 decoder 在 Android NCNN 测试 JNI runtime 上和 Windows 桌面参考匹配；测试没有调用生产 JNI 库 nanodet_ncnn_runtime，且只覆盖一张图。exp23 的 Android 实际 Mat 宽度已在该固定图测试中读为 34。资产来源身份仍未独立核验，两个模型保持 assetsVerified=false。提交问题按路径拆分审阅，不把整个混合工作区作为一个批次。
 
 本任务是 V1-3”拍后模板与实拍比对 MVP”的底层配准引擎切片。当前只实现静态单张照片的 V4/AKAZE 配准、几何质量门禁、模板 ROI 四角投影和失败状态输出；不实现完整 CaptureComparisonScreen，不启动实时相机或新检测算法。
 
@@ -675,7 +808,7 @@ NanoDet、检测阈值、结果判定、ZIP/CSV、CameraX、DPM、OCR、实时�
 
 # 已完成任务：既有 14 项 JVM 失败整改
 
-状态：**USER_ACCEPTED / COMMITTED**（2026-09-21；主协调提交 `86d1ebd2`；独立于已验收的 NanoDet 任务）
+状态：**T1_IMPLEMENTATION_JVM_AND_DEVICE_UI_PASS / T2_FIXED_IMAGE_ANDROID_PREPROCESS_DECODER_PARITY_PASS_WITH_TEST_NCNN_RUNTIME / T2_PRODUCTION_JNI_PARITY_PENDING / T2_ASSET_PROVENANCE_REVIEW_PENDING / T4_SOFTWARE_AUDIT_PENDING / FIELD_VALIDATION_PENDING**（2026-09-28）。SEA-AL10 上本轮可见的三份 instrumentation XML 共 18 tests / 0 failures / 0 errors / 0 skipped：PartColor UI 12 项、模型加载与合成候选 4 项、固定真图 parity 2 项。固定真图证明生产 Kotlin 预处理与 decoder 在 Android NCNN 测试 JNI runtime 上和 Windows 桌面参考匹配；测试没有调用生产 JNI 库 nanodet_ncnn_runtime，且只覆盖一张图。exp23 的 Android 实际 Mat 宽度已在该固定图测试中读为 34。资产来源身份仍未独立核验，两个模型保持 assetsVerified=false。提交问题按路径拆分审阅，不把整个混合工作区作为一个批次。
 
 本任务只处理上一项 NanoDet Android 回归中记录的既有 JVM 测试失败。不得把这些失败隐藏、删除、改成 skipped，或借此重开已验收的 NanoDet、ROI 人工改判、DPM、OCR、CameraX 或批次清理任务。执行 Agent 必须先在当前工作区重现并读取实际 JUnit XML；下面的失败清单是 2026-09-20/21 的基线，不替代当前复跑结果。
 
@@ -736,7 +869,7 @@ NanoDet、检测阈值、结果判定、ZIP/CSV、CameraX、DPM、OCR、实时�
 
 # 已验收任务：NanoDet exp09 四分类 Android 协议、BOLT/NUTSERT 检测路由与阈值校准
 
-状态：**TASK_2B_PROTOCOL_PASS / ANDROID_PARITY_PASS / TASK_3_SOFTWARE_COMPLETE / TASK_4_ANALYSIS_COMPLETE / TASK_5_REGRESSION_PASS / USER_ACCEPTED**（2026-09-21）
+状态：**T1_IMPLEMENTATION_JVM_AND_DEVICE_UI_PASS / T2_FIXED_IMAGE_ANDROID_PREPROCESS_DECODER_PARITY_PASS_WITH_TEST_NCNN_RUNTIME / T2_PRODUCTION_JNI_PARITY_PENDING / T2_ASSET_PROVENANCE_REVIEW_PENDING / T4_SOFTWARE_AUDIT_PENDING / FIELD_VALIDATION_PENDING**（2026-09-28）。SEA-AL10 上本轮可见的三份 instrumentation XML 共 18 tests / 0 failures / 0 errors / 0 skipped：PartColor UI 12 项、模型加载与合成候选 4 项、固定真图 parity 2 项。固定真图证明生产 Kotlin 预处理与 decoder 在 Android NCNN 测试 JNI runtime 上和 Windows 桌面参考匹配；测试没有调用生产 JNI 库 nanodet_ncnn_runtime，且只覆盖一张图。exp23 的 Android 实际 Mat 宽度已在该固定图测试中读为 34。资产来源身份仍未独立核验，两个模型保持 assetsVerified=false。提交问题按路径拆分审阅，不把整个混合工作区作为一个批次。
 
 - 桌面 parity（yolov12 环境）：✅ 通过（PT vs ONNX max=1.22e-05, NCNN vs ONNX max=5.80e-06, IoU≥0.999）
 - Task 2A NCNN 转换（ncnn_py311 环境）：✅ 已完成（用户授权环境例外）
@@ -784,7 +917,7 @@ NanoDet、检测阈值、结果判定、ZIP/CSV、CameraX、DPM、OCR、实时�
 
 ## Task 3 完成报告：BOLT/NUTSERT ROI 属性与检测路由（2026-09-20）
 
-状态：**SOFTWARE_COMPLETE / USER_ACCEPTED**（2026-09-21，用户人工确认无误）。
+状态：**T1_IMPLEMENTATION_JVM_AND_DEVICE_UI_PASS / T2_FIXED_IMAGE_ANDROID_PREPROCESS_DECODER_PARITY_PASS_WITH_TEST_NCNN_RUNTIME / T2_PRODUCTION_JNI_PARITY_PENDING / T2_ASSET_PROVENANCE_REVIEW_PENDING / T4_SOFTWARE_AUDIT_PENDING / FIELD_VALIDATION_PENDING**（2026-09-28）。SEA-AL10 上本轮可见的三份 instrumentation XML 共 18 tests / 0 failures / 0 errors / 0 skipped：PartColor UI 12 项、模型加载与合成候选 4 项、固定真图 parity 2 项。固定真图证明生产 Kotlin 预处理与 decoder 在 Android NCNN 测试 JNI runtime 上和 Windows 桌面参考匹配；测试没有调用生产 JNI 库 nanodet_ncnn_runtime，且只覆盖一张图。exp23 的 Android 实际 Mat 宽度已在该固定图测试中读为 34。资产来源身份仍未独立核验，两个模型保持 assetsVerified=false。提交问题按路径拆分审阅，不把整个混合工作区作为一个批次。
 
 ### 实际修改文件（9 个）
 
@@ -854,7 +987,7 @@ CameraX、DPM、OCR、NanoDet decoder/DFL/NMS、模型资产、阈值策略和�
 
 ## Task 4 完成报告：NanoDet exp09 阈值校准与数据证据（2026-09-20）
 
-状态：**ANALYSIS_COMPLETE**（离线分析，非生产代码变更）
+状态：**T1_IMPLEMENTATION_JVM_AND_DEVICE_UI_PASS / T2_FIXED_IMAGE_ANDROID_PREPROCESS_DECODER_PARITY_PASS_WITH_TEST_NCNN_RUNTIME / T2_PRODUCTION_JNI_PARITY_PENDING / T2_ASSET_PROVENANCE_REVIEW_PENDING / T4_SOFTWARE_AUDIT_PENDING / FIELD_VALIDATION_PENDING**（2026-09-28）。SEA-AL10 上本轮可见的三份 instrumentation XML 共 18 tests / 0 failures / 0 errors / 0 skipped：PartColor UI 12 项、模型加载与合成候选 4 项、固定真图 parity 2 项。固定真图证明生产 Kotlin 预处理与 decoder 在 Android NCNN 测试 JNI runtime 上和 Windows 桌面参考匹配；测试没有调用生产 JNI 库 nanodet_ncnn_runtime，且只覆盖一张图。exp23 的 Android 实际 Mat 宽度已在该固定图测试中读为 34。资产来源身份仍未独立核验，两个模型保持 assetsVerified=false。提交问题按路径拆分审阅，不把整个混合工作区作为一个批次。
 
 ### 概要
 
@@ -926,7 +1059,7 @@ CameraX、DPM、OCR、NanoDet decoder/DFL/NMS、模型资产、阈值策略和�
 
 ## Task 5 完成报告：Android 回归与收口验收（2026-09-20）
 
-状态：**REGRESSION_PASS / USER_ACCEPTED**（2026-09-21，用户人工确认无误）。exp09 四分类输出契约、BOLT/NUTSERT 路由和静态 ROI 推理已完成 Android 结构化回归；阈值 `0.20` 仍仅为阶段性候选基线。
+状态：**T1_IMPLEMENTATION_JVM_AND_DEVICE_UI_PASS / T2_FIXED_IMAGE_ANDROID_PREPROCESS_DECODER_PARITY_PASS_WITH_TEST_NCNN_RUNTIME / T2_PRODUCTION_JNI_PARITY_PENDING / T2_ASSET_PROVENANCE_REVIEW_PENDING / T4_SOFTWARE_AUDIT_PENDING / FIELD_VALIDATION_PENDING**（2026-09-28）。SEA-AL10 上本轮可见的三份 instrumentation XML 共 18 tests / 0 failures / 0 errors / 0 skipped：PartColor UI 12 项、模型加载与合成候选 4 项、固定真图 parity 2 项。固定真图证明生产 Kotlin 预处理与 decoder 在 Android NCNN 测试 JNI runtime 上和 Windows 桌面参考匹配；测试没有调用生产 JNI 库 nanodet_ncnn_runtime，且只覆盖一张图。exp23 的 Android 实际 Mat 宽度已在该固定图测试中读为 34。资产来源身份仍未独立核验，两个模型保持 assetsVerified=false。提交问题按路径拆分审阅，不把整个混合工作区作为一个批次。
 
 ### 回归证据
 
@@ -967,7 +1100,7 @@ CameraX、DPM、OCR、NanoDet decoder/DFL/NMS、模型资产、阈值策略和�
 
 ## 历史记录：ROI 检测结果、人工改判与 ROI 证据图导出收口
 
-状态：**已完成并提交**（提交 `57003b44`；2026-09-18；定向测试 99/99 全部通过，APK 构建成功）。本节及其后续细节为历史验收记录，不是当前执行入口。
+状态：**T1_IMPLEMENTATION_JVM_AND_DEVICE_UI_PASS / T2_FIXED_IMAGE_ANDROID_PREPROCESS_DECODER_PARITY_PASS_WITH_TEST_NCNN_RUNTIME / T2_PRODUCTION_JNI_PARITY_PENDING / T2_ASSET_PROVENANCE_REVIEW_PENDING / T4_SOFTWARE_AUDIT_PENDING / FIELD_VALIDATION_PENDING**（2026-09-28）。SEA-AL10 上本轮可见的三份 instrumentation XML 共 18 tests / 0 failures / 0 errors / 0 skipped：PartColor UI 12 项、模型加载与合成候选 4 项、固定真图 parity 2 项。固定真图证明生产 Kotlin 预处理与 decoder 在 Android NCNN 测试 JNI runtime 上和 Windows 桌面参考匹配；测试没有调用生产 JNI 库 nanodet_ncnn_runtime，且只覆盖一张图。exp23 的 Android 实际 Mat 宽度已在该固定图测试中读为 34。资产来源身份仍未独立核验，两个模型保持 assetsVerified=false。提交问题按路径拆分审阅，不把整个混合工作区作为一个批次。
 
 > **历史审计说明**：此前记录的 "AUDIT_REOPENED" 和 "98/99 失败（ViewModelSaveLifecycleTest.dbSaveFailureCleansUpNewEvidenceFiles）" 已被2026-09-18 的 99/99 全通过证据 supersede。旧审计内容保留在历史记录中，但不再作为当前结论。
 
@@ -1059,7 +1192,7 @@ app/build/test-results/testDebugUnitTest/TEST-com.wearable.inspection.mobile.dat
 
 # 已验收任务：DPM 原始证据清理
 
-状态：**USER_ACCEPTED**（2026-09-18 v3.1；用户已确认真机扫码不卡顿且不再出现紫色加载圈）
+状态：**T1_IMPLEMENTATION_JVM_AND_DEVICE_UI_PASS / T2_FIXED_IMAGE_ANDROID_PREPROCESS_DECODER_PARITY_PASS_WITH_TEST_NCNN_RUNTIME / T2_PRODUCTION_JNI_PARITY_PENDING / T2_ASSET_PROVENANCE_REVIEW_PENDING / T4_SOFTWARE_AUDIT_PENDING / FIELD_VALIDATION_PENDING**（2026-09-28）。SEA-AL10 上本轮可见的三份 instrumentation XML 共 18 tests / 0 failures / 0 errors / 0 skipped：PartColor UI 12 项、模型加载与合成候选 4 项、固定真图 parity 2 项。固定真图证明生产 Kotlin 预处理与 decoder 在 Android NCNN 测试 JNI runtime 上和 Windows 桌面参考匹配；测试没有调用生产 JNI 库 nanodet_ncnn_runtime，且只覆盖一张图。exp23 的 Android 实际 Mat 宽度已在该固定图测试中读为 34。资产来源身份仍未独立核验，两个模型保持 assetsVerified=false。提交问题按路径拆分审阅，不把整个混合工作区作为一个批次。
 
 需求纠偏：用户确认”导出全部扫码证据 ZIP”只是导出能力，不需要新增 DPM 扫码证据记录或独立 ZIP 导入/管理流程。当前真正需要解决的是 App 私有目录 `filesDir/dpm_evidence`、数据库中的 DPM 原始证据行、原始帧和 ROI 图长期累积导致的存储占用。
 
@@ -1204,7 +1337,7 @@ v10 → v11：CREATE TABLE exported_packages（id, packageType, displayName, cre
 
 # 已验收任务：采集批次/零件 ZIP 清理
 
-状态：**USER_ACCEPTED**（2026-09-18；用户完成人工验收并确认通过）。本任务已完成开发、自动化验证、最终 APK 构建和人工验收；不扩展批量多选导出、ROI、DPM、CameraX 或其他待办。
+状态：**T1_IMPLEMENTATION_JVM_AND_DEVICE_UI_PASS / T2_FIXED_IMAGE_ANDROID_PREPROCESS_DECODER_PARITY_PASS_WITH_TEST_NCNN_RUNTIME / T2_PRODUCTION_JNI_PARITY_PENDING / T2_ASSET_PROVENANCE_REVIEW_PENDING / T4_SOFTWARE_AUDIT_PENDING / FIELD_VALIDATION_PENDING**（2026-09-28）。SEA-AL10 上本轮可见的三份 instrumentation XML 共 18 tests / 0 failures / 0 errors / 0 skipped：PartColor UI 12 项、模型加载与合成候选 4 项、固定真图 parity 2 项。固定真图证明生产 Kotlin 预处理与 decoder 在 Android NCNN 测试 JNI runtime 上和 Windows 桌面参考匹配；测试没有调用生产 JNI 库 nanodet_ncnn_runtime，且只覆盖一张图。exp23 的 Android 实际 Mat 宽度已在该固定图测试中读为 34。资产来源身份仍未独立核验，两个模型保持 assetsVerified=false。提交问题按路径拆分审阅，不把整个混合工作区作为一个批次。
 
 执行边界：
 
@@ -1229,7 +1362,7 @@ v10 → v11：CREATE TABLE exported_packages（id, packageType, displayName, cre
 
 # 已验收任务：DPM 扫码证据绑定采集批次并进入批次 ZIP
 
-状态：**USER_ACCEPTED**（2026-09-16；用户确认人机验收通过）。扫码会话到后续新建批次的绑定、批次 ZIP 内 DPM 帧/ROI 文件和 CSV 记录均已完成真机验证；此前 `PHYSICAL_ACCEPTANCE_PENDING` 状态由本次用户验收取代。提交：批次绑定闭环 `2e2c5943`；DPM 空 ZIP/SAF 收口 `b7ac09c8`；DPM 退出与 ZIP 写入可靠性补充 `62976e60`。证据见本节及 [`docs/reports/b3/DPM_EVIDENCE_EXPORT_REPORT.md`](../docs/reports/b3/DPM_EVIDENCE_EXPORT_REPORT.md)。
+状态：**T1_IMPLEMENTATION_JVM_AND_DEVICE_UI_PASS / T2_FIXED_IMAGE_ANDROID_PREPROCESS_DECODER_PARITY_PASS_WITH_TEST_NCNN_RUNTIME / T2_PRODUCTION_JNI_PARITY_PENDING / T2_ASSET_PROVENANCE_REVIEW_PENDING / T4_SOFTWARE_AUDIT_PENDING / FIELD_VALIDATION_PENDING**（2026-09-28）。SEA-AL10 上本轮可见的三份 instrumentation XML 共 18 tests / 0 failures / 0 errors / 0 skipped：PartColor UI 12 项、模型加载与合成候选 4 项、固定真图 parity 2 项。固定真图证明生产 Kotlin 预处理与 decoder 在 Android NCNN 测试 JNI runtime 上和 Windows 桌面参考匹配；测试没有调用生产 JNI 库 nanodet_ncnn_runtime，且只覆盖一张图。exp23 的 Android 实际 Mat 宽度已在该固定图测试中读为 34。资产来源身份仍未独立核验，两个模型保持 assetsVerified=false。提交问题按路径拆分审阅，不把整个混合工作区作为一个批次。
 
 ## 本轮修复：DPM 扫码证据绑定采集批次闭环（2026-09-16）
 
@@ -1315,13 +1448,13 @@ v10 → v11：CREATE TABLE exported_packages（id, packageType, displayName, cre
 
 ## 交付项 1：DPM ECC 成功照片合并到采集批次 ZIP
 
-状态：**USER_ACCEPTED**（2026-09-16）。
+状态：**T1_IMPLEMENTATION_JVM_AND_DEVICE_UI_PASS / T2_FIXED_IMAGE_ANDROID_PREPROCESS_DECODER_PARITY_PASS_WITH_TEST_NCNN_RUNTIME / T2_PRODUCTION_JNI_PARITY_PENDING / T2_ASSET_PROVENANCE_REVIEW_PENDING / T4_SOFTWARE_AUDIT_PENDING / FIELD_VALIDATION_PENDING**（2026-09-28）。SEA-AL10 上本轮可见的三份 instrumentation XML 共 18 tests / 0 failures / 0 errors / 0 skipped：PartColor UI 12 项、模型加载与合成候选 4 项、固定真图 parity 2 项。固定真图证明生产 Kotlin 预处理与 decoder 在 Android NCNN 测试 JNI runtime 上和 Windows 桌面参考匹配；测试没有调用生产 JNI 库 nanodet_ncnn_runtime，且只覆盖一张图。exp23 的 Android 实际 Mat 宽度已在该固定图测试中读为 34。资产来源身份仍未独立核验，两个模型保持 assetsVerified=false。提交问题按路径拆分审阅，不把整个混合工作区作为一个批次。
 
 批次 ZIP 仅导出 ECC 纠错通过且码值非空的 DPM 源帧照片和同一源帧扫描 ROI 照片。文件从 `filesDir/dpm_evidence` 原路径按字节复制，必须与独立 `DpmEvidenceExportService` ZIP 中的对应照片完全一致。独立 DPM ZIP 继续按 `scanSessionId` 导出；ECC 失败、未读出、超时、取消或旧 session 不产生 DPM 照片。
 
 ## 交付项 2：ROI 检测结果、人工改判及 ROI 证据图导出
 
-状态：**IN_PROGRESS / REQUIREMENT_REVISED**（2026-09-16）。
+状态：**T1_IMPLEMENTATION_JVM_AND_DEVICE_UI_PASS / T2_FIXED_IMAGE_ANDROID_PREPROCESS_DECODER_PARITY_PASS_WITH_TEST_NCNN_RUNTIME / T2_PRODUCTION_JNI_PARITY_PENDING / T2_ASSET_PROVENANCE_REVIEW_PENDING / T4_SOFTWARE_AUDIT_PENDING / FIELD_VALIDATION_PENDING**（2026-09-28）。SEA-AL10 上本轮可见的三份 instrumentation XML 共 18 tests / 0 failures / 0 errors / 0 skipped：PartColor UI 12 项、模型加载与合成候选 4 项、固定真图 parity 2 项。固定真图证明生产 Kotlin 预处理与 decoder 在 Android NCNN 测试 JNI runtime 上和 Windows 桌面参考匹配；测试没有调用生产 JNI 库 nanodet_ncnn_runtime，且只覆盖一张图。exp23 的 Android 实际 Mat 宽度已在该固定图测试中读为 34。资产来源身份仍未独立核验，两个模型保持 assetsVerified=false。提交问题按路径拆分审阅，不把整个混合工作区作为一个批次。
 
 ### 开始前审计与执行边界
 
@@ -1408,7 +1541,7 @@ v10 → v11：CREATE TABLE exported_packages（id, packageType, displayName, cre
 
 # 历史任务：修复 MobileInspectionApp 启动闪退
 
-状态：**SOFTWARE_COMPLETE / AWAITING_USER_ACCEPTANCE**（2026-09-15）。已修复 `CameraPreview` 在后台线程求值 `PreviewView.surfaceProvider` 导致的启动闪退；本轮只修复该启动路径，不进入任何后续功能。
+状态：**T1_IMPLEMENTATION_JVM_AND_DEVICE_UI_PASS / T2_FIXED_IMAGE_ANDROID_PREPROCESS_DECODER_PARITY_PASS_WITH_TEST_NCNN_RUNTIME / T2_PRODUCTION_JNI_PARITY_PENDING / T2_ASSET_PROVENANCE_REVIEW_PENDING / T4_SOFTWARE_AUDIT_PENDING / FIELD_VALIDATION_PENDING**（2026-09-28）。SEA-AL10 上本轮可见的三份 instrumentation XML 共 18 tests / 0 failures / 0 errors / 0 skipped：PartColor UI 12 项、模型加载与合成候选 4 项、固定真图 parity 2 项。固定真图证明生产 Kotlin 预处理与 decoder 在 Android NCNN 测试 JNI runtime 上和 Windows 桌面参考匹配；测试没有调用生产 JNI 库 nanodet_ncnn_runtime，且只覆盖一张图。exp23 的 Android 实际 Mat 宽度已在该固定图测试中读为 34。资产来源身份仍未独立核验，两个模型保持 assetsVerified=false。提交问题按路径拆分审阅，不把整个混合工作区作为一个批次。
 
 实现与验证：在 `Dispatchers.Main.immediate` 获取 `Preview.SurfaceProvider`，再将已取得的 provider 传给后台 `CameraController.connect`；保留现有 CameraX 主线程桥接、`active=false` 立即 `disconnect(sessionId)`、`connectionGeneration`、sessionId 防竞态、`DisposableEffect` 兜底和重入行为。定向 JVM：`CameraControllerTest` 42/42、`CameraPreviewTest` 18/18；`compileDebugKotlin` 与 `assembleDebug` 通过。主 APK `app/build/outputs/apk/debug/app-debug.apk`，2026-09-15 10:42:09 +08:00，276,579,040 bytes，SHA-256 `D6A0481AA9288F0550150D5132CE981AF5B9DDF2C4C0842CF9BF3E45F09356C4`。设备 `ERLDU20429005890` ABI 为 `arm64-v8a,armeabi-v7a,armeabi`；新包安装并显式启动成功，PID 5995，旧包无 PID，前台为 `com.wearable.inspection.mobile/.MainActivity`，启动后指定 logcat 错误模式无匹配。DPM ECC、CameraX 可见性、NanoDet 确认页仍保持待用户验收，未标记 `USER_ACCEPTED`。详细记录见 [`docs/reports/b3/CAMERA_ACTIVE_VISIBILITY_RELEASE_REPORT.md`](../docs/reports/b3/CAMERA_ACTIVE_VISIBILITY_RELEASE_REPORT.md)。未提交 Git，工作区其他改动保留，等待验收。
 
@@ -1416,7 +1549,7 @@ v10 → v11：CREATE TABLE exported_packages（id, packageType, displayName, cre
 
 # 历史任务：DPM 扫码证据只保存 ECC 成功源帧
 
-状态：**SOFTWARE_COMPLETE / AWAITING_USER_ACCEPTANCE**（2026-09-15，纠正版）。本项只修改 DPM 证据帧选择与保存语义；只有 ZXing、ML Kit 或 GRID 返回非空 Data Matrix 码值且 `DpmAnalyzer` 发出当前会话 `DECODED` 时，才保存准确源帧和对应 scan ROI。无 ECC 成功时不保存原图、ROI、预处理图，不创建 `NO_READ` 证据行，也不回退到 `lastFrameBitmap`。
+状态：**T1_IMPLEMENTATION_JVM_AND_DEVICE_UI_PASS / T2_FIXED_IMAGE_ANDROID_PREPROCESS_DECODER_PARITY_PASS_WITH_TEST_NCNN_RUNTIME / T2_PRODUCTION_JNI_PARITY_PENDING / T2_ASSET_PROVENANCE_REVIEW_PENDING / T4_SOFTWARE_AUDIT_PENDING / FIELD_VALIDATION_PENDING**（2026-09-28）。SEA-AL10 上本轮可见的三份 instrumentation XML 共 18 tests / 0 failures / 0 errors / 0 skipped：PartColor UI 12 项、模型加载与合成候选 4 项、固定真图 parity 2 项。固定真图证明生产 Kotlin 预处理与 decoder 在 Android NCNN 测试 JNI runtime 上和 Windows 桌面参考匹配；测试没有调用生产 JNI 库 nanodet_ncnn_runtime，且只覆盖一张图。exp23 的 Android 实际 Mat 宽度已在该固定图测试中读为 34。资产来源身份仍未独立核验，两个模型保持 assetsVerified=false。提交问题按路径拆分审阅，不把整个混合工作区作为一个批次。
 
 实现：复用 ZXing `DataMatrixReader.decode()`、`Decoder().decode(matrix)` 和 ML Kit 内部 ECC；不新增 Reed-Solomon 或像素修正。`DpmEvidenceFrameTracker` 以稳定 frameToken/时间和 ROI 保存同步 ZXing/ML Kit 源帧；GRID 提交/完成生命周期携带源 token，取消、超时、stop、会话结束和迟到结果均失效并回收 Bitmap。成功帧被选中后后续帧不能覆盖；保存失败会清理原图/ROI/数据库孤立状态。独立 DPM ZIP 仅导出实际存在的 SUCCESS 照片，现场采集照片 ZIP 未修改。
 
@@ -1426,7 +1559,7 @@ v10 → v11：CREATE TABLE exported_packages（id, packageType, displayName, cre
 
 # 历史任务：现场采集页离开时立即暂停 CameraX
 
-状态：**SOFTWARE_COMPLETE / AWAITING_USER_ACCEPTANCE**（2026-09-15）。修复现场采集页切换到“追溯记录/我的”时相机仍保持绑定造成的卡顿；仅修改 CameraPreview 活跃状态、现场页透传、相机生命周期 JVM 测试和本报告，不运行 adb、安装 APK 或真机验收。
+状态：**T1_IMPLEMENTATION_JVM_AND_DEVICE_UI_PASS / T2_FIXED_IMAGE_ANDROID_PREPROCESS_DECODER_PARITY_PASS_WITH_TEST_NCNN_RUNTIME / T2_PRODUCTION_JNI_PARITY_PENDING / T2_ASSET_PROVENANCE_REVIEW_PENDING / T4_SOFTWARE_AUDIT_PENDING / FIELD_VALIDATION_PENDING**（2026-09-28）。SEA-AL10 上本轮可见的三份 instrumentation XML 共 18 tests / 0 failures / 0 errors / 0 skipped：PartColor UI 12 项、模型加载与合成候选 4 项、固定真图 parity 2 项。固定真图证明生产 Kotlin 预处理与 decoder 在 Android NCNN 测试 JNI runtime 上和 Windows 桌面参考匹配；测试没有调用生产 JNI 库 nanodet_ncnn_runtime，且只覆盖一张图。exp23 的 Android 实际 Mat 宽度已在该固定图测试中读为 34。资产来源身份仍未独立核验，两个模型保持 assetsVerified=false。提交问题按路径拆分审阅，不把整个混合工作区作为一个批次。
 
 实现与验证：复用 `CameraController.disconnect(sessionId)`，`active=false` 时在后台立即断开 Preview、ImageAnalysis、ImageCapture、分析器、Executor 和 observer；不调用 `release()`。CameraX 要求主线程的 API 由 `RealCameraBinder` 统一桥接执行，provider 获取和等待不占用 Compose 主线程。连接代次门禁会清理不可见期间迟到的 session，重入时允许新 session 重新连接；旧 observer 回调不能覆盖新 session；`DisposableEffect` 保留为销毁兜底，且本地 session 标识先清空以避免重复解绑。AppNavigation 原有 `currentRoute == Screen.LiveInspection.route` 作为可见状态来源，未修改一级淡入淡出动画。最终定向命令 `:app:compileDebugKotlin :app:testDebugUnitTest --no-daemon --tests CameraControllerTest --tests CameraPreviewTest` 通过；`CameraControllerTest` 42/42、`CameraPreviewTest` 17/17。未生成 APK、未做真机测试。详细记录见 [`docs/reports/b3/CAMERA_ACTIVE_VISIBILITY_RELEASE_REPORT.md`](../docs/reports/b3/CAMERA_ACTIVE_VISIBILITY_RELEASE_REPORT.md)。工作区其他改动保留，未提交 Git，等待用户验收。
 
@@ -1434,7 +1567,7 @@ v10 → v11：CREATE TABLE exported_packages（id, packageType, displayName, cre
 
 # 历史任务：展示 NanoDet ROI 模型结果并保存人工终审
 
-状态：**SOFTWARE_COMPLETE / AWAITING_USER_ACCEPTANCE**（2026-09-14）。前一项 Android NCNN runtime smoke 和 NanoDet 静态照片 ROI 推理均已由用户验收。本项只在现有 ViewConfirmationScreen/ViewConfirmationViewModel 展示真实 inferenceResults，并保存人工终审。
+状态：**T1_IMPLEMENTATION_JVM_AND_DEVICE_UI_PASS / T2_FIXED_IMAGE_ANDROID_PREPROCESS_DECODER_PARITY_PASS_WITH_TEST_NCNN_RUNTIME / T2_PRODUCTION_JNI_PARITY_PENDING / T2_ASSET_PROVENANCE_REVIEW_PENDING / T4_SOFTWARE_AUDIT_PENDING / FIELD_VALIDATION_PENDING**（2026-09-28）。SEA-AL10 上本轮可见的三份 instrumentation XML 共 18 tests / 0 failures / 0 errors / 0 skipped：PartColor UI 12 项、模型加载与合成候选 4 项、固定真图 parity 2 项。固定真图证明生产 Kotlin 预处理与 decoder 在 Android NCNN 测试 JNI runtime 上和 Windows 桌面参考匹配；测试没有调用生产 JNI 库 nanodet_ncnn_runtime，且只覆盖一张图。exp23 的 Android 实际 Mat 宽度已在该固定图测试中读为 34。资产来源身份仍未独立核验，两个模型保持 assetsVerified=false。提交问题按路径拆分审阅，不把整个混合工作区作为一个批次。
 
 复用现有 ViewRoiConfirmEntity 和 photoId、batchId、templateId、viewIndex、roiId 稳定关联；先审计 Room schema、DAO、repository、ViewModel 和确认页，禁止建立平行结果模型。逐 ROI 展示真实推理状态、类别、模型建议、最高匹配分数和检测框。FEATURE、属性未配置、无框、照片/模型不可用和推理错误应显示明确状态。人工逐 ROI 独立选 OK/NG，允许双向改判；softwareResult 与 humanResult 分字段保存，记录所有检测框/分数/阈值/模型版本及摘要/推理状态、人工最终值、是否改判和确认时间。旧记录的模型字段保持未执行/null。整张照片总体 OK/NG 继续只由人工独立选择。
 
@@ -1446,7 +1579,7 @@ v10 → v11：CREATE TABLE exported_packages（id, packageType, displayName, cre
 
 # 已验收任务：NanoDet 模板 ROI 静态照片推理接入
 
-状态：**USER_ACCEPTED**（2026-09-14）。前一项 Android NCNN runtime 冒烟测试已由用户验收；本项仅为已保存照片的当前模板 ROI 提供真实 NCNN 推理结果，不接入预览流、确认页 UI、人工改判、数据库迁移、结果 ZIP、自动对齐或新相机架构。
+状态：**T1_IMPLEMENTATION_JVM_AND_DEVICE_UI_PASS / T2_FIXED_IMAGE_ANDROID_PREPROCESS_DECODER_PARITY_PASS_WITH_TEST_NCNN_RUNTIME / T2_PRODUCTION_JNI_PARITY_PENDING / T2_ASSET_PROVENANCE_REVIEW_PENDING / T4_SOFTWARE_AUDIT_PENDING / FIELD_VALIDATION_PENDING**（2026-09-28）。SEA-AL10 上本轮可见的三份 instrumentation XML 共 18 tests / 0 failures / 0 errors / 0 skipped：PartColor UI 12 项、模型加载与合成候选 4 项、固定真图 parity 2 项。固定真图证明生产 Kotlin 预处理与 decoder 在 Android NCNN 测试 JNI runtime 上和 Windows 桌面参考匹配；测试没有调用生产 JNI 库 nanodet_ncnn_runtime，且只覆盖一张图。exp23 的 Android 实际 Mat 宽度已在该固定图测试中读为 34。资产来源身份仍未独立核验，两个模型保持 assetsVerified=false。提交问题按路径拆分审阅，不把整个混合工作区作为一个批次。
 
 复用已验证的 NCNN optlevel=2 模型、Android FP32 CPU runtime 和 `arm64-v8a` 库，不重做转换或冒烟测试。复用 `RoiDefinitionEntity.targetType` 与 `RoiCoordinateMapper`；校验照片 EXIF 方向、实际图像区域、像素边界及 ROI/整图框坐标。NUT 映射类别 0，THREAD 映射类别 1，FEATURE 明确标记不支持；保持 BGR、416×416 左上补边、既定 mean/std、`in0`/`out0`，候选过滤保留低分框。默认业务阈值 0.37 仅为未校准起始值。
 
@@ -1459,7 +1592,7 @@ v10 → v11：CREATE TABLE exported_packages（id, packageType, displayName, cre
 
 # 已验收任务：Android NCNN 运行时冒烟测试
 
-状态：**USER_ACCEPTED**（2026-09-14）。本任务验证 Android NCNN runtime 加载、推理及两张回归图片与桌面对照；未接入 ROI 页面、数据库或结果包。
+状态：**T1_IMPLEMENTATION_JVM_AND_DEVICE_UI_PASS / T2_FIXED_IMAGE_ANDROID_PREPROCESS_DECODER_PARITY_PASS_WITH_TEST_NCNN_RUNTIME / T2_PRODUCTION_JNI_PARITY_PENDING / T2_ASSET_PROVENANCE_REVIEW_PENDING / T4_SOFTWARE_AUDIT_PENDING / FIELD_VALIDATION_PENDING**（2026-09-28）。SEA-AL10 上本轮可见的三份 instrumentation XML 共 18 tests / 0 failures / 0 errors / 0 skipped：PartColor UI 12 项、模型加载与合成候选 4 项、固定真图 parity 2 项。固定真图证明生产 Kotlin 预处理与 decoder 在 Android NCNN 测试 JNI runtime 上和 Windows 桌面参考匹配；测试没有调用生产 JNI 库 nanodet_ncnn_runtime，且只覆盖一张图。exp23 的 Android 实际 Mat 宽度已在该固定图测试中读为 34。资产来源身份仍未独立核验，两个模型保持 assetsVerified=false。提交问题按路径拆分审阅，不把整个混合工作区作为一个批次。
 
 使用现有 NDK `D:\ProgramData\Android\SDK\android-ndk-r30`（`30.0.16248370`）的 `ndk-build.cmd`，在 `YAL-AL10` 真机（ABI `arm64-v8a`）运行仅限 `androidTest` 的 NCNN FP32 加载/推理通路。两图按 BGR、左上放置 234×416 等比例缩放补边至 416×416、指定 mean/std 归一化；输出 blob `out0` shape `[3598,34]`。两图类别、数量、候选点和四档阈值检测数均与桌面 NCNN 相同；最大置信度差 `2.69e-7`，最大框坐标差 `3.53e-5 px`。`parity_results.json` 不含完整原始张量，未声称完成逐元素张量对照。
 
@@ -1468,14 +1601,14 @@ v10 → v11：CREATE TABLE exported_packages（id, packageType, displayName, cre
 ---
 # 历史任务记录：DPM 扫码证据 ZIP 空文件修复
 
-状态：**USER_ACCEPTED**（2026-09-16；本任务的 SAF/ZIP 软件整改与后续 DPM 导出闭环均已由用户验收）。早期记录中的 `SOFTWARE_COMPLETE / PHYSICAL_ACCEPTANCE_PENDING` 和“禁止标记 USER_ACCEPTED”属于验收前状态，现由文档顶部的最新验收记录取代。修复 manifest writer 关闭底层 ZipOutputStream、SAF 输出流为空或 ZIP 生成失败时误报成功，以及 SAF 预创建空文件清理；增加真实 ZIP 解包回归测试、无 sessionId 退出和 SAF resolver 行为回归。报告：`docs/reports/b3/DPM_EVIDENCE_EXPORT_REPORT.md`。
+状态：**T1_IMPLEMENTATION_JVM_AND_DEVICE_UI_PASS / T2_FIXED_IMAGE_ANDROID_PREPROCESS_DECODER_PARITY_PASS_WITH_TEST_NCNN_RUNTIME / T2_PRODUCTION_JNI_PARITY_PENDING / T2_ASSET_PROVENANCE_REVIEW_PENDING / T4_SOFTWARE_AUDIT_PENDING / FIELD_VALIDATION_PENDING**（2026-09-28）。SEA-AL10 上本轮可见的三份 instrumentation XML 共 18 tests / 0 failures / 0 errors / 0 skipped：PartColor UI 12 项、模型加载与合成候选 4 项、固定真图 parity 2 项。固定真图证明生产 Kotlin 预处理与 decoder 在 Android NCNN 测试 JNI runtime 上和 Windows 桌面参考匹配；测试没有调用生产 JNI 库 nanodet_ncnn_runtime，且只覆盖一张图。exp23 的 Android 实际 Mat 宽度已在该固定图测试中读为 34。资产来源身份仍未独立核验，两个模型保持 assetsVerified=false。提交问题按路径拆分审阅，不把整个混合工作区作为一个批次。
 
 历史实现范围：DPM ZIP 导出服务、SAF 写入逻辑、导出/生命周期测试及配套任务文档；当时的未运行真机说明保留为历史事实，不用于覆盖当前已验收的 DPM 批次闭环证据。
 
 ---
 # 已完成任务：NanoDet 转换与三方桌面对照
 
-状态：**SOFTWARE_COMPLETE / DESKTOP_PARITY_VERIFIED / ANDROID_APP_INTEGRATION_NOT_STARTED**（2026-09-14；本次授权范围完成，待用户验收）。
+状态：**T1_IMPLEMENTATION_JVM_AND_DEVICE_UI_PASS / T2_FIXED_IMAGE_ANDROID_PREPROCESS_DECODER_PARITY_PASS_WITH_TEST_NCNN_RUNTIME / T2_PRODUCTION_JNI_PARITY_PENDING / T2_ASSET_PROVENANCE_REVIEW_PENDING / T4_SOFTWARE_AUDIT_PENDING / FIELD_VALIDATION_PENDING**（2026-09-28）。SEA-AL10 上本轮可见的三份 instrumentation XML 共 18 tests / 0 failures / 0 errors / 0 skipped：PartColor UI 12 项、模型加载与合成候选 4 项、固定真图 parity 2 项。固定真图证明生产 Kotlin 预处理与 decoder 在 Android NCNN 测试 JNI runtime 上和 Windows 桌面参考匹配；测试没有调用生产 JNI 库 nanodet_ncnn_runtime，且只覆盖一张图。exp23 的 Android 实际 Mat 宽度已在该固定图测试中读为 34。资产来源身份仍未独立核验，两个模型保持 assetsVerified=false。提交问题按路径拆分审阅，不把整个混合工作区作为一个批次。
 
 使用已存在的 ONNX，通过 NCNN 官方 PNNX 20260526、FP32、`optlevel=2` 转成可由 NCNN runtime 加载的 `.param/.bin`；另用官方 NCNN Android shared 包准备了多 ABI 运行库。对 `frame_00106_f1060.jpg` 和 `frame_00045_f450.jpg` 使用同一输入张量比较 PyTorch、ONNX、NCNN 原始输出、类别、置信度及解码框，结果通过。最初 `optlevel=0` 产物含 runtime 不支持的 `prim::ListConstruct`，已单独标为 `opt0_rejected`，不得用于接入。
 
@@ -1485,7 +1618,7 @@ Android App 尚未接入模型，也未构建 APK：工程没有 `abiFilters`/`n
 
 # 已完成任务：DPM 扫码证据可操作导出
 
-状态：**DONE**（2026-09-15，实现完成，自动化验证通过，待用户验收）。
+状态：**T1_IMPLEMENTATION_JVM_AND_DEVICE_UI_PASS / T2_FIXED_IMAGE_ANDROID_PREPROCESS_DECODER_PARITY_PASS_WITH_TEST_NCNN_RUNTIME / T2_PRODUCTION_JNI_PARITY_PENDING / T2_ASSET_PROVENANCE_REVIEW_PENDING / T4_SOFTWARE_AUDIT_PENDING / FIELD_VALIDATION_PENDING**（2026-09-28）。SEA-AL10 上本轮可见的三份 instrumentation XML 共 18 tests / 0 failures / 0 errors / 0 skipped：PartColor UI 12 项、模型加载与合成候选 4 项、固定真图 parity 2 项。固定真图证明生产 Kotlin 预处理与 decoder 在 Android NCNN 测试 JNI runtime 上和 Windows 桌面参考匹配；测试没有调用生产 JNI 库 nanodet_ncnn_runtime，且只覆盖一张图。exp23 的 Android 实际 Mat 宽度已在该固定图测试中读为 34。资产来源身份仍未独立核验，两个模型保持 assetsVerified=false。提交问题按路径拆分审阅，不把整个混合工作区作为一个批次。
 
 目标：在现有导出入口增加"导出 DPM 扫码证据"操作，生成独立 ZIP（按 scanSessionId 分目录、原始帧 + ROI 裁切 + manifest.csv），支持 SAF 保存和 FileProvider 分享。导出后保留应用内原始证据。
 
@@ -1502,7 +1635,7 @@ Android App 尚未接入模型，也未构建 APK：工程没有 `abiFilters`/`n
 
 # 已完成任务：DPM 扫码会话图像证据留存
 
-状态：**DONE / 语义由上方纠正版覆盖**（2026-09-15）。
+状态：**T1_IMPLEMENTATION_JVM_AND_DEVICE_UI_PASS / T2_FIXED_IMAGE_ANDROID_PREPROCESS_DECODER_PARITY_PASS_WITH_TEST_NCNN_RUNTIME / T2_PRODUCTION_JNI_PARITY_PENDING / T2_ASSET_PROVENANCE_REVIEW_PENDING / T4_SOFTWARE_AUDIT_PENDING / FIELD_VALIDATION_PENDING**（2026-09-28）。SEA-AL10 上本轮可见的三份 instrumentation XML 共 18 tests / 0 failures / 0 errors / 0 skipped：PartColor UI 12 项、模型加载与合成候选 4 项、固定真图 parity 2 项。固定真图证明生产 Kotlin 预处理与 decoder 在 Android NCNN 测试 JNI runtime 上和 Windows 桌面参考匹配；测试没有调用生产 JNI 库 nanodet_ncnn_runtime，且只覆盖一张图。exp23 的 Android 实际 Mat 宽度已在该固定图测试中读为 34。资产来源身份仍未独立核验，两个模型保持 assetsVerified=false。提交问题按路径拆分审阅，不把整个混合工作区作为一个批次。
 
 历史目标曾包含无读出时保存最后有效帧/`NO_READ`；该语义已被上方纠正版“无 ECC 成功时不保存照片证据或记录”覆盖。当前仍保留成功读码源帧、scan ROI、`scanSessionId`、帧时间和独立 DPM ZIP 的稳定关联。
 
@@ -1526,7 +1659,7 @@ Android App 尚未接入模型，也未构建 APK：工程没有 `abiFilters`/`n
 
 # 已完成任务：模板叠加默认透明度为 0%
 
-状态：**USER_ACCEPTED**（2026-09-15，用户确认验收通过）。详见 `docs/reports/b2/TEMPLATE_OVERLAY_ALPHA_ZERO_REPORT.md`。
+状态：**T1_IMPLEMENTATION_JVM_AND_DEVICE_UI_PASS / T2_FIXED_IMAGE_ANDROID_PREPROCESS_DECODER_PARITY_PASS_WITH_TEST_NCNN_RUNTIME / T2_PRODUCTION_JNI_PARITY_PENDING / T2_ASSET_PROVENANCE_REVIEW_PENDING / T4_SOFTWARE_AUDIT_PENDING / FIELD_VALIDATION_PENDING**（2026-09-28）。SEA-AL10 上本轮可见的三份 instrumentation XML 共 18 tests / 0 failures / 0 errors / 0 skipped：PartColor UI 12 项、模型加载与合成候选 4 项、固定真图 parity 2 项。固定真图证明生产 Kotlin 预处理与 decoder 在 Android NCNN 测试 JNI runtime 上和 Windows 桌面参考匹配；测试没有调用生产 JNI 库 nanodet_ncnn_runtime，且只覆盖一张图。exp23 的 Android 实际 Mat 宽度已在该固定图测试中读为 34。资产来源身份仍未独立核验，两个模型保持 assetsVerified=false。提交问题按路径拆分审阅，不把整个混合工作区作为一个批次。
 
 ---
 
@@ -1536,7 +1669,7 @@ Android App 尚未接入模型，也未构建 APK：工程没有 `abiFilters`/`n
 
 # 已完成任务：单零件多 View 人工确认 + ZIP 导出
 
-状态：**USER_ACCEPTED**（2026-09-15，用户确认测试通过）。
+状态：**T1_IMPLEMENTATION_JVM_AND_DEVICE_UI_PASS / T2_FIXED_IMAGE_ANDROID_PREPROCESS_DECODER_PARITY_PASS_WITH_TEST_NCNN_RUNTIME / T2_PRODUCTION_JNI_PARITY_PENDING / T2_ASSET_PROVENANCE_REVIEW_PENDING / T4_SOFTWARE_AUDIT_PENDING / FIELD_VALIDATION_PENDING**（2026-09-28）。SEA-AL10 上本轮可见的三份 instrumentation XML 共 18 tests / 0 failures / 0 errors / 0 skipped：PartColor UI 12 项、模型加载与合成候选 4 项、固定真图 parity 2 项。固定真图证明生产 Kotlin 预处理与 decoder 在 Android NCNN 测试 JNI runtime 上和 Windows 桌面参考匹配；测试没有调用生产 JNI 库 nanodet_ncnn_runtime，且只覆盖一张图。exp23 的 Android 实际 Mat 宽度已在该固定图测试中读为 34。资产来源身份仍未独立核验，两个模型保持 assetsVerified=false。提交问题按路径拆分审阅，不把整个混合工作区作为一个批次。
 
 目标：用户选择零件 → 按模板顺序逐 View 拍照。当前 View 有 enabled ROI 时进入确认 UI，逐个选择 ROI OK/NG 和总体 OK/NG 后保存并进入下一 View；当前 View 无 ROI 时仍先真实拍照并保存到当前 batchId，随后直接进入下一 View。全部完成后生成包含所有原始照片和真实确认结果的 ZIP，统一写入一个 Excel 兼容 CSV（检测 CSV 可无 ROI 确认行）。
 
@@ -1566,7 +1699,7 @@ Android App 尚未接入模型，也未构建 APK：工程没有 `abiFilters`/`n
 
 ## 本轮修复：模板包导入失败（2026-09-04）
 
-状态：**源码整改完成 / AUTOMATION_AND_PHYSICAL_ACCEPTANCE_PENDING**。
+状态：**T1_IMPLEMENTATION_JVM_AND_DEVICE_UI_PASS / T2_FIXED_IMAGE_ANDROID_PREPROCESS_DECODER_PARITY_PASS_WITH_TEST_NCNN_RUNTIME / T2_PRODUCTION_JNI_PARITY_PENDING / T2_ASSET_PROVENANCE_REVIEW_PENDING / T4_SOFTWARE_AUDIT_PENDING / FIELD_VALIDATION_PENDING**（2026-09-28）。SEA-AL10 上本轮可见的三份 instrumentation XML 共 18 tests / 0 failures / 0 errors / 0 skipped：PartColor UI 12 项、模型加载与合成候选 4 项、固定真图 parity 2 项。固定真图证明生产 Kotlin 预处理与 decoder 在 Android NCNN 测试 JNI runtime 上和 Windows 桌面参考匹配；测试没有调用生产 JNI 库 nanodet_ncnn_runtime，且只覆盖一张图。exp23 的 Android 实际 Mat 宽度已在该固定图测试中读为 34。资产来源身份仍未独立核验，两个模型保持 assetsVerified=false。提交问题按路径拆分审阅，不把整个混合工作区作为一个批次。
 
 - [x] SAF 复制 ZIP 使用系统唯一临时文件，并校验复制字节数和文件长度，避免空临时文件进入解析器。
 - [x] 模板包解析将损坏/非 ZIP 文件转换为可读错误；兼容历史 manifest 的字符串 `imageFiles`、Windows 反斜杠和图片扩展名大小写差异。
@@ -1577,7 +1710,7 @@ Android App 尚未接入模型，也未构建 APK：工程没有 `abiFilters`/`n
 
 ## 本轮修复：切换零件后模板图片与 ROI 偶发缺失（2026-09-04）
 
-状态：**源码整改完成 / AUTOMATION_AND_PHYSICAL_ACCEPTANCE_PENDING**。
+状态：**T1_IMPLEMENTATION_JVM_AND_DEVICE_UI_PASS / T2_FIXED_IMAGE_ANDROID_PREPROCESS_DECODER_PARITY_PASS_WITH_TEST_NCNN_RUNTIME / T2_PRODUCTION_JNI_PARITY_PENDING / T2_ASSET_PROVENANCE_REVIEW_PENDING / T4_SOFTWARE_AUDIT_PENDING / FIELD_VALIDATION_PENDING**（2026-09-28）。SEA-AL10 上本轮可见的三份 instrumentation XML 共 18 tests / 0 failures / 0 errors / 0 skipped：PartColor UI 12 项、模型加载与合成候选 4 项、固定真图 parity 2 项。固定真图证明生产 Kotlin 预处理与 decoder 在 Android NCNN 测试 JNI runtime 上和 Windows 桌面参考匹配；测试没有调用生产 JNI 库 nanodet_ncnn_runtime，且只覆盖一张图。exp23 的 Android 实际 Mat 宽度已在该固定图测试中读为 34。资产来源身份仍未独立核验，两个模型保持 assetsVerified=false。提交问题按路径拆分审阅，不把整个混合工作区作为一个批次。
 
 - [x] 切换零件时保留相机预览仍有效的 `contentRect`，不因未重建 CameraX 预览而永久隐藏 ROI 框。
 - [x] 模板流切换时先清空旧零件模板，并只接受 `partId` 与当前零件一致的模板。
@@ -1608,7 +1741,7 @@ Android App 尚未接入模型，也未构建 APK：工程没有 `abiFilters`/`n
 
 ## 本轮修复：无 ROI View 与多 View 推进（2026-09-04）
 
-状态：**USER_ACCEPTED**（2026-09-15，用户确认测试通过）。
+状态：**T1_IMPLEMENTATION_JVM_AND_DEVICE_UI_PASS / T2_FIXED_IMAGE_ANDROID_PREPROCESS_DECODER_PARITY_PASS_WITH_TEST_NCNN_RUNTIME / T2_PRODUCTION_JNI_PARITY_PENDING / T2_ASSET_PROVENANCE_REVIEW_PENDING / T4_SOFTWARE_AUDIT_PENDING / FIELD_VALIDATION_PENDING**（2026-09-28）。SEA-AL10 上本轮可见的三份 instrumentation XML 共 18 tests / 0 failures / 0 errors / 0 skipped：PartColor UI 12 项、模型加载与合成候选 4 项、固定真图 parity 2 项。固定真图证明生产 Kotlin 预处理与 decoder 在 Android NCNN 测试 JNI runtime 上和 Windows 桌面参考匹配；测试没有调用生产 JNI 库 nanodet_ncnn_runtime，且只覆盖一张图。exp23 的 Android 实际 Mat 宽度已在该固定图测试中读为 34。资产来源身份仍未独立核验，两个模型保持 assetsVerified=false。提交问题按路径拆分审阅，不把整个混合工作区作为一个批次。
 
 - [x] 只按当前拍摄 `templateId` 查询 enabled ROI；不使用零件、其他 View 或全局 ROI 数量
 - [x] 无 ROI View 先保存原始照片、插入并回读真实 `photoId`，再按当前 `viewIndex` 直接推进
@@ -1624,7 +1757,7 @@ Android App 尚未接入模型，也未构建 APK：工程没有 `abiFilters`/`n
 
 ## 人工验收问题二次整改（2026-09-04）
 
-状态：**USER_ACCEPTED**（2026-09-15，用户确认测试通过）。
+状态：**T1_IMPLEMENTATION_JVM_AND_DEVICE_UI_PASS / T2_FIXED_IMAGE_ANDROID_PREPROCESS_DECODER_PARITY_PASS_WITH_TEST_NCNN_RUNTIME / T2_PRODUCTION_JNI_PARITY_PENDING / T2_ASSET_PROVENANCE_REVIEW_PENDING / T4_SOFTWARE_AUDIT_PENDING / FIELD_VALIDATION_PENDING**（2026-09-28）。SEA-AL10 上本轮可见的三份 instrumentation XML 共 18 tests / 0 failures / 0 errors / 0 skipped：PartColor UI 12 项、模型加载与合成候选 4 项、固定真图 parity 2 项。固定真图证明生产 Kotlin 预处理与 decoder 在 Android NCNN 测试 JNI runtime 上和 Windows 桌面参考匹配；测试没有调用生产 JNI 库 nanodet_ncnn_runtime，且只覆盖一张图。exp23 的 Android 实际 Mat 宽度已在该固定图测试中读为 34。资产来源身份仍未独立核验，两个模型保持 assetsVerified=false。提交问题按路径拆分审阅，不把整个混合工作区作为一个批次。
 
 ### 问题 1：连续拍摄两张照片后 ZIP 只保留一张
 
@@ -1825,7 +1958,7 @@ BUILD SUCCESSFUL — 550 项（545 passed / 0 failed / 5 skipped）
 
 ## 采集批次/零件 ZIP 清理
 
-状态：**SOFTWARE_COMPLETE**（2026-09-04，待用户验收）。
+状态：**T1_IMPLEMENTATION_JVM_AND_DEVICE_UI_PASS / T2_FIXED_IMAGE_ANDROID_PREPROCESS_DECODER_PARITY_PASS_WITH_TEST_NCNN_RUNTIME / T2_PRODUCTION_JNI_PARITY_PENDING / T2_ASSET_PROVENANCE_REVIEW_PENDING / T4_SOFTWARE_AUDIT_PENDING / FIELD_VALIDATION_PENDING**（2026-09-28）。SEA-AL10 上本轮可见的三份 instrumentation XML 共 18 tests / 0 failures / 0 errors / 0 skipped：PartColor UI 12 项、模型加载与合成候选 4 项、固定真图 parity 2 项。固定真图证明生产 Kotlin 预处理与 decoder 在 Android NCNN 测试 JNI runtime 上和 Windows 桌面参考匹配；测试没有调用生产 JNI 库 nanodet_ncnn_runtime，且只覆盖一张图。exp23 的 Android 实际 Mat 宽度已在该固定图测试中读为 34。资产来源身份仍未独立核验，两个模型保持 assetsVerified=false。提交问题按路径拆分审阅，不把整个混合工作区作为一个批次。
 
 - [x] 点击多个批次卡片或复选框可多选，并显示清晰选中状态（Primary 边框 + BackgroundVariant1 背景）
 - [x] 选中一个或多个批次后启用右侧垃圾桶 IconButton；未选中时灰色禁用
@@ -1842,7 +1975,7 @@ BUILD SUCCESSFUL — 550 项（545 passed / 0 failed / 5 skipped）
 
 ## 采集批次筛选、删除交互与布局稳定性优化
 
-状态：**USER_ACCEPTED**（2026-09-15，用户确认测试通过）。
+状态：**T1_IMPLEMENTATION_JVM_AND_DEVICE_UI_PASS / T2_FIXED_IMAGE_ANDROID_PREPROCESS_DECODER_PARITY_PASS_WITH_TEST_NCNN_RUNTIME / T2_PRODUCTION_JNI_PARITY_PENDING / T2_ASSET_PROVENANCE_REVIEW_PENDING / T4_SOFTWARE_AUDIT_PENDING / FIELD_VALIDATION_PENDING**（2026-09-28）。SEA-AL10 上本轮可见的三份 instrumentation XML 共 18 tests / 0 failures / 0 errors / 0 skipped：PartColor UI 12 项、模型加载与合成候选 4 项、固定真图 parity 2 项。固定真图证明生产 Kotlin 预处理与 decoder 在 Android NCNN 测试 JNI runtime 上和 Windows 桌面参考匹配；测试没有调用生产 JNI 库 nanodet_ncnn_runtime，且只覆盖一张图。exp23 的 Android 实际 Mat 宽度已在该固定图测试中读为 34。资产来源身份仍未独立核验，两个模型保持 assetsVerified=false。提交问题按路径拆分审阅，不把整个混合工作区作为一个批次。
 
 ### 一、时间筛选
 
@@ -1911,13 +2044,13 @@ Compose 布局 bounds 断言（标题栏高度不变、筛选器与垃圾桶不�
 
 ## 已完成任务：模板 ROI 属性选择
 
-状态：**SOFTWARE_COMPLETE / PHYSICAL_ACCEPTANCE_PASS**（2026-09-04，用户确认验收完成）
+状态：**T1_IMPLEMENTATION_JVM_AND_DEVICE_UI_PASS / T2_FIXED_IMAGE_ANDROID_PREPROCESS_DECODER_PARITY_PASS_WITH_TEST_NCNN_RUNTIME / T2_PRODUCTION_JNI_PARITY_PENDING / T2_ASSET_PROVENANCE_REVIEW_PENDING / T4_SOFTWARE_AUDIT_PENDING / FIELD_VALIDATION_PENDING**（2026-09-28）。SEA-AL10 上本轮可见的三份 instrumentation XML 共 18 tests / 0 failures / 0 errors / 0 skipped：PartColor UI 12 项、模型加载与合成候选 4 项、固定真图 parity 2 项。固定真图证明生产 Kotlin 预处理与 decoder 在 Android NCNN 测试 JNI runtime 上和 Windows 桌面参考匹配；测试没有调用生产 JNI 库 nanodet_ncnn_runtime，且只覆盖一张图。exp23 的 Android 实际 Mat 宽度已在该固定图测试中读为 34。资产来源身份仍未独立核验，两个模型保持 assetsVerified=false。提交问题按路径拆分审阅，不把整个混合工作区作为一个批次。
 
 ---
 
 ## 已完成任务：模板视角 ROI 长按删除回归整改
 
-状态：**SOFTWARE_COMPLETE / PHYSICAL_ACCEPTANCE_PASS**（2026-09-03，人工交互验收通过）
+状态：**T1_IMPLEMENTATION_JVM_AND_DEVICE_UI_PASS / T2_FIXED_IMAGE_ANDROID_PREPROCESS_DECODER_PARITY_PASS_WITH_TEST_NCNN_RUNTIME / T2_PRODUCTION_JNI_PARITY_PENDING / T2_ASSET_PROVENANCE_REVIEW_PENDING / T4_SOFTWARE_AUDIT_PENDING / FIELD_VALIDATION_PENDING**（2026-09-28）。SEA-AL10 上本轮可见的三份 instrumentation XML 共 18 tests / 0 failures / 0 errors / 0 skipped：PartColor UI 12 项、模型加载与合成候选 4 项、固定真图 parity 2 项。固定真图证明生产 Kotlin 预处理与 decoder 在 Android NCNN 测试 JNI runtime 上和 Windows 桌面参考匹配；测试没有调用生产 JNI 库 nanodet_ncnn_runtime，且只覆盖一张图。exp23 的 Android 实际 Mat 宽度已在该固定图测试中读为 34。资产来源身份仍未独立核验，两个模型保持 assetsVerified=false。提交问题按路径拆分审阅，不把整个混合工作区作为一个批次。
 
 ---
 
@@ -1925,7 +2058,7 @@ Compose 布局 bounds 断言（标题栏高度不变、筛选器与垃圾桶不�
 
 ## 按采集批次导出照片 ZIP + UI 压缩
 
-状态：**SOFTWARE_COMPLETE**（2026-09-03，待用户验收）
+状态：**T1_IMPLEMENTATION_JVM_AND_DEVICE_UI_PASS / T2_FIXED_IMAGE_ANDROID_PREPROCESS_DECODER_PARITY_PASS_WITH_TEST_NCNN_RUNTIME / T2_PRODUCTION_JNI_PARITY_PENDING / T2_ASSET_PROVENANCE_REVIEW_PENDING / T4_SOFTWARE_AUDIT_PENDING / FIELD_VALIDATION_PENDING**（2026-09-28）。SEA-AL10 上本轮可见的三份 instrumentation XML 共 18 tests / 0 failures / 0 errors / 0 skipped：PartColor UI 12 项、模型加载与合成候选 4 项、固定真图 parity 2 项。固定真图证明生产 Kotlin 预处理与 decoder 在 Android NCNN 测试 JNI runtime 上和 Windows 桌面参考匹配；测试没有调用生产 JNI 库 nanodet_ncnn_runtime，且只覆盖一张图。exp23 的 Android 实际 Mat 宽度已在该固定图测试中读为 34。资产来源身份仍未独立核验，两个模型保持 assetsVerified=false。提交问题按路径拆分审阅，不把整个混合工作区作为一个批次。
 
 ## B2 Task 1：旧 DPM 识别链迁移与实时扫码闭环
 
@@ -1937,7 +2070,7 @@ Compose 布局 bounds 断言（标题栏高度不变、筛选器与垃圾桶不�
 
 ## 模板配置重构与逐视角 ROI
 
-状态：**SOFTWARE_PARTIAL / ROI_REMEDIATION_PENDING**（2026-09-03 审计）
+状态：**T1_IMPLEMENTATION_JVM_AND_DEVICE_UI_PASS / T2_FIXED_IMAGE_ANDROID_PREPROCESS_DECODER_PARITY_PASS_WITH_TEST_NCNN_RUNTIME / T2_PRODUCTION_JNI_PARITY_PENDING / T2_ASSET_PROVENANCE_REVIEW_PENDING / T4_SOFTWARE_AUDIT_PENDING / FIELD_VALIDATION_PENDING**（2026-09-28）。SEA-AL10 上本轮可见的三份 instrumentation XML 共 18 tests / 0 failures / 0 errors / 0 skipped：PartColor UI 12 项、模型加载与合成候选 4 项、固定真图 parity 2 项。固定真图证明生产 Kotlin 预处理与 decoder 在 Android NCNN 测试 JNI runtime 上和 Windows 桌面参考匹配；测试没有调用生产 JNI 库 nanodet_ncnn_runtime，且只覆盖一张图。exp23 的 Android 实际 Mat 宽度已在该固定图测试中读为 34。资产来源身份仍未独立核验，两个模型保持 assetsVerified=false。提交问题按路径拆分审阅，不把整个混合工作区作为一个批次。
 
 ## B1 完成门禁
 
@@ -1947,7 +2080,7 @@ B1 已完成并关闭（提交 `b7c4c08e`）。
 
 ## 附加离线回归：NutPresenceDetector Key 与负样本
 
-状态：**NUT_KEY_REFINEMENT_COMPLETE / HEX_ANGLE_REFINEMENT_APPLIED / FULL_SUITE_PASS**（2026-09-04）
+状态：**T1_IMPLEMENTATION_JVM_AND_DEVICE_UI_PASS / T2_FIXED_IMAGE_ANDROID_PREPROCESS_DECODER_PARITY_PASS_WITH_TEST_NCNN_RUNTIME / T2_PRODUCTION_JNI_PARITY_PENDING / T2_ASSET_PROVENANCE_REVIEW_PENDING / T4_SOFTWARE_AUDIT_PENDING / FIELD_VALIDATION_PENDING**（2026-09-28）。SEA-AL10 上本轮可见的三份 instrumentation XML 共 18 tests / 0 failures / 0 errors / 0 skipped：PartColor UI 12 项、模型加载与合成候选 4 项、固定真图 parity 2 项。固定真图证明生产 Kotlin 预处理与 decoder 在 Android NCNN 测试 JNI runtime 上和 Windows 桌面参考匹配；测试没有调用生产 JNI 库 nanodet_ncnn_runtime，且只覆盖一张图。exp23 的 Android 实际 Mat 宽度已在该固定图测试中读为 34。资产来源身份仍未独立核验，两个模型保持 assetsVerified=false。提交问题按路径拆分审阅，不把整个混合工作区作为一个批次。
 
 - [x] 自动发现 Key 中全部 `nut_*.png|jpg|jpeg`，当前 5 张样本均按用户确认的 `expectedCount=2` 检出 2 个最终主体框
 - [x] 保留 `bodyHexAngleCandidates` 配置接口，但默认使用稳定 `0°` 主体几何先验；避免 Canny 在垫圈/背景边缘上选择 `-20°/20°`，并将主体 box 限制在证据组件内
@@ -1960,7 +2093,7 @@ B1 已完成并关闭（提交 `b7c4c08e`）。
 
 ## 28. 拍照后确认页卡顿、现场页残影与未完成批次导出门禁（2026-09-04）
 
-状态：**USER_ACCEPTED**（2026-09-15，用户确认测试通过）。
+状态：**T1_IMPLEMENTATION_JVM_AND_DEVICE_UI_PASS / T2_FIXED_IMAGE_ANDROID_PREPROCESS_DECODER_PARITY_PASS_WITH_TEST_NCNN_RUNTIME / T2_PRODUCTION_JNI_PARITY_PENDING / T2_ASSET_PROVENANCE_REVIEW_PENDING / T4_SOFTWARE_AUDIT_PENDING / FIELD_VALIDATION_PENDING**（2026-09-28）。SEA-AL10 上本轮可见的三份 instrumentation XML 共 18 tests / 0 failures / 0 errors / 0 skipped：PartColor UI 12 项、模型加载与合成候选 4 项、固定真图 parity 2 项。固定真图证明生产 Kotlin 预处理与 decoder 在 Android NCNN 测试 JNI runtime 上和 Windows 桌面参考匹配；测试没有调用生产 JNI 库 nanodet_ncnn_runtime，且只覆盖一张图。exp23 的 Android 实际 Mat 宽度已在该固定图测试中读为 34。资产来源身份仍未独立核验，两个模型保持 assetsVerified=false。提交问题按路径拆分审阅，不把整个混合工作区作为一个批次。
 
 ### 根因与修复
 
@@ -2005,7 +2138,7 @@ B1 已完成并关闭（提交 `b7c4c08e`）。
 
 ## 检测结果追溯与 DPM 扫码证据进度摘要
 
-状态：DPM 成功证据进入批次 ZIP **USER_ACCEPTED**；ROI 最终结果/改判证据图片交付 **IN_PROGRESS**。当前唯一执行入口为本文顶部；本历史摘要不另建并行任务。完整边界见 [`tasks/plan.md`](plan.md#2026-09-16-当前任务指针与-roi-执行计划) 与 [`docs/reports/b2/RESULT_TRACEABILITY_PLAN.md`](../docs/reports/b2/RESULT_TRACEABILITY_PLAN.md)。
+状态：**T1_IMPLEMENTATION_JVM_AND_DEVICE_UI_PASS / T2_FIXED_IMAGE_ANDROID_PREPROCESS_DECODER_PARITY_PASS_WITH_TEST_NCNN_RUNTIME / T2_PRODUCTION_JNI_PARITY_PENDING / T2_ASSET_PROVENANCE_REVIEW_PENDING / T4_SOFTWARE_AUDIT_PENDING / FIELD_VALIDATION_PENDING**（2026-09-28）。SEA-AL10 上本轮可见的三份 instrumentation XML 共 18 tests / 0 failures / 0 errors / 0 skipped：PartColor UI 12 项、模型加载与合成候选 4 项、固定真图 parity 2 项。固定真图证明生产 Kotlin 预处理与 decoder 在 Android NCNN 测试 JNI runtime 上和 Windows 桌面参考匹配；测试没有调用生产 JNI 库 nanodet_ncnn_runtime，且只覆盖一张图。exp23 的 Android 实际 Mat 宽度已在该固定图测试中读为 34。资产来源身份仍未独立核验，两个模型保持 assetsVerified=false。提交问题按路径拆分审阅，不把整个混合工作区作为一个批次。
 
 计划顺序：
 
