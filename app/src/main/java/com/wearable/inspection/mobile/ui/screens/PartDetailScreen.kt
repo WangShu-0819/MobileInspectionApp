@@ -273,22 +273,37 @@ fun PartDetailScreen(
 
             // 零件信息
             part?.let { p ->
-                Row(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
-                    Text(
-                        text = "${templates.size} 个视角",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Primary,
-                    )
-                    Text(
-                        text = if (p.dpmCode != null) "DPM: ${p.dpmCode}" else "未绑定 DPM",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (p.dpmCode != null) TextSecondary else PlaceholderColor,
-                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        PartColorLabel(partId = p.id)
+                        Text(
+                            text = p.id,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary,
+                        )
+                    }
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    ) {
+                        Text(
+                            text = "${templates.size} 个视角",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Primary,
+                        )
+                        Text(
+                            text = if (p.dpmCode != null) "DPM: ${p.dpmCode}" else "未绑定 DPM",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (p.dpmCode != null) TextSecondary else PlaceholderColor,
+                        )
+                    }
                 }
             }
 

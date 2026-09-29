@@ -48,6 +48,15 @@ class InspectionRepository(
         partDao.insert(part)
     }
 
+    /** 手动新建零件：主键冲突时抛出 [DuplicatePartIdException]。 */
+    suspend fun insertNewPart(part: PartEntity) {
+        try {
+            partDao.insertNew(part)
+        } catch (e: android.database.sqlite.SQLiteConstraintException) {
+            throw DuplicatePartIdException(part.id, e)
+        }
+    }
+
     suspend fun deletePart(partId: String) {
         deleteTemplatePackage(partId)
     }
@@ -794,3 +803,9 @@ data class DpmCleanupResult(
     val failedPaths: List<String>? = null,
     val error: String? = null
 )
+
+/**
+ * 零件 ID 重复异常：insertNew 主键冲突时抛出。
+ */
+class DuplicatePartIdException(val partId: String, cause: Throwable?) :
+    IllegalStateException("零件 ID 已存在: $partId", cause)

@@ -1,7 +1,8 @@
 package com.wearable.inspection.mobile.ui.screens
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -51,13 +52,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.wearable.inspection.mobile.MobileInspectionApp
 import com.wearable.inspection.mobile.data.entity.PartEntity
+import com.wearable.inspection.mobile.ui.theme.FailColor
 import com.wearable.inspection.mobile.ui.theme.LocalCustomColors
+import com.wearable.inspection.mobile.ui.theme.PlaceholderColor
 import com.wearable.inspection.mobile.ui.theme.Primary
 import com.wearable.inspection.mobile.ui.theme.SurfaceWhite
 import com.wearable.inspection.mobile.ui.theme.TextPrimary
 import com.wearable.inspection.mobile.ui.theme.TextSecondary
-import com.wearable.inspection.mobile.ui.theme.PlaceholderColor
-import com.wearable.inspection.mobile.ui.theme.FailColor
+import com.wearable.inspection.mobile.data.repository.DuplicatePartIdException
 import kotlinx.coroutines.launch
 
 /**
@@ -81,6 +83,7 @@ fun PartManagementScreen(
     var modelInput by remember { mutableStateOf("") }
     var dpmCodeInput by remember { mutableStateOf("") }
     var createError by remember { mutableStateOf<String?>(null) }
+    var createPartColor by remember { mutableStateOf<PartCreationValidator.PartColor?>(null) }
     var partToDelete by remember { mutableStateOf<PartEntity?>(null) }
 
     LaunchedEffect(Unit) {
@@ -120,6 +123,7 @@ fun PartManagementScreen(
                             modelInput = ""
                             dpmCodeInput = ""
                             createError = null
+                            createPartColor = null
                             showCreateDialog = true
                         }
                     ) {
@@ -194,46 +198,21 @@ fun PartManagementScreen(
             onDismissRequest = { showCreateDialog = false },
             title = { Text("新建零件") },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(
-                        value = partIdInput,
-                        onValueChange = {
-                            partIdInput = it
-                            createError = null
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        label = { Text("零件 ID") },
-                        singleLine = true
-                    )
-                    OutlinedTextField(
-                        value = partNameInput,
-                        onValueChange = { partNameInput = it },
-                        modifier = Modifier.fillMaxWidth(),
-                        label = { Text("零件名称") },
-                        singleLine = true
-                    )
-                    OutlinedTextField(
-                        value = modelInput,
-                        onValueChange = { modelInput = it },
-                        modifier = Modifier.fillMaxWidth(),
-                        label = { Text("型号（可选）") },
-                        singleLine = true
-                    )
-                    OutlinedTextField(
-                        value = dpmCodeInput,
-                        onValueChange = { dpmCodeInput = it },
-                        modifier = Modifier.fillMaxWidth(),
-                        label = { Text("DPM 码（可选）") },
-                        singleLine = true
-                    )
-                    createError?.let { message ->
-                        Text(
-                            text = message,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = FailColor
-                        )
-                    }
-                }
+                PartCreateFormFields(
+                    partIdInput = partIdInput,
+                    onPartIdChange = { partIdInput = it },
+                    partNameInput = partNameInput,
+                    onPartNameChange = { partNameInput = it },
+                    selectedColor = createPartColor,
+                    onColorSelected = { createPartColor = it },
+                    createError = createError,
+                    onClearError = { createError = null },
+                    showOptionalFields = true,
+                    modelInput = modelInput,
+                    onModelChange = { modelInput = it },
+                    dpmCodeInput = dpmCodeInput,
+                    onDpmCodeChange = { dpmCodeInput = it },
+                )
             },
             dismissButton = {
                 TextButton(onClick = { showCreateDialog = false }) {
@@ -243,32 +222,45 @@ fun PartManagementScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        val id = partIdInput.trim()
+                        val baseId = partIdInput.trim()
                         val name = partNameInput.trim()
-                        when {
-                            id.isBlank() -> createError = "请输入零件 ID"
-                            name.isBlank() -> createError = "请输入零件名称"
-                            !id.matches(Regex("[A-Za-z0-9_-]{1,64}")) -> {
-                                createError = "零件 ID 仅支持字母、数字、下划线和连字符（1~64 位）"
+                        val color = createPartColor
+                        // 客户端校验
+                        val localError = PartCreationValidator.validateBaseId(baseId, color, name, finalIdExists = false)
+                        if (localError != null) {
+                            createError = localError
+                            return@TextButton
+                        }
+                        val finalId = PartCreationValidator.generateFinalId(baseId, color!!)
+                        scope.launch {
+                            val existing = repository.getPartById(finalId)
+                            val dupError = PartCreationValidator.validateBaseId(baseId, color, name, finalIdExists = existing != null)
+                            if (dupError != null) {
+                                createError = dupError
+                                return@launch
                             }
-                            else -> {
-                                scope.launch {
-                                    if (repository.getPartById(id) != null) {
-                                        createError = "该零件 ID 已存在"
-                                    } else {
-                                        repository.upsertPart(
-                                            PartEntity(
-                                                id = id,
-                                                name = name,
-                                                model = modelInput.trim().ifBlank { null },
-                                                dpmCode = dpmCodeInput.trim().ifBlank { null },
-                                            )
-                                        )
-                                        parts = repository.getParts()
-                                        showCreateDialog = false
-                                    }
-                                }
+                            val insertError = try {
+                                repository.insertNewPart(
+                                    PartEntity(
+                                        id = finalId,
+                                        name = name,
+                                        model = modelInput.trim().ifBlank { null },
+                                        dpmCode = dpmCodeInput.trim().ifBlank { null },
+                                    )
+                                )
+                                null // 插入成功
+                            } catch (e: DuplicatePartIdException) {
+                                "该零件 ID 已存在"
+                            } catch (e: Exception) {
+                                "保存失败：${e.message}"
                             }
+                            if (insertError != null) {
+                                createError = insertError
+                                return@launch
+                            }
+                            // 成功后的刷新放在冲突捕获范围之外
+                            parts = repository.getParts()
+                            showCreateDialog = false
                         }
                     }
                 ) {
@@ -338,11 +330,22 @@ private fun PartRow(
                         modifier = Modifier.weight(1f),
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                text = part.name,
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Medium,
+                                color = TextPrimary
+                            )
+                            PartColorLabel(partId = part.id)
+                        }
                         Text(
-                            text = part.name,
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Medium,
-                            color = TextPrimary
+                            text = part.id,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary
                         )
                         if (!part.model.isNullOrBlank()) {
                             Text(

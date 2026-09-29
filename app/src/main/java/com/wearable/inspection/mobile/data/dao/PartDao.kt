@@ -24,6 +24,10 @@ interface PartDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(part: PartEntity)
 
+    /** 仅用于手动新建零件：主键冲突时抛出异常，不替换已有零件。 */
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    suspend fun insertNew(part: PartEntity)
+
     @Update
     suspend fun update(part: PartEntity)
 

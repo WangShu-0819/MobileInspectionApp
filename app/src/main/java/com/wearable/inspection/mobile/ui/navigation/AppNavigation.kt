@@ -564,7 +564,7 @@ fun AppRoot() {
 
                 val context = LocalContext.current
                 val repository = remember { MobileInspectionApp.repository(context) }
-                val inferenceService = remember(context) { NanoDetRoiInferenceService(context.applicationContext) }
+                val inferenceService = remember(context, partId) { NanoDetRoiInferenceService(context.applicationContext, partId = partId) }
                 val imageStore = remember(context) { com.wearable.inspection.mobile.data.image.MobileImageStore(context.applicationContext) }
                 val partName = remember { mutableStateOf("") }
 
