@@ -19,6 +19,11 @@ import com.wearable.inspection.mobile.detection.NanoDetModelContract
 import com.wearable.inspection.mobile.detection.NanoDetRoiInferenceResult
 import com.wearable.inspection.mobile.detection.NanoDetRoiInferenceService
 import com.wearable.inspection.mobile.detection.NanoDetSuggestion
+import com.wearable.inspection.mobile.detection.RoiSimilarityFallback
+import com.wearable.inspection.mobile.detection.RoiSimilarityFallbackPolicy
+import com.wearable.inspection.mobile.detection.RoiSimilarityResult
+import com.wearable.inspection.mobile.detection.RoiSimilarityStatus
+import com.wearable.inspection.mobile.detection.runRoiSimilarityAfterSavingEvidence
 import com.wearable.inspection.mobile.data.image.MobileImageStore
 import com.wearable.inspection.mobile.registration.RegistrationStatus
 import android.util.Log
@@ -27,6 +32,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
+import java.util.UUID
 
 /**
  * View 人工确认 ViewModel
@@ -93,6 +99,8 @@ class ViewConfirmationViewModel(
     /** 已保存的改判证据（roiId → path + overrideTime），从数据库恢复。 */
     private data class EvidenceRef(val path: String, val overrideTime: Long)
     private val savedOverrideEvidence = mutableMapOf<String, EvidenceRef>()
+    private val savedSimilarityEvidence = mutableMapOf<String, String>()
+    private val newSimilarityEvidencePaths = mutableSetOf<String>()
 
     /** 整图推理结果（FALLBACK_FULL_IMAGE 或 FAILED 路径） */
     var fullImageInferResult by mutableStateOf<FullImageInferResult?>(null)
@@ -108,7 +116,9 @@ class ViewConfirmationViewModel(
 
     private var photoGeometry: RoiCoordinateMapper.PhotoGeometry? = null
     private var templateExifOrientation: Int? = null
+    private var templateImagePath: String? = null
     private var photoAssociationValid = false
+    private val similarityFallback = RoiSimilarityFallback()
 
     /**
      * 投影 ROI 像素坐标缓存（roiId → ContentRectBounds）。
@@ -142,6 +152,10 @@ class ViewConfirmationViewModel(
                 val roiList = repository.getRois(templateId).filter { it.enabled }
                 rois = roiList
                 restoreManualSelections(repository.getViewRoiConfirmsByPhoto(batchId, photoId), roiList)
+                templateImagePath = repository.getTemplate(templateId)?.mainImagePath
+                templateExifOrientation = withContext(Dispatchers.IO) {
+                    templateImagePath?.let(RoiCoordinateMapper::getImageGeometry)?.exifOrientation
+                }
 
                 val geometry = withContext(Dispatchers.IO) {
                     RoiCoordinateMapper.getImageGeometry(photoPath)
@@ -248,6 +262,7 @@ class ViewConfirmationViewModel(
                     detail = "推理服务未返回该 ROI 结果"
                 )
             }
+            runSimilarityFallback(roiList)
         } catch (e: Exception) {
             errorMessage = "NanoDet 推理失败：${e.message ?: "未知错误"}"
             setInferenceFailure(NanoDetInferenceStatus.INFERENCE_ERROR, errorMessage!!)
@@ -297,7 +312,7 @@ class ViewConfirmationViewModel(
         geometry: RoiCoordinateMapper.PhotoGeometry,
     ) {
         val templateGeometry = withContext(Dispatchers.IO) {
-            repository.getTemplate(templateId)?.mainImagePath?.let(RoiCoordinateMapper::getImageGeometry)
+            templateImagePath?.let(RoiCoordinateMapper::getImageGeometry)
         }
         templateExifOrientation = templateGeometry?.exifOrientation
         val displayTemplateOrientation = templateExifOrientation
@@ -313,6 +328,7 @@ class ViewConfirmationViewModel(
                             displayTemplateOrientation,
                             geometry,
                         )
+                        projectedPixelRects[roi.id] = pixelRect
                         val bitmap = RoiCoordinateMapper.cropRoiBitmap(photoPath, pixelRect, inSampleSize = 2)
                         if (bitmap != null) put(roi.id, bitmap)
                     }
@@ -335,11 +351,49 @@ class ViewConfirmationViewModel(
                     detail = "推理服务未返回该 ROI 结果"
                 )
             }
+            runSimilarityFallback(roiList)
         } catch (e: Exception) {
             errorMessage = "NanoDet 推理失败：${e.message ?: "未知错误"}"
             setInferenceFailure(NanoDetInferenceStatus.INFERENCE_ERROR, errorMessage!!)
         }
         applyDefaultSelections(roiList)
+    }
+
+    /** Keep NanoDet's original status while attaching an independent widget similarity result. */
+    private suspend fun runSimilarityFallback(currentRois: List<RoiDefinitionEntity>) {
+        val targets = currentRois.filter { roi ->
+            RoiSimilarityFallbackPolicy.shouldRun(
+                inferenceResults[roi.id],
+                RoiTargetType.fromName(roi.targetType),
+            )
+        }
+        if (targets.isEmpty()) return
+        for (roi in targets) {
+            val result = inferenceResults[roi.id] ?: continue
+            val bitmap = roiBitmaps[roi.id]
+            val safeId = roi.id.filter(Char::isLetterOrDigit).take(12).ifBlank { "roi" }
+            val fileName = "sim_${batchId.take(8)}_${photoId}_${viewIndex}_${safeId}_${UUID.randomUUID().toString().take(8)}.jpg"
+            val execution = runRoiSimilarityAfterSavingEvidence(
+                bitmapAvailable = bitmap != null,
+                saveEvidence = {
+                    withContext(Dispatchers.IO) {
+                        bitmap?.let { imageStore.saveRoiEvidence(it, fileName) }
+                    }
+                },
+                compare = { _ ->
+                    withContext(Dispatchers.IO) {
+                        similarityFallback.evaluate(partId, templateImagePath, photoPath, roi)
+                    }
+                },
+            )
+            val imagePath = execution.evidencePath
+            if (imagePath != null) newSimilarityEvidencePaths += imagePath
+            inferenceResults[roi.id] = result.copy(
+                similarity = execution.result,
+                similarityEvidencePath = imagePath,
+                similarityEvidenceStatus = execution.evidenceStatus,
+            )
+        }
     }
 
     private fun restoreManualSelections(
@@ -361,6 +415,7 @@ class ViewConfirmationViewModel(
             if (!row.roiEvidencePath.isNullOrBlank() && row.overrideTime != null) {
                 savedOverrideEvidence[row.roiId] = EvidenceRef(row.roiEvidencePath, row.overrideTime)
             }
+            row.similarityRoiEvidencePath?.let { savedSimilarityEvidence[row.roiId] = it }
         }
         val overallValues = matchingRows.map { it.overallResult }.distinct()
         if (overallValues.size == 1 && overallValues.single() in setOf("OK", "NG")) {
@@ -436,6 +491,10 @@ class ViewConfirmationViewModel(
         viewModelScope.launch {
             val newEvidenceFiles = mutableListOf<String>()
             try {
+                inferenceResults.values.mapNotNull { it.similarityEvidencePath }
+                    .filter { it in newSimilarityEvidencePaths }
+                    .distinct()
+                    .forEach(newEvidenceFiles::add)
                 val now = System.currentTimeMillis()
                 val overall = overallResult!!
                 val geometry = photoGeometry
@@ -521,23 +580,27 @@ class ViewConfirmationViewModel(
                             actual.softwareDetectionsJson == expected.softwareDetectionsJson &&
                             actual.humanChangedModel == expected.humanChangedModel &&
                             actual.overrideTime == expected.overrideTime &&
-                            actual.roiEvidencePath == expected.roiEvidencePath
+                            actual.roiEvidencePath == expected.roiEvidencePath &&
+                            actual.similarityStatus == expected.similarityStatus &&
+                            actual.similarityScore == expected.similarityScore &&
+                            actual.similarityThreshold == expected.similarityThreshold &&
+                            actual.similarityCandidate == expected.similarityCandidate &&
+                            actual.similarityRoiEvidencePath == expected.similarityRoiEvidencePath
                     }
                 }) { "确认记录保存校验失败" }
 
                 if (!isFullImageMode) {
-                    // DB 成功后：删除不再需要的旧证据文件
-                    for (roi in rois) {
-                        val os = roiOverrideStates.firstOrNull { it.roiId == roi.id } ?: continue
-                        if (!os.humanChangedModel) {
-                            val oldRef = savedOverrideEvidence[roi.id]
-                            if (oldRef != null) imageStore.deleteRoiEvidence(oldRef.path)
-                        }
-                    }
+                    val retainedPaths = confirms.flatMap { listOfNotNull(it.roiEvidencePath, it.similarityRoiEvidencePath) }.toSet()
+                    (savedOverrideEvidence.values.map { it.path } + savedSimilarityEvidence.values)
+                        .distinct().filterNot(retainedPaths::contains).forEach(imageStore::deleteRoiEvidence)
                     savedOverrideEvidence.clear()
                     roiOverrideStates.filter { it.humanChangedModel && it.roiEvidencePath != null }.forEach {
                         savedOverrideEvidence[it.roiId] = EvidenceRef(it.roiEvidencePath!!, it.overrideTime!!)
                     }
+                    savedSimilarityEvidence.clear()
+                    confirms.mapNotNull { confirm -> confirm.similarityRoiEvidencePath?.let { confirm.roiId to it } }
+                        .forEach { (roiId, path) -> savedSimilarityEvidence[roiId] = path }
+                    newSimilarityEvidencePaths.clear()
                 }
 
                 saveCompleted = true
@@ -570,15 +633,23 @@ class ViewConfirmationViewModel(
         val overrideStates = mutableListOf<OverrideState>()
         var evidenceSaveError: String? = null
 
+        if (inferenceResults.values.any { it.similarity.wasRun && it.similarityEvidenceStatus != "SAVED" }) {
+            throw IllegalStateException("相似度 ROI 图片未成功保存，不能确认结果")
+        }
+
         for (roi in rois) {
             val human = roiResults.getValue(roi.id)
             val suggestion = inferenceResults[roi.id]?.modelSuggestion
             val changed = suggestion != null && suggestion.name != human
             val existingRef = savedOverrideEvidence[roi.id]
             val existingValid = existingRef != null && imageStore.roiEvidenceFileValid(existingRef.path)
+            val similarityEvidence = inferenceResults[roi.id]?.similarityEvidencePath
+                ?.takeIf(imageStore::roiEvidenceFileValid)
 
             if (!changed) {
                 overrideStates += OverrideState(roi.id, false, null, null, false)
+            } else if (similarityEvidence != null) {
+                overrideStates += OverrideState(roi.id, true, now, similarityEvidence, false)
             } else {
                 if (existingValid) {
                     overrideStates += OverrideState(roi.id, true, existingRef!!.overrideTime, existingRef.path, false)
@@ -646,6 +717,7 @@ class ViewConfirmationViewModel(
                 confirmedAt = now,
                 overrideTime = os.overrideTime,
                 roiEvidencePath = os.roiEvidencePath,
+                similarityRoiEvidencePath = inferenceResults[roi.id]?.similarityEvidencePath,
             )
         }
     }
@@ -660,6 +732,7 @@ class ViewConfirmationViewModel(
      */
     override fun onCleared() {
         super.onCleared()
+        if (!saveCompleted) newSimilarityEvidencePaths.forEach(imageStore::deleteRoiEvidence)
         roiBitmaps.values.forEach { it.recycle() }
         roiBitmaps.clear()
         inferenceService.close()
@@ -762,7 +835,8 @@ internal fun buildViewRoiConfirmEntity(
     overallResult: String,
     confirmedAt: Long,
     overrideTime: Long? = null,
-    roiEvidencePath: String? = null
+    roiEvidencePath: String? = null,
+    similarityRoiEvidencePath: String? = inference?.similarityEvidencePath
 ): ViewRoiConfirmEntity {
     require(humanResult == "OK" || humanResult == "NG")
     require(overallResult == "OK" || overallResult == "NG")
@@ -788,12 +862,17 @@ internal fun buildViewRoiConfirmEntity(
             put("inputShape", result.inputShape)
             put("outputBlob", result.outputBlob)
             put("outputShape", result.outputShape)
-            put("candidateThreshold", result.candidateThreshold.toDouble())
+            put("candidateThreshold", result.candidateThreshold?.toDouble() ?: JSONObject.NULL)
             put("imageWidth", result.imageWidth ?: JSONObject.NULL)
             put("imageHeight", result.imageHeight ?: JSONObject.NULL)
             put("exifOrientation", result.exifOrientation ?: JSONObject.NULL)
             put("roiBounds", result.roiBounds?.let { bounds -> JSONArray(bounds) } ?: JSONObject.NULL)
             put("detail", result.detail ?: JSONObject.NULL)
+            put("similarityStatus", result.similarity.status.name)
+            put("similarityScore", result.similarity.score?.toDouble() ?: JSONObject.NULL)
+            put("similarityThreshold", result.similarity.threshold?.toDouble() ?: JSONObject.NULL)
+            put("similarityCandidate", result.similarity.candidate?.name ?: JSONObject.NULL)
+            put("similarityEvidenceStatus", result.similarityEvidenceStatus ?: JSONObject.NULL)
         }.toString()
     }
     val targetClass = inference?.targetClassIndex?.let { index ->
@@ -839,7 +918,12 @@ internal fun buildViewRoiConfirmEntity(
         humanChangedModel = inference?.modelSuggestion != null &&
             inference.modelSuggestion != NanoDetSuggestion.valueOf(humanResult),
         overrideTime = overrideTime,
-        roiEvidencePath = roiEvidencePath
+        roiEvidencePath = roiEvidencePath,
+        similarityStatus = inference?.similarity?.status?.name,
+        similarityScore = inference?.similarity?.score,
+        similarityThreshold = inference?.similarity?.threshold,
+        similarityCandidate = inference?.similarity?.candidate?.name,
+        similarityRoiEvidencePath = similarityRoiEvidencePath
     )
 }
 

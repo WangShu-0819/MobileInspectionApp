@@ -8,6 +8,8 @@ import com.wearable.inspection.mobile.detection.NanoDetInferenceStatus
 import com.wearable.inspection.mobile.detection.NanoDetRoiInferenceResult
 import com.wearable.inspection.mobile.detection.NanoDetSuggestion
 import com.wearable.inspection.mobile.detection.NanoDetModelContract
+import com.wearable.inspection.mobile.detection.RoiSimilarityResult
+import com.wearable.inspection.mobile.detection.RoiSimilarityStatus
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
@@ -232,10 +234,41 @@ class ViewConfirmationModelResultTest {
         assertEquals("未检出", inferenceStatusLabel(NanoDetInferenceStatus.NO_DETECTION))
         assertEquals("ROI 属性未配置", inferenceStatusLabel(NanoDetInferenceStatus.ROI_NOT_CONFIGURED))
         assertEquals("部件类别暂不支持", inferenceStatusLabel(NanoDetInferenceStatus.FEATURE_UNSUPPORTED))
+        assertEquals("模型不支持该目标类型", inferenceStatusLabel(NanoDetInferenceStatus.MODEL_TARGET_UNSUPPORTED))
         assertEquals("照片不可读取", inferenceStatusLabel(NanoDetInferenceStatus.IMAGE_UNREADABLE))
         assertEquals("模型不可用", inferenceStatusLabel(NanoDetInferenceStatus.MODEL_UNAVAILABLE))
         assertEquals("推理错误", inferenceStatusLabel(NanoDetInferenceStatus.INFERENCE_ERROR))
         assertEquals("已检出，达到模型阈值", inferenceStatusLabel(NanoDetInferenceStatus.DETECTED))
+    }
+
+    @Test
+    fun `unsupported NanoDet status is preserved alongside independent similarity evidence`() {
+        val inference = result(
+            status = NanoDetInferenceStatus.MODEL_TARGET_UNSUPPORTED,
+            suggestion = null,
+            score = null,
+            classIndex = null,
+        ).copy(
+            similarity = RoiSimilarityResult(
+                status = RoiSimilarityStatus.SCORED_WITH_CANDIDATE_THRESHOLD,
+                score = 0.70f,
+                threshold = 0.75f,
+                candidate = NanoDetSuggestion.NG,
+            ),
+            similarityEvidencePath = "D:/evidence/unsupported-roi.jpg",
+            similarityEvidenceStatus = "SAVED",
+        )
+        val row = saveRow(inference, human = "OK", overall = "OK")
+
+        assertEquals("MODEL_TARGET_UNSUPPORTED", row.softwareStatus)
+        assertNull(row.softwareResult)
+        assertFalse(row.humanChangedModel)
+        assertEquals("SCORED_WITH_CANDIDATE_THRESHOLD", row.similarityStatus)
+        assertEquals(0.70f, row.similarityScore!!, 0.0001f)
+        assertEquals(0.75f, row.similarityThreshold!!, 0.0001f)
+        assertEquals("NG", row.similarityCandidate)
+        assertEquals("D:/evidence/unsupported-roi.jpg", row.similarityRoiEvidencePath)
+        assertEquals("SAVED", JSONObject(row.softwareModelSummary).getString("similarityEvidenceStatus"))
     }
 
     // ───────────────────────────────────────────────
@@ -265,7 +298,7 @@ class ViewConfirmationModelResultTest {
             NanoDetDetection(2, "bolt", 0.55f, 8, NanoDetBox(70.0, 80.0, 100.0, 110.0), NanoDetBox(170.0, 280.0, 200.0, 310.0)),
         )
         val result = fullImageResult(allDetections, threshold = 0.50f)
-        val threshold = result.threshold
+        val threshold = result.threshold!!
         val displayDetections = result.detections.filter { it.score >= threshold }
 
         assertEquals("threshold 应为 0.50", 0.50f, threshold, 0.001f)
@@ -282,7 +315,7 @@ class ViewConfirmationModelResultTest {
             NanoDetDetection(1, "thread", 0.40f, 7, NanoDetBox(20.0, 25.0, 40.0, 45.0), NanoDetBox(120.0, 225.0, 140.0, 245.0)),
         )
         val result = fullImageResult(allDetections, threshold = 0.50f)
-        val displayDetections = result.detections.filter { it.score >= result.threshold }
+        val displayDetections = result.detections.filter { it.score >= result.threshold!! }
 
         assertEquals("所有检测低于阈值时应为空", 0, displayDetections.size)
     }
@@ -294,7 +327,7 @@ class ViewConfirmationModelResultTest {
             NanoDetDetection(2, "bolt", 0.65f, 9, NanoDetBox(70.0, 80.0, 100.0, 110.0), NanoDetBox(170.0, 280.0, 200.0, 310.0)),
         )
         val result = fullImageResult(allDetections, threshold = 0.50f)
-        val displayDetections = result.detections.filter { it.score >= result.threshold }
+        val displayDetections = result.detections.filter { it.score >= result.threshold!! }
 
         assertEquals("全部达到阈值时应全部保留", 2, displayDetections.size)
     }
@@ -320,7 +353,7 @@ class ViewConfirmationModelResultTest {
             NanoDetDetection(0, "nut", 0.20f, 5, NanoDetBox(10.0, 15.0, 20.0, 28.0), NanoDetBox(110.0, 215.0, 120.0, 228.0)),
         )
         val result = fullImageResult(allDetections, threshold = 0.50f)
-        val displayDetections = result.detections.filter { it.score >= result.threshold }
+        val displayDetections = result.detections.filter { it.score >= result.threshold!! }
         val displayHighestScore = displayDetections.maxOfOrNull { it.score }
 
         // 显示的最高分应来自过滤后的检测（0.89），而非全部检测的 result.highestScore（也是0.89但逻辑不同）
@@ -497,7 +530,7 @@ class ViewConfirmationModelResultTest {
             NanoDetDetection(0, "nut", 0.20f, 5, NanoDetBox(10.0, 15.0, 20.0, 28.0), NanoDetBox(110.0, 215.0, 120.0, 228.0)),
         )
         val result = fullImageResult(allDetections, threshold = 0.50f)
-        val threshold = result.threshold
+        val threshold = result.threshold!!
         val displayDetections = result.detections.filter { it.score >= threshold }
 
         // 模拟 ViewConfirmationScreen 中的摘要文本格式
@@ -519,7 +552,7 @@ class ViewConfirmationModelResultTest {
             NanoDetDetection(1, "thread", 0.89f, 10, NanoDetBox(1.0, 2.0, 50.0, 60.0), NanoDetBox(101.0, 202.0, 150.0, 262.0)),
         )
         val result = fullImageResult(allDetections, threshold = 0.50f)
-        val threshold = result.threshold
+        val threshold = result.threshold!!
         val displayDetections = result.detections.filter { it.score >= threshold }
 
         val summaryText = "整图检出：${displayDetections.size} 个 · 阈值 ${"%.0f".format(threshold * 100)}%"

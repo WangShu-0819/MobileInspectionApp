@@ -59,5 +59,10 @@ data class ViewRoiConfirmEntity(
     /** 仅改判记录有值；未改判和旧行为 null */
     val overrideTime: Long? = null,
     /** 仅改判记录关联到受管理 ROI 证据图时有值；未改判和旧行为 null */
-    val roiEvidencePath: String? = null
+    val roiEvidencePath: String? = null,
+    val similarityStatus: String? = null,
+    val similarityScore: Float? = null,
+    val similarityThreshold: Float? = null,
+    val similarityCandidate: String? = null,
+    val similarityRoiEvidencePath: String? = null
 )

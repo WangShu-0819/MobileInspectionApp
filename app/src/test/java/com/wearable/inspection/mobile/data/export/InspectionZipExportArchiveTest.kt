@@ -108,24 +108,151 @@ class InspectionZipExportArchiveTest {
 
         val records = parseCsv(manifest)
         val roiRecords = records.filter { it[0] == "ROI" }
-        val firstThread = roiRecords.first { it[3] == "101" && it[6] == "roi-thread" && it[32] == "0" }
-        assertEquals("OK", firstThread[21]) // 模型原值
-        assertEquals("NG", firstThread[22]) // 人工终审
-        assertEquals("true", firstThread[23])
-        assertEquals("OK", firstThread[25]) // 总体人工结论独立于 ROI
+        val nanodetStatusIndex = InspectionExcelExporter.MANIFEST_HEADER.indexOf("NanoDet状态")
+        val nanodetResultIndex = InspectionExcelExporter.MANIFEST_HEADER.indexOf("NanoDet结果")
+        val humanResultIndex = InspectionExcelExporter.MANIFEST_HEADER.indexOf("人工最终结果")
+        val changedModelIndex = InspectionExcelExporter.MANIFEST_HEADER.indexOf("humanChangedModel")
+        val overallResultIndex = InspectionExcelExporter.MANIFEST_HEADER.indexOf("总体人工结果")
+        val detectionIndex = InspectionExcelExporter.MANIFEST_HEADER.indexOf("detectionIndex")
+        val firstThread = roiRecords.first {
+            it[3] == "101" && it[6] == "roi-thread" && it[detectionIndex] == "0"
+        }
+        assertEquals("OK", firstThread[nanodetResultIndex]) // 模型原值
+        assertEquals("NG", firstThread[humanResultIndex]) // 人工终审
+        assertEquals("true", firstThread[changedModelIndex])
+        assertEquals("OK", firstThread[overallResultIndex]) // 总体人工结论独立于 ROI
         val firstPhoto = records.first { it[0] == "照片" && it[3] == "101" }
-        assertEquals("OK", firstPhoto[25])
-        assertEquals("views/view_01/photo_101_photo-101.jpg", firstPhoto[28])
-        assertEquals("已导出", firstPhoto[29])
+        assertEquals("OK", firstPhoto[overallResultIndex])
+        assertEquals("views/view_01/photo_101_photo-101.jpg", firstPhoto[InspectionExcelExporter.MANIFEST_HEADER.indexOf("照片ZIP路径")])
+        assertEquals("已导出", firstPhoto[InspectionExcelExporter.MANIFEST_HEADER.indexOf("照片状态")])
         assertEquals(2, roiRecords.count { it[3] == "101" && it[6] == "roi-thread" })
         val reverseRecord = roiRecords.first { it[3] == "103" && it[6] == "roi-thread" }
-        assertEquals("NG", reverseRecord[21])
-        assertEquals("OK", reverseRecord[22])
-        assertEquals("true", reverseRecord[23])
-        assertEquals("NG", reverseRecord[25])
+        assertEquals("DETECTED_BELOW_THRESHOLD", reverseRecord[nanodetStatusIndex])
+        assertEquals("NG", reverseRecord[nanodetResultIndex])
+        assertEquals("OK", reverseRecord[humanResultIndex])
+        assertEquals("true", reverseRecord[changedModelIndex])
+        assertEquals("NG", reverseRecord[overallResultIndex])
         val unconfiguredRecord = roiRecords.first { it[3] == "202" && it[6] == "roi-unconfigured" }
         assertEquals("未执行", unconfiguredRecord[20])
-        assertEquals("人工未确认", unconfiguredRecord[22])
+        assertEquals("人工未确认", unconfiguredRecord[26])
+    }
+
+    @Test
+    fun `similarity fallback fields and roi image zip path are exported`() = runTest {
+        val dir = Files.createTempDirectory("inspection-similarity-evidence").toFile()
+        val photo = photo(dir, 701, 0, "tpl-sim", byteArrayOf(1, 2, 3))
+        val roi = roi("roi-thread", "tpl-sim", "THREAD")
+        val image = File(dir, "similarity-roi.jpg").apply { writeBytes(byteArrayOf(9, 8, 7, 6)) }
+        val confirmed = confirm(photo, roi, human = "OK", overall = "OK", software = "NG").copy(
+            similarityStatus = "SCORED_WITH_CANDIDATE_THRESHOLD",
+            similarityScore = 0.70f,
+            similarityThreshold = 0.75f,
+            similarityCandidate = "NG",
+            softwareModelSummary = """{"similarityEvidenceStatus":"SAVED"}""",
+            roiEvidencePath = image.absolutePath,
+            similarityRoiEvidencePath = image.absolutePath,
+        )
+        val repository = Mockito.mock(InspectionRepository::class.java)
+        `when`(repository.getCaptureBatch("batch-a")).thenReturn(CaptureBatchEntity("batch-a", "part-a", "A", 1, 2, 1))
+        `when`(repository.getCapturedPhotos("batch-a")).thenReturn(listOf(photo))
+        `when`(repository.getViewRoiConfirms("batch-a")).thenReturn(listOf(confirmed))
+        `when`(repository.getRois("tpl-sim")).thenReturn(listOf(roi))
+        `when`(repository.getDpmScanEvidenceByBatch("batch-a")).thenReturn(emptyList())
+
+        val zip = File(dir, "similarity.zip")
+        val result = InspectionZipExportService(Mockito.mock(Context::class.java), repository)
+            .exportInspectionZip("batch-a", "part-a", zip)
+        assertTrue(result is InspectionExportResult.Success)
+        val entries = unzip(zip)
+        val records = parseCsv(entries.getValue("inspection_result.csv").toString(Charsets.UTF_8))
+        val header = records.first()
+        val record = records.first { it[0] == "ROI" }
+        assertEquals("DETECTED", record[header.indexOf("NanoDet状态")])
+        assertEquals("NG", record[header.indexOf("NanoDet结果")])
+        assertEquals("SCORED_WITH_CANDIDATE_THRESHOLD", record[header.indexOf("相似度状态")])
+        assertEquals("0.7", record[header.indexOf("相似度分数")])
+        assertEquals("0.75", record[header.indexOf("相似度阈值")])
+        assertEquals("NG", record[header.indexOf("相似度候选")])
+        assertEquals("OK", record[header.indexOf("人工最终结果")])
+        assertEquals("true", record[header.indexOf("humanChangedModel")])
+        assertEquals("改判", record[header.indexOf("人工相对NanoDet")])
+        assertEquals("改判", record[header.indexOf("人工相对相似度候选")])
+        assertEquals("SAVED", record[header.indexOf("相似度ROI图保存状态")])
+        val zipPath = record[header.indexOf("相似度ROI图ZIP路径")]
+        assertTrue(zipPath.startsWith("roi_evidence/"))
+        assertEquals("已导出", record[header.indexOf("相似度ROI图ZIP状态")])
+        assertArrayEquals(image.readBytes(), entries.getValue(zipPath))
+        assertEquals("true", record[header.indexOf("ROI图ZIP路径")].isNotBlank().toString())
+    }
+
+    @Test
+    fun `ROI evidence save failure stays separate from a ZIP image path`() = runTest {
+        val dir = Files.createTempDirectory("inspection-similarity-save-failed").toFile()
+        val photo = photo(dir, 702, 0, "tpl-sim-failed", byteArrayOf(1, 2, 3))
+        val roi = roi("roi-thread", "tpl-sim-failed", "THREAD")
+        val confirmed = confirm(photo, roi, human = "NG", overall = "NG", software = null).copy(
+            softwareStatus = "MODEL_TARGET_UNSUPPORTED",
+            similarityStatus = "ROI_EVIDENCE_SAVE_FAILED",
+            softwareModelSummary = """{"similarityEvidenceStatus":"SAVE_FAILED_NOT_RUN"}""",
+        )
+        val repository = Mockito.mock(InspectionRepository::class.java)
+        `when`(repository.getCaptureBatch("batch-a")).thenReturn(CaptureBatchEntity("batch-a", "part-a", "A", 1, 2, 1))
+        `when`(repository.getCapturedPhotos("batch-a")).thenReturn(listOf(photo))
+        `when`(repository.getViewRoiConfirms("batch-a")).thenReturn(listOf(confirmed))
+        `when`(repository.getRois("tpl-sim-failed")).thenReturn(listOf(roi))
+        `when`(repository.getDpmScanEvidenceByBatch("batch-a")).thenReturn(emptyList())
+
+        val zip = File(dir, "similarity-save-failed.zip")
+        val result = InspectionZipExportService(Mockito.mock(Context::class.java), repository)
+            .exportInspectionZip("batch-a", "part-a", zip)
+        assertTrue(result is InspectionExportResult.Success)
+        val entries = unzip(zip)
+        val records = parseCsv(entries.getValue("inspection_result.csv").toString(Charsets.UTF_8))
+        val header = records.first()
+        val record = records.first { it[0] == "ROI" }
+        assertEquals("MODEL_TARGET_UNSUPPORTED", record[header.indexOf("NanoDet状态")])
+        assertEquals("", record[header.indexOf("NanoDet结果")])
+        assertEquals("ROI_EVIDENCE_SAVE_FAILED", record[header.indexOf("相似度状态")])
+        assertEquals("", record[header.indexOf("相似度候选")])
+        assertEquals("SAVE_FAILED_NOT_RUN", record[header.indexOf("相似度ROI图保存状态")])
+        assertEquals("未运行：ROI 留图保存失败", record[header.indexOf("相似度ROI图ZIP状态")])
+        assertEquals("", record[header.indexOf("相似度ROI图ZIP路径")])
+    }
+
+    @Test
+    fun `comparison error keeps separately saved ROI image in the ZIP`() = runTest {
+        val dir = Files.createTempDirectory("inspection-similarity-compare-error").toFile()
+        val photo = photo(dir, 703, 0, "tpl-sim-error", byteArrayOf(1, 2, 3))
+        val roi = roi("roi-thread", "tpl-sim-error", "THREAD")
+        val image = File(dir, "saved-before-comparison.jpg").apply { writeBytes(byteArrayOf(4, 5, 6, 7)) }
+        val confirmed = confirm(photo, roi, human = "NG", overall = "NG", software = "NG").copy(
+            softwareStatus = "NO_DETECTION",
+            similarityStatus = "REGISTRATION_FAILED",
+            softwareModelSummary = """{"similarityEvidenceStatus":"SAVED"}""",
+            similarityRoiEvidencePath = image.absolutePath,
+        )
+        val repository = Mockito.mock(InspectionRepository::class.java)
+        `when`(repository.getCaptureBatch("batch-a")).thenReturn(CaptureBatchEntity("batch-a", "part-a", "A", 1, 2, 1))
+        `when`(repository.getCapturedPhotos("batch-a")).thenReturn(listOf(photo))
+        `when`(repository.getViewRoiConfirms("batch-a")).thenReturn(listOf(confirmed))
+        `when`(repository.getRois("tpl-sim-error")).thenReturn(listOf(roi))
+        `when`(repository.getDpmScanEvidenceByBatch("batch-a")).thenReturn(emptyList())
+
+        val zip = File(dir, "similarity-comparison-error.zip")
+        val result = InspectionZipExportService(Mockito.mock(Context::class.java), repository)
+            .exportInspectionZip("batch-a", "part-a", zip)
+        assertTrue(result is InspectionExportResult.Success)
+        val entries = unzip(zip)
+        val records = parseCsv(entries.getValue("inspection_result.csv").toString(Charsets.UTF_8))
+        val header = records.first()
+        val record = records.first { it[0] == "ROI" }
+        assertEquals("REGISTRATION_FAILED", record[header.indexOf("相似度状态")])
+        assertEquals("SAVED", record[header.indexOf("相似度ROI图保存状态")])
+        assertEquals("", record[header.indexOf("相似度候选")])
+        val zipPath = record[header.indexOf("相似度ROI图ZIP路径")]
+        assertTrue(zipPath.startsWith("roi_evidence/"))
+        assertEquals("已导出", record[header.indexOf("相似度ROI图ZIP状态")])
+        assertArrayEquals(image.readBytes(), entries.getValue(zipPath))
     }
 
     @Test

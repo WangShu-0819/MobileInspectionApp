@@ -73,6 +73,7 @@ import com.wearable.inspection.mobile.detection.NanoDetDetection
 import com.wearable.inspection.mobile.detection.NanoDetInferenceStatus
 import com.wearable.inspection.mobile.detection.NanoDetModelContract
 import com.wearable.inspection.mobile.detection.NanoDetRoiInferenceResult
+import com.wearable.inspection.mobile.detection.RoiSimilarityStatus
 import com.wearable.inspection.mobile.ui.theme.BackgroundVariant1
 import com.wearable.inspection.mobile.ui.theme.DividerColor
 import com.wearable.inspection.mobile.ui.theme.FailColor
@@ -278,6 +279,7 @@ internal fun RoiConfirmCard(
     val statusHint = when (inference?.status) {
         NanoDetInferenceStatus.ROI_NOT_CONFIGURED,
         NanoDetInferenceStatus.FEATURE_UNSUPPORTED -> "部件类别暂不支持"
+        NanoDetInferenceStatus.MODEL_TARGET_UNSUPPORTED -> "当前模型不支持该目标类型"
         NanoDetInferenceStatus.ABI_UNSUPPORTED,
         NanoDetInferenceStatus.RUNTIME_UNAVAILABLE,
         NanoDetInferenceStatus.MODEL_UNAVAILABLE,
@@ -360,6 +362,25 @@ internal fun RoiConfirmCard(
                 }
             }
 
+            val nanodetStatus = inference?.let { inferenceStatusLabel(it.status) } ?: "模型未执行"
+            val nanodetResult = inference?.modelSuggestion?.name ?: "无 OK/NG 结果"
+            val similarity = inference?.similarity
+            Text(
+                text = "NanoDet：$nanodetStatus · 结果 $nanodetResult",
+                modifier = Modifier.testTag("nanodet-result-${roi.id}"),
+                style = MaterialTheme.typography.labelSmall,
+                color = TextSecondary,
+            )
+            Text(
+                text = "相似度：${similarity?.let { similarityStatusLabel(it.status) } ?: "未运行"}" +
+                    " · 分数 ${similarity?.score?.let(::formatSimilarityValue) ?: "—"}" +
+                    " · 阈值 ${similarity?.threshold?.let(::formatSimilarityValue) ?: "—"}" +
+                    " · 候选 ${similarity?.candidate?.name ?: "无"}",
+                modifier = Modifier.testTag("similarity-result-${roi.id}"),
+                style = MaterialTheme.typography.labelSmall,
+                color = TextSecondary,
+            )
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -368,6 +389,18 @@ internal fun RoiConfirmCard(
                 Column {
                     Text("人工终审", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = TextPrimary)
                     Text(selectedResult?.let { "已选择 $it" } ?: "请独立选择 OK / NG", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                    Text(
+                        "人工相对 NanoDet：${humanDecisionRelation(selectedResult, inference?.modelSuggestion?.name, "无 NanoDet 候选")}",
+                        modifier = Modifier.testTag("human-vs-nanodet-${roi.id}"),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = TextSecondary,
+                    )
+                    Text(
+                        "人工相对相似度候选：${humanDecisionRelation(selectedResult, similarity?.candidate?.name, "无候选")}",
+                        modifier = Modifier.testTag("human-vs-similarity-${roi.id}"),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = TextSecondary,
+                    )
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 ResultChip(
@@ -705,6 +738,7 @@ internal fun inferenceStatusLabel(status: NanoDetInferenceStatus): String = when
     NanoDetInferenceStatus.NO_DETECTION -> "未检出"
     NanoDetInferenceStatus.ROI_NOT_CONFIGURED -> "ROI 属性未配置"
     NanoDetInferenceStatus.FEATURE_UNSUPPORTED -> "部件类别暂不支持"
+    NanoDetInferenceStatus.MODEL_TARGET_UNSUPPORTED -> "模型不支持该目标类型"
     NanoDetInferenceStatus.INVALID_ROI -> "ROI 区域无效"
     NanoDetInferenceStatus.PHOTO_ASSOCIATION_ERROR -> "照片关联错误"
     NanoDetInferenceStatus.IMAGE_UNREADABLE -> "照片不可读取"
@@ -714,6 +748,29 @@ internal fun inferenceStatusLabel(status: NanoDetInferenceStatus): String = when
     NanoDetInferenceStatus.MODEL_UNAVAILABLE -> "模型不可用"
     NanoDetInferenceStatus.INFERENCE_ERROR -> "推理错误"
 }
+
+internal fun similarityStatusLabel(status: RoiSimilarityStatus): String = when (status) {
+    RoiSimilarityStatus.NOT_RUN_NANODET_NOT_NG -> "未运行"
+    RoiSimilarityStatus.TEMPLATE_UNREADABLE -> "模板图不可读"
+    RoiSimilarityStatus.PHOTO_UNREADABLE -> "现场图不可读"
+    RoiSimilarityStatus.SIMILARITY_RUNTIME_UNAVAILABLE -> "相似度运行库不可用"
+    RoiSimilarityStatus.INVALID_ROI -> "ROI 无效"
+    RoiSimilarityStatus.ROI_IMAGE_UNAVAILABLE -> "ROI 图片不可用"
+    RoiSimilarityStatus.ROI_EVIDENCE_SAVE_FAILED -> "ROI 留图保存失败"
+    RoiSimilarityStatus.REGISTRATION_FAILED -> "配准失败"
+    RoiSimilarityStatus.COMPARISON_ERROR -> "相似度推理错误"
+    RoiSimilarityStatus.SCORED_NO_THRESHOLD -> "已评分，无候选阈值"
+    RoiSimilarityStatus.SCORED_WITH_CANDIDATE_THRESHOLD -> "已评分"
+}
+
+internal fun humanDecisionRelation(humanResult: String?, candidate: String?, noCandidateLabel: String): String = when {
+    humanResult !in setOf("OK", "NG") -> "未选择"
+    candidate !in setOf("OK", "NG") -> noCandidateLabel
+    humanResult == candidate -> "一致"
+    else -> "改判"
+}
+
+private fun formatSimilarityValue(value: Float): String = String.format(java.util.Locale.US, "%.3f", value)
 
 internal fun modelClassLabel(classIndex: Int): String = when (classIndex) {
     0 -> "螺母（类别 0）"
@@ -730,6 +787,7 @@ private fun inferenceStatusColor(status: NanoDetInferenceStatus?): Color = when 
     null,
     NanoDetInferenceStatus.ROI_NOT_CONFIGURED,
     NanoDetInferenceStatus.FEATURE_UNSUPPORTED,
+    NanoDetInferenceStatus.MODEL_TARGET_UNSUPPORTED,
     NanoDetInferenceStatus.INVALID_ROI,
     NanoDetInferenceStatus.PHOTO_ASSOCIATION_ERROR,
     NanoDetInferenceStatus.IMAGE_UNREADABLE,

@@ -59,6 +59,9 @@ class InspectionZipExportService(
 
             ZipOutputStream(FileOutputStream(outputFile)).use { zos ->
                 val roiEvidenceZipPaths = mutableMapOf<Long, String>()
+                val similarityEvidenceZipPaths = mutableMapOf<Long, String>()
+                val similarityEvidenceZipStatuses = mutableMapOf<Long, String>()
+                val zipEntryByEvidencePath = mutableMapOf<String, String>()
                 photos.forEach { photo ->
                     val file = File(photo.filePath)
                     val entryName = "views/view_${(photo.viewIndex + 1).toString().padStart(2, '0')}/photo_${photo.photoId}_${file.name}"
@@ -128,26 +131,52 @@ class InspectionZipExportService(
                     }
                 }
 
-                // 写入改判 ROI 证据图（必须在 CSV 之前，确保 CSV 中的 ZIP 路径准确）
-                confirms.filter { it.humanChangedModel && !it.roiEvidencePath.isNullOrBlank() }
-                    .forEach { confirm ->
-                        val evidenceFile = File(confirm.roiEvidencePath!!)
-                        if (evidenceFile.isFile && evidenceFile.length() > 0L) {
-                            val entryName = "roi_evidence/${confirm.batchId.take(8)}_${confirm.photoId}_${confirm.viewIndex}_${confirm.roiId.take(8)}_${confirm.id}.jpg"
-                            try {
-                                zos.putNextEntry(ZipEntry(entryName).apply { size = evidenceFile.length(); time = evidenceFile.lastModified() })
-                                FileInputStream(evidenceFile).use { it.copyTo(zos) }
-                                zos.closeEntry()
-                                roiEvidenceZipPaths[confirm.id] = entryName
-                            } catch (_: Exception) {
-                                runCatching { zos.closeEntry() }
-                            }
+                // 写入两类 ROI 图证据（必须在 CSV 之前，确保路径准确）；相同本地图片只写入一次。
+                confirms.forEach { confirm ->
+                    val overridePath = confirm.roiEvidencePath.takeIf { confirm.humanChangedModel && !it.isNullOrBlank() }
+                    val similarityPath = confirm.similarityRoiEvidencePath?.takeIf(String::isNotBlank)
+                    fun writeEvidence(path: String?, suffix: String): Pair<String, String> {
+                        if (path.isNullOrBlank()) return "" to "未保存"
+                        zipEntryByEvidencePath[path]?.let { return it to "已导出" }
+                        val evidenceFile = File(path)
+                        if (!evidenceFile.isFile || evidenceFile.length() == 0L) return "" to "缺失：ROI 图片不可用"
+                        val entryName = "roi_evidence/${confirm.batchId.take(8)}_${confirm.photoId}_${confirm.viewIndex}_${confirm.roiId.take(8)}_${confirm.id}_$suffix.jpg"
+                        return try {
+                            zos.putNextEntry(ZipEntry(entryName).apply { size = evidenceFile.length(); time = evidenceFile.lastModified() })
+                            FileInputStream(evidenceFile).use { it.copyTo(zos) }
+                            zos.closeEntry()
+                            zipEntryByEvidencePath[path] = entryName
+                            entryName to "已导出"
+                        } catch (_: Exception) {
+                            runCatching { zos.closeEntry() }
+                            "" to "写入失败：ROI 图片无法写入 ZIP"
                         }
                     }
+                    val overrideResult = overridePath?.let { writeEvidence(it, "override") }
+                    if (overrideResult != null) roiEvidenceZipPaths[confirm.id] = overrideResult.first
+                    if (similarityPath != null) {
+                        val (entry, status) = if (similarityPath == overridePath) {
+                            overrideResult ?: ("" to "未导出")
+                        } else writeEvidence(similarityPath, "similarity")
+                        similarityEvidenceZipPaths[confirm.id] = entry
+                        similarityEvidenceZipStatuses[confirm.id] = status
+                    } else {
+                        similarityEvidenceZipStatuses[confirm.id] = when (confirm.similarityStatus) {
+                            null, "NOT_RUN_NANODET_NOT_NG" -> "未运行"
+                            "ROI_IMAGE_UNAVAILABLE" -> "未运行：ROI 图片不可用"
+                            "ROI_EVIDENCE_SAVE_FAILED" -> "未运行：ROI 留图保存失败"
+                            else -> "缺失：已运行但无图片路径"
+                        }
+                    }
+                }
 
                 // 回填 roiRows 中已成功写入 ZIP 的证据路径
-                roiRows.filter { row -> row.confirm?.id?.let { roiEvidenceZipPaths.containsKey(it) } == true }
-                    .forEach { row -> row.roiEvidenceZipPath = roiEvidenceZipPaths[row.confirm!!.id].orEmpty() }
+                roiRows.forEach { row ->
+                    val id = row.confirm?.id ?: return@forEach
+                    row.roiEvidenceZipPath = roiEvidenceZipPaths[id].orEmpty()
+                    row.similarityRoiZipPath = similarityEvidenceZipPaths[id].orEmpty()
+                    row.similarityRoiZipStatus = similarityEvidenceZipStatuses[id] ?: "未运行"
+                }
 
                 dpmEvidence.forEach { evidence ->
                     val sessionDir = "dpm/sessions/${evidence.scanSessionId}"

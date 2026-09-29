@@ -17,6 +17,8 @@ import com.wearable.inspection.mobile.detection.NanoDetDetection
 import com.wearable.inspection.mobile.detection.NanoDetInferenceStatus
 import com.wearable.inspection.mobile.detection.NanoDetRoiInferenceResult
 import com.wearable.inspection.mobile.detection.NanoDetSuggestion
+import com.wearable.inspection.mobile.detection.RoiSimilarityResult
+import com.wearable.inspection.mobile.detection.RoiSimilarityStatus
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -137,6 +139,64 @@ class ViewConfirmationModelResultComposeTest {
         val ng = composeRule.onNodeWithTag("human-result-${threadRoi.id}-NG")
         ok.assertIsNotSelected()
         ng.assertIsSelected()
+    }
+
+    @Test
+    fun similarityCandidateIsVisibleButHumanSelectionStaysIndependent() {
+        val result = NanoDetRoiInferenceResult(
+            roiId = threadRoi.id,
+            status = NanoDetInferenceStatus.DETECTED_BELOW_THRESHOLD,
+            modelSuggestion = NanoDetSuggestion.NG,
+            matchingScore = 0.20f,
+            targetClassIndex = 1,
+            threshold = 0.50f,
+            similarity = RoiSimilarityResult(
+                status = RoiSimilarityStatus.SCORED_WITH_CANDIDATE_THRESHOLD,
+                score = 0.80f,
+                threshold = 0.75f,
+                candidate = NanoDetSuggestion.OK,
+            ),
+        )
+        val humanResult = mutableStateOf<String?>("NG")
+        composeRule.setContent {
+            MaterialTheme { RoiConfirmCard(threadRoi, null, result, humanResult.value) { humanResult.value = it } }
+        }
+
+        composeRule.onNodeWithText("NanoDet：已检出，低于模型阈值 · 结果 NG").assertIsDisplayed()
+        composeRule.onNodeWithText("相似度：已评分 · 分数 0.800 · 阈值 0.750 · 候选 OK").assertIsDisplayed()
+        composeRule.onNodeWithText("人工相对 NanoDet：一致").assertIsDisplayed()
+        composeRule.onNodeWithText("人工相对相似度候选：改判").assertIsDisplayed()
+
+        composeRule.onNodeWithTag("human-result-${threadRoi.id}-OK").performClick()
+        composeRule.runOnIdle { assertEquals("OK", humanResult.value) }
+        composeRule.onNodeWithText("人工相对 NanoDet：改判").assertIsDisplayed()
+        composeRule.onNodeWithText("人工相对相似度候选：一致").assertIsDisplayed()
+    }
+
+    @Test
+    fun unsupportedModelKeepsStatusAndSimilarityCandidateIsSeparate() {
+        val result = NanoDetRoiInferenceResult(
+            roiId = threadRoi.id,
+            status = NanoDetInferenceStatus.MODEL_TARGET_UNSUPPORTED,
+            modelSuggestion = null,
+            matchingScore = null,
+            targetClassIndex = null,
+            similarity = RoiSimilarityResult(
+                status = RoiSimilarityStatus.SCORED_WITH_CANDIDATE_THRESHOLD,
+                score = 0.70f,
+                threshold = 0.75f,
+                candidate = NanoDetSuggestion.NG,
+            ),
+        )
+        composeRule.setContent {
+            MaterialTheme { RoiConfirmCard(threadRoi, null, result, "OK") {} }
+        }
+
+        composeRule.onNodeWithText("NanoDet：模型不支持该目标类型 · 结果 无 OK/NG 结果").assertIsDisplayed()
+        composeRule.onNodeWithText("相似度：已评分 · 分数 0.700 · 阈值 0.750 · 候选 NG").assertIsDisplayed()
+        composeRule.onNodeWithText("人工相对 NanoDet：无 NanoDet 候选").assertIsDisplayed()
+        composeRule.onNodeWithText("人工相对相似度候选：改判").assertIsDisplayed()
+        composeRule.onNodeWithTag("human-result-${threadRoi.id}-OK").assertIsSelected()
     }
 
     // --- NO_DETECTION → "未检出"提示，默认选中 NG ---

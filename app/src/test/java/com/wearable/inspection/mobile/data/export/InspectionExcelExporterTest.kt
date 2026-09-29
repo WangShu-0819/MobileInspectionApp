@@ -307,17 +307,19 @@ class InspectionExcelExporterTest {
         val csv = os.toString("UTF-8")
         val lines = csv.removePrefix("﻿").trimEnd().lines()
         val dataLines = lines.drop(1) // skip header
+        val detectionIndex = InspectionExcelExporter.MANIFEST_HEADER.indexOf("detectionIndex")
+        val detectionScore = InspectionExcelExporter.MANIFEST_HEADER.indexOf("detectionScore")
 
         // 检测行：score=0.89 和 score=0.55 均 >=0.50，应保留；score=0.20 <0.50，应过滤
         val detectionLines = dataLines.filter { line ->
             val fields = parseCsvLine(line)
-            fields.size > 34 && fields[0] == "ROI" && fields[32].isNotBlank()
+            fields.size > detectionIndex && fields[0] == "ROI" && fields[detectionIndex].isNotBlank()
         }
         assertEquals("应有 2 条达到阈值的检测行", 2, detectionLines.size)
 
         // 验证保留的检测分数
         val scores = detectionLines.map { line ->
-            parseCsvLine(line)[34].toDouble()
+            parseCsvLine(line)[detectionScore].toDouble()
         }
         assertTrue("0.89 应保留", scores.any { kotlin.math.abs(it - 0.89) < 0.01 })
         assertTrue("0.55 应保留", scores.any { kotlin.math.abs(it - 0.55) < 0.01 })
@@ -340,6 +342,7 @@ class InspectionExcelExporterTest {
         val csv = os.toString("UTF-8")
         val lines = csv.removePrefix("﻿").trimEnd().lines()
         val dataLines = lines.drop(1)
+        val detectionIndex = InspectionExcelExporter.MANIFEST_HEADER.indexOf("detectionIndex")
 
         // 所有检测低于阈值 → 只有 1 条 ROI 行（detectionIndex 为空）
         val roiLines = dataLines.filter { line ->
@@ -348,7 +351,7 @@ class InspectionExcelExporterTest {
         }
         assertEquals("低于阈值时应只有 1 条 ROI 行", 1, roiLines.size)
         val fields = parseCsvLine(roiLines[0])
-        assertEquals("detectionIndex 应为空", "", fields[32])
+        assertEquals("detectionIndex 应为空", "", fields[detectionIndex])
     }
 
     @Test
@@ -396,7 +399,7 @@ class InspectionExcelExporterTest {
 
         val detectionLines = dataLines.filter { line ->
             val fields = parseCsvLine(line)
-            fields.size > 34 && fields[0] == "ROI" && fields[6] == "__FULL_IMAGE__" && fields[32].isNotBlank()
+            fields.size > 38 && fields[0] == "ROI" && fields[6] == "__FULL_IMAGE__" && fields[38].isNotBlank()
         }
         assertEquals("threshold=null 时应保留全部 2 条检测行", 2, detectionLines.size)
     }
@@ -446,7 +449,7 @@ class InspectionExcelExporterTest {
 
         val detectionLines = dataLines.filter { line ->
             val fields = parseCsvLine(line)
-            fields.size > 34 && fields[0] == "ROI" && fields[6] == "roi-thread" && fields[32].isNotBlank()
+            fields.size > 38 && fields[0] == "ROI" && fields[6] == "roi-thread" && fields[38].isNotBlank()
         }
         assertEquals("普通 ROI 应保留全部检测行（不受阈值过滤）", 1, detectionLines.size)
     }

@@ -260,6 +260,17 @@ val MIGRATION_10_11 = object : Migration(10, 11) {
     }
 }
 
+/** v11 → v12：保存 NanoDet NG 后的 ROI 相似度结果及证据图片路径。 */
+val MIGRATION_11_12 = object : Migration(11, 12) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE view_roi_confirms ADD COLUMN similarityStatus TEXT")
+        db.execSQL("ALTER TABLE view_roi_confirms ADD COLUMN similarityScore REAL")
+        db.execSQL("ALTER TABLE view_roi_confirms ADD COLUMN similarityThreshold REAL")
+        db.execSQL("ALTER TABLE view_roi_confirms ADD COLUMN similarityCandidate TEXT")
+        db.execSQL("ALTER TABLE view_roi_confirms ADD COLUMN similarityRoiEvidencePath TEXT")
+    }
+}
+
 /**
  * 所有 Migration 列表
  * 新增 Migration 时必须在此添加
@@ -275,5 +286,6 @@ val ALL_MIGRATIONS = arrayOf<Migration>(
     MIGRATION_7_8,
     MIGRATION_8_9,
     MIGRATION_9_10,
-    MIGRATION_10_11
+    MIGRATION_10_11,
+    MIGRATION_11_12
 )

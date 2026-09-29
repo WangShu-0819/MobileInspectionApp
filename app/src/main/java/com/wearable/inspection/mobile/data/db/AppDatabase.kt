@@ -20,7 +20,7 @@ import com.wearable.inspection.mobile.data.entity.*
         DpmScanEvidenceEntity::class,
         ExportedPackageEntity::class
     ],
-    version = 11,
+    version = 12,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {

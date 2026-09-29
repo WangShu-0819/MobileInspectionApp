@@ -30,7 +30,7 @@ import java.util.zip.ZipInputStream
  * ROI 改判证据导出测试
  *
  * 覆盖：
- * - CSV 列头有 45 列，末尾为 result/overrideTime
+ * - CSV manifest 包含 NanoDet 和相似度字段，末尾为 result/overrideTime
  * - 改判时 ROI 证据图写入 ZIP roi_evidence/ 目录
  * - 未改判不写入 roi_evidence
  * - ZIP 内 roi_evidence entry 内容与源文件 SHA-256 一致
@@ -98,6 +98,10 @@ class RoiEvidenceExportTest {
         fields
     }
 
+    private fun column(header: List<String>, name: String): Int = header.indexOf(name).also {
+        assertTrue("CSV 缺少列：$name", it >= 0)
+    }
+
     private fun unzip(file: File): Map<String, ByteArray> = buildMap {
         ZipInputStream(FileInputStream(file)).use { zip ->
             var entry = zip.nextEntry
@@ -130,7 +134,7 @@ class RoiEvidenceExportTest {
     }
 
     @Test
-    fun `CSV header has 45 columns with result and overrideTime at end`() = runTest {
+    fun `CSV header includes all manifest fields and ends with result and overrideTime`() = runTest {
         val dir = Files.createTempDirectory("roi-evidence-export").toFile()
         try {
             val thread = roi("roi-thread", "tpl-0", "THREAD")
@@ -147,19 +151,19 @@ class RoiEvidenceExportTest {
             val rows = parseCsv(csv)
             assertTrue(rows.isNotEmpty())
             val header = rows[0]
-            // 修改前基线为 45 列；追加 result + overrideTime 后为 47 列
-            assertEquals("CSV 列数应为 47", 47, header.size)
+            assertEquals(InspectionExcelExporter.MANIFEST_HEADER, header)
+            assertEquals(InspectionExcelExporter.MANIFEST_HEADER.size, header.size)
             assertEquals("记录类型", header[0])
             assertEquals("batchId", header[1])
-            // 原有列索引不变
-            assertEquals("拍摄时间", header[27])
-            assertEquals("ROI图ZIP路径", header[30])
-            assertEquals("ROI图状态", header[31])
-            assertEquals("dpmFrameStatus", header[43])
-            assertEquals("dpmRoiStatus", header[44])
+            assertEquals("拍摄时间", header[column(header, "拍摄时间")])
+            assertEquals("ROI图ZIP路径", header[column(header, "ROI图ZIP路径")])
+            assertEquals("相似度ROI图ZIP路径", header[column(header, "相似度ROI图ZIP路径")])
+            assertEquals("dpmFrameStatus", header[column(header, "dpmFrameStatus")])
+            assertEquals("dpmRoiStatus", header[column(header, "dpmRoiStatus")])
+            assertTrue(header.containsAll(listOf("NanoDet状态", "NanoDet结果", "相似度状态", "相似度分数", "相似度阈值", "相似度候选")))
             // 新列追加在末尾
-            assertEquals("result", header[45])
-            assertEquals("overrideTime", header[46])
+            assertEquals("result", header[header.size - 2])
+            assertEquals("overrideTime", header[header.size - 1])
         } finally {
             dir.deleteRecursively()
         }
@@ -282,11 +286,11 @@ class RoiEvidenceExportTest {
             // 改判 ROI 行必须有非空 ROI图ZIP路径（index30）且精确匹配 ZIP entry
             val roiRows = rows.filter { it[0] == "ROI" }
             val overriddenRow = roiRows.first()
-            val zipPath = overriddenRow[30]
+            val zipPath = overriddenRow[column(rows[0], "ROI图ZIP路径")]
             assertTrue("改判 ROI 行的 CSV ROI图ZIP路径不应为空", zipPath.isNotBlank())
             assertTrue("CSV 路径 '$zipPath' 必须在 ZIP 中存在", entries.containsKey(zipPath))
             assertTrue("ZIP entry 路径必须以 roi_evidence/ 开头", zipPath.startsWith("roi_evidence/"))
-            assertEquals("已导出", overriddenRow[31])
+            assertEquals("已导出", overriddenRow[column(rows[0], "ROI图状态")])
         } finally {
             dir.deleteRecursively()
         }
@@ -322,8 +326,8 @@ class RoiEvidenceExportTest {
             val csv = entries.getValue("inspection_result.csv").toString(Charsets.UTF_8)
             val rows = parseCsv(csv)
             val roiRow = rows.first { it[0] == "ROI" }
-            assertEquals("源图缺失时 CSV ROI图ZIP路径应为空", "", roiRow[30])
-            assertNotEquals("源图缺失时 ROI图状态不应为已导出", "已导出", roiRow[31])
+            assertEquals("源图缺失时 CSV ROI图ZIP路径应为空", "", roiRow[column(rows[0], "ROI图ZIP路径")])
+            assertNotEquals("源图缺失时 ROI图状态不应为已导出", "已导出", roiRow[column(rows[0], "ROI图状态")])
             assertEquals("ZIP 内不应有 roi_evidence 条目", 0, entries.keys.count { it.startsWith("roi_evidence/") })
         } finally {
             dir.deleteRecursively()
@@ -349,8 +353,8 @@ class RoiEvidenceExportTest {
             val rows = parseCsv(csv)
             val roiRows = rows.filter { it[0] == "ROI" }
             roiRows.forEach { row ->
-                assertEquals("未改判行的 ROI图ZIP路径 应为空", "", row[30])
-                assertEquals("未改判行状态应为 '未改判'", "未改判", row[31])
+                assertEquals("未改判行的 ROI图ZIP路径 应为空", "", row[column(rows[0], "ROI图ZIP路径")])
+                assertEquals("未改判行状态应为 '未改判'", "未改判", row[column(rows[0], "ROI图状态")])
             }
 
             // ZIP 内不应有 roi_evidence 条目
@@ -446,7 +450,7 @@ class RoiEvidenceExportTest {
                     fields
                 }
                 val roiCsvRow = rows.first { it[0] == "ROI" }
-                roiCsvRow[31] // ROI图状态 列
+                roiCsvRow[column(rows[0], "ROI图状态")]
             }
             assertNotEquals("ZIP 写入失败时状态不应为已导出", "已导出", status)
             assertEquals("ZIP 写入失败时状态应为缺失", "缺失：改判证据未保存", status)

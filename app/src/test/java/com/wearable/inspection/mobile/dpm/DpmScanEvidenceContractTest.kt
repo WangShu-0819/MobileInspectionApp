@@ -224,9 +224,9 @@ class DpmScanEvidenceContractTest {
     }
 
     @Test
-    fun `app database version is 11 with dpm association migration`() {
+    fun `app database version is 12 with dpm association and roi similarity migrations`() {
         val source = read("src/main/java/com/wearable/inspection/mobile/data/db/AppDatabase.kt")
-        assertTrue("数据库版本必须为 11", source.contains("version = 11"))
+        assertTrue("数据库版本必须为 12", source.contains("version = 12"))
         assertTrue("必须包含 DpmScanEvidenceEntity",
             source.contains("DpmScanEvidenceEntity::class"))
         assertTrue("必须声明 dpmScanEvidenceDao",
@@ -237,6 +237,7 @@ class DpmScanEvidenceContractTest {
         assertTrue("必须定义 v8→v9 关联迁移", migrations.contains("MIGRATION_8_9"))
         assertTrue("必须定义 v9→v10 迁移", migrations.contains("MIGRATION_9_10"))
         assertTrue("必须定义 v10→v11 迁移", migrations.contains("MIGRATION_10_11"))
+        assertTrue("必须定义 v11→v12 相似度记录迁移", migrations.contains("MIGRATION_11_12"))
         assertTrue("关联字段必须可空", migrations.contains("ADD COLUMN batchId TEXT"))
     }
 

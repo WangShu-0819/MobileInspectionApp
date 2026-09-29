@@ -5,6 +5,7 @@ import com.wearable.inspection.mobile.data.entity.DpmScanEvidenceEntity
 import com.wearable.inspection.mobile.data.entity.RoiDefinitionEntity
 import com.wearable.inspection.mobile.data.entity.ViewRoiConfirmEntity
 import org.json.JSONArray
+import org.json.JSONObject
 import java.io.File
 import java.io.OutputStream
 import java.io.OutputStreamWriter
@@ -33,9 +34,10 @@ object InspectionExcelExporter {
         "记录类型", "batchId", "partId", "photoId", "templateId", "viewIndex", "roiId",
         "图片名称", "View名称", "ROI名称", "ROI属性", "ROI_normalizedRect", "ROI_映射后像素坐标",
         "软件目标类别", "软件最高分", "业务阈值", "候选阈值", "模型版本", "模型摘要", "推理耗时ms",
-        "推理状态", "模型建议", "人工最终结果", "humanChangedModel", "人工确认时间",
+        "NanoDet状态", "NanoDet结果", "相似度状态", "相似度分数", "相似度阈值", "相似度候选", "人工最终结果", "humanChangedModel",
+        "人工相对NanoDet", "人工相对相似度候选", "相似度ROI图保存状态", "人工确认时间",
         "总体人工结果", "总体确认时间", "拍摄时间", "照片ZIP路径", "照片状态",
-        "ROI图ZIP路径", "ROI图状态", "detectionIndex", "detectionClass", "detectionScore",
+        "ROI图ZIP路径", "ROI图状态", "相似度ROI图ZIP路径", "相似度ROI图ZIP状态", "detectionIndex", "detectionClass", "detectionScore",
         "detectionRoiBox", "detectionImageBox", "scanSessionId", "dpmCode", "dpmDecodeSource",
         "dpmStatus", "dpmFrameZipPath", "dpmRoiZipPath", "dpmFrameStatus", "dpmRoiStatus",
         "result", "overrideTime"
@@ -132,11 +134,11 @@ object InspectionExcelExporter {
     private fun photoRow(batchId: String, partId: String, row: InspectionPhotoExportRow): List<String> {
         val photo = row.photo
         return manifestPrefix("照片", batchId, partId, photo, null, null) +
-            List(12) { "" } + listOf(
+            List(19) { "" } + listOf(
                 row.overallResult.orEmpty(),
                 row.overallConfirmTime?.let { DATE_FORMAT.format(Date(it)) }.orEmpty(),
                 DATE_FORMAT.format(Date(photo.capturedAt)), row.zipPath, row.status
-            ) + List(15) { "" } + listOf("", "")
+            ) + List(17) { "" } + listOf("", "")
     }
 
     private fun roiRow(
@@ -156,10 +158,15 @@ object InspectionExcelExporter {
             confirm?.softwareThreshold?.toString().orEmpty(), inferCandidateThreshold(confirm?.softwareModelSummary),
             confirm?.softwareModelVersion.orEmpty(), confirm?.softwareModelSummary.orEmpty(),
             confirm?.softwareElapsedMs?.toString().orEmpty(), confirm?.softwareStatus ?: "未执行",
-            confirm?.softwareResult.orEmpty(), confirm?.humanResult ?: "人工未确认",
-            confirm?.humanChangedModel?.toString().orEmpty(), humanTime,
+            confirm?.softwareResult.orEmpty(), confirm?.similarityStatus.orEmpty(), confirm?.similarityScore?.toString().orEmpty(),
+            confirm?.similarityThreshold?.toString().orEmpty(), confirm?.similarityCandidate.orEmpty(), confirm?.humanResult ?: "人工未确认",
+            confirm?.humanChangedModel?.toString().orEmpty(),
+            decisionRelation(confirm?.humanResult, confirm?.softwareResult, "无 NanoDet 候选"),
+            decisionRelation(confirm?.humanResult, confirm?.similarityCandidate, "无候选"),
+            similarityEvidenceSaveStatus(confirm), humanTime,
             confirm?.overallResult.orEmpty(), overallTime, DATE_FORMAT.format(Date(photo.capturedAt)),
             "", "已由照片行记录", row.roiEvidenceZipPath, roiEvidenceZipStatus(confirm, row.roiEvidenceZipPath),
+            row.similarityRoiZipPath, row.similarityRoiZipStatus,
             detectionIndex?.toString().orEmpty(), detection?.className.orEmpty(), detection?.score.orEmpty(),
             detection?.roiBox.orEmpty(), detection?.imageBox.orEmpty()
         ) + List(8) { "" } + listOf(
@@ -170,15 +177,18 @@ object InspectionExcelExporter {
 
     private fun dpmRow(batchId: String, partId: String, row: InspectionDpmExportRow): List<String> {
         val e = row.evidence
-        return listOf(
-            "DPM", batchId, partId, e.photoId?.toString().orEmpty(), e.templateId.orEmpty(),
-            e.viewIndex?.toString().orEmpty(), e.roiId.orEmpty(), "", "", "", "", "", "", "", "", "", "", "", "", "",
-            "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "",
-            "",
-            e.scanSessionId, e.decodedContent.orEmpty(), e.decodeSource.orEmpty(), e.status,
-            row.frameZipPath, row.roiZipPath, row.frameStatus, row.roiStatus,
-            "", ""
-        )
+        return MutableList(MANIFEST_HEADER.size) { "" }.apply {
+            this[0] = "DPM"; this[1] = batchId; this[2] = partId
+            this[3] = e.photoId?.toString().orEmpty(); this[4] = e.templateId.orEmpty()
+            this[5] = e.viewIndex?.toString().orEmpty(); this[6] = e.roiId.orEmpty()
+            val start = MANIFEST_HEADER.indexOf("scanSessionId")
+            this[start] = e.scanSessionId; this[start + 1] = e.decodedContent.orEmpty()
+            this[start + 2] = e.decodeSource.orEmpty(); this[start + 3] = e.status
+            this[start + 4] = row.frameZipPath; this[start + 5] = row.roiZipPath
+            this[start + 6] = row.frameStatus; this[start + 7] = row.roiStatus
+            this[MANIFEST_HEADER.indexOf("result")] = ""
+            this[MANIFEST_HEADER.indexOf("overrideTime")] = ""
+        }
     }
 
     private fun manifestPrefix(
@@ -220,6 +230,28 @@ object InspectionExcelExporter {
         return "缺失：改判证据未保存"
     }
 
+    private fun decisionRelation(humanResult: String?, candidate: String?, noCandidateLabel: String): String = when {
+        humanResult !in setOf("OK", "NG") -> "未确认"
+        candidate !in setOf("OK", "NG") -> noCandidateLabel
+        humanResult == candidate -> "一致"
+        else -> "改判"
+    }
+
+    private fun similarityEvidenceSaveStatus(confirm: ViewRoiConfirmEntity?): String {
+        if (confirm == null) return "未确认"
+        val recorded = runCatching {
+            confirm.softwareModelSummary
+                ?.takeIf(String::isNotBlank)
+                ?.let(::JSONObject)
+                ?.optString("similarityEvidenceStatus")
+                ?.takeIf { it.isNotBlank() && it != "null" }
+        }.getOrNull()
+        return recorded ?: when (confirm.similarityStatus) {
+            null, "NOT_RUN_NANODET_NOT_NG" -> "未运行"
+            else -> "未知"
+        }
+    }
+
     private fun inferCandidateThreshold(summary: String?): String = runCatching {
         summary?.let { org.json.JSONObject(it).optDouble("candidateThreshold").toString() }.orEmpty()
     }.getOrDefault("")
@@ -254,7 +286,9 @@ data class InspectionRoiExportRow(
     val photo: CapturedPhotoEntity,
     val roi: RoiDefinitionEntity,
     val confirm: ViewRoiConfirmEntity?,
-    var roiEvidenceZipPath: String = ""
+    var roiEvidenceZipPath: String = "",
+    var similarityRoiZipPath: String = "",
+    var similarityRoiZipStatus: String = ""
 )
 
 /** ZIP 导出期间构造的 DPM 文件索引，不是新的持久化模型。 */
