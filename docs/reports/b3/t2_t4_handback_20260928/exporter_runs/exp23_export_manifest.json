@@ -1,0 +1,103 @@
+{
+  "model": "exp23",
+  "outputDir": "D:\\study\\Textile_defects\\nanodet-main\\nanodet-main\\workspace\\key_nut_thread_experiments\\exp23_factory_white_specialist_init_pair_keep_ratio_true\\android_export\\codex_safe_20260928_exp23_retry1",
+  "config": {
+    "path": "D:\\study\\Textile_defects\\nanodet-main\\nanodet-main\\workspace\\key_nut_thread_experiments\\exp23_factory_white_specialist_init_pair_keep_ratio_true\\B_exp09_warmstart\\configs\\model.yml",
+    "sha256": "9aa9d1517836cb2d5c98d58b23d7a9cff3087d96ed6744f37d8e589c373fba2f"
+  },
+  "checkpoint": {
+    "path": "D:\\study\\Textile_defects\\nanodet-main\\nanodet-main\\workspace\\key_nut_thread_experiments\\exp23_factory_white_specialist_init_pair_keep_ratio_true\\B_exp09_warmstart\\training\\model_best\\nanodet_model_best.pth",
+    "sha256": "fc18f39cc8736f0bca223dcc3c03e90440adbca7049129e3231a6601d6f9274e"
+  },
+  "exporter": {
+    "path": "D:\\study\\Textile_defects\\nanodet-main\\nanodet-main\\workspace\\key_nut_thread_experiments\\exp23_factory_white_specialist_init_pair_keep_ratio_true\\android_export\\export_exp23_onnx_ncnn.py",
+    "sha256": "5a8d6e64e0a8a6afb9619895f2ad0e4c4d3638083444740b36b85d7abb175e21"
+  },
+  "toolchain": {
+    "python": {
+      "version": "3.11.13 | packaged by Anaconda, Inc. | (main, Jun  5 2025, 13:03:15) [MSC v.1929 64 bit (AMD64)]",
+      "executable": "D:\\ProgramData\\anaconda3\\envs\\yolov12\\python.exe"
+    },
+    "platform": "Windows-10-10.0.22621-SP0",
+    "torch": "2.2.2+cu118",
+    "onnx": "1.17.0",
+    "onnxsim": "0.7.3",
+    "pnnx": {
+      "path": "D:\\study\\Textile_defects\\_ncnn_toolchain_20260526\\pnnx\\pnnx\\pnnx.exe",
+      "sha256": "16165dc5fcc53d31f0339b996c15fd2dc26b8d7db43753f72eeab0a0e576116e",
+      "version": "unreported: this binary has no --version option"
+    }
+  },
+  "commands": {
+    "exporter": [
+      "D:\\ProgramData\\anaconda3\\envs\\yolov12\\python.exe",
+      "D:\\study\\Textile_defects\\nanodet-main\\nanodet-main\\workspace\\key_nut_thread_experiments\\exp23_factory_white_specialist_init_pair_keep_ratio_true\\android_export\\export_exp23_onnx_ncnn.py",
+      "--output-dir",
+      "D:\\study\\Textile_defects\\nanodet-main\\nanodet-main\\workspace\\key_nut_thread_experiments\\exp23_factory_white_specialist_init_pair_keep_ratio_true\\android_export\\codex_safe_20260928_exp23_retry1"
+    ],
+    "pnnx": [
+      "D:\\study\\Textile_defects\\_ncnn_toolchain_20260526\\pnnx\\pnnx\\pnnx.exe",
+      "D:\\study\\Textile_defects\\nanodet-main\\nanodet-main\\workspace\\key_nut_thread_experiments\\exp23_factory_white_specialist_init_pair_keep_ratio_true\\android_export\\codex_safe_20260928_exp23_retry1\\ncnn_exp23\\exp23.onnx",
+      "inputshape=[1,3,416,416]f32",
+      "fp16=0",
+      "optlevel=2"
+    ]
+  },
+  "pnnx": {
+    "returnCode": 0,
+    "stdout": "",
+    "stderr": "pnnxparam = D:\\study\\Textile_defects\\nanodet-main\\nanodet-main\\workspace\\key_nut_thread_experiments\\exp23_factory_white_specialist_init_pair_keep_ratio_true\\android_export\\codex_safe_20260928_exp23_retry1\\ncnn_exp23\\exp23.pnnx.param\npnnxbin = D:\\study\\Textile_defects\\nanodet-main\\nanodet-main\\workspace\\key_nut_thread_experiments\\exp23_factory_white_specialist_init_pair_keep_ratio_true\\android_export\\codex_safe_20260928_exp23_retry1\\ncnn_exp23\\exp23.pnnx.bin\npnnxpy = D:\\study\\Textile_defects\\nanodet-main\\nanodet-main\\workspace\\key_nut_thread_experiments\\exp23_factory_white_specialist_init_pair_keep_ratio_true\\android_export\\codex_safe_20260928_exp23_retry1\\ncnn_exp23\\exp23_pnnx.py\npnnxonnx = D:\\study\\Textile_defects\\nanodet-main\\nanodet-main\\workspace\\key_nut_thread_experiments\\exp23_factory_white_specialist_init_pair_keep_ratio_true\\android_export\\codex_safe_20260928_exp23_retry1\\ncnn_exp23\\exp23.pnnx.onnx\nncnnparam = D:\\study\\Textile_defects\\nanodet-main\\nanodet-main\\workspace\\key_nut_thread_experiments\\exp23_factory_white_specialist_init_pair_keep_ratio_true\\android_export\\codex_safe_20260928_exp23_retry1\\ncnn_exp23\\exp23.ncnn.param\nncnnbin = D:\\study\\Textile_defects\\nanodet-main\\nanodet-main\\workspace\\key_nut_thread_experiments\\exp23_factory_white_specialist_init_pair_keep_ratio_true\\android_export\\codex_safe_20260928_exp23_retry1\\ncnn_exp23\\exp23.ncnn.bin\nncnnpy = D:\\study\\Textile_defects\\nanodet-main\\nanodet-main\\workspace\\key_nut_thread_experiments\\exp23_factory_white_specialist_init_pair_keep_ratio_true\\android_export\\codex_safe_20260928_exp23_retry1\\ncnn_exp23\\exp23_ncnn.py\nfp16 = 0\noptlevel = 2\ndevice = cpu\ninputshape = [1,3,416,416]f32\ninputshape2 = \ninput = \ninput2 = \ncustomop = \nmoduleop = \nget inputshape from traced inputs\ninputshape = [1,3,416,416]f32\ninputshape2 = \n############# pass_level0 onnx \ninline_containers ...                 0.00ms\neliminate_noop ...                    0.34ms\nfold_constants ...                    0.20ms\ncanonicalize ...                      0.29ms\nshape_inference ...               \u001b[0;93m2026-09-28 16:00:56.4183542 [W:onnxruntime:pnnx, cpuid_info.cc:95 onnxruntime::CPUIDInfo::LogEarlyWarning] Unknown CPU vendor. cpuinfo_vendor value: 0\u001b[m\n  102.12ms\nfold_constants_dynamic_shape ...      0.46ms\ninline_if_graph ...                   0.04ms\nfuse_constant_as_attribute ...        0.38ms\neliminate_noop_with_shape ...         0.22ms\n┌──────────────────┬──────────┬──────────┐\n│                  │ orig     │ opt      │\n├──────────────────┼──────────┼──────────┤\n│ node             │ 349      │ 349      │\n│ initializer      │ 275      │ 260      │\n│ functions        │ 0        │ 0        │\n├──────────────────┼──────────┼──────────┤\n│ nn module op     │ 0        │ 0        │\n│ custom module op │ 0        │ 0        │\n│ aten op          │ 0        │ 0        │\n│ prims op         │ 0        │ 0        │\n│ onnx native op   │ 349      │ 349      │\n├──────────────────┼──────────┼──────────┤\n│ Add              │ 5        │ 5        │\n│ Concat           │ 37       │ 37       │\n│ Conv             │ 130      │ 130      │\n│ LeakyRelu        │ 87       │ 87       │\n│ MaxPool          │ 1        │ 1        │\n│ Reshape          │ 36       │ 36       │\n│ Resize           │ 2        │ 2        │\n│ Sigmoid          │ 4        │ 4        │\n│ Slice            │ 26       │ 26       │\n│ Split            │ 4        │ 4        │\n│ Transpose        │ 17       │ 17       │\n└──────────────────┴──────────┴──────────┘\n############# pass_level1 onnx\n############# pass_level2\n############# pass_level3\n############# pass_level4\n############# pass_level5\n############# pass_ncnn\nmodel inputshape = [1,3,416,416]f32\nFLOPS = 1.673G\nmemory OPS = 63.399M\n"
+  },
+  "outputs": [
+    {
+      "path": "exp23_2class_nanodet.onnx",
+      "bytes": 5120215,
+      "sha256": "0322e2d1dd54202accafbf29f9a6a0227a5a126e1cd40b60b0ce8c8b553f235a"
+    },
+    {
+      "path": "ncnn_exp23/exp23.ncnn.bin",
+      "bytes": 5002704,
+      "sha256": "1b662094ce94f4a3a8c899f40e1cb449e01aa10ae7a1addabcb92bfef18da35d"
+    },
+    {
+      "path": "ncnn_exp23/exp23.ncnn.param",
+      "bytes": 24308,
+      "sha256": "ad45e2f3fcb6777a5e924aa9a3095c23b2c5f900632720c389d7816a1a390bdd"
+    },
+    {
+      "path": "ncnn_exp23/exp23.onnx",
+      "bytes": 5120215,
+      "sha256": "0322e2d1dd54202accafbf29f9a6a0227a5a126e1cd40b60b0ce8c8b553f235a"
+    },
+    {
+      "path": "ncnn_exp23/exp23.pnnx.bin",
+      "bytes": 5046562,
+      "sha256": "37a5d490e53fab1a0173f2a33f3641fb7266a2f58a295d36681757290b8f5f2e"
+    },
+    {
+      "path": "ncnn_exp23/exp23.pnnx.onnx",
+      "bytes": 5063115,
+      "sha256": "8dd8a1b86886449b4a4a658f65a9c951664012e045434a539ac0e871a6df72d4"
+    },
+    {
+      "path": "ncnn_exp23/exp23.pnnx.param",
+      "bytes": 60295,
+      "sha256": "d45e09e9472782272cc1b96bb4db24320b55507068aed11999fb59a6b3d9b738"
+    },
+    {
+      "path": "ncnn_exp23/exp23.pnnxsim.onnx",
+      "bytes": 5059694,
+      "sha256": "2449d024b1dd7547bddda514a3e79b934f2fea2aee1965dbd08f5b208f75365f"
+    },
+    {
+      "path": "ncnn_exp23/exp23_ncnn.py",
+      "bytes": 1045,
+      "sha256": "1a4f5badd699d7cb844e2269ff7734246cabdff5834e5de5fe828855058fe954"
+    },
+    {
+      "path": "ncnn_exp23/exp23_pnnx.py",
+      "bytes": 70336,
+      "sha256": "7e4a90808168e5cdc489adea0876a34bd15b258f40cf5280db7ae9e1f1867413"
+    }
+  ]
+}

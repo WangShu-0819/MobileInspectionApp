@@ -1,0 +1,30 @@
+[
+  {
+    "model": "exp22",
+    "command": [
+      "D:\\ProgramData\\anaconda3\\envs\\yolov12\\python.exe",
+      "D:\\study\\Textile_defects\\nanodet-main\\nanodet-main\\workspace\\key_nut_thread_experiments\\exp22_factory_black_specialist_4class_init_pair_keep_ratio_true\\android_export\\export_exp22_onnx_ncnn.py",
+      "--output-dir",
+      "C:\\Users\\ws\\AppData\\Local\\Temp\\t2-exporter-nonempty-oda9aqt1"
+    ],
+    "returnCode": 2,
+    "stdout": "",
+    "stderr": "usage: export_exp22_onnx_ncnn.py [-h] --output-dir OUTPUT_DIR\nexport_exp22_onnx_ncnn.py: error: refusing non-empty --output-dir: C:\\Users\\ws\\AppData\\Local\\Temp\\t2-exporter-nonempty-oda9aqt1\n",
+    "blockerStillPresent": true,
+    "onlyBlockerRemains": true
+  },
+  {
+    "model": "exp23",
+    "command": [
+      "D:\\ProgramData\\anaconda3\\envs\\yolov12\\python.exe",
+      "D:\\study\\Textile_defects\\nanodet-main\\nanodet-main\\workspace\\key_nut_thread_experiments\\exp23_factory_white_specialist_init_pair_keep_ratio_true\\android_export\\export_exp23_onnx_ncnn.py",
+      "--output-dir",
+      "C:\\Users\\ws\\AppData\\Local\\Temp\\t2-exporter-nonempty-7pffdito"
+    ],
+    "returnCode": 2,
+    "stdout": "",
+    "stderr": "usage: export_exp23_onnx_ncnn.py [-h] --output-dir OUTPUT_DIR\nexport_exp23_onnx_ncnn.py: error: refusing non-empty --output-dir: C:\\Users\\ws\\AppData\\Local\\Temp\\t2-exporter-nonempty-7pffdito\n",
+    "blockerStillPresent": true,
+    "onlyBlockerRemains": true
+  }
+]

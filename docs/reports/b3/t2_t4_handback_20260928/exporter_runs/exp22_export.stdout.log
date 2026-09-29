@@ -1,0 +1,20 @@
+Input shape: (416, 416)
+Num classes: 4
+Class names: ['Black Thread', 'Black Nutsert', 'Black Nut', 'Black Bolt']
+model size is  1.0x
+init weights...
+Finish initialize NanoDet-Plus Head.
+
+Exporting ONNX to D:\study\Textile_defects\nanodet-main\nanodet-main\workspace\key_nut_thread_experiments\exp22_factory_black_specialist_4class_init_pair_keep_ratio_true\android_export\codex_safe_20260928_exp22\exp22_4class_nanodet.onnx...
+ONNX exported: 5135345 bytes
+
+Verifying ONNX model...
+ONNX check passed
+PyTorch output shape: (1, 3598, 36)
+
+Simplifying ONNX...
+ONNX simplified successfully
+Simplified ONNX output: ['output']
+
+Running PNNX on D:\study\Textile_defects\nanodet-main\nanodet-main\workspace\key_nut_thread_experiments\exp22_factory_black_specialist_4class_init_pair_keep_ratio_true\android_export\codex_safe_20260928_exp22\ncnn_exp22\exp22.onnx...
+Command: D:\study\Textile_defects\_ncnn_toolchain_20260526\pnnx\pnnx\pnnx.exe D:\study\Textile_defects\nanodet-main\nanodet-main\workspace\key_nut_thread_experiments\exp22_factory_black_specialist_4class_init_pair_keep_ratio_true\android_export\codex_safe_20260928_exp22\ncnn_exp22\exp22.onnx inputshape=[1,3,416,416]f32 fp16=0 optlevel=2

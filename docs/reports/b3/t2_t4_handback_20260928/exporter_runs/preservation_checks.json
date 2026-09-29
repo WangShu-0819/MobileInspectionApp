@@ -1,0 +1,26 @@
+{
+  "preexistingExporterOutputsUnchanged": true,
+  "preexistingExporterOutputCount": 20,
+  "appAssetsUnchanged": true,
+  "assetsVerified": false,
+  "beforeAssetHashes": {
+    "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\app\\src\\main\\assets\\nanodet\\exp22\\nanodet.ncnn.bin": "d3a16edb715050b376f40b5f396fc748b984d781590aa1bf07b3f42a3d92a3d7",
+    "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\app\\src\\main\\assets\\nanodet\\exp22\\nanodet.ncnn.param": "b81b824fea9ff949f72f3715a8f20c6ebe96c2792370dd80b7a7a69a65335960",
+    "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\app\\src\\main\\assets\\nanodet\\exp23\\nanodet.ncnn.bin": "1b662094ce94f4a3a8c899f40e1cb449e01aa10ae7a1addabcb92bfef18da35d",
+    "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\app\\src\\main\\assets\\nanodet\\exp23\\nanodet.ncnn.param": "ad45e2f3fcb6777a5e924aa9a3095c23b2c5f900632720c389d7816a1a390bdd",
+    "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\app\\src\\main\\assets\\nanodet\\nanodet.ncnn.bin": "a9c6792bc13b926bf1baa4f73c001e6eb7e08a3668682b9755e6796d8556c137",
+    "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\app\\src\\main\\assets\\nanodet\\nanodet.ncnn.param": "b81b824fea9ff949f72f3715a8f20c6ebe96c2792370dd80b7a7a69a65335960"
+  },
+  "afterAssetHashes": {
+    "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\app\\src\\main\\assets\\nanodet\\exp22\\nanodet.ncnn.bin": "d3a16edb715050b376f40b5f396fc748b984d781590aa1bf07b3f42a3d92a3d7",
+    "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\app\\src\\main\\assets\\nanodet\\exp22\\nanodet.ncnn.param": "b81b824fea9ff949f72f3715a8f20c6ebe96c2792370dd80b7a7a69a65335960",
+    "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\app\\src\\main\\assets\\nanodet\\exp23\\nanodet.ncnn.bin": "1b662094ce94f4a3a8c899f40e1cb449e01aa10ae7a1addabcb92bfef18da35d",
+    "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\app\\src\\main\\assets\\nanodet\\exp23\\nanodet.ncnn.param": "ad45e2f3fcb6777a5e924aa9a3095c23b2c5f900632720c389d7816a1a390bdd",
+    "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\app\\src\\main\\assets\\nanodet\\nanodet.ncnn.bin": "a9c6792bc13b926bf1baa4f73c001e6eb7e08a3668682b9755e6796d8556c137",
+    "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\app\\src\\main\\assets\\nanodet\\nanodet.ncnn.param": "b81b824fea9ff949f72f3715a8f20c6ebe96c2792370dd80b7a7a69a65335960"
+  },
+  "retryOutputs": {
+    "exp22": "D:\\study\\Textile_defects\\nanodet-main\\nanodet-main\\workspace\\key_nut_thread_experiments\\exp22_factory_black_specialist_4class_init_pair_keep_ratio_true\\android_export\\codex_safe_20260928_exp22_retry1",
+    "exp23": "D:\\study\\Textile_defects\\nanodet-main\\nanodet-main\\workspace\\key_nut_thread_experiments\\exp23_factory_white_specialist_init_pair_keep_ratio_true\\android_export\\codex_safe_20260928_exp23_retry1"
+  }
+}

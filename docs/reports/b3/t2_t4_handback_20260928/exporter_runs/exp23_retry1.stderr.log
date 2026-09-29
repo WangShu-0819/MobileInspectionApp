@@ -1,0 +1,64 @@
+pnnxparam = D:\study\Textile_defects\nanodet-main\nanodet-main\workspace\key_nut_thread_experiments\exp23_factory_white_specialist_init_pair_keep_ratio_true\android_export\codex_safe_20260928_exp23_retry1\ncnn_exp23\exp23.pnnx.param
+pnnxbin = D:\study\Textile_defects\nanodet-main\nanodet-main\workspace\key_nut_thread_experiments\exp23_factory_white_specialist_init_pair_keep_ratio_true\android_export\codex_safe_20260928_exp23_retry1\ncnn_exp23\exp23.pnnx.bin
+pnnxpy = D:\study\Textile_defects\nanodet-main\nanodet-main\workspace\key_nut_thread_experiments\exp23_factory_white_specialist_init_pair_keep_ratio_true\android_export\codex_safe_20260928_exp23_retry1\ncnn_exp23\exp23_pnnx.py
+pnnxonnx = D:\study\Textile_defects\nanodet-main\nanodet-main\workspace\key_nut_thread_experiments\exp23_factory_white_specialist_init_pair_keep_ratio_true\android_export\codex_safe_20260928_exp23_retry1\ncnn_exp23\exp23.pnnx.onnx
+ncnnparam = D:\study\Textile_defects\nanodet-main\nanodet-main\workspace\key_nut_thread_experiments\exp23_factory_white_specialist_init_pair_keep_ratio_true\android_export\codex_safe_20260928_exp23_retry1\ncnn_exp23\exp23.ncnn.param
+ncnnbin = D:\study\Textile_defects\nanodet-main\nanodet-main\workspace\key_nut_thread_experiments\exp23_factory_white_specialist_init_pair_keep_ratio_true\android_export\codex_safe_20260928_exp23_retry1\ncnn_exp23\exp23.ncnn.bin
+ncnnpy = D:\study\Textile_defects\nanodet-main\nanodet-main\workspace\key_nut_thread_experiments\exp23_factory_white_specialist_init_pair_keep_ratio_true\android_export\codex_safe_20260928_exp23_retry1\ncnn_exp23\exp23_ncnn.py
+fp16 = 0
+optlevel = 2
+device = cpu
+inputshape = [1,3,416,416]f32
+inputshape2 = 
+input = 
+input2 = 
+customop = 
+moduleop = 
+get inputshape from traced inputs
+inputshape = [1,3,416,416]f32
+inputshape2 = 
+############# pass_level0 onnx 
+inline_containers ...                 0.00ms
+eliminate_noop ...                    0.34ms
+fold_constants ...                    0.20ms
+canonicalize ...                      0.29ms
+shape_inference ...               [0;93m2026-09-28 16:00:56.4183542 [W:onnxruntime:pnnx, cpuid_info.cc:95 onnxruntime::CPUIDInfo::LogEarlyWarning] Unknown CPU vendor. cpuinfo_vendor value: 0[m
+  102.12ms
+fold_constants_dynamic_shape ...      0.46ms
+inline_if_graph ...                   0.04ms
+fuse_constant_as_attribute ...        0.38ms
+eliminate_noop_with_shape ...         0.22ms
+┌──────────────────┬──────────┬──────────┐
+│                  │ orig     │ opt      │
+├──────────────────┼──────────┼──────────┤
+│ node             │ 349      │ 349      │
+│ initializer      │ 275      │ 260      │
+│ functions        │ 0        │ 0        │
+├──────────────────┼──────────┼──────────┤
+│ nn module op     │ 0        │ 0        │
+│ custom module op │ 0        │ 0        │
+│ aten op          │ 0        │ 0        │
+│ prims op         │ 0        │ 0        │
+│ onnx native op   │ 349      │ 349      │
+├──────────────────┼──────────┼──────────┤
+│ Add              │ 5        │ 5        │
+│ Concat           │ 37       │ 37       │
+│ Conv             │ 130      │ 130      │
+│ LeakyRelu        │ 87       │ 87       │
+│ MaxPool          │ 1        │ 1        │
+│ Reshape          │ 36       │ 36       │
+│ Resize           │ 2        │ 2        │
+│ Sigmoid          │ 4        │ 4        │
+│ Slice            │ 26       │ 26       │
+│ Split            │ 4        │ 4        │
+│ Transpose        │ 17       │ 17       │
+└──────────────────┴──────────┴──────────┘
+############# pass_level1 onnx
+############# pass_level2
+############# pass_level3
+############# pass_level4
+############# pass_level5
+############# pass_ncnn
+model inputshape = [1,3,416,416]f32
+FLOPS = 1.673G
+memory OPS = 63.399M

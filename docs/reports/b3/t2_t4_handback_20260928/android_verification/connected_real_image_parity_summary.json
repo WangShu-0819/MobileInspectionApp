@@ -1,0 +1,13 @@
+{
+  "JUnitXml": "docs\\reports\\b3\\t2_t4_handback_20260928\\android_verification\\connected_real_image_parity.xml",
+  "LogcatJson": "docs\\reports\\b3\\t2_t4_handback_20260928\\android_verification\\current_real_image_parity_logcat.txt",
+  "TimestampUtc": "2026-09-28T08:21:56",
+  "Device": "SEA-AL10 - 10",
+  "Tests": 2,
+  "Failures": 0,
+  "Errors": 0,
+  "Skipped": 0,
+  "GradleExitCode": 0,
+  "Exp22Report": "docs\\reports\\b3\\t2_t4_handback_20260928\\android_verification\\current_production_jni_exp22.json",
+  "Exp23Report": "docs\\reports\\b3\\t2_t4_handback_20260928\\android_verification\\current_production_jni_exp23.json"
+}

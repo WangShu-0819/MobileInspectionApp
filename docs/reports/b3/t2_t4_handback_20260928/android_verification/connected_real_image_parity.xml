@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<testsuite name="com.wearable.inspection.mobile.detection.RealImageNcnnParityInstrumentedTest" tests="2" failures="0" errors="0" skipped="0" time="2.059" timestamp="2026-09-28T08:21:56" hostname="localhost">
+  <properties>
+    <property name="device" value="SEA-AL10 - 10" />
+    <property name="flavor" value="" />
+    <property name="project" value=":app" />
+  </properties>
+  <testcase name="exp23RealImageMatchesDesktopNcnn" classname="com.wearable.inspection.mobile.detection.RealImageNcnnParityInstrumentedTest" time="0.351" />
+  <testcase name="exp22RealImageMatchesDesktopNcnn" classname="com.wearable.inspection.mobile.detection.RealImageNcnnParityInstrumentedTest" time="0.211" />
+</testsuite>

@@ -1,0 +1,26 @@
+{
+  "model": "exp22",
+  "command": [
+    "D:\\ProgramData\\anaconda3\\envs\\yolov12\\python.exe",
+    "D:\\study\\Textile_defects\\nanodet-main\\nanodet-main\\workspace\\key_nut_thread_experiments\\exp22_factory_black_specialist_4class_init_pair_keep_ratio_true\\android_export\\export_exp22_onnx_ncnn.py",
+    "--output-dir",
+    "D:\\study\\Textile_defects\\nanodet-main\\nanodet-main\\workspace\\key_nut_thread_experiments\\exp22_factory_black_specialist_4class_init_pair_keep_ratio_true\\android_export\\codex_safe_20260928_exp22"
+  ],
+  "workingDirectory": "D:\\study\\Textile_defects\\nanodet-main\\nanodet-main\\workspace\\key_nut_thread_experiments\\exp22_factory_black_specialist_4class_init_pair_keep_ratio_true\\android_export",
+  "returnCode": 1,
+  "outputDir": "D:\\study\\Textile_defects\\nanodet-main\\nanodet-main\\workspace\\key_nut_thread_experiments\\exp22_factory_black_specialist_4class_init_pair_keep_ratio_true\\android_export\\codex_safe_20260928_exp22",
+  "stdoutLog": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\t2_t4_handback_20260928\\exporter_runs\\exp22_export.stdout.log",
+  "stderrLog": "D:\\study\\Textile_defects\\Wearable Inspection\\MobileInspectionApp\\docs\\reports\\b3\\t2_t4_handback_20260928\\exporter_runs\\exp22_export.stderr.log",
+  "outputFileHashes": {
+    "D:\\study\\Textile_defects\\nanodet-main\\nanodet-main\\workspace\\key_nut_thread_experiments\\exp22_factory_black_specialist_4class_init_pair_keep_ratio_true\\android_export\\codex_safe_20260928_exp22\\exp22_4class_nanodet.onnx": "eb3ed8b83b82ab04af65998aca03604fe1ea51c9c51ca864a256d633822629ed",
+    "D:\\study\\Textile_defects\\nanodet-main\\nanodet-main\\workspace\\key_nut_thread_experiments\\exp22_factory_black_specialist_4class_init_pair_keep_ratio_true\\android_export\\codex_safe_20260928_exp22\\ncnn_exp22\\exp22.ncnn.bin": "d3a16edb715050b376f40b5f396fc748b984d781590aa1bf07b3f42a3d92a3d7",
+    "D:\\study\\Textile_defects\\nanodet-main\\nanodet-main\\workspace\\key_nut_thread_experiments\\exp22_factory_black_specialist_4class_init_pair_keep_ratio_true\\android_export\\codex_safe_20260928_exp22\\ncnn_exp22\\exp22.ncnn.param": "b81b824fea9ff949f72f3715a8f20c6ebe96c2792370dd80b7a7a69a65335960",
+    "D:\\study\\Textile_defects\\nanodet-main\\nanodet-main\\workspace\\key_nut_thread_experiments\\exp22_factory_black_specialist_4class_init_pair_keep_ratio_true\\android_export\\codex_safe_20260928_exp22\\ncnn_exp22\\exp22.onnx": "eb3ed8b83b82ab04af65998aca03604fe1ea51c9c51ca864a256d633822629ed",
+    "D:\\study\\Textile_defects\\nanodet-main\\nanodet-main\\workspace\\key_nut_thread_experiments\\exp22_factory_black_specialist_4class_init_pair_keep_ratio_true\\android_export\\codex_safe_20260928_exp22\\ncnn_exp22\\exp22.pnnx.bin": "f15ff1747760998df2e62b32311b0ef107075b3b5a0d690417beb8da0b2a3ebf",
+    "D:\\study\\Textile_defects\\nanodet-main\\nanodet-main\\workspace\\key_nut_thread_experiments\\exp22_factory_black_specialist_4class_init_pair_keep_ratio_true\\android_export\\codex_safe_20260928_exp22\\ncnn_exp22\\exp22.pnnx.onnx": "9af09d8a2d22506ca78d41d32c925fdbde7dbc48b90b4206d3f9354e8882afe0",
+    "D:\\study\\Textile_defects\\nanodet-main\\nanodet-main\\workspace\\key_nut_thread_experiments\\exp22_factory_black_specialist_4class_init_pair_keep_ratio_true\\android_export\\codex_safe_20260928_exp22\\ncnn_exp22\\exp22.pnnx.param": "62478faff23348a2c75bb8951b42c4113c2d6e5b73bb56c5f8107ba32b3b2a66",
+    "D:\\study\\Textile_defects\\nanodet-main\\nanodet-main\\workspace\\key_nut_thread_experiments\\exp22_factory_black_specialist_4class_init_pair_keep_ratio_true\\android_export\\codex_safe_20260928_exp22\\ncnn_exp22\\exp22.pnnxsim.onnx": "78ad92e3c52f221cad91a8bba746efb19bc513c97fd05aaf1062f5e4c1d0b6fa",
+    "D:\\study\\Textile_defects\\nanodet-main\\nanodet-main\\workspace\\key_nut_thread_experiments\\exp22_factory_black_specialist_4class_init_pair_keep_ratio_true\\android_export\\codex_safe_20260928_exp22\\ncnn_exp22\\exp22_ncnn.py": "1a5d6a3f5263da7b9e5f61c1e64adbf52d89ee65c3b56f175488284af523aefc",
+    "D:\\study\\Textile_defects\\nanodet-main\\nanodet-main\\workspace\\key_nut_thread_experiments\\exp22_factory_black_specialist_4class_init_pair_keep_ratio_true\\android_export\\codex_safe_20260928_exp22\\ncnn_exp22\\exp22_pnnx.py": "bc0b7963046fa60b255739be95625624c8ea8a70d2a33147bae05283a2f3f8ba"
+  }
+}

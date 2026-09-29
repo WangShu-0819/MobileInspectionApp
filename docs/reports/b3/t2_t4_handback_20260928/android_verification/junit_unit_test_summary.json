@@ -1,0 +1,835 @@
+{
+  "Command": ".\\gradlew.bat testDebugUnitTest assembleDebug",
+  "GradleExitCode": 0,
+  "Tests": 1497.0,
+  "Failures": 0.0,
+  "Errors": 0.0,
+  "Skipped": 5.0,
+  "SuiteCount": 103,
+  "Suites": [
+    {
+      "File": "TEST-com.wearable.inspection.mobile.camera.CameraControllerTakePhotoTest.xml",
+      "Suite": "com.wearable.inspection.mobile.camera.CameraControllerTakePhotoTest",
+      "Tests": 17,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.camera.CameraControllerTest.xml",
+      "Suite": "com.wearable.inspection.mobile.camera.CameraControllerTest",
+      "Tests": 42,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.data.CapturedPhotoPersistenceContractTest.xml",
+      "Suite": "com.wearable.inspection.mobile.data.CapturedPhotoPersistenceContractTest",
+      "Tests": 5,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.data.db.Migration9To10RobolectricTest.xml",
+      "Suite": "com.wearable.inspection.mobile.data.db.Migration9To10RobolectricTest",
+      "Tests": 1,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.data.entity.CaptureBatchDeleteTest.xml",
+      "Suite": "com.wearable.inspection.mobile.data.entity.CaptureBatchDeleteTest",
+      "Tests": 27,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.data.entity.DpmScanEvidenceEntityTest.xml",
+      "Suite": "com.wearable.inspection.mobile.data.entity.DpmScanEvidenceEntityTest",
+      "Tests": 10,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.data.entity.RoiTargetTypeTest.xml",
+      "Suite": "com.wearable.inspection.mobile.data.entity.RoiTargetTypeTest",
+      "Tests": 12,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.data.entity.ViewRoiConfirmEntityTest.xml",
+      "Suite": "com.wearable.inspection.mobile.data.entity.ViewRoiConfirmEntityTest",
+      "Tests": 16,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.data.export.DpmEvidenceExportArchiveTest.xml",
+      "Suite": "com.wearable.inspection.mobile.data.export.DpmEvidenceExportArchiveTest",
+      "Tests": 2,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.data.export.DpmEvidenceExportServiceTest.xml",
+      "Suite": "com.wearable.inspection.mobile.data.export.DpmEvidenceExportServiceTest",
+      "Tests": 17,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.data.export.InspectionExcelExporterTest.xml",
+      "Suite": "com.wearable.inspection.mobile.data.export.InspectionExcelExporterTest",
+      "Tests": 20,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.data.export.InspectionZipExportArchiveTest.xml",
+      "Suite": "com.wearable.inspection.mobile.data.export.InspectionZipExportArchiveTest",
+      "Tests": 4,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.data.export.InspectionZipExportServiceTest.xml",
+      "Suite": "com.wearable.inspection.mobile.data.export.InspectionZipExportServiceTest",
+      "Tests": 17,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.data.export.PhotoExportServiceTest.xml",
+      "Suite": "com.wearable.inspection.mobile.data.export.PhotoExportServiceTest",
+      "Tests": 9,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.data.image.MobileImageStoreCapturePathTest.xml",
+      "Suite": "com.wearable.inspection.mobile.data.image.MobileImageStoreCapturePathTest",
+      "Tests": 2,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.data.image.MobileImageStoreRoiEvidenceTest.xml",
+      "Suite": "com.wearable.inspection.mobile.data.image.MobileImageStoreRoiEvidenceTest",
+      "Tests": 8,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.data.image.MobileImageStoreTest.xml",
+      "Suite": "com.wearable.inspection.mobile.data.image.MobileImageStoreTest",
+      "Tests": 18,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.data.MultiViewPhotoPersistenceTest.xml",
+      "Suite": "com.wearable.inspection.mobile.data.MultiViewPhotoPersistenceTest",
+      "Tests": 16,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.detection.DecoderClassConfigTest.xml",
+      "Suite": "com.wearable.inspection.mobile.detection.DecoderClassConfigTest",
+      "Tests": 8,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.detection.InferenceServiceConfigTest.xml",
+      "Suite": "com.wearable.inspection.mobile.detection.InferenceServiceConfigTest",
+      "Tests": 26,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.detection.ModelClassPolicyTest.xml",
+      "Suite": "com.wearable.inspection.mobile.detection.ModelClassPolicyTest",
+      "Tests": 25,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.detection.ModelRoutingDecisionTest.xml",
+      "Suite": "com.wearable.inspection.mobile.detection.ModelRoutingDecisionTest",
+      "Tests": 18,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.detection.NanoDetInferenceContractTest.xml",
+      "Suite": "com.wearable.inspection.mobile.detection.NanoDetInferenceContractTest",
+      "Tests": 19,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.detection.NanoDetRoiInferenceServiceModelUnavailableTest.xml",
+      "Suite": "com.wearable.inspection.mobile.detection.NanoDetRoiInferenceServiceModelUnavailableTest",
+      "Tests": 6,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.detection.NanoDetRoiInferenceServiceTest.xml",
+      "Suite": "com.wearable.inspection.mobile.detection.NanoDetRoiInferenceServiceTest",
+      "Tests": 2,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.detection.NmsBehaviorTest.xml",
+      "Suite": "com.wearable.inspection.mobile.detection.NmsBehaviorTest",
+      "Tests": 7,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.detection.PartModelRouterTest.xml",
+      "Suite": "com.wearable.inspection.mobile.detection.PartModelRouterTest",
+      "Tests": 18,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.detection.RoiSimilarityFallbackTest.xml",
+      "Suite": "com.wearable.inspection.mobile.detection.RoiSimilarityFallbackTest",
+      "Tests": 5,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.detection.SessionRoiRegistryTest.xml",
+      "Suite": "com.wearable.inspection.mobile.detection.SessionRoiRegistryTest",
+      "Tests": 9,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.detection.V4NanoDetIntegrationTest.xml",
+      "Suite": "com.wearable.inspection.mobile.detection.V4NanoDetIntegrationTest",
+      "Tests": 54,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.dpm.DpmAnalyzerTest.xml",
+      "Suite": "com.wearable.inspection.mobile.dpm.DpmAnalyzerTest",
+      "Tests": 9,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.dpm.DpmDecodePipelineTest.xml",
+      "Suite": "com.wearable.inspection.mobile.dpm.DpmDecodePipelineTest",
+      "Tests": 8,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.dpm.DpmDimensionModeTest.xml",
+      "Suite": "com.wearable.inspection.mobile.dpm.DpmDimensionModeTest",
+      "Tests": 11,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.dpm.DpmDumpBudgetTest.xml",
+      "Suite": "com.wearable.inspection.mobile.dpm.DpmDumpBudgetTest",
+      "Tests": 6,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.dpm.DpmEvidenceCleanupTest.xml",
+      "Suite": "com.wearable.inspection.mobile.dpm.DpmEvidenceCleanupTest",
+      "Tests": 53,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.dpm.DpmEvidenceFrameTrackerTest.xml",
+      "Suite": "com.wearable.inspection.mobile.dpm.DpmEvidenceFrameTrackerTest",
+      "Tests": 13,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.dpm.DpmFrameAnalyzerEvidenceTest.xml",
+      "Suite": "com.wearable.inspection.mobile.dpm.DpmFrameAnalyzerEvidenceTest",
+      "Tests": 8,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.dpm.DpmFrameAnalyzerTest.xml",
+      "Suite": "com.wearable.inspection.mobile.dpm.DpmFrameAnalyzerTest",
+      "Tests": 3,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.dpm.DpmFrameConstraintTest.xml",
+      "Suite": "com.wearable.inspection.mobile.dpm.DpmFrameConstraintTest",
+      "Tests": 17,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.dpm.DpmFrameQualityTest.xml",
+      "Suite": "com.wearable.inspection.mobile.dpm.DpmFrameQualityTest",
+      "Tests": 8,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.dpm.DpmGridGateTest.xml",
+      "Suite": "com.wearable.inspection.mobile.dpm.DpmGridGateTest",
+      "Tests": 7,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.dpm.DpmOfflineDecodeTest.xml",
+      "Suite": "com.wearable.inspection.mobile.dpm.DpmOfflineDecodeTest",
+      "Tests": 3,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.dpm.DpmPreprocessorTest.xml",
+      "Suite": "com.wearable.inspection.mobile.dpm.DpmPreprocessorTest",
+      "Tests": 16,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.dpm.DpmRespondGateTest.xml",
+      "Suite": "com.wearable.inspection.mobile.dpm.DpmRespondGateTest",
+      "Tests": 9,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.dpm.DpmScanControlTest.xml",
+      "Suite": "com.wearable.inspection.mobile.dpm.DpmScanControlTest",
+      "Tests": 5,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.dpm.DpmScanEvidenceContractTest.xml",
+      "Suite": "com.wearable.inspection.mobile.dpm.DpmScanEvidenceContractTest",
+      "Tests": 24,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.dpm.DpmScannerTest.xml",
+      "Suite": "com.wearable.inspection.mobile.dpm.DpmScannerTest",
+      "Tests": 17,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 5
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.dpm.DpmScanRoiMapperTest.xml",
+      "Suite": "com.wearable.inspection.mobile.dpm.DpmScanRoiMapperTest",
+      "Tests": 9,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.dpm.ZxingDataMatrixDecoderTest.xml",
+      "Suite": "com.wearable.inspection.mobile.dpm.ZxingDataMatrixDecoderTest",
+      "Tests": 4,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.ocr.BmwThreeLineFormatterTest.xml",
+      "Suite": "com.wearable.inspection.mobile.ocr.BmwThreeLineFormatterTest",
+      "Tests": 4,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.ocr.FormatterProbeTest.xml",
+      "Suite": "com.wearable.inspection.mobile.ocr.FormatterProbeTest",
+      "Tests": 1,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.ocr.OcrPreProcessorTest.xml",
+      "Suite": "com.wearable.inspection.mobile.ocr.OcrPreProcessorTest",
+      "Tests": 4,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.ocr.StampRegionLocatorTest.xml",
+      "Suite": "com.wearable.inspection.mobile.ocr.StampRegionLocatorTest",
+      "Tests": 10,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.ocr.SteelStampCharFusionTest.xml",
+      "Suite": "com.wearable.inspection.mobile.ocr.SteelStampCharFusionTest",
+      "Tests": 11,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.ocr.SteelStampLineClusterTest.xml",
+      "Suite": "com.wearable.inspection.mobile.ocr.SteelStampLineClusterTest",
+      "Tests": 7,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.ocr.SteelStampOcrAnalyzerTest.xml",
+      "Suite": "com.wearable.inspection.mobile.ocr.SteelStampOcrAnalyzerTest",
+      "Tests": 9,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.ocr.SteelStampResultTest.xml",
+      "Suite": "com.wearable.inspection.mobile.ocr.SteelStampResultTest",
+      "Tests": 17,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.ocr.SteelStampTextParserTest.xml",
+      "Suite": "com.wearable.inspection.mobile.ocr.SteelStampTextParserTest",
+      "Tests": 3,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.registration.GmsGridFilterTest.xml",
+      "Suite": "com.wearable.inspection.mobile.registration.GmsGridFilterTest",
+      "Tests": 7,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.registration.PhotoRegistrationEngineTest.xml",
+      "Suite": "com.wearable.inspection.mobile.registration.PhotoRegistrationEngineTest",
+      "Tests": 19,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.registration.RegistrationQualityGatesTest.xml",
+      "Suite": "com.wearable.inspection.mobile.registration.RegistrationQualityGatesTest",
+      "Tests": 35,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.result.ResultPackagerTest.xml",
+      "Suite": "com.wearable.inspection.mobile.result.ResultPackagerTest",
+      "Tests": 4,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.template.DirectoryTemplateImporterTest.xml",
+      "Suite": "com.wearable.inspection.mobile.template.DirectoryTemplateImporterTest",
+      "Tests": 16,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.template.TemplateCaptureConcurrencyTest.xml",
+      "Suite": "com.wearable.inspection.mobile.template.TemplateCaptureConcurrencyTest",
+      "Tests": 1,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.template.TemplateCaptureViewModelTest.xml",
+      "Suite": "com.wearable.inspection.mobile.template.TemplateCaptureViewModelTest",
+      "Tests": 18,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.template.TemplatePackageExporterTest.xml",
+      "Suite": "com.wearable.inspection.mobile.template.TemplatePackageExporterTest",
+      "Tests": 3,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.template.TemplatePackageImporterTest.xml",
+      "Suite": "com.wearable.inspection.mobile.template.TemplatePackageImporterTest",
+      "Tests": 22,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.template.TemplatePackageManagementTest.xml",
+      "Suite": "com.wearable.inspection.mobile.template.TemplatePackageManagementTest",
+      "Tests": 3,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.template.TemplatePartIdPrefixTest.xml",
+      "Suite": "com.wearable.inspection.mobile.template.TemplatePartIdPrefixTest",
+      "Tests": 7,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.ui.navigation.ViewConfirmationNavigationTest.xml",
+      "Suite": "com.wearable.inspection.mobile.ui.navigation.ViewConfirmationNavigationTest",
+      "Tests": 18,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.ui.screens.BatchFilterAndDeleteTest.xml",
+      "Suite": "com.wearable.inspection.mobile.ui.screens.BatchFilterAndDeleteTest",
+      "Tests": 61,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.ui.screens.CameraPreviewTest.xml",
+      "Suite": "com.wearable.inspection.mobile.ui.screens.CameraPreviewTest",
+      "Tests": 19,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.ui.screens.CaptureComparisonAutoNavigationTest.xml",
+      "Suite": "com.wearable.inspection.mobile.ui.screens.CaptureComparisonAutoNavigationTest",
+      "Tests": 21,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.ui.screens.CaptureComparisonGeometryTest.xml",
+      "Suite": "com.wearable.inspection.mobile.ui.screens.CaptureComparisonGeometryTest",
+      "Tests": 21,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.ui.screens.ContentRectCalculatorTest.xml",
+      "Suite": "com.wearable.inspection.mobile.ui.screens.ContentRectCalculatorTest",
+      "Tests": 10,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.ui.screens.DpmScanExitFlowTest.xml",
+      "Suite": "com.wearable.inspection.mobile.ui.screens.DpmScanExitFlowTest",
+      "Tests": 3,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.ui.screens.DpmScanExitLifecycleComposeTest.xml",
+      "Suite": "com.wearable.inspection.mobile.ui.screens.DpmScanExitLifecycleComposeTest",
+      "Tests": 1,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.ui.screens.ExifOrientationRegressionTest.xml",
+      "Suite": "com.wearable.inspection.mobile.ui.screens.ExifOrientationRegressionTest",
+      "Tests": 7,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.ui.screens.FullImageConfirmContentComposeTest.xml",
+      "Suite": "com.wearable.inspection.mobile.ui.screens.FullImageConfirmContentComposeTest",
+      "Tests": 13,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.ui.screens.FullImageDetectionOverlayTest.xml",
+      "Suite": "com.wearable.inspection.mobile.ui.screens.FullImageDetectionOverlayTest",
+      "Tests": 19,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.ui.screens.LiveInspectionCaptureStateTest.xml",
+      "Suite": "com.wearable.inspection.mobile.ui.screens.LiveInspectionCaptureStateTest",
+      "Tests": 33,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.ui.screens.LiveInspectionOverlayTest.xml",
+      "Suite": "com.wearable.inspection.mobile.ui.screens.LiveInspectionOverlayTest",
+      "Tests": 4,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.ui.screens.NoRoiViewAdvancementTest.xml",
+      "Suite": "com.wearable.inspection.mobile.ui.screens.NoRoiViewAdvancementTest",
+      "Tests": 18,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.ui.screens.PartColorComposeTest.xml",
+      "Suite": "com.wearable.inspection.mobile.ui.screens.PartColorComposeTest",
+      "Tests": 30,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.ui.screens.PartCreationValidatorTest.xml",
+      "Suite": "com.wearable.inspection.mobile.ui.screens.PartCreationValidatorTest",
+      "Tests": 18,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.ui.screens.PartCreationValidatorV2Test.xml",
+      "Suite": "com.wearable.inspection.mobile.ui.screens.PartCreationValidatorV2Test",
+      "Tests": 23,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.ui.screens.ProjectedRoiBoundaryTest.xml",
+      "Suite": "com.wearable.inspection.mobile.ui.screens.ProjectedRoiBoundaryTest",
+      "Tests": 6,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.ui.screens.RoiCoordinateMapperTest.xml",
+      "Suite": "com.wearable.inspection.mobile.ui.screens.RoiCoordinateMapperTest",
+      "Tests": 20,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.ui.screens.RoiEditorViewModelTest.xml",
+      "Suite": "com.wearable.inspection.mobile.ui.screens.RoiEditorViewModelTest",
+      "Tests": 80,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.ui.screens.RoiEvidenceExportTest.xml",
+      "Suite": "com.wearable.inspection.mobile.ui.screens.RoiEvidenceExportTest",
+      "Tests": 9,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.ui.screens.RoiExifMapperTest.xml",
+      "Suite": "com.wearable.inspection.mobile.ui.screens.RoiExifMapperTest",
+      "Tests": 1,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.ui.screens.RoiResultSemanticsTest.xml",
+      "Suite": "com.wearable.inspection.mobile.ui.screens.RoiResultSemanticsTest",
+      "Tests": 12,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.ui.screens.RoiSafetyMarginTest.xml",
+      "Suite": "com.wearable.inspection.mobile.ui.screens.RoiSafetyMarginTest",
+      "Tests": 32,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.ui.screens.SafZipExportTest.xml",
+      "Suite": "com.wearable.inspection.mobile.ui.screens.SafZipExportTest",
+      "Tests": 3,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.ui.screens.TemplateImageLoaderTest.xml",
+      "Suite": "com.wearable.inspection.mobile.ui.screens.TemplateImageLoaderTest",
+      "Tests": 39,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.ui.screens.TemplateRoiOverlayTest.xml",
+      "Suite": "com.wearable.inspection.mobile.ui.screens.TemplateRoiOverlayTest",
+      "Tests": 20,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.ui.screens.ViewConfirmationFlowTest.xml",
+      "Suite": "com.wearable.inspection.mobile.ui.screens.ViewConfirmationFlowTest",
+      "Tests": 12,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.ui.screens.ViewConfirmationModelResultComposeTest.xml",
+      "Suite": "com.wearable.inspection.mobile.ui.screens.ViewConfirmationModelResultComposeTest",
+      "Tests": 8,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.ui.screens.ViewConfirmationModelResultTest.xml",
+      "Suite": "com.wearable.inspection.mobile.ui.screens.ViewConfirmationModelResultTest",
+      "Tests": 28,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.ui.screens.ViewConfirmationPerformanceTest.xml",
+      "Suite": "com.wearable.inspection.mobile.ui.screens.ViewConfirmationPerformanceTest",
+      "Tests": 1,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.ui.screens.ViewConfirmationViewModelStateTest.xml",
+      "Suite": "com.wearable.inspection.mobile.ui.screens.ViewConfirmationViewModelStateTest",
+      "Tests": 17,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.ui.screens.ViewModelSaveLifecycleTest.xml",
+      "Suite": "com.wearable.inspection.mobile.ui.screens.ViewModelSaveLifecycleTest",
+      "Tests": 4,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    },
+    {
+      "File": "TEST-com.wearable.inspection.mobile.ui.screens.workbench.WorkbenchViewModelAdvanceTest.xml",
+      "Suite": "com.wearable.inspection.mobile.ui.screens.workbench.WorkbenchViewModelAdvanceTest",
+      "Tests": 15,
+      "Failures": 0,
+      "Errors": 0,
+      "Skipped": 0
+    }
+  ]
+}

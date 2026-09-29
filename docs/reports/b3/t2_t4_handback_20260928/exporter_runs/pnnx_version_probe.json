@@ -1,0 +1,7 @@
+{
+  "Command": "D:\\study\\Textile_defects\\_ncnn_toolchain_20260526\\pnnx\\pnnx\\pnnx.exe --version",
+  "ReturnCode": -1,
+  "Output": "Usage: pnnx [model.pt] [(key=value)...]\n  pnnxparam=model.pnnx.param\n  pnnxbin=model.pnnx.bin\n  pnnxpy=model_pnnx.py\n  pnnxonnx=model.pnnx.onnx\n  ncnnparam=model.ncnn.param\n  ncnnbin=model.ncnn.bin\n  ncnnpy=model_ncnn.py\n  fp16=1\n  optlevel=2\n  device=cpu/gpu\n  inputshape=[1,3,224,224],...\n  inputshape2=[1,3,320,320],...\n  input=in0.npy,...\n  input2=in0.npy,...\n  customop=C:\\Users\\nihui\\AppData\\Local\\torch_extensions\\torch_extensions\\Cache\\fused\\fused.dll,...\n  moduleop=models.common.Focus,models.yolo.Detect,...\nSample usage: pnnx mobilenet_v2.pt inputshape=[1,3,224,224]\n              pnnx yolov5s.pt inputshape=[1,3,640,640]f32 inputshape2=[1,3,320,320]f32 device=gpu moduleop=models.common.Focus,models.yolo.Detect",
+  "BinarySHA256": "16165DC5FCC53D31F0339B996C15FD2DC26B8D7DB43753F72EEAB0A0E576116E",
+  "FileVersion": null
+}

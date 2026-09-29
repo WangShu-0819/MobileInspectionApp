@@ -1,0 +1,35 @@
+Input shape: (416, 416)
+Num classes: 4
+Class names: ['Black Thread', 'Black Nutsert', 'Black Nut', 'Black Bolt']
+model size is  1.0x
+init weights...
+Finish initialize NanoDet-Plus Head.
+
+Exporting ONNX to D:\study\Textile_defects\nanodet-main\nanodet-main\workspace\key_nut_thread_experiments\exp22_factory_black_specialist_4class_init_pair_keep_ratio_true\android_export\codex_safe_20260928_exp22_retry1\exp22_4class_nanodet.onnx...
+ONNX exported: 5135345 bytes
+
+Verifying ONNX model...
+ONNX check passed
+PyTorch output shape: (1, 3598, 36)
+
+Simplifying ONNX...
+ONNX simplified successfully
+Simplified ONNX output: ['output']
+
+Running PNNX on D:\study\Textile_defects\nanodet-main\nanodet-main\workspace\key_nut_thread_experiments\exp22_factory_black_specialist_4class_init_pair_keep_ratio_true\android_export\codex_safe_20260928_exp22_retry1\ncnn_exp22\exp22.onnx...
+Command: D:\study\Textile_defects\_ncnn_toolchain_20260526\pnnx\pnnx\pnnx.exe D:\study\Textile_defects\nanodet-main\nanodet-main\workspace\key_nut_thread_experiments\exp22_factory_black_specialist_4class_init_pair_keep_ratio_true\android_export\codex_safe_20260928_exp22_retry1\ncnn_exp22\exp22.onnx inputshape=[1,3,416,416]f32 fp16=0 optlevel=2
+PNNX return code: 0
+
+NCNN output files:
+  exp22.ncnn.bin: 5005808 bytes
+  exp22.ncnn.param: 24308 bytes
+  exp22.onnx: 5123319 bytes
+  exp22.pnnx.bin: 5049666 bytes
+  exp22.pnnx.onnx: 5066219 bytes
+  exp22.pnnx.param: 60295 bytes
+  exp22.pnnxsim.onnx: 5062798 bytes
+  exp22_ncnn.py: 1059 bytes
+  exp22_pnnx.py: 70364 bytes
+Export manifest: D:\study\Textile_defects\nanodet-main\nanodet-main\workspace\key_nut_thread_experiments\exp22_factory_black_specialist_4class_init_pair_keep_ratio_true\android_export\codex_safe_20260928_exp22_retry1\export_manifest.json
+
+Done!

@@ -1,0 +1,81 @@
+{
+  "model": "exp22",
+  "imageSha256": "f9fcc75a2f4047db35fcd2b884e1bdf5bab3ce7addce8610c40a99469942ded6",
+  "imageWidth": 720,
+  "imageHeight": 1280,
+  "exifOrientation": 1,
+  "preprocessing": {
+    "resizedWidth": 234,
+    "resizedHeight": 416,
+    "scaleX": 0.325,
+    "scaleY": 0.325,
+    "color": "BGR",
+    "resize": "OpenCV INTER_LINEAR",
+    "inputTensorSha256": "1780011d72d18eb5c6f68cb6695b009dbfee350fe92f81a2cd4b4eaad7ee1f6b"
+  },
+  "status": "PASSED",
+  "assetsVerified": false,
+  "runtime": {
+    "abi": "arm64-v8a",
+    "device": "HUAWEI SEA-AL10",
+    "sdk": 29,
+    "ncnnPackage": "ncnn-20260526-android-shared"
+  },
+  "productionRuntime": {
+    "library": "libnanodet_ncnn_runtime.so",
+    "outputElementCount": 129528,
+    "actualMatMetadataReturned": false,
+    "nativeShapeGuard": "checks actual NCNN Mat dims/w/h/elemsize against create-time outputWidth, 3598 and float32; Mat metadata is not returned to Kotlin"
+  },
+  "testOnlyMatProbe": {
+    "library": "libncnn_smoke.so",
+    "actualMatDimsWHElemsize": [
+      2,
+      36,
+      3598,
+      4
+    ],
+    "outputElementCount": 129528
+  },
+  "inputTensorComparison": {
+    "comparedElements": 519168,
+    "maxAbsDiff": 0,
+    "elementsExceedingTolerance": 0,
+    "maxAbsTolerance": 0.01750800280112045,
+    "passed": true,
+    "actualSha256": "1780011d72d18eb5c6f68cb6695b009dbfee350fe92f81a2cd4b4eaad7ee1f6b",
+    "expectedSha256": "1780011d72d18eb5c6f68cb6695b009dbfee350fe92f81a2cd4b4eaad7ee1f6b",
+    "exactHashMatch": true
+  },
+  "productionVsMatProbeTensorComparison": {
+    "comparedElements": 129528,
+    "maxAbsDiff": 0,
+    "elementsExceedingTolerance": 0,
+    "maxAbsTolerance": 1E-05,
+    "passed": true
+  },
+  "rawTensorComparison": {
+    "comparedElements": 129528,
+    "maxAbsDiff": 3.3080577850341797E-06,
+    "elementsExceedingTolerance": 0,
+    "maxAbsTolerance": 1E-05,
+    "passed": true,
+    "actualSha256": "cc882aa81ad07d6d44ffff34a7f167768a5ee615ad7ea7ffb4f5deaef4a792ca",
+    "expectedSha256": "ac2c3ab86786f0f370f57c1a647773b643eb455a35875cb15c96a68115099201"
+  },
+  "decoderCandidateCount": 3,
+  "candidateComparison": {
+    "actualCount": 3,
+    "expectedCount": 3,
+    "nmsSurvivorKeysMatch": true,
+    "classNameMismatches": 0,
+    "numericMismatches": 0,
+    "maxScoreAbsDiff": 6.556510925292969E-07,
+    "maxBoxCoordinateAbsDiffPx": 1.5758756831019127E-05,
+    "scoreTolerance": 1E-05,
+    "boxCoordinateTolerancePx": 0.01,
+    "passed": true
+  },
+  "coordinatesWithinImage": true,
+  "targetPackage": "com.wearable.inspection.mobile"
+}

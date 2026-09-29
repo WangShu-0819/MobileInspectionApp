@@ -1,0 +1,120 @@
+Starting a Gradle Daemon, 1 busy and 1 incompatible and 2 stopped Daemons could not be reused, use --status for details
+Configuration on demand is an incubating feature.
+
+> Configure project :app
+WARNING: The option setting 'android.overridePathCheck=true' is experimental.
+The current default is 'false'.
+
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:generateDebugBuildConfig UP-TO-DATE
+> Task :app:checkDebugAarMetadata UP-TO-DATE
+> Task :app:generateDebugResValues UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths UP-TO-DATE
+> Task :app:generateDebugResources UP-TO-DATE
+> Task :app:mergeDebugResources UP-TO-DATE
+> Task :app:packageDebugResources UP-TO-DATE
+> Task :app:parseDebugLocalResources UP-TO-DATE
+> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksDebug UP-TO-DATE
+> Task :app:processDebugMainManifest FROM-CACHE
+> Task :app:processDebugManifest FROM-CACHE
+> Task :app:processDebugManifestForPackage FROM-CACHE
+> Task :app:processDebugResources FROM-CACHE
+> Task :app:javaPreCompileDebug UP-TO-DATE
+> Task :app:preDebugUnitTestBuild UP-TO-DATE
+> Task :app:javaPreCompileDebugUnitTest UP-TO-DATE
+> Task :app:mergeDebugShaders UP-TO-DATE
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:mergeDebugAssets UP-TO-DATE
+> Task :app:packageDebugUnitTestForUnitTest UP-TO-DATE
+> Task :app:generateDebugUnitTestConfig UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:compressDebugAssets UP-TO-DATE
+> Task :app:desugarDebugFileDependencies UP-TO-DATE
+> Task :app:checkDebugDuplicateClasses UP-TO-DATE
+> Task :app:mergeExtDexDebug UP-TO-DATE
+> Task :app:mergeLibDexDebug UP-TO-DATE
+> Task :app:prepareNanoDetMainNative
+
+> Task :app:buildNanoDetMainNative
+Android NDK: WARNING:C:\Users\ws\AppData\Local\Temp\mobileinspection-nanodet-main\Android.mk:nanodet_ncnn_runtime: non-system libraries in linker flags: -lncnn    
+Android NDK:     This is likely to result in incorrect builds. Try using LOCAL_STATIC_LIBRARIES    
+Android NDK:     or LOCAL_SHARED_LIBRARIES instead to list the library dependencies of the    
+Android NDK:     current module    
+[arm64-v8a] Compile++      : nanodet_ncnn_runtime <= nanodet_ncnn_jni.cpp
+[arm64-v8a] SharedLibrary  : libnanodet_ncnn_runtime.so
+[arm64-v8a] Install        : libnanodet_ncnn_runtime.so => C:\Users\ws\AppData\Local\Temp\mobileinspection-nanodet-main\libs/arm64-v8a/libnanodet_ncnn_runtime.so
+
+> Task :app:stageNanoDetMainNative UP-TO-DATE
+> Task :app:mergeDebugJniLibFolders UP-TO-DATE
+> Task :app:mergeDebugNativeLibs UP-TO-DATE
+> Task :app:stripDebugDebugSymbols UP-TO-DATE
+> Task :app:validateSigningDebug UP-TO-DATE
+> Task :app:writeDebugAppMetadata UP-TO-DATE
+> Task :app:writeDebugSigningConfigVersions UP-TO-DATE
+
+> Task :app:kspDebugKotlin
+w: [ksp] D:/study/Textile_defects/Wearable Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/data/entity/InspectionTemplateEntity.kt:21: partId column references a foreign key but it is not part of an index. This may trigger full table scans whenever parent table is modified so you are highly advised to create an index that covers this column.
+w: [ksp] D:/study/Textile_defects/Wearable Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/data/entity/RoiDefinitionEntity.kt:21: templateId column references a foreign key but it is not part of an index. This may trigger full table scans whenever parent table is modified so you are highly advised to create an index that covers this column.
+w: [ksp] D:/study/Textile_defects/Wearable Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/data/entity/InspectionSessionEntity.kt:27: partId column references a foreign key but it is not part of an index. This may trigger full table scans whenever parent table is modified so you are highly advised to create an index that covers this column.
+w: [ksp] D:/study/Textile_defects/Wearable Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/data/entity/InspectionSessionEntity.kt:27: templateId column references a foreign key but it is not part of an index. This may trigger full table scans whenever parent table is modified so you are highly advised to create an index that covers this column.
+w: [ksp] D:/study/Textile_defects/Wearable Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/data/entity/RoiInspectionRecordEntity.kt:27: sessionId column references a foreign key but it is not part of an index. This may trigger full table scans whenever parent table is modified so you are highly advised to create an index that covers this column.
+w: [ksp] D:/study/Textile_defects/Wearable Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/data/entity/RoiInspectionRecordEntity.kt:27: roiId column references a foreign key but it is not part of an index. This may trigger full table scans whenever parent table is modified so you are highly advised to create an index that covers this column.
+w: [ksp] D:/study/Textile_defects/Wearable Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/data/entity/CaptureBatchEntity.kt:24: partId column references a foreign key but it is not part of an index. This may trigger full table scans whenever parent table is modified so you are highly advised to create an index that covers this column.
+w: [ksp] D:/study/Textile_defects/Wearable Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/data/entity/CapturedPhotoEntity.kt:24: batchId column references a foreign key but it is not part of an index. This may trigger full table scans whenever parent table is modified so you are highly advised to create an index that covers this column.
+w: [ksp] D:/study/Textile_defects/Wearable Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/data/entity/ViewRoiConfirmEntity.kt:30: batchId column references a foreign key but it is not part of an index. This may trigger full table scans whenever parent table is modified so you are highly advised to create an index that covers this column.
+
+> Task :app:compileDebugKotlin
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/debug/java/com/wearable/inspection/mobile/verify/Capture20VerifyActivity.kt:98:18 This declaration overrides a deprecated member but is not marked as deprecated itself. Please add the '@Deprecated' annotation or suppress the diagnostic.
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/debug/java/com/wearable/inspection/mobile/verify/Capture20VerifyActivity.kt:99:15 'fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray): Unit' is deprecated. This method has been deprecated in favor of using the Activity Result API
+      which brings increased type safety via an {@link ActivityResultContract} and the prebuilt
+      contracts for common intents available in
+      {@link androidx.activity.result.contract.ActivityResultContracts}, provides hooks for
+      testing, and allow receiving results in separate, testable classes independent from your
+      activity. Use
+      {@link #registerForActivityResult(ActivityResultContract, ActivityResultCallback)} passing
+      in a {@link RequestMultiplePermissions} object for the {@link ActivityResultContract} and
+      handling the result in the {@link ActivityResultCallback#onActivityResult(Object) callback}.
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/ocr/OcrRoiCropUtils.kt:139:47 'static fun newInstance(p0: String, p1: Boolean): BitmapRegionDecoder' is deprecated. Deprecated in Java.
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/ui/screens/AppSettingsScreen.kt:97:57 'val Icons.Filled.ArrowBack: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ArrowBack.
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/ui/screens/AppSettingsScreen.kt:273:25 'fun Divider(modifier: Modifier = ..., thickness: Dp = ..., color: Color = ...): Unit' is deprecated. Renamed to HorizontalDivider.
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/ui/screens/CaptureComparisonScreen.kt:121:44 'val Icons.Filled.ArrowBack: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ArrowBack.
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/ui/screens/PartDetailScreen.kt:167:26 'val LocalLifecycleOwner: ProvidableCompositionLocal<LifecycleOwner>' is deprecated. Moved to lifecycle-runtime-compose library in androidx.lifecycle.compose package.
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/ui/screens/PartListScreen.kt:124:26 'val LocalLifecycleOwner: ProvidableCompositionLocal<LifecycleOwner>' is deprecated. Moved to lifecycle-runtime-compose library in androidx.lifecycle.compose package.
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/ui/screens/PartManagementScreen.kt:113:57 'val Icons.Filled.ArrowBack: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ArrowBack.
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/ui/screens/PlaceholderScreens.kt:62:57 'val Icons.Filled.ArrowBack: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ArrowBack.
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/ui/screens/ProfileScreen.kt:246:25 'fun Divider(modifier: Modifier = ..., thickness: Dp = ..., color: Color = ...): Unit' is deprecated. Renamed to HorizontalDivider.
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/ui/screens/ProfileScreen.kt:306:41 'val Icons.Filled.ArrowForward: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ArrowForward.
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/ui/screens/ResultManagementScreen.kt:69:57 'val Icons.Filled.ArrowBack: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ArrowBack.
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/ui/screens/RoiEditorScreen.kt:592:49 Condition is always 'true'.
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/ui/screens/TemplateConfigScreen.kt:162:26 'val LocalLifecycleOwner: ProvidableCompositionLocal<LifecycleOwner>' is deprecated. Moved to lifecycle-runtime-compose library in androidx.lifecycle.compose package.
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/ui/screens/TemplateConfigScreen.kt:537:13 'fun Divider(modifier: Modifier = ..., thickness: Dp = ..., color: Color = ...): Unit' is deprecated. Renamed to HorizontalDivider.
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/ui/screens/TemplateConfigScreen.kt:576:21 'fun Divider(modifier: Modifier = ..., thickness: Dp = ..., color: Color = ...): Unit' is deprecated. Renamed to HorizontalDivider.
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/ui/screens/TemplateDetailScreen.kt:278:37 'fun Divider(modifier: Modifier = ..., thickness: Dp = ..., color: Color = ...): Unit' is deprecated. Renamed to HorizontalDivider.
+w: file:///D:/study/Textile_defects/Wearable%20Inspection/MobileInspectionApp/app/src/main/java/com/wearable/inspection/mobile/ui/screens/ViewConfirmationScreen.kt:134:57 'val Icons.Filled.ArrowBack: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ArrowBack.
+
+> Task :app:compileDebugJavaWithJavac
+> Task :app:processDebugJavaRes UP-TO-DATE
+> Task :app:bundleDebugClassesToRuntimeJar
+> Task :app:bundleDebugClassesToCompileJar
+> Task :app:dexBuilderDebug
+> Task :app:mergeDebugGlobalSynthetics UP-TO-DATE
+> Task :app:mergeDebugJavaResource UP-TO-DATE
+> Task :app:mergeProjectDexDebug
+> Task :app:kspDebugUnitTestKotlin
+> Task :app:compileDebugUnitTestKotlin
+> Task :app:packageDebug
+> Task :app:compileDebugUnitTestJavaWithJavac UP-TO-DATE
+> Task :app:processDebugUnitTestJavaRes UP-TO-DATE
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+> Task :app:testDebugUnitTest
+> Task :app:cleanupNanoDetMainNative
+> Task :app:createDebugApkListingFileRedirect
+> Task :app:assembleDebug
+
+BUILD SUCCESSFUL in 1m 18s
+52 actionable tasks: 15 executed, 4 from cache, 33 up-to-date
