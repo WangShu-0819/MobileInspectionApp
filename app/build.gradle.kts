@@ -229,6 +229,8 @@ dependencies {
     testImplementation("org.robolectric:robolectric:4.13")
     debugImplementation(libs.androidx.compose.ui.test.manifest) // Compose UI test manifest
 
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4) // Compose UI instrumented 测试
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.test.espresso.core)
     androidTestImplementation(libs.androidx.room.testing)

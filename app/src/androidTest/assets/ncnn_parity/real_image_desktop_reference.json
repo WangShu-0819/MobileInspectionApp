@@ -1,0 +1,236 @@
+{
+  "schemaVersion": 1,
+  "status": "READY",
+  "generatedAtUtc": "2026-09-28T04:57:25.357350+00:00",
+  "runtime": {
+    "platform": "Windows-10-10.0.22621-SP0",
+    "machine": "",
+    "architecture": "64bit",
+    "pythonPlatform": "win-amd64",
+    "python": "3.11.13",
+    "ncnnVersion": "1.0.20260526",
+    "opencvVersion": "4.5.5",
+    "ncnnModulePath": "D:\\study\\Textile_defects\\_ncnn_toolchain_20260526\\ncnn_py311\\ncnn\\__init__.py",
+    "toolchainRoot": "D:\\study\\Textile_defects\\_ncnn_toolchain_20260526",
+    "vulkan": false,
+    "fp16Storage": false,
+    "fp16Packed": false,
+    "fp16Arithmetic": false,
+    "threads": 1
+  },
+  "image": {
+    "path": "app/src/androidTest/assets/ncnn_parity/frame_00000_f0.jpg",
+    "originalSourcePath": "D:\\study\\Textile_defects\\Wearable Inspection\\DCIM\\extracted_frames\\frame_00000_f0.jpg",
+    "sha256": "f9fcc75a2f4047db35fcd2b884e1bdf5bab3ce7addce8610c40a99469942ded6",
+    "width": 720,
+    "height": 1280,
+    "exifOrientation": 1,
+    "decoder": "OpenCV cv2.imread(IMREAD_COLOR | IMREAD_IGNORE_ORIENTATION)"
+  },
+  "preprocessing": {
+    "inputSize": 416,
+    "color": "BGR",
+    "resize": "OpenCV INTER_LINEAR",
+    "mean": [
+      103.52999877929688,
+      116.27999877929688,
+      123.67500305175781
+    ],
+    "std": [
+      57.375,
+      57.119998931884766,
+      58.39500045776367
+    ],
+    "letterbox": "top-left; padding normalized tensor values are zero",
+    "transform": {
+      "width": 720,
+      "height": 1280,
+      "resizedWidth": 234,
+      "resizedHeight": 416,
+      "scaleX": 0.325,
+      "scaleY": 0.325,
+      "padLeft": 0,
+      "padTop": 0,
+      "padRight": 182,
+      "padBottom": 0
+    },
+    "inputTensorLayout": "float32 NCHW [1,3,416,416]",
+    "inputTensorSha256": "1780011d72d18eb5c6f68cb6695b009dbfee350fe92f81a2cd4b4eaad7ee1f6b",
+    "inputTensor": {
+      "path": "real_image_desktop_input.f32",
+      "dtype": "float32-le",
+      "layout": "NCHW [1,3,416,416]",
+      "elementCount": 519168,
+      "sha256": "1780011d72d18eb5c6f68cb6695b009dbfee350fe92f81a2cd4b4eaad7ee1f6b"
+    }
+  },
+  "comparisonPolicy": {
+    "inputTensorMaxAbsoluteDifferenceTolerance": 0.01750800280112045,
+    "inputTensorToleranceBasis": "one uint8 intensity step divided by the smallest declared normalization std (57.12), plus 1e-6 for FP32 rounding; compares every preprocessed NCHW element",
+    "rawTensorMaxAbsoluteDifference": 1e-05,
+    "scoreMaxAbsoluteDifference": 1e-05,
+    "boxCoordinateMaxAbsoluteDifferencePx": 0.01,
+    "candidateIdentity": "exact (classIndex, point) set after classwise NMS",
+    "toleranceBasis": "raw FP32 tensor and score limits match the existing exp09 parity limits; 0.01 px bounds subpixel decoder rounding; all limits were fixed before this run and not tuned to these outputs"
+  },
+  "results": {
+    "exp22": {
+      "contractVersion": "nanodet-ncnn-exp22-black-4class",
+      "classNames": [
+        "Black Thread",
+        "Black Nutsert",
+        "Black Nut",
+        "Black Bolt"
+      ],
+      "classCount": 4,
+      "paramSha256": "b81b824fea9ff949f72f3715a8f20c6ebe96c2792370dd80b7a7a69a65335960",
+      "modelSha256": "d3a16edb715050b376f40b5f396fc748b984d781590aa1bf07b3f42a3d92a3d7",
+      "inputBlob": "in0",
+      "outputBlob": "out0",
+      "inputShape": [
+        1,
+        3,
+        416,
+        416
+      ],
+      "inputTensorSha256": "1780011d72d18eb5c6f68cb6695b009dbfee350fe92f81a2cd4b4eaad7ee1f6b",
+      "outputMat": {
+        "dims": 2,
+        "w": 36,
+        "h": 3598,
+        "elemsize": 4
+      },
+      "outputShape": [
+        3598,
+        36
+      ],
+      "outputTensor": {
+        "path": "real_image_exp22_desktop_output.f32",
+        "dtype": "float32-le",
+        "layout": "row-major [Mat.h, Mat.w]",
+        "elementCount": 129528,
+        "sha256": "ac2c3ab86786f0f370f57c1a647773b643eb455a35875cb15c96a68115099201"
+      },
+      "candidateThreshold": 0.05,
+      "nmsThreshold": 0.6,
+      "classwiseNmsMaxDetections": 100,
+      "candidateCountAfterNms": 3,
+      "candidates": [
+        {
+          "classIndex": 2,
+          "className": "Black Nut",
+          "score": 0.4670999050140381,
+          "box": [
+            217.0916237895267,
+            209.05946939606793,
+            413.3279401577137,
+            426.7621310738478
+          ],
+          "point": 689
+        },
+        {
+          "classIndex": 2,
+          "className": "Black Nut",
+          "score": 0.06604955345392227,
+          "box": [
+            180.75650494591,
+            845.510727357769,
+            358.5648399386927,
+            1049.852094008624
+          ],
+          "point": 2038
+        },
+        {
+          "classIndex": 2,
+          "className": "Black Nut",
+          "score": 0.06372535973787308,
+          "box": [
+            529.6132215196901,
+            496.92050795125095,
+            717.3309973007542,
+            682.5452090548775
+          ],
+          "point": 1273
+        }
+      ]
+    },
+    "exp23": {
+      "contractVersion": "nanodet-ncnn-exp23-white-2class",
+      "classNames": [
+        "White Nut",
+        "White Thread"
+      ],
+      "classCount": 2,
+      "paramSha256": "ad45e2f3fcb6777a5e924aa9a3095c23b2c5f900632720c389d7816a1a390bdd",
+      "modelSha256": "1b662094ce94f4a3a8c899f40e1cb449e01aa10ae7a1addabcb92bfef18da35d",
+      "inputBlob": "in0",
+      "outputBlob": "out0",
+      "inputShape": [
+        1,
+        3,
+        416,
+        416
+      ],
+      "inputTensorSha256": "1780011d72d18eb5c6f68cb6695b009dbfee350fe92f81a2cd4b4eaad7ee1f6b",
+      "outputMat": {
+        "dims": 2,
+        "w": 34,
+        "h": 3598,
+        "elemsize": 4
+      },
+      "outputShape": [
+        3598,
+        34
+      ],
+      "outputTensor": {
+        "path": "real_image_exp23_desktop_output.f32",
+        "dtype": "float32-le",
+        "layout": "row-major [Mat.h, Mat.w]",
+        "elementCount": 122332,
+        "sha256": "77d0053d0ebecb153214042cda453e1720d484368446d992a78fcb8d1f0ce822"
+      },
+      "candidateThreshold": 0.05,
+      "nmsThreshold": 0.6,
+      "classwiseNmsMaxDetections": 100,
+      "candidateCountAfterNms": 3,
+      "candidates": [
+        {
+          "classIndex": 0,
+          "className": "White Nut",
+          "score": 0.06428490579128265,
+          "box": [
+            133.26147007579206,
+            843.9366209067047,
+            202.87188452913963,
+            909.5852478713148
+          ],
+          "point": 1879
+        },
+        {
+          "classIndex": 0,
+          "className": "White Nut",
+          "score": 0.05640742927789688,
+          "box": [
+            145.42651576099365,
+            615.7729031921668,
+            225.8810191765772,
+            704.1384345613188
+          ],
+          "point": 1411
+        },
+        {
+          "classIndex": 0,
+          "className": "White Nut",
+          "score": 0.055789947509765625,
+          "box": [
+            249.91761111414405,
+            547.3930849404127,
+            338.94033537000274,
+            617.3784707813647
+          ],
+          "point": 3022
+        }
+      ]
+    }
+  }
+}

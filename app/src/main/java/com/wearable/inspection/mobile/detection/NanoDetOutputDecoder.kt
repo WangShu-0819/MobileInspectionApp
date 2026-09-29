@@ -7,18 +7,34 @@ import kotlin.math.min
 
 object NanoDetOutputDecoder {
     private val strides = intArrayOf(8, 16, 32, 64)
-    private val classNames = arrayOf("nut", "thread", "bolt", "nutsert")
+    private val defaultClassNames = arrayOf("nut", "thread", "bolt", "nutsert")
     private const val REG_MAX = 7
     private const val NMS_THRESHOLD = 0.6
     private const val MAX_DETECTIONS_PER_CLASS = 100
 
+    /**
+     * 使用默认 4 类名称解码（exp09 兼容）。
+     */
     fun decode(
         output: FloatArray,
         transform: NanoDetInputTransform,
         scoreThreshold: Float = NanoDetModelContract.CANDIDATE_THRESHOLD
+    ): List<NanoDetCandidate> = decode(output, transform, defaultClassNames, scoreThreshold)
+
+    /**
+     * 使用指定类别名称解码（支持 exp22/exp23 不同类数）。
+     *
+     * @param classNames 模型类别名称数组；其大小决定输出列宽（4 + 4*(REG_MAX+1)）
+     */
+    fun decode(
+        output: FloatArray,
+        transform: NanoDetInputTransform,
+        classNames: Array<String>,
+        scoreThreshold: Float = NanoDetModelContract.CANDIDATE_THRESHOLD
     ): List<NanoDetCandidate> {
-        require(output.size == NanoDetModelContract.OUTPUT_WIDTH * NanoDetModelContract.OUTPUT_HEIGHT) {
-            "Unexpected NCNN output element count: ${output.size}"
+        val outputWidth = classNames.size + 4 * (REG_MAX + 1)
+        require(output.size == outputWidth * NanoDetModelContract.OUTPUT_HEIGHT) {
+            "Unexpected NCNN output element count: ${output.size}, expected ${outputWidth * NanoDetModelContract.OUTPUT_HEIGHT} for ${classNames.size} classes"
         }
         require(output.all(Float::isFinite)) { "NCNN output contains non-finite values" }
         require(scoreThreshold.isFinite() && scoreThreshold in 0f..1f)
@@ -34,7 +50,7 @@ object NanoDetOutputDecoder {
                     val centerY = y * stride
                     if (centerX >= transform.resizedWidth || centerY >= transform.resizedHeight) continue
 
-                    val row = point * NanoDetModelContract.OUTPUT_WIDTH
+                    val row = point * outputWidth
                     var classIndex = 0
                     var maxClassScore = output[row]
                     for (c in 1 until classNames.size) {

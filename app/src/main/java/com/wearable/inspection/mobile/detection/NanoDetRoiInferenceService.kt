@@ -17,10 +17,28 @@ import java.security.MessageDigest
 class NanoDetRoiInferenceService(
     context: Context,
     private val businessThreshold: Float = NanoDetModelContract.STARTING_BUSINESS_THRESHOLD,
-    private val runtimeFactory: NanoDetTensorRuntimeFactory = NanoDetTensorRuntimeFactory(::RuntimeSession)
+    private val runtimeFactory: NanoDetTensorRuntimeFactory = NanoDetTensorRuntimeFactory(::RuntimeSession),
+    /** 零件 ID；用于前缀路由选择模型。空字符串表示旧零件（exp09）。 */
+    private val partId: String = "",
 ) : AutoCloseable {
     private val appContext = context.applicationContext
-    private val modelDirectory = File(appContext.filesDir, "models/${NanoDetModelContract.VERSION}")
+
+    /** 路由结果：根据 partId 前缀选择模型配置和类别策略。 */
+    private val routeResult: ModelRouteResult = PartModelRouter.resolveModelConfig(partId)
+    /** 当前模型配置；ModelUnavailable 时为 null，不携带任何模型元数据。 */
+    private val activeConfig: ModelConfig? = when (val r = routeResult) {
+        is ModelRouteResult.Success -> r.config
+        is ModelRouteResult.ModelUnavailable -> null
+    }
+    /** 当前类别策略；ModelUnavailable 时降级为 exp09（仅用于不需要模型的路径）。 */
+    private val classPolicy: ModelClassPolicy = when (val r = routeResult) {
+        is ModelRouteResult.Success -> r.classPolicy
+        is ModelRouteResult.ModelUnavailable -> Exp09ClassPolicy
+    }
+    /** 模型是否可用（路由成功且资产已验证）。 */
+    private val modelAvailable: Boolean = routeResult is ModelRouteResult.Success && (activeConfig?.assetsVerified == true)
+
+    private val modelDirectory = activeConfig?.let { File(appContext.filesDir, "models/${it.modelDirName}") }
     private var runtime: NanoDetTensorRuntime? = null
 
     init {
@@ -35,6 +53,31 @@ class NanoDetRoiInferenceService(
         templateExifOrientation: Int?
     ): Map<String, NanoDetRoiInferenceResult> {
         if (rois.isEmpty()) return emptyMap()
+
+        // 模型不可用时，所有 ROI 返回明确的 MODEL_UNAVAILABLE
+        // 不携带任何模型合同字段（targetClassIndex、shape、threshold 等均为 null）
+        if (!modelAvailable) {
+            val unavailableReason = (routeResult as ModelRouteResult.ModelUnavailable).reason
+            return rois.associate { roi ->
+                roi.id to NanoDetRoiInferenceResult(
+                    roiId = roi.id,
+                    status = NanoDetInferenceStatus.MODEL_UNAVAILABLE,
+                    modelSuggestion = null,
+                    matchingScore = null,
+                    targetClassIndex = null,
+                    threshold = null,
+                    candidateThreshold = null,
+                    modelVersion = null,
+                    modelParamSha256 = null,
+                    modelSha256 = null,
+                    inputShape = null,
+                    outputBlob = null,
+                    outputShape = null,
+                    detail = "模型不可用: $unavailableReason",
+                )
+            }
+        }
+
         val results = linkedMapOf<String, NanoDetRoiInferenceResult>()
         val pending = mutableListOf<PendingRoi>()
 
@@ -43,19 +86,26 @@ class NanoDetRoiInferenceService(
             val unsupported = when (targetType) {
                 null -> NanoDetInferenceStatus.ROI_NOT_CONFIGURED
                 RoiTargetType.FEATURE -> NanoDetInferenceStatus.FEATURE_UNSUPPORTED
-                else -> null
+                else -> if (!classPolicy.isTargetSupported(targetType))
+                    NanoDetInferenceStatus.MODEL_TARGET_UNSUPPORTED else null
             }
             if (unsupported != null) {
-                results[roi.id] = result(roi.id, unsupported, targetClass = NanoDetDecisionPolicy.classIndex(targetType))
+                val detail = if (unsupported == NanoDetInferenceStatus.MODEL_TARGET_UNSUPPORTED)
+                    "${activeConfig?.version ?: "未知"} 模型不支持 ${targetType?.name} 类别" else null
+                results[roi.id] = result(
+                    roi.id, unsupported,
+                    targetClass = classPolicy.classIndex(targetType),
+                    detail = detail
+                )
                 continue
             }
             val normalized = RoiCoordinateMapper.parseNormalizedRect(roi.normalizedRect)
             if (normalized == null) {
-                results[roi.id] = result(roi.id, NanoDetInferenceStatus.INVALID_ROI, targetClass = NanoDetDecisionPolicy.classIndex(targetType))
+                results[roi.id] = result(roi.id, NanoDetInferenceStatus.INVALID_ROI, targetClass = classPolicy.classIndex(targetType))
                 continue
             }
             if (templateExifOrientation == null) {
-                results[roi.id] = result(roi.id, NanoDetInferenceStatus.TEMPLATE_IMAGE_UNREADABLE, targetClass = NanoDetDecisionPolicy.classIndex(targetType))
+                results[roi.id] = result(roi.id, NanoDetInferenceStatus.TEMPLATE_IMAGE_UNREADABLE, targetClass = classPolicy.classIndex(targetType))
                 continue
             }
             pending += PendingRoi(roi, checkNotNull(targetType), normalized)
@@ -65,7 +115,7 @@ class NanoDetRoiInferenceService(
         val photoGeometry = RoiCoordinateMapper.getImageGeometry(photoPath)
         if (photoGeometry == null) {
             pending.forEach {
-                results[it.roi.id] = result(it.roi.id, NanoDetInferenceStatus.IMAGE_UNREADABLE, targetClass = NanoDetDecisionPolicy.classIndex(it.targetType))
+                results[it.roi.id] = result(it.roi.id, NanoDetInferenceStatus.IMAGE_UNREADABLE, targetClass = classPolicy.classIndex(it.targetType))
             }
             return results
         }
@@ -82,7 +132,7 @@ class NanoDetRoiInferenceService(
                 results[pendingRoi.roi.id] = result(
                     pendingRoi.roi.id,
                     NanoDetInferenceStatus.INVALID_ROI,
-                    targetClass = NanoDetDecisionPolicy.classIndex(pendingRoi.targetType),
+                    targetClass = classPolicy.classIndex(pendingRoi.targetType),
                     imageWidth = photoGeometry.width,
                     imageHeight = photoGeometry.height,
                     exifOrientation = photoGeometry.exifOrientation
@@ -99,7 +149,7 @@ class NanoDetRoiInferenceService(
                 results[it.pending.roi.id] = result(
                     it.pending.roi.id,
                     NanoDetInferenceStatus.ABI_UNSUPPORTED,
-                    targetClass = NanoDetDecisionPolicy.classIndex(it.pending.targetType),
+                    targetClass = classPolicy.classIndex(it.pending.targetType),
                     imageWidth = photoGeometry.width,
                     imageHeight = photoGeometry.height,
                     exifOrientation = photoGeometry.exifOrientation,
@@ -120,7 +170,7 @@ class NanoDetRoiInferenceService(
                 results[it.pending.roi.id] = result(
                     it.pending.roi.id,
                     NanoDetInferenceStatus.RUNTIME_UNAVAILABLE,
-                    targetClass = NanoDetDecisionPolicy.classIndex(it.pending.targetType),
+                    targetClass = classPolicy.classIndex(it.pending.targetType),
                     imageWidth = photoGeometry.width,
                     imageHeight = photoGeometry.height,
                     exifOrientation = photoGeometry.exifOrientation,
@@ -141,7 +191,7 @@ class NanoDetRoiInferenceService(
                 results[it.pending.roi.id] = result(
                     it.pending.roi.id,
                     NanoDetInferenceStatus.RUNTIME_UNAVAILABLE,
-                    targetClass = NanoDetDecisionPolicy.classIndex(it.pending.targetType),
+                    targetClass = classPolicy.classIndex(it.pending.targetType),
                     imageWidth = photoGeometry.width,
                     imageHeight = photoGeometry.height,
                     exifOrientation = photoGeometry.exifOrientation,
@@ -155,7 +205,7 @@ class NanoDetRoiInferenceService(
                 results[it.pending.roi.id] = result(
                     it.pending.roi.id,
                     NanoDetInferenceStatus.IMAGE_UNREADABLE,
-                    targetClass = NanoDetDecisionPolicy.classIndex(it.pending.targetType),
+                    targetClass = classPolicy.classIndex(it.pending.targetType),
                     imageWidth = photoGeometry.width,
                     imageHeight = photoGeometry.height,
                     exifOrientation = photoGeometry.exifOrientation,
@@ -171,7 +221,7 @@ class NanoDetRoiInferenceService(
                 results[it.pending.roi.id] = result(
                     it.pending.roi.id,
                     NanoDetInferenceStatus.IMAGE_UNREADABLE,
-                    targetClass = NanoDetDecisionPolicy.classIndex(it.pending.targetType),
+                    targetClass = classPolicy.classIndex(it.pending.targetType),
                     imageWidth = photoGeometry.width,
                     imageHeight = photoGeometry.height,
                     exifOrientation = photoGeometry.exifOrientation,
@@ -189,7 +239,7 @@ class NanoDetRoiInferenceService(
                 results[it.pending.roi.id] = result(
                     it.pending.roi.id,
                     NanoDetInferenceStatus.IMAGE_UNREADABLE,
-                    targetClass = NanoDetDecisionPolicy.classIndex(it.pending.targetType),
+                    targetClass = classPolicy.classIndex(it.pending.targetType),
                     imageWidth = photoGeometry.width,
                     imageHeight = photoGeometry.height,
                     exifOrientation = photoGeometry.exifOrientation,
@@ -206,7 +256,7 @@ class NanoDetRoiInferenceService(
                 results[it.pending.roi.id] = result(
                     it.pending.roi.id,
                     NanoDetInferenceStatus.IMAGE_UNREADABLE,
-                    targetClass = NanoDetDecisionPolicy.classIndex(it.pending.targetType),
+                    targetClass = classPolicy.classIndex(it.pending.targetType),
                     imageWidth = photoGeometry.width,
                     imageHeight = photoGeometry.height,
                     exifOrientation = photoGeometry.exifOrientation,
@@ -228,7 +278,7 @@ class NanoDetRoiInferenceService(
                         results[item.pending.roi.id] = result(
                             item.pending.roi.id,
                             NanoDetInferenceStatus.RUNTIME_UNAVAILABLE,
-                            targetClass = NanoDetDecisionPolicy.classIndex(item.pending.targetType),
+                            targetClass = classPolicy.classIndex(item.pending.targetType),
                             elapsedMs = elapsedMillis(startedAt),
                             imageWidth = photoGeometry.width,
                             imageHeight = photoGeometry.height,
@@ -241,7 +291,7 @@ class NanoDetRoiInferenceService(
                         results[item.pending.roi.id] = result(
                             item.pending.roi.id,
                             NanoDetInferenceStatus.MODEL_UNAVAILABLE,
-                            targetClass = NanoDetDecisionPolicy.classIndex(item.pending.targetType),
+                            targetClass = classPolicy.classIndex(item.pending.targetType),
                             elapsedMs = elapsedMillis(startedAt),
                             imageWidth = photoGeometry.width,
                             imageHeight = photoGeometry.height,
@@ -257,7 +307,7 @@ class NanoDetRoiInferenceService(
                         results[item.pending.roi.id] = result(
                             item.pending.roi.id,
                             NanoDetInferenceStatus.INFERENCE_ERROR,
-                            targetClass = NanoDetDecisionPolicy.classIndex(item.pending.targetType),
+                            targetClass = classPolicy.classIndex(item.pending.targetType),
                             elapsedMs = elapsedMillis(startedAt),
                             imageWidth = photoGeometry.width,
                             imageHeight = photoGeometry.height,
@@ -268,12 +318,12 @@ class NanoDetRoiInferenceService(
                         continue
                     }
                     val candidates = try {
-                        NanoDetOutputDecoder.decode(output, preprocessed.transform)
+                        NanoDetOutputDecoder.decode(output, preprocessed.transform, classPolicy.classNames)
                     } catch (e: IllegalArgumentException) {
                         results[item.pending.roi.id] = result(
                             item.pending.roi.id,
                             NanoDetInferenceStatus.INFERENCE_ERROR,
-                            targetClass = NanoDetDecisionPolicy.classIndex(item.pending.targetType),
+                            targetClass = classPolicy.classIndex(item.pending.targetType),
                             elapsedMs = elapsedMillis(startedAt),
                             imageWidth = photoGeometry.width,
                             imageHeight = photoGeometry.height,
@@ -301,7 +351,7 @@ class NanoDetRoiInferenceService(
                             imageBox = mappedBox.imageBox
                         )
                     }
-                    val decision = NanoDetDecisionPolicy.decide(item.pending.targetType, candidates, businessThreshold)
+                    val decision = NanoDetDecisionPolicy.decideWithPolicy(item.pending.targetType, candidates, businessThreshold, classPolicy)
                     results[item.pending.roi.id] = NanoDetRoiInferenceResult(
                         roiId = item.pending.roi.id,
                         status = decision.status,
@@ -314,13 +364,19 @@ class NanoDetRoiInferenceService(
                         imageHeight = photoGeometry.height,
                         exifOrientation = photoGeometry.exifOrientation,
                         roiBounds = item.bounds.asList(),
-                        detections = detections
+                        detections = detections,
+                        modelVersion = activeConfig!!.version,
+                        modelParamSha256 = activeConfig.paramSha256,
+                        modelSha256 = activeConfig.modelSha256,
+                        inputShape = "[1,3,${NanoDetModelContract.INPUT_SIZE},${NanoDetModelContract.INPUT_SIZE}]",
+                        outputBlob = NanoDetModelContract.OUTPUT_BLOB,
+                        outputShape = "[${activeConfig.outputHeight},${activeConfig.outputWidth}]",
                     )
                 } catch (e: LinkageError) {
                     results[item.pending.roi.id] = result(
                         item.pending.roi.id,
                         NanoDetInferenceStatus.RUNTIME_UNAVAILABLE,
-                        targetClass = NanoDetDecisionPolicy.classIndex(item.pending.targetType),
+                        targetClass = classPolicy.classIndex(item.pending.targetType),
                         elapsedMs = elapsedMillis(startedAt),
                         imageWidth = photoGeometry.width,
                         imageHeight = photoGeometry.height,
@@ -332,7 +388,7 @@ class NanoDetRoiInferenceService(
                     results[item.pending.roi.id] = result(
                         item.pending.roi.id,
                         NanoDetInferenceStatus.INFERENCE_ERROR,
-                        targetClass = NanoDetDecisionPolicy.classIndex(item.pending.targetType),
+                        targetClass = classPolicy.classIndex(item.pending.targetType),
                         elapsedMs = elapsedMillis(startedAt),
                         imageWidth = photoGeometry.width,
                         imageHeight = photoGeometry.height,
@@ -360,6 +416,20 @@ class NanoDetRoiInferenceService(
     @Synchronized
     fun inferFullImage(photoPath: String): FullImageInferResult {
         val startedAt = System.nanoTime()
+
+        if (!modelAvailable) {
+            val unavailableReason = (routeResult as ModelRouteResult.ModelUnavailable).reason
+            return FullImageInferResult(
+                detections = emptyList(), aggregatedSuggestion = null, highestScore = null,
+                elapsedMs = elapsedMillis(startedAt), imageWidth = 0, imageHeight = 0,
+                exifOrientation = null, status = NanoDetInferenceStatus.MODEL_UNAVAILABLE,
+                detail = "模型不可用: $unavailableReason",
+                modelVersion = null,
+                modelParamSha256 = null,
+                modelSha256 = null,
+                threshold = null,
+            )
+        }
 
         if (!Build.SUPPORTED_ABIS.contains("arm64-v8a")) {
             return FullImageInferResult(
@@ -463,7 +533,7 @@ class NanoDetRoiInferenceService(
                 )
             }
             val candidates = try {
-                NanoDetOutputDecoder.decode(output, preprocessed.transform)
+                NanoDetOutputDecoder.decode(output, preprocessed.transform, classPolicy.classNames)
             } catch (e: IllegalArgumentException) {
                 return FullImageInferResult(
                     detections = emptyList(), aggregatedSuggestion = null, highestScore = null,
@@ -502,6 +572,9 @@ class NanoDetRoiInferenceService(
                 imageHeight = photoGeometry.height,
                 exifOrientation = photoGeometry.exifOrientation,
                 status = if (detections.isNotEmpty()) NanoDetInferenceStatus.DETECTED else NanoDetInferenceStatus.NO_DETECTION,
+                modelVersion = activeConfig!!.version,
+                modelParamSha256 = activeConfig.paramSha256,
+                modelSha256 = activeConfig.modelSha256,
             )
         } finally {
             if (uprightImage !== rawImage) uprightImage.release()
@@ -510,20 +583,36 @@ class NanoDetRoiInferenceService(
     }
 
     private fun createRuntime(): NanoDetTensorRuntime {
-        val paramFile = ensureModel("nanodet.ncnn.param", NanoDetModelContract.PARAM_SHA256)
-        val modelFile = ensureModel("nanodet.ncnn.bin", NanoDetModelContract.MODEL_SHA256)
-        return runtimeFactory.create(paramFile.absolutePath, modelFile.absolutePath)
+        val config = activeConfig!! // modelAvailable 为 true 时 activeConfig 必非 null
+        val paramFile = ensureModel(
+            localName = config.assetParamPath.substringAfterLast('/'),
+            assetPath = config.assetParamPath,
+            expectedSha256 = config.paramSha256,
+        )
+        val modelFile = ensureModel(
+            localName = config.assetModelPath.substringAfterLast('/'),
+            assetPath = config.assetModelPath,
+            expectedSha256 = config.modelSha256,
+        )
+        return runtimeFactory.create(paramFile.absolutePath, modelFile.absolutePath, config.outputWidth)
     }
 
-    private fun ensureModel(name: String, expectedSha256: String): File {
-        val file = File(modelDirectory, name)
+    /**
+     * 确保模型资产已部署到本地缓存目录。
+     *
+     * 按完整资产路径（而非仅文件名）从 assets 复制到 models/{modelDirName}/。
+     * 各模型使用独立的缓存目录（由 activeConfig.modelDirName 隔离）和独立的 SHA-256。
+     * 不靠文件名判断模型类型；资产路径由 ModelConfig 显式指定。
+     */
+    private fun ensureModel(localName: String, assetPath: String, expectedSha256: String): File {
+        val dir = modelDirectory!! // 仅在 modelAvailable 路径调用，modelDirectory 必非 null
+        val file = File(dir, localName)
         if (!file.isFile || sha256(file) != expectedSha256) {
-            if (!modelDirectory.exists() && !modelDirectory.mkdirs()) error("无法创建模型目录")
+            if (!dir.exists() && !dir.mkdirs()) error("无法创建模型目录")
             file.delete()
-            val assetPath = "nanodet/$name"
             appContext.assets.open(assetPath).use { input -> file.outputStream().use(input::copyTo) }
         }
-        check(sha256(file) == expectedSha256) { "$name SHA-256 与已验证模型不匹配" }
+        check(sha256(file) == expectedSha256) { "$localName SHA-256 与已验证模型不匹配" }
         return file
     }
 
@@ -555,7 +644,13 @@ class NanoDetRoiInferenceService(
         imageHeight = imageHeight,
         exifOrientation = exifOrientation,
         roiBounds = roiBounds,
-        detail = detail
+        detail = detail,
+        modelVersion = activeConfig?.version,
+        modelParamSha256 = activeConfig?.paramSha256,
+        modelSha256 = activeConfig?.modelSha256,
+        inputShape = activeConfig?.let { "[1,3,${NanoDetModelContract.INPUT_SIZE},${NanoDetModelContract.INPUT_SIZE}]" },
+        outputBlob = activeConfig?.let { NanoDetModelContract.OUTPUT_BLOB },
+        outputShape = activeConfig?.let { "[${it.outputHeight},${it.outputWidth}]" },
     )
 
     @Synchronized
@@ -572,8 +667,8 @@ class NanoDetRoiInferenceService(
 
     private data class MappedRoi(val pending: PendingRoi, val bounds: com.wearable.inspection.mobile.ui.screens.ContentRectBounds)
 
-    private class RuntimeSession(paramPath: String, modelPath: String) : NanoDetTensorRuntime {
-        private var handle = NanoDetNcnnNative.create(paramPath, modelPath)
+    private class RuntimeSession(paramPath: String, modelPath: String, outputWidth: Int) : NanoDetTensorRuntime {
+        private var handle = NanoDetNcnnNative.create(paramPath, modelPath, outputWidth)
 
         init {
             check(handle != 0L) { "NCNN 返回无效 runtime handle" }

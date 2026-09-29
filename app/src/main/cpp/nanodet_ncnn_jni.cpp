@@ -8,11 +8,11 @@ namespace {
 constexpr int kInputWidth = 416;
 constexpr int kInputHeight = 416;
 constexpr int kChannels = 3;
-constexpr int kOutputWidth = 36;
 constexpr int kOutputHeight = 3598;
 
 struct Runtime {
     ncnn::Net net;
+    int outputWidth;
 };
 
 void throw_illegal_state(JNIEnv* env, const std::string& message) {
@@ -32,15 +32,20 @@ std::string to_string(JNIEnv* env, jstring value) {
 
 extern "C" JNIEXPORT jlong JNICALL
 Java_com_wearable_inspection_mobile_detection_NanoDetNcnnNative_create(
-        JNIEnv* env, jclass, jstring param_path, jstring model_path) {
+        JNIEnv* env, jclass, jstring param_path, jstring model_path, jint output_width) {
     const std::string param_file = to_string(env, param_path);
     const std::string model_file = to_string(env, model_path);
     if (param_file.empty() || model_file.empty()) {
         throw_illegal_state(env, "NCNN model paths are empty");
         return 0;
     }
+    if (output_width <= 0) {
+        throw_illegal_state(env, "NCNN outputWidth must be positive");
+        return 0;
+    }
 
     auto* runtime = new Runtime();
+    runtime->outputWidth = static_cast<int>(output_width);
     runtime->net.opt.use_vulkan_compute = false;
     runtime->net.opt.use_fp16_storage = false;
     runtime->net.opt.use_fp16_packed = false;
@@ -72,6 +77,8 @@ Java_com_wearable_inspection_mobile_detection_NanoDetNcnnNative_infer(
         return nullptr;
     }
 
+    const int outputWidth = runtime->outputWidth;
+
     ncnn::Mat input(kInputWidth, kInputHeight, kChannels);
     jfloat* source = env->GetFloatArrayElements(input_values, nullptr);
     if (source == nullptr) return nullptr;
@@ -93,19 +100,22 @@ Java_com_wearable_inspection_mobile_detection_NanoDetNcnnNative_infer(
         throw_illegal_state(env, "NCNN extract out0 failed: " + std::to_string(result));
         return nullptr;
     }
-    if (output.dims != 2 || output.w != kOutputWidth || output.h != kOutputHeight ||
+    if (output.dims != 2 || output.w != outputWidth || output.h != kOutputHeight ||
         output.elemsize != sizeof(float)) {
-        throw_illegal_state(env, "Unexpected NCNN output shape or element size");
+        throw_illegal_state(env, "Unexpected NCNN output shape: got [" +
+            std::to_string(output.h) + "," + std::to_string(output.w) +
+            "], expected [" + std::to_string(kOutputHeight) + "," +
+            std::to_string(outputWidth) + "]");
         return nullptr;
     }
 
-    const jsize count = kOutputWidth * kOutputHeight;
+    const jsize count = outputWidth * kOutputHeight;
     jfloatArray result_array = env->NewFloatArray(count);
     if (result_array == nullptr) return nullptr;
     jfloat* destination = env->GetFloatArrayElements(result_array, nullptr);
     if (destination == nullptr) return nullptr;
     for (int row = 0; row < kOutputHeight; ++row) {
-        std::memcpy(destination + row * kOutputWidth, output.row(row), kOutputWidth * sizeof(float));
+        std::memcpy(destination + row * outputWidth, output.row(row), outputWidth * sizeof(float));
     }
     env->ReleaseFloatArrayElements(result_array, destination, 0);
     return result_array;

@@ -25,8 +25,8 @@ data class FullImageInferResult(
     /** 推理状态 */
     val status: NanoDetInferenceStatus,
     val detail: String? = null,
-    val modelVersion: String = NanoDetModelContract.VERSION,
-    val modelParamSha256: String = NanoDetModelContract.PARAM_SHA256,
-    val modelSha256: String = NanoDetModelContract.MODEL_SHA256,
-    val threshold: Float = NanoDetModelContract.STARTING_BUSINESS_THRESHOLD,
+    val modelVersion: String? = null,
+    val modelParamSha256: String? = null,
+    val modelSha256: String? = null,
+    val threshold: Float? = NanoDetModelContract.STARTING_BUSINESS_THRESHOLD,
 )
