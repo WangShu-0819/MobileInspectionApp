@@ -1,0 +1,21 @@
+{
+  "dataset_directory": "D:\\study\\Textile_defects\\Wearable Inspection\\Key_update_black",
+  "image_count": 33,
+  "category_counts": {
+    "nut": 11,
+    "Nutsert": 6,
+    "thread": 16
+  },
+  "label_directory": "D:\\study\\Textile_defects\\Wearable Inspection\\Key_update_black_label",
+  "matched_label_files": 33,
+  "roi_box_count": 45,
+  "annotation_class_counts": {
+    "Thread": 16,
+    "Nutsert": 18,
+    "Black Nut": 11
+  },
+  "exif_orientation_counts": {
+    "missing": 33
+  },
+  "source_read_only": true
+}

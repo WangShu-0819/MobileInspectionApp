@@ -1,0 +1,132 @@
+{
+  "dataset": "D:\\study\\Textile_defects\\Wearable Inspection\\Key_update_black",
+  "labels_directory": "D:\\study\\Textile_defects\\Wearable Inspection\\Key_update_black_label",
+  "seed": 20260927,
+  "dataset_inventory": {
+    "image_count": 33,
+    "matched_label_count": 33,
+    "roi_box_count": 45,
+    "thread_roi_count": 16,
+    "thread_roi_classes": [
+      "Black Thread"
+    ]
+  },
+  "images_with_thread_rois": 16,
+  "thread_roi_count": 16,
+  "transforms": [
+    "identity",
+    "perspective_moderate",
+    "combined_moderate"
+  ],
+  "coverage_levels": [
+    0.1,
+    0.25,
+    0.5,
+    0.75,
+    1.0
+  ],
+  "positions": [
+    "top",
+    "center",
+    "bottom"
+  ],
+  "case_count": 768,
+  "clean_geometry_scored_count": 48,
+  "synthetic_occlusion_scored_count": 707,
+  "registration_rejected_count": 13,
+  "clean_ssim_min": 0.9404669404029846,
+  "clean_ssim_p05": 0.9518570065498352,
+  "clean_ssim_median": 0.9651124477386475,
+  "severe_synthetic_scored_count": 276,
+  "severe_synthetic_ssim_max": 0.4373129904270172,
+  "trial_candidate": {
+    "metric": "mean grayscale SSIM over the valid ROI core",
+    "threshold": 0.95,
+    "clean_geometry_pass_count": 46,
+    "clean_geometry_count": 48,
+    "severe_synthetic_pass_count": 0,
+    "severe_synthetic_count": 276,
+    "status": "supervised Black Thread field-trial candidate; not a validated business threshold"
+  },
+  "coverage_summary": [
+    {
+      "coverage": 0.1,
+      "case_count": 144,
+      "scored_count": 144,
+      "registration_rejected_count": 0,
+      "ssim_median": 0.9035738706588745,
+      "ssim_max": 0.9598019123077393,
+      "pass_at_trial_candidate_count": 12,
+      "pass_at_0_90_count": 78
+    },
+    {
+      "coverage": 0.25,
+      "case_count": 144,
+      "scored_count": 144,
+      "registration_rejected_count": 0,
+      "ssim_median": 0.7754883766174316,
+      "ssim_max": 0.8388441801071167,
+      "pass_at_trial_candidate_count": 0,
+      "pass_at_0_90_count": 0
+    },
+    {
+      "coverage": 0.5,
+      "case_count": 144,
+      "scored_count": 143,
+      "registration_rejected_count": 1,
+      "ssim_median": 0.5516124963760376,
+      "ssim_max": 0.6240355372428894,
+      "pass_at_trial_candidate_count": 0,
+      "pass_at_0_90_count": 0
+    },
+    {
+      "coverage": 0.75,
+      "case_count": 144,
+      "scored_count": 141,
+      "registration_rejected_count": 3,
+      "ssim_median": 0.3314073383808136,
+      "ssim_max": 0.4373129904270172,
+      "pass_at_trial_candidate_count": 0,
+      "pass_at_0_90_count": 0
+    },
+    {
+      "coverage": 1.0,
+      "case_count": 144,
+      "scored_count": 135,
+      "registration_rejected_count": 9,
+      "ssim_median": 0.1638684868812561,
+      "ssim_max": 0.29885178804397583,
+      "pass_at_trial_candidate_count": 0,
+      "pass_at_0_90_count": 0
+    }
+  ],
+  "key_role": {
+    "directory": "D:\\study\\Textile_defects\\Wearable Inspection\\Key_role",
+    "image_count": 42,
+    "image_dimensions": {
+      "473x473": 5,
+      "788x788": 6,
+      "657x657": 11,
+      "378x378": 2,
+      "788x1051": 2,
+      "788x1050": 1,
+      "327x1651": 1,
+      "946x946": 2,
+      "663x1065": 1,
+      "657x876": 4,
+      "3000x4000": 3,
+      "550x550": 3,
+      "1183x1183": 1
+    },
+    "labeled": false,
+    "pairing_status": "not established",
+    "expected_hole_semantics": "unknown",
+    "used_as_ground_truth": false
+  },
+  "limitations": [
+    "All scores are same-image synthetic geometry/occlusion responses, not real absent-part or defect labels.",
+    "Python registration omits the App custom GMS and does not establish Android V4 parity.",
+    "The solid median-background band is an artificial occlusion, not a physically removed part.",
+    "Key_role has no verified pairing map and its expected-hole semantics are uncertain, so it is excluded from threshold selection."
+  ]
+}

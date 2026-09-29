@@ -1,0 +1,1643 @@
+{
+  "created_local": "2026-09-24T15:45:51+08:00",
+  "dataset_directory": "D:\\study\\Textile_defects\\Wearable Inspection\\Key_update_black",
+  "seed": 20260924,
+  "inventory": {
+    "image_count": 33,
+    "category_counts": {
+      "nut": 11,
+      "Nutsert": 6,
+      "thread": 16
+    },
+    "label_directory": "D:\\study\\Textile_defects\\Wearable Inspection\\Key_update_black_label",
+    "label_files_matched": 33,
+    "roi_boxes": 45,
+    "annotation_classes": [
+      "Part_1",
+      "Part_2",
+      "Nut",
+      "Thread",
+      "Nutsert",
+      "Black Nut",
+      "Whilte Thread",
+      "Bolt"
+    ],
+    "orientation_counts": {
+      "missing": 33
+    }
+  },
+  "environment": {
+    "python_executable": "D:\\ProgramData\\anaconda3\\envs\\dinov2\\python.exe",
+    "python_version": "3.9.23",
+    "opencv_version": "4.13.0",
+    "numpy_version": "2.0.2",
+    "pillow_version": "11.1.0",
+    "ssim_implementation": "OpenCV Gaussian-window SSIM (local implementation); scikit-image not installed"
+  },
+  "app_v4_comparison": {
+    "feature": "AKAZE M-LDB, threshold 0.002, 4 octaves, 4 layers, top 1000 by response",
+    "matching": "BFMatcher Hamming, Lowe ratio 0.75; GMS omitted",
+    "homography": "USAC_MAGSAC, 8px threshold, 500 iterations, 0.995 confidence when exposed by OpenCV",
+    "quality_gate_thresholds": {
+      "minimum_inliers": 10,
+      "minimum_inlier_ratio": 0.3,
+      "maximum_median_reprojection_error_px": 8.0,
+      "minimum_spatial_coverage_hull_over_bbox": 0.15,
+      "projected_roi_area_ratio": [
+        0.005,
+        0.95
+      ],
+      "boundary_margin_px": 50.0
+    },
+    "difference": "Python/OpenCV does not run the App custom GMS filter; ratio-test matches go directly to MAGSAC/RANSAC. App targets OpenCV 4.10.0, this run uses its recorded Python OpenCV version. This is not an Android V4 equivalence claim.",
+    "similarity_thresholds_changed": false
+  },
+  "scope": {
+    "synthetic_case_count": 561,
+    "different_source_control_count": 528,
+    "same_category_control_count": 190,
+    "cross_category_control_count": 338,
+    "different_source_pairs_are_business_negatives": false,
+    "automated_ok_ng_or_missing_part_labels_available": false,
+    "business_thresholds_used_or_tuned": false
+  },
+  "synthetic_overall": {
+    "case_count": 561,
+    "homography_estimated_count": 561,
+    "registration_success_count": 538,
+    "gate_rejected_after_homography_count": 23,
+    "registration_failed_before_homography_count": 0,
+    "failure_types": {
+      "none": 538,
+      "projected_corners_outside_50px_margin": 21,
+      "projected_area_below_0.005": 2
+    },
+    "inlier_count": {
+      "count": 561,
+      "mean": 229.40819964349376,
+      "median": 155.0,
+      "p90": 474.0,
+      "min": 34.0,
+      "max": 1000.0
+    },
+    "inlier_ratio": {
+      "count": 561,
+      "mean": 0.9870712959218162,
+      "median": 0.9900990099009901,
+      "p90": 1.0,
+      "min": 0.888235294117647,
+      "max": 1.0
+    },
+    "spatial_coverage": {
+      "count": 561,
+      "mean": 0.74062962175451,
+      "median": 0.7601718043195618,
+      "p90": 0.8560263711184836,
+      "min": 0.35926042586677703,
+      "max": 0.9314860396742336
+    },
+    "median_reprojection_error_px": {
+      "count": 561,
+      "mean": 0.23070848230504948,
+      "median": 0.19706189632415771,
+      "p90": 0.5023816823959351,
+      "min": 0.0,
+      "max": 0.9901922345161438
+    },
+    "corner_error_mean_px": {
+      "count": 561,
+      "mean": 0.4706750606417569,
+      "median": 0.29171907901763916,
+      "p90": 0.8663978576660156,
+      "min": 0.0,
+      "max": 10.334707260131836
+    },
+    "estimated_overlap_ratio": {
+      "count": 561,
+      "mean": 0.9161925087731068,
+      "median": 0.9673817762399077,
+      "p90": 0.9999238411572213,
+      "min": 0.5084635239777204,
+      "max": 1.0
+    },
+    "registration_time_ms": {
+      "count": 561,
+      "mean": 77.15864171122995,
+      "median": 57.092,
+      "p90": 162.197,
+      "min": 15.336,
+      "max": 437.641
+    },
+    "unaligned_roi_ssim": {
+      "count": 561,
+      "mean": 0.4034729314950282,
+      "median": 0.36572787165641785,
+      "p90": 0.8452036380767822,
+      "min": 0.03564930707216263,
+      "max": 1.0
+    },
+    "estimated_roi_ssim": {
+      "count": 561,
+      "mean": 0.9721734421244704,
+      "median": 0.9745962023735046,
+      "p90": 0.9890236854553223,
+      "min": 0.9251081943511963,
+      "max": 1.0
+    },
+    "known_roi_ssim_upper_reference": {
+      "count": 561,
+      "mean": 0.9745030788814321,
+      "median": 0.9762798547744751,
+      "p90": 0.9906184673309326,
+      "min": 0.9372103214263916,
+      "max": 1.0
+    },
+    "unaligned_roi_gradient_ssim": {
+      "count": 561,
+      "mean": 0.21254982836408937,
+      "median": 0.11113382875919342,
+      "p90": 0.6285394430160522,
+      "min": 0.00021740415832027793,
+      "max": 1.0
+    },
+    "estimated_roi_gradient_ssim": {
+      "count": 561,
+      "mean": 0.9375253505318631,
+      "median": 0.9355547626813253,
+      "p90": 0.9736891984939575,
+      "min": 0.8096112012863159,
+      "max": 1.0
+    },
+    "known_roi_gradient_ssim_upper_reference": {
+      "count": 561,
+      "mean": 0.9446743446237901,
+      "median": 0.9399714867273966,
+      "p90": 0.9773805737495422,
+      "min": 0.8777722716331482,
+      "max": 1.0
+    }
+  },
+  "by_transform_and_intensity": {
+    "combined:moderate": {
+      "case_count": 33,
+      "homography_estimated": 33,
+      "registration_success": 31,
+      "quality_gate_pass_rate": 0.9393939393939394,
+      "failure_types": {
+        "none": 31,
+        "projected_corners_outside_50px_margin": 2
+      },
+      "inlier_count": {
+        "count": 33,
+        "mean": 213.36363636363637,
+        "median": 154.0,
+        "p90": 548.2000000000002,
+        "min": 55.0,
+        "max": 680.0
+      },
+      "inlier_ratio": {
+        "count": 33,
+        "mean": 0.9842833119219346,
+        "median": 0.9883268482490273,
+        "p90": 0.9993788819875776,
+        "min": 0.9414414414414415,
+        "max": 1.0
+      },
+      "spatial_coverage": {
+        "count": 33,
+        "mean": 0.7286376056892853,
+        "median": 0.748504691381773,
+        "p90": 0.8283701579370502,
+        "min": 0.44908303694379087,
+        "max": 0.8513361886872456
+      },
+      "median_reprojection_error_px": {
+        "count": 33,
+        "mean": 0.24654307555068622,
+        "median": 0.2335771769285202,
+        "p90": 0.3270990014076233,
+        "min": 0.16651785373687744,
+        "max": 0.4560840129852295
+      },
+      "corner_error_mean_px": {
+        "count": 33,
+        "mean": 0.767780478253509,
+        "median": 0.3778672516345978,
+        "p90": 0.9499794244766236,
+        "min": 0.19500957429409027,
+        "max": 10.334707260131836
+      },
+      "estimated_overlap_ratio": {
+        "count": 33,
+        "mean": 0.8398902995081698,
+        "median": 0.8600079041161505,
+        "p90": 0.8637085199230176,
+        "min": 0.7083385409591089,
+        "max": 0.8667146549267402
+      },
+      "registration_time_ms": {
+        "count": 33,
+        "mean": 75.18136363636364,
+        "median": 56.598,
+        "p90": 135.4584,
+        "min": 18.731,
+        "max": 279.532
+      },
+      "unaligned_roi_ssim": {
+        "count": 33,
+        "mean": 0.2525051779141932,
+        "median": 0.24035699168841043,
+        "p90": 0.4262364983558655,
+        "min": 0.05933209881186485,
+        "max": 0.47258493304252625
+      },
+      "estimated_roi_ssim": {
+        "count": 33,
+        "mean": 0.9693631475622003,
+        "median": 0.9680100679397583,
+        "p90": 0.9816478729248047,
+        "min": 0.9495243430137634,
+        "max": 0.9835788607597351
+      },
+      "known_roi_ssim_upper_reference": {
+        "count": 33,
+        "mean": 0.971461604941975,
+        "median": 0.9694836735725403,
+        "p90": 0.982706880569458,
+        "min": 0.9581130743026733,
+        "max": 0.9839720129966736
+      },
+      "unaligned_roi_gradient_ssim": {
+        "count": 33,
+        "mean": 0.06873308215290308,
+        "median": 0.0452633760869503,
+        "p90": 0.1285393312573433,
+        "min": 0.017382415011525154,
+        "max": 0.15284502506256104
+      },
+      "estimated_roi_gradient_ssim": {
+        "count": 33,
+        "mean": 0.932428139026719,
+        "median": 0.9372125864028931,
+        "p90": 0.9449335932731628,
+        "min": 0.8785601258277893,
+        "max": 0.949720561504364
+      },
+      "known_roi_gradient_ssim_upper_reference": {
+        "count": 33,
+        "mean": 0.938876338077314,
+        "median": 0.9400944113731384,
+        "p90": 0.9481176614761353,
+        "min": 0.9211901426315308,
+        "max": 0.9576591650644938
+      }
+    },
+    "identity:none": {
+      "case_count": 33,
+      "homography_estimated": 33,
+      "registration_success": 33,
+      "quality_gate_pass_rate": 1.0,
+      "failure_types": {
+        "none": 33
+      },
+      "inlier_count": {
+        "count": 33,
+        "mean": 312.54545454545456,
+        "median": 197.0,
+        "p90": 912.8000000000003,
+        "min": 70.0,
+        "max": 1000.0
+      },
+      "inlier_ratio": {
+        "count": 33,
+        "mean": 1.0,
+        "median": 1.0,
+        "p90": 1.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "spatial_coverage": {
+        "count": 33,
+        "mean": 0.8042103430307814,
+        "median": 0.8151332241282774,
+        "p90": 0.891640798683804,
+        "min": 0.5680182399854226,
+        "max": 0.9285263082679253
+      },
+      "median_reprojection_error_px": {
+        "count": 33,
+        "mean": 0.0,
+        "median": 0.0,
+        "p90": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "corner_error_mean_px": {
+        "count": 33,
+        "mean": 2.1359801270380216e-13,
+        "median": 0.0,
+        "p90": 6.976113480286485e-13,
+        "min": 0.0,
+        "max": 2.0104807575693773e-12
+      },
+      "estimated_overlap_ratio": {
+        "count": 33,
+        "mean": 1.0,
+        "median": 1.0,
+        "p90": 1.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "registration_time_ms": {
+        "count": 33,
+        "mean": 82.2790303030303,
+        "median": 57.649,
+        "p90": 157.9284,
+        "min": 17.89,
+        "max": 437.641
+      },
+      "unaligned_roi_ssim": {
+        "count": 33,
+        "mean": 1.0,
+        "median": 1.0,
+        "p90": 1.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "estimated_roi_ssim": {
+        "count": 33,
+        "mean": 1.0,
+        "median": 1.0,
+        "p90": 1.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "known_roi_ssim_upper_reference": {
+        "count": 33,
+        "mean": 1.0,
+        "median": 1.0,
+        "p90": 1.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "unaligned_roi_gradient_ssim": {
+        "count": 33,
+        "mean": 1.0,
+        "median": 1.0,
+        "p90": 1.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "estimated_roi_gradient_ssim": {
+        "count": 33,
+        "mean": 1.0,
+        "median": 1.0,
+        "p90": 1.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "known_roi_gradient_ssim_upper_reference": {
+        "count": 33,
+        "mean": 1.0,
+        "median": 1.0,
+        "p90": 1.0,
+        "min": 1.0,
+        "max": 1.0
+      }
+    },
+    "perspective:light": {
+      "case_count": 33,
+      "homography_estimated": 33,
+      "registration_success": 33,
+      "quality_gate_pass_rate": 1.0,
+      "failure_types": {
+        "none": 33
+      },
+      "inlier_count": {
+        "count": 33,
+        "mean": 272.2121212121212,
+        "median": 176.0,
+        "p90": 787.6000000000003,
+        "min": 61.0,
+        "max": 894.0
+      },
+      "inlier_ratio": {
+        "count": 33,
+        "mean": 0.9949366130605591,
+        "median": 0.9954128440366973,
+        "p90": 1.0,
+        "min": 0.9842105263157894,
+        "max": 1.0
+      },
+      "spatial_coverage": {
+        "count": 33,
+        "mean": 0.7873553670671142,
+        "median": 0.8070759818120912,
+        "p90": 0.8873311658604456,
+        "min": 0.5675126511952173,
+        "max": 0.9154289097756527
+      },
+      "median_reprojection_error_px": {
+        "count": 33,
+        "mean": 0.06768086744528828,
+        "median": 0.06874238699674606,
+        "p90": 0.08526400923728943,
+        "min": 0.04455702379345894,
+        "max": 0.09168816357851028
+      },
+      "corner_error_mean_px": {
+        "count": 33,
+        "mean": 0.11405635455792601,
+        "median": 0.08765587210655212,
+        "p90": 0.22248315513134004,
+        "min": 0.03696184605360031,
+        "max": 0.3041819930076599
+      },
+      "estimated_overlap_ratio": {
+        "count": 33,
+        "mean": 0.9997122091414947,
+        "median": 0.9998116109188774,
+        "p90": 0.9999523737658566,
+        "min": 0.9989163711729235,
+        "max": 0.9999854302006443
+      },
+      "registration_time_ms": {
+        "count": 33,
+        "mean": 77.0809696969697,
+        "median": 57.492,
+        "p90": 161.14920000000004,
+        "min": 16.134,
+        "max": 306.98
+      },
+      "unaligned_roi_ssim": {
+        "count": 33,
+        "mean": 0.8139467025646056,
+        "median": 0.88154137134552,
+        "p90": 0.9730550408363342,
+        "min": 0.38272308309872943,
+        "max": 0.9924049377441406
+      },
+      "estimated_roi_ssim": {
+        "count": 33,
+        "mean": 0.9700722062226498,
+        "median": 0.9722984433174133,
+        "p90": 0.9837164998054504,
+        "min": 0.9399409294128418,
+        "max": 0.9911671280860901
+      },
+      "known_roi_ssim_upper_reference": {
+        "count": 33,
+        "mean": 0.9702601577296401,
+        "median": 0.9720004200935364,
+        "p90": 0.985241961479187,
+        "min": 0.9395661950111389,
+        "max": 0.9910779595375061
+      },
+      "unaligned_roi_gradient_ssim": {
+        "count": 33,
+        "mean": 0.6373173044147816,
+        "median": 0.6805759072303772,
+        "p90": 0.9257651448249817,
+        "min": 0.14025595784187317,
+        "max": 0.9700329899787903
+      },
+      "estimated_roi_gradient_ssim": {
+        "count": 33,
+        "mean": 0.9334581313711224,
+        "median": 0.9301882982254028,
+        "p90": 0.961844289302826,
+        "min": 0.8874684572219849,
+        "max": 0.9708846807479858
+      },
+      "known_roi_gradient_ssim_upper_reference": {
+        "count": 33,
+        "mean": 0.9340173493732106,
+        "median": 0.9301722645759583,
+        "p90": 0.9615049242973328,
+        "min": 0.8872925639152527,
+        "max": 0.9750456213951111
+      }
+    },
+    "perspective:moderate": {
+      "case_count": 33,
+      "homography_estimated": 33,
+      "registration_success": 33,
+      "quality_gate_pass_rate": 1.0,
+      "failure_types": {
+        "none": 33
+      },
+      "inlier_count": {
+        "count": 33,
+        "mean": 268.6969696969697,
+        "median": 171.0,
+        "p90": 778.8000000000003,
+        "min": 59.0,
+        "max": 883.0
+      },
+      "inlier_ratio": {
+        "count": 33,
+        "mean": 0.9955764302788583,
+        "median": 0.9976905311778291,
+        "p90": 1.0,
+        "min": 0.9771309771309772,
+        "max": 1.0
+      },
+      "spatial_coverage": {
+        "count": 33,
+        "mean": 0.7967856087481874,
+        "median": 0.8063416859925727,
+        "p90": 0.8651955012178174,
+        "min": 0.569610305264378,
+        "max": 0.9305603656871066
+      },
+      "median_reprojection_error_px": {
+        "count": 33,
+        "mean": 0.10792161027590434,
+        "median": 0.10317903012037277,
+        "p90": 0.13777456879615785,
+        "min": 0.07629222422838211,
+        "max": 0.15381605923175812
+      },
+      "corner_error_mean_px": {
+        "count": 33,
+        "mean": 0.19923954886017423,
+        "median": 0.14328798651695251,
+        "p90": 0.40069835186004643,
+        "min": 0.02593335136771202,
+        "max": 0.7037597298622131
+      },
+      "estimated_overlap_ratio": {
+        "count": 33,
+        "mean": 0.9996185640734842,
+        "median": 0.9997176470588235,
+        "p90": 0.9999317027151856,
+        "min": 0.9983490728275076,
+        "max": 0.999958864664747
+      },
+      "registration_time_ms": {
+        "count": 33,
+        "mean": 77.51757575757576,
+        "median": 57.523,
+        "p90": 136.62580000000003,
+        "min": 16.112,
+        "max": 317.101
+      },
+      "unaligned_roi_ssim": {
+        "count": 33,
+        "mean": 0.5223943750665645,
+        "median": 0.5541308522224426,
+        "p90": 0.8211983919143677,
+        "min": 0.18226756155490875,
+        "max": 0.8773413300514221
+      },
+      "estimated_roi_ssim": {
+        "count": 33,
+        "mean": 0.9662810413524358,
+        "median": 0.966311514377594,
+        "p90": 0.9793482303619385,
+        "min": 0.95024174451828,
+        "max": 0.9819558262825012
+      },
+      "known_roi_ssim_upper_reference": {
+        "count": 33,
+        "mean": 0.9665970242384708,
+        "median": 0.9665542443593343,
+        "p90": 0.9794264554977417,
+        "min": 0.9510295391082764,
+        "max": 0.9826108614603678
+      },
+      "unaligned_roi_gradient_ssim": {
+        "count": 33,
+        "mean": 0.25788790371381876,
+        "median": 0.1902859273056189,
+        "p90": 0.5736746907234193,
+        "min": 0.028936440745989483,
+        "max": 0.7064675092697144
+      },
+      "estimated_roi_gradient_ssim": {
+        "count": 33,
+        "mean": 0.9252186562075759,
+        "median": 0.9253548383712769,
+        "p90": 0.9373954892158508,
+        "min": 0.902999222278595,
+        "max": 0.9494569500287374
+      },
+      "known_roi_gradient_ssim_upper_reference": {
+        "count": 33,
+        "mean": 0.9263935378103545,
+        "median": 0.9266161322593689,
+        "p90": 0.9379350543022156,
+        "min": 0.9060128927230835,
+        "max": 0.9522641897201538
+      }
+    },
+    "perspective:strong": {
+      "case_count": 33,
+      "homography_estimated": 33,
+      "registration_success": 33,
+      "quality_gate_pass_rate": 1.0,
+      "failure_types": {
+        "none": 33
+      },
+      "inlier_count": {
+        "count": 33,
+        "mean": 259.8787878787879,
+        "median": 172.0,
+        "p90": 732.4000000000002,
+        "min": 62.0,
+        "max": 869.0
+      },
+      "inlier_ratio": {
+        "count": 33,
+        "mean": 0.9930501088427766,
+        "median": 0.9951219512195122,
+        "p90": 1.0,
+        "min": 0.9745762711864406,
+        "max": 1.0
+      },
+      "spatial_coverage": {
+        "count": 33,
+        "mean": 0.7866821038145828,
+        "median": 0.8053945528930362,
+        "p90": 0.8693896103302432,
+        "min": 0.5719691210297779,
+        "max": 0.9155605566471017
+      },
+      "median_reprojection_error_px": {
+        "count": 33,
+        "mean": 0.14889269909172348,
+        "median": 0.14863185584545135,
+        "p90": 0.19446596503257751,
+        "min": 0.09043143689632416,
+        "max": 0.20499739050865173
+      },
+      "corner_error_mean_px": {
+        "count": 33,
+        "mean": 0.20901700289863528,
+        "median": 0.16865870356559753,
+        "p90": 0.3885690689086914,
+        "min": 0.06989288330078125,
+        "max": 0.8189789056777954
+      },
+      "estimated_overlap_ratio": {
+        "count": 33,
+        "mean": 0.9994036917088774,
+        "median": 0.9995946384174684,
+        "p90": 0.9998758767031738,
+        "min": 0.9965896193771626,
+        "max": 0.9999846635051962
+      },
+      "registration_time_ms": {
+        "count": 33,
+        "mean": 74.92754545454545,
+        "median": 57.398,
+        "p90": 139.34060000000002,
+        "min": 18.105,
+        "max": 310.302
+      },
+      "unaligned_roi_ssim": {
+        "count": 33,
+        "mean": 0.38782438319740875,
+        "median": 0.37485814094543457,
+        "p90": 0.6317928194999695,
+        "min": 0.03849557042121887,
+        "max": 0.8624221682548523
+      },
+      "estimated_roi_ssim": {
+        "count": 33,
+        "mean": 0.9652028655765033,
+        "median": 0.9642199277877808,
+        "p90": 0.979096786181132,
+        "min": 0.94405198097229,
+        "max": 0.9817429780960083
+      },
+      "known_roi_ssim_upper_reference": {
+        "count": 33,
+        "mean": 0.9656914279918478,
+        "median": 0.9646485447883606,
+        "p90": 0.9800972104072571,
+        "min": 0.9446913003921509,
+        "max": 0.9820297360420227
+      },
+      "unaligned_roi_gradient_ssim": {
+        "count": 33,
+        "mean": 0.15028451817554675,
+        "median": 0.10838761180639267,
+        "p90": 0.34340637922286993,
+        "min": 0.00021740415832027793,
+        "max": 0.6285394430160522
+      },
+      "estimated_roi_gradient_ssim": {
+        "count": 33,
+        "mean": 0.9230453751303933,
+        "median": 0.9271458387374878,
+        "p90": 0.9365227341651916,
+        "min": 0.8950780630111694,
+        "max": 0.9446238875389099
+      },
+      "known_roi_gradient_ssim_upper_reference": {
+        "count": 33,
+        "mean": 0.9246239108268661,
+        "median": 0.9274570941925049,
+        "p90": 0.9379189133644104,
+        "min": 0.8987517356872559,
+        "max": 0.9465179443359375
+      }
+    },
+    "rotation:10deg": {
+      "case_count": 66,
+      "homography_estimated": 66,
+      "registration_success": 66,
+      "quality_gate_pass_rate": 1.0,
+      "failure_types": {
+        "none": 66
+      },
+      "inlier_count": {
+        "count": 66,
+        "mean": 241.46969696969697,
+        "median": 157.0,
+        "p90": 747.5,
+        "min": 53.0,
+        "max": 801.0
+      },
+      "inlier_ratio": {
+        "count": 66,
+        "mean": 0.9878069151463442,
+        "median": 0.9880948162845906,
+        "p90": 1.0,
+        "min": 0.9649122807017544,
+        "max": 1.0
+      },
+      "spatial_coverage": {
+        "count": 66,
+        "mean": 0.7421770321901692,
+        "median": 0.7540163324162101,
+        "p90": 0.8307527468425084,
+        "min": 0.4817762493071211,
+        "max": 0.8720759739014016
+      },
+      "median_reprojection_error_px": {
+        "count": 66,
+        "mean": 0.15247701593872273,
+        "median": 0.14531250298023224,
+        "p90": 0.19613301008939743,
+        "min": 0.08880682289600372,
+        "max": 0.2785000801086426
+      },
+      "corner_error_mean_px": {
+        "count": 66,
+        "mean": 0.3712354636553562,
+        "median": 0.31165316700935364,
+        "p90": 0.6336359977722168,
+        "min": 0.0687924176454544,
+        "max": 1.498359203338623
+      },
+      "estimated_overlap_ratio": {
+        "count": 66,
+        "mean": 0.9131622157013837,
+        "median": 0.9263273749275263,
+        "p90": 0.9268481353325644,
+        "min": 0.8291047412036409,
+        "max": 0.9273837717789722
+      },
+      "registration_time_ms": {
+        "count": 66,
+        "mean": 77.12322727272728,
+        "median": 57.8895,
+        "p90": 164.073,
+        "min": 15.449,
+        "max": 368.848
+      },
+      "unaligned_roi_ssim": {
+        "count": 66,
+        "mean": 0.2983767351304943,
+        "median": 0.2666723902026812,
+        "p90": 0.4964583218097687,
+        "min": 0.08020586520433426,
+        "max": 0.5369493961334229
+      },
+      "estimated_roi_ssim": {
+        "count": 66,
+        "mean": 0.9676825611880331,
+        "median": 0.9659375846385956,
+        "p90": 0.9805383086204529,
+        "min": 0.9499850869178772,
+        "max": 0.9818611741065979
+      },
+      "known_roi_ssim_upper_reference": {
+        "count": 66,
+        "mean": 0.9687150072569799,
+        "median": 0.9667369723320007,
+        "p90": 0.9810578525066376,
+        "min": 0.9541867971420288,
+        "max": 0.9826509157816569
+      },
+      "unaligned_roi_gradient_ssim": {
+        "count": 66,
+        "mean": 0.09414838883564855,
+        "median": 0.0902210883796215,
+        "p90": 0.16461503505706787,
+        "min": 0.00342811131849885,
+        "max": 0.2042870670557022
+      },
+      "estimated_roi_gradient_ssim": {
+        "count": 66,
+        "mean": 0.9283428074735584,
+        "median": 0.9291603167851765,
+        "p90": 0.940687745809555,
+        "min": 0.9035372734069824,
+        "max": 0.9478423992792765
+      },
+      "known_roi_gradient_ssim_upper_reference": {
+        "count": 66,
+        "mean": 0.9316967782950161,
+        "median": 0.9325208862622578,
+        "p90": 0.9426365494728088,
+        "min": 0.910794198513031,
+        "max": 0.9532825748125712
+      }
+    },
+    "rotation:20deg": {
+      "case_count": 66,
+      "homography_estimated": 66,
+      "registration_success": 60,
+      "quality_gate_pass_rate": 0.9090909090909091,
+      "failure_types": {
+        "none": 60,
+        "projected_corners_outside_50px_margin": 6
+      },
+      "inlier_count": {
+        "count": 66,
+        "mean": 207.27272727272728,
+        "median": 147.0,
+        "p90": 553.0,
+        "min": 47.0,
+        "max": 685.0
+      },
+      "inlier_ratio": {
+        "count": 66,
+        "mean": 0.982740013748872,
+        "median": 0.9863761482077135,
+        "p90": 1.0,
+        "min": 0.9074074074074074,
+        "max": 1.0
+      },
+      "spatial_coverage": {
+        "count": 66,
+        "mean": 0.6699481868066033,
+        "median": 0.6674712503019993,
+        "p90": 0.7607424894813939,
+        "min": 0.45067263829242854,
+        "max": 0.8435852199727879
+      },
+      "median_reprojection_error_px": {
+        "count": 66,
+        "mean": 0.21799901556788068,
+        "median": 0.2060168907046318,
+        "p90": 0.2887624055147171,
+        "min": 0.10808360576629639,
+        "max": 0.4974099397659302
+      },
+      "corner_error_mean_px": {
+        "count": 66,
+        "mean": 0.5916836593638767,
+        "median": 0.41871967911720276,
+        "p90": 0.982161819934845,
+        "min": 0.08491776883602142,
+        "max": 5.7420573234558105
+      },
+      "estimated_overlap_ratio": {
+        "count": 66,
+        "mean": 0.8482238962475482,
+        "median": 0.8762160847475948,
+        "p90": 0.8769084706362047,
+        "min": 0.6715609292215732,
+        "max": 0.8782671280276817
+      },
+      "registration_time_ms": {
+        "count": 66,
+        "mean": 77.38178787878788,
+        "median": 57.3195,
+        "p90": 160.1585,
+        "min": 15.336,
+        "max": 340.461
+      },
+      "unaligned_roi_ssim": {
+        "count": 66,
+        "mean": 0.24299555734703035,
+        "median": 0.2123919700582822,
+        "p90": 0.41275404393672943,
+        "min": 0.06593306362628937,
+        "max": 0.45050081113974255
+      },
+      "estimated_roi_ssim": {
+        "count": 66,
+        "mean": 0.9668848613897959,
+        "median": 0.9655962586402893,
+        "p90": 0.9804962873458862,
+        "min": 0.9394086003303528,
+        "max": 0.98631219069163
+      },
+      "known_roi_ssim_upper_reference": {
+        "count": 66,
+        "mean": 0.9694257340948991,
+        "median": 0.9677530527114868,
+        "p90": 0.9811399281024933,
+        "min": 0.9546540975570679,
+        "max": 0.986936092376709
+      },
+      "unaligned_roi_gradient_ssim": {
+        "count": 66,
+        "mean": 0.06339015375712247,
+        "median": 0.05371866002678871,
+        "p90": 0.12633822113275528,
+        "min": 0.009743362354735533,
+        "max": 0.17199761172135672
+      },
+      "estimated_roi_gradient_ssim": {
+        "count": 66,
+        "mean": 0.9272013094389078,
+        "median": 0.9318473140398662,
+        "p90": 0.9430567026138306,
+        "min": 0.8530633449554443,
+        "max": 0.9491151571273804
+      },
+      "known_roi_gradient_ssim_upper_reference": {
+        "count": 66,
+        "mean": 0.9350437779318203,
+        "median": 0.9364022314548492,
+        "p90": 0.9450691044330597,
+        "min": 0.9162542223930359,
+        "max": 0.9510588645935059
+      }
+    },
+    "rotation:30deg": {
+      "case_count": 66,
+      "homography_estimated": 66,
+      "registration_success": 54,
+      "quality_gate_pass_rate": 0.8181818181818182,
+      "failure_types": {
+        "none": 54,
+        "projected_corners_outside_50px_margin": 12
+      },
+      "inlier_count": {
+        "count": 66,
+        "mean": 178.83333333333334,
+        "median": 142.0,
+        "p90": 370.0,
+        "min": 44.0,
+        "max": 557.0
+      },
+      "inlier_ratio": {
+        "count": 66,
+        "mean": 0.9765685091652698,
+        "median": 0.9838331160365059,
+        "p90": 0.9979757085020242,
+        "min": 0.888235294117647,
+        "max": 1.0
+      },
+      "spatial_coverage": {
+        "count": 66,
+        "mean": 0.6262634555602562,
+        "median": 0.6273038908904409,
+        "p90": 0.7108515177129333,
+        "min": 0.35926042586677703,
+        "max": 0.8101142500966134
+      },
+      "median_reprojection_error_px": {
+        "count": 66,
+        "mean": 0.27881691379077506,
+        "median": 0.2592110186815262,
+        "p90": 0.36576656997203827,
+        "min": 0.15414685010910034,
+        "max": 0.6312814950942993
+      },
+      "corner_error_mean_px": {
+        "count": 66,
+        "mean": 0.8491549261591651,
+        "median": 0.4705985486507416,
+        "p90": 1.174611747264862,
+        "min": 0.15092739462852478,
+        "max": 7.889983654022217
+      },
+      "estimated_overlap_ratio": {
+        "count": 66,
+        "mean": 0.7990057557841443,
+        "median": 0.8449126241746361,
+        "p90": 0.8456451576789753,
+        "min": 0.5084635239777204,
+        "max": 0.850012625199899
+      },
+      "registration_time_ms": {
+        "count": 66,
+        "mean": 76.08530303030302,
+        "median": 57.426,
+        "p90": 164.51749999999998,
+        "min": 15.705,
+        "max": 331.711
+      },
+      "unaligned_roi_ssim": {
+        "count": 66,
+        "mean": 0.20919226893139156,
+        "median": 0.18822649121284485,
+        "p90": 0.36425261199474335,
+        "min": 0.03564930707216263,
+        "max": 0.4166565239429474
+      },
+      "estimated_roi_ssim": {
+        "count": 66,
+        "mean": 0.9656544025197173,
+        "median": 0.9649712145328522,
+        "p90": 0.9802575707435608,
+        "min": 0.9251081943511963,
+        "max": 0.9832351803779602
+      },
+      "known_roi_ssim_upper_reference": {
+        "count": 66,
+        "mean": 0.969576060922459,
+        "median": 0.9679838120937347,
+        "p90": 0.9813152849674225,
+        "min": 0.9507078727086385,
+        "max": 0.9833428263664246
+      },
+      "unaligned_roi_gradient_ssim": {
+        "count": 66,
+        "mean": 0.05084945839792114,
+        "median": 0.0396474739536643,
+        "p90": 0.10333676636219025,
+        "min": 0.004113307688385248,
+        "max": 0.1206885576248169
+      },
+      "estimated_roi_gradient_ssim": {
+        "count": 66,
+        "mean": 0.9239306644056783,
+        "median": 0.9286578297615051,
+        "p90": 0.9431143403053284,
+        "min": 0.8096112012863159,
+        "max": 0.9503340125083923
+      },
+      "known_roi_gradient_ssim_upper_reference": {
+        "count": 66,
+        "mean": 0.9361989322033796,
+        "median": 0.9374935328960419,
+        "p90": 0.9470548629760742,
+        "min": 0.9086450139681498,
+        "max": 0.9515180587768555
+      }
+    },
+    "scale:0.85x": {
+      "case_count": 33,
+      "homography_estimated": 33,
+      "registration_success": 31,
+      "quality_gate_pass_rate": 0.9393939393939394,
+      "failure_types": {
+        "none": 31,
+        "projected_area_below_0.005": 2
+      },
+      "inlier_count": {
+        "count": 33,
+        "mean": 152.6969696969697,
+        "median": 113.0,
+        "p90": 388.8000000000001,
+        "min": 34.0,
+        "max": 457.0
+      },
+      "inlier_ratio": {
+        "count": 33,
+        "mean": 0.9790071948700522,
+        "median": 0.9803921568627451,
+        "p90": 0.9992063492063492,
+        "min": 0.9411764705882353,
+        "max": 1.0
+      },
+      "spatial_coverage": {
+        "count": 33,
+        "mean": 0.7638461392827842,
+        "median": 0.7799908536832345,
+        "p90": 0.8581338869072358,
+        "min": 0.562738505452418,
+        "max": 0.9314860396742336
+      },
+      "median_reprojection_error_px": {
+        "count": 33,
+        "mean": 0.5637575640822902,
+        "median": 0.5619058609008789,
+        "p90": 0.7135721921920777,
+        "min": 0.3433208465576172,
+        "max": 0.777556300163269
+      },
+      "corner_error_mean_px": {
+        "count": 33,
+        "mean": 0.6219299864588361,
+        "median": 0.44636547565460205,
+        "p90": 1.06491117477417,
+        "min": 0.2032260000705719,
+        "max": 2.3632149696350098
+      },
+      "estimated_overlap_ratio": {
+        "count": 33,
+        "mean": 0.998165383252112,
+        "median": 0.9990885506235199,
+        "p90": 1.0,
+        "min": 0.9861964481104284,
+        "max": 1.0
+      },
+      "registration_time_ms": {
+        "count": 33,
+        "mean": 77.84278787878787,
+        "median": 58.207,
+        "p90": 137.478,
+        "min": 16.862,
+        "max": 352.779
+      },
+      "unaligned_roi_ssim": {
+        "count": 33,
+        "mean": 0.24851253410481444,
+        "median": 0.22781310975551605,
+        "p90": 0.4046662747859955,
+        "min": 0.0962284654378891,
+        "max": 0.5021698474884033
+      },
+      "estimated_roi_ssim": {
+        "count": 33,
+        "mean": 0.9511821083348206,
+        "median": 0.950337290763855,
+        "p90": 0.9703434467315674,
+        "min": 0.9277976155281067,
+        "max": 0.9743366440137228
+      },
+      "known_roi_ssim_upper_reference": {
+        "count": 33,
+        "mean": 0.9572626888149917,
+        "median": 0.9543007016181946,
+        "p90": 0.9739740014076232,
+        "min": 0.9372103214263916,
+        "max": 0.97658371925354
+      },
+      "unaligned_roi_gradient_ssim": {
+        "count": 33,
+        "mean": 0.0654342392026776,
+        "median": 0.05601905286312103,
+        "p90": 0.12249372303485871,
+        "min": 0.004500539507716894,
+        "max": 0.16733036935329437
+      },
+      "estimated_roi_gradient_ssim": {
+        "count": 33,
+        "mean": 0.8855645795061131,
+        "median": 0.8890200257301331,
+        "p90": 0.9077524741490681,
+        "min": 0.8287488222122192,
+        "max": 0.9269373416900635
+      },
+      "known_roi_gradient_ssim_upper_reference": {
+        "count": 33,
+        "mean": 0.9042483249095955,
+        "median": 0.9048954844474792,
+        "p90": 0.919439435005188,
+        "min": 0.8777722716331482,
+        "max": 0.9336902300516764
+      }
+    },
+    "scale:1.15x": {
+      "case_count": 33,
+      "homography_estimated": 33,
+      "registration_success": 32,
+      "quality_gate_pass_rate": 0.9696969696969697,
+      "failure_types": {
+        "none": 32,
+        "projected_corners_outside_50px_margin": 1
+      },
+      "inlier_count": {
+        "count": 33,
+        "mean": 150.8181818181818,
+        "median": 110.0,
+        "p90": 358.0000000000001,
+        "min": 40.0,
+        "max": 439.0
+      },
+      "inlier_ratio": {
+        "count": 33,
+        "mean": 0.9748834572183802,
+        "median": 0.975609756097561,
+        "p90": 0.9919954648526077,
+        "min": 0.9361702127659575,
+        "max": 1.0
+      },
+      "spatial_coverage": {
+        "count": 33,
+        "mean": 0.7674219902011136,
+        "median": 0.8019732279659332,
+        "p90": 0.8824714096588591,
+        "min": 0.4445687880561513,
+        "max": 0.9151805889112714
+      },
+      "median_reprojection_error_px": {
+        "count": 33,
+        "mean": 0.6166296899318695,
+        "median": 0.5992588996887207,
+        "p90": 0.7254061698913574,
+        "min": 0.3475531339645386,
+        "max": 0.9901922345161438
+      },
+      "corner_error_mean_px": {
+        "count": 33,
+        "mean": 1.052260091358965,
+        "median": 0.7770719528198242,
+        "p90": 1.6910199165344242,
+        "min": 0.23289461433887482,
+        "max": 8.38574504852295
+      },
+      "estimated_overlap_ratio": {
+        "count": 33,
+        "mean": 0.7568292019839316,
+        "median": 0.7568281430219147,
+        "p90": 0.7579131103421761,
+        "min": 0.7535524798154556,
+        "max": 0.7622532871972318
+      },
+      "registration_time_ms": {
+        "count": 33,
+        "mean": 75.77612121212121,
+        "median": 56.826,
+        "p90": 137.7276,
+        "min": 17.217,
+        "max": 270.829
+      },
+      "unaligned_roi_ssim": {
+        "count": 33,
+        "mean": 0.2646181975500752,
+        "median": 0.25765622158845264,
+        "p90": 0.4233704149723053,
+        "min": 0.08548705279827118,
+        "max": 0.4912521541118622
+      },
+      "estimated_roi_ssim": {
+        "count": 33,
+        "mean": 0.9707955946825971,
+        "median": 0.9723973870277405,
+        "p90": 0.9825517654418945,
+        "min": 0.9573771953582764,
+        "max": 0.9830402135848999
+      },
+      "known_roi_ssim_upper_reference": {
+        "count": 33,
+        "mean": 0.9759266731714962,
+        "median": 0.9741427898406982,
+        "p90": 0.9852163910865783,
+        "min": 0.9646559357643127,
+        "max": 0.9866983294487
+      },
+      "unaligned_roi_gradient_ssim": {
+        "count": 33,
+        "mean": 0.07579754901617164,
+        "median": 0.06503081321716309,
+        "p90": 0.15365660190582275,
+        "min": 0.011241276748478413,
+        "max": 0.16588029265403748
+      },
+      "estimated_roi_gradient_ssim": {
+        "count": 33,
+        "mean": 0.9296281614688912,
+        "median": 0.9342761635780334,
+        "p90": 0.9446210265159607,
+        "min": 0.8962649703025818,
+        "max": 0.9520863890647888
+      },
+      "known_roi_gradient_ssim_upper_reference": {
+        "count": 33,
+        "mean": 0.94582271937168,
+        "median": 0.9464206099510193,
+        "p90": 0.9544025301933289,
+        "min": 0.9293121099472046,
+        "max": 0.9630358616511027
+      }
+    },
+    "shear_x:12pct": {
+      "case_count": 66,
+      "homography_estimated": 66,
+      "registration_success": 66,
+      "quality_gate_pass_rate": 1.0,
+      "failure_types": {
+        "none": 66
+      },
+      "inlier_count": {
+        "count": 66,
+        "mean": 247.96969696969697,
+        "median": 163.0,
+        "p90": 747.5,
+        "min": 59.0,
+        "max": 818.0
+      },
+      "inlier_ratio": {
+        "count": 66,
+        "mean": 0.9911649772059303,
+        "median": 0.9921263482280431,
+        "p90": 1.0,
+        "min": 0.9745370370370371,
+        "max": 1.0
+      },
+      "spatial_coverage": {
+        "count": 66,
+        "mean": 0.7658673253282546,
+        "median": 0.782696914606393,
+        "p90": 0.8452355737276305,
+        "min": 0.5417086421272461,
+        "max": 0.8957017689875735
+      },
+      "median_reprojection_error_px": {
+        "count": 66,
+        "mean": 0.21191798602089737,
+        "median": 0.2039954513311386,
+        "p90": 0.2587011754512787,
+        "min": 0.14541226625442505,
+        "max": 0.373234361410141
+      },
+      "corner_error_mean_px": {
+        "count": 66,
+        "mean": 0.34459790271339996,
+        "median": 0.2505582794547081,
+        "p90": 0.5638840198516846,
+        "min": 0.09328509867191315,
+        "max": 1.9188528060913086
+      },
+      "estimated_overlap_ratio": {
+        "count": 66,
+        "mean": 0.957010809589447,
+        "median": 0.9698234895661828,
+        "p90": 0.9701277053759194,
+        "min": 0.8819127835891862,
+        "max": 0.9702768166089966
+      },
+      "registration_time_ms": {
+        "count": 66,
+        "mean": 78.36027272727273,
+        "median": 55.8405,
+        "p90": 181.608,
+        "min": 15.41,
+        "max": 306.432
+      },
+      "unaligned_roi_ssim": {
+        "count": 66,
+        "mean": 0.48726957867091353,
+        "median": 0.5202272236347198,
+        "p90": 0.6963943839073181,
+        "min": 0.1666485071182251,
+        "max": 0.7287309169769287
+      },
+      "estimated_roi_ssim": {
+        "count": 66,
+        "mean": 0.9838509177318727,
+        "median": 0.9826204180717468,
+        "p90": 0.9920970797538757,
+        "min": 0.9565220475196838,
+        "max": 0.9936060905456543
+      },
+      "known_roi_ssim_upper_reference": {
+        "count": 66,
+        "mean": 0.9863243458246944,
+        "median": 0.9850724339485168,
+        "p90": 0.9928981959819794,
+        "min": 0.9762630462646484,
+        "max": 0.9941499829292297
+      },
+      "unaligned_roi_gradient_ssim": {
+        "count": 66,
+        "mean": 0.2524659249292466,
+        "median": 0.284783273935318,
+        "p90": 0.36685192584991455,
+        "min": 0.0703372210264206,
+        "max": 0.393566757440567
+      },
+      "estimated_roi_gradient_ssim": {
+        "count": 66,
+        "mean": 0.9639976006565671,
+        "median": 0.9651079475879669,
+        "p90": 0.9765289723873138,
+        "min": 0.8914686441421509,
+        "max": 0.9810389280319214
+      },
+      "known_roi_gradient_ssim_upper_reference": {
+        "count": 66,
+        "mean": 0.9712441997094587,
+        "median": 0.9700087904930115,
+        "p90": 0.9802777171134949,
+        "min": 0.9549486041069031,
+        "max": 0.9829073548316956
+      }
+    },
+    "shear_y:12pct": {
+      "case_count": 66,
+      "homography_estimated": 66,
+      "registration_success": 66,
+      "quality_gate_pass_rate": 1.0,
+      "failure_types": {
+        "none": 66
+      },
+      "inlier_count": {
+        "count": 66,
+        "mean": 259.3181818181818,
+        "median": 163.5,
+        "p90": 820.5,
+        "min": 58.0,
+        "max": 859.0
+      },
+      "inlier_ratio": {
+        "count": 66,
+        "mean": 0.9909570419727409,
+        "median": 0.9916415497315316,
+        "p90": 1.0,
+        "min": 0.9662921348314607,
+        "max": 1.0
+      },
+      "spatial_coverage": {
+        "count": 66,
+        "mean": 0.7736262061111269,
+        "median": 0.7932244340978776,
+        "p90": 0.8713563881522857,
+        "min": 0.4542202857146992,
+        "max": 0.9185058020149928
+      },
+      "median_reprojection_error_px": {
+        "count": 66,
+        "mean": 0.22409841508576364,
+        "median": 0.2112928330898285,
+        "p90": 0.2803841382265091,
+        "min": 0.1532375067472458,
+        "max": 0.405262291431427
+      },
+      "corner_error_mean_px": {
+        "count": 66,
+        "mean": 0.36192433236900606,
+        "median": 0.24675880372524261,
+        "p90": 0.700421154499054,
+        "min": 0.050904951989650726,
+        "max": 1.731978416442871
+      },
+      "estimated_overlap_ratio": {
+        "count": 66,
+        "mean": 0.9734239724148495,
+        "median": 0.9699656008010357,
+        "p90": 0.9903513633340724,
+        "min": 0.9643515570934256,
+        "max": 0.9922890911560929
+      },
+      "registration_time_ms": {
+        "count": 66,
+        "mean": 76.59516666666667,
+        "median": 54.6275,
+        "p90": 166.588,
+        "min": 16.678,
+        "max": 325.609
+      },
+      "unaligned_roi_ssim": {
+        "count": 66,
+        "mean": 0.4467850924290792,
+        "median": 0.47398875653743744,
+        "p90": 0.5932047963142395,
+        "min": 0.07615119218826294,
+        "max": 0.6329061388969421
+      },
+      "estimated_roi_ssim": {
+        "count": 66,
+        "mean": 0.9829530333629762,
+        "median": 0.9854448437690735,
+        "p90": 0.9890619516372681,
+        "min": 0.9666849374771118,
+        "max": 0.9922816356023153
+      },
+      "known_roi_ssim_upper_reference": {
+        "count": 66,
+        "mean": 0.9856352339489292,
+        "median": 0.9870156049728394,
+        "p90": 0.9900699655214946,
+        "min": 0.9749240875244141,
+        "max": 0.9932000637054443
+      },
+      "unaligned_roi_gradient_ssim": {
+        "count": 66,
+        "mean": 0.21809231683687128,
+        "median": 0.22331420332193375,
+        "p90": 0.29270189255476,
+        "min": 0.02860315702855587,
+        "max": 0.33356350660324097
+      },
+      "estimated_roi_gradient_ssim": {
+        "count": 66,
+        "mean": 0.9608215761907173,
+        "median": 0.9624434113502502,
+        "p90": 0.9762924611568451,
+        "min": 0.917008101940155,
+        "max": 0.980619490146637
+      },
+      "known_roi_gradient_ssim_upper_reference": {
+        "count": 66,
+        "mean": 0.9685571509780306,
+        "median": 0.9680242240428925,
+        "p90": 0.9796547492345173,
+        "min": 0.9503083825111389,
+        "max": 0.9829913775126139
+      }
+    }
+  },
+  "different_source_controls": {
+    "pair_count": 528,
+    "same_category_status_counts": {
+      "SUCCESS": 53,
+      "FALLBACK_FULL_IMAGE": 11,
+      "FAILED": 126
+    },
+    "cross_category_status_counts": {
+      "FAILED": 263,
+      "FALLBACK_FULL_IMAGE": 75
+    },
+    "interpretation": "Different original images can depict different objects, poses, crops, or lighting. These controls do not count as defects, missing-part negatives, or a business false-positive rate."
+  },
+  "representative_cases": {
+    "best_corner_recovery": [
+      {
+        "pair_id": "synthetic-00-identity",
+        "source_file": "nut_25.jpg",
+        "transform": "identity",
+        "corner_error_mean_px": 0.0,
+        "status": "SUCCESS"
+      },
+      {
+        "pair_id": "synthetic-01-identity",
+        "source_file": "nut_26.jpg",
+        "transform": "identity",
+        "corner_error_mean_px": 0.0,
+        "status": "SUCCESS"
+      },
+      {
+        "pair_id": "synthetic-02-identity",
+        "source_file": "nut_27.jpg",
+        "transform": "identity",
+        "corner_error_mean_px": 0.0,
+        "status": "SUCCESS"
+      },
+      {
+        "pair_id": "synthetic-03-identity",
+        "source_file": "nut_28.jpg",
+        "transform": "identity",
+        "corner_error_mean_px": 0.0,
+        "status": "SUCCESS"
+      },
+      {
+        "pair_id": "synthetic-04-identity",
+        "source_file": "nut_29.jpg",
+        "transform": "identity",
+        "corner_error_mean_px": 0.0,
+        "status": "SUCCESS"
+      }
+    ],
+    "homography_failures": [],
+    "quality_gate_rejections": [
+      {
+        "pair_id": "synthetic-11-rotation_-30",
+        "source_file": "Nutsert_1.jpg",
+        "transform": "rotation_-30",
+        "corner_error_mean_px": 0.8099456429481506,
+        "reason": "projected_corners_outside_50px_margin"
+      },
+      {
+        "pair_id": "synthetic-11-rotation_+30",
+        "source_file": "Nutsert_1.jpg",
+        "transform": "rotation_+30",
+        "corner_error_mean_px": 0.3971431255340576,
+        "reason": "projected_corners_outside_50px_margin"
+      },
+      {
+        "pair_id": "synthetic-11-scale_0.85",
+        "source_file": "Nutsert_1.jpg",
+        "transform": "scale_0.85",
+        "corner_error_mean_px": 0.2032260000705719,
+        "reason": "projected_area_below_0.005"
+      },
+      {
+        "pair_id": "synthetic-12-rotation_-30",
+        "source_file": "Nutsert_2.jpg",
+        "transform": "rotation_-30",
+        "corner_error_mean_px": 0.2140577882528305,
+        "reason": "projected_corners_outside_50px_margin"
+      },
+      {
+        "pair_id": "synthetic-12-rotation_+30",
+        "source_file": "Nutsert_2.jpg",
+        "transform": "rotation_+30",
+        "corner_error_mean_px": 0.300504207611084,
+        "reason": "projected_corners_outside_50px_margin"
+      }
+    ],
+    "same_category_control_example": {
+      "source_file": "nut_25.jpg",
+      "query_file": "nut_26.jpg",
+      "status": "SUCCESS"
+    },
+    "cross_category_control_example": {
+      "source_file": "nut_25.jpg",
+      "query_file": "Nutsert_1.jpg",
+      "status": "FAILED"
+    }
+  }
+}
