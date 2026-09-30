@@ -3,6 +3,7 @@ package com.wearable.inspection.mobile.data.export
 import com.wearable.inspection.mobile.data.export.InspectionZipExportService
 import org.junit.Assert.*
 import org.junit.Test
+import org.mockito.Mockito
 import java.io.File
 
 /**
@@ -78,16 +79,47 @@ class InspectionZipExportServiceTest {
 
     @Test
     fun `generateZipFileName format follows convention`() {
-        // 验证文件名格式约定: inspection_{partId}_{batchId_short}_{timestamp}.zip
+        // T7.5: 验证文件名格式逻辑: {partCode}_yyyyMMdd_HHmmss_SSS.zip
+        // 直接调用 InspectionZipExportService.generateZipFileName（需要 Context，用 mock）
+        val mockContext = org.mockito.Mockito.mock(android.content.Context::class.java)
+        val mockRepo = org.mockito.Mockito.mock(
+            com.wearable.inspection.mobile.data.repository.InspectionRepository::class.java
+        )
+        val service = InspectionZipExportService(mockContext, mockRepo)
+
         val partId = "part_001"
         val batchId = "batch_1234567890"
-        val batchIdShort = batchId.take(8) // "batch_12" (8 chars)
-        assertEquals(8, batchIdShort.length)
-        assertTrue(batchIdShort.startsWith("batch_"))
-        // 文件名前缀应包含零件ID和批次ID前缀
-        val prefix = "inspection_${partId}_${batchIdShort}_"
-        assertTrue(prefix.contains(partId))
-        assertTrue(prefix.contains(batchIdShort))
+
+        // 无 partCode 时回退到 partId
+        val name1 = service.generateZipFileName(partId, batchId)
+        assertTrue("文件名应以 partId 开头", name1.startsWith("${partId}_"))
+        assertTrue("文件名应以 .zip 结尾", name1.endsWith(".zip"))
+
+        // 有 partCode 时使用 partCode
+        val name2 = service.generateZipFileName(partId, batchId, "DPM-ABC")
+        assertTrue("文件名应以 partCode 开头", name2.startsWith("DPM-ABC_"))
+        assertTrue("文件名应以 .zip 结尾", name2.endsWith(".zip"))
+
+        // 空 partCode 回退到 partId
+        val name3 = service.generateZipFileName(partId, batchId, "")
+        assertTrue("空 partCode 应回退到 partId", name3.startsWith("${partId}_"))
+
+        // null partCode 回退到 partId
+        val name3b = service.generateZipFileName(partId, batchId, null)
+        assertTrue("null partCode 应回退到 partId", name3b.startsWith("${partId}_"))
+
+        // 非法字符被替换
+        val name4 = service.generateZipFileName(partId, batchId, "A/B:C*D?")
+        assertFalse("文件名不应包含 /", name4.contains("/"))
+        assertFalse("文件名不应包含 :", name4.contains(":"))
+        assertFalse("文件名不应包含 *", name4.contains("*"))
+        assertFalse("文件名不应包含 ?", name4.contains("?"))
+        assertTrue("非法字符应被替换为 _", name4.startsWith("A_B_C_D__"))
+
+        // 时间戳包含毫秒
+        val name5 = service.generateZipFileName(partId, batchId)
+        // 格式: partId_yyyyMMdd_HHmmss_SSS.zip — 至少包含 _20 (年份前缀)
+        assertTrue("时间戳应包含年份", name5.contains("_20"))
     }
 
     @Test

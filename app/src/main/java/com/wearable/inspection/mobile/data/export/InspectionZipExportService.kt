@@ -230,9 +230,18 @@ class InspectionZipExportService(
         }
     }
 
-    fun generateZipFileName(partId: String, batchId: String): String {
-        val ts = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
-        return "inspection_${partId}_${batchId.take(8)}_$ts.zip"
+    /**
+     * T7.5: 生成 ZIP 文件名，包含零件编码和毫秒时间戳。
+     *
+     * 格式: `<partCode>_yyyyMMdd_HHmmss_SSS.zip`
+     * - partCode: 优先使用 dpmCode，为空时回退到 partId
+     * - 非法文件名字符（\/:*?"<>|）替换为下划线
+     */
+    fun generateZipFileName(partId: String, batchId: String, partCode: String? = null): String {
+        val ts = SimpleDateFormat("yyyyMMdd_HHmmss_SSS", Locale.US).format(Date())
+        val code = partCode?.takeIf { it.isNotBlank() } ?: partId
+        val sanitized = code.replace(Regex("[\\\\/:*?\"<>|]"), "_")
+        return "${sanitized}_$ts.zip"
     }
 
     internal fun uniqueName(originalName: String, usedNames: Set<String>): String {

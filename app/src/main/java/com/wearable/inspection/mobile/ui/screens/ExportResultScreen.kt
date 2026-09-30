@@ -88,6 +88,8 @@ fun ExportResultScreen(
     var errorMessage by remember { mutableStateOf<String?>(null) }
     // 持久化 ZIP 路径（用于分享/下载）
     var zipFilePath by remember { mutableStateOf<String?>(null) }
+    // T7.5: 零件编码（dpmCode），用于生成有意义的文件名
+    var partCode by remember { mutableStateOf<String?>(null) }
 
     // SAF 下载
     val createZipLauncher = rememberLauncherForActivityResult(
@@ -114,7 +116,11 @@ fun ExportResultScreen(
     LaunchedEffect(batchId) {
         withContext(Dispatchers.IO) {
             try {
-                val outputFile = File(context.cacheDir, exportService.generateZipFileName(partId, batchId))
+                // T7.5: 查询零件编码（dpmCode），优先用于文件名
+                val part = repository.getPartById(partId)
+                val code = part?.dpmCode
+                partCode = code
+                val outputFile = File(context.cacheDir, exportService.generateZipFileName(partId, batchId, code))
                 val result = exportService.exportInspectionZip(batchId, partId, outputFile)
                 exportResult = result
                 if (result is InspectionExportResult.Success) {
@@ -226,7 +232,7 @@ fun ExportResultScreen(
                     // 下载按钮
                     Button(
                         onClick = {
-                            val fileName = exportService.generateZipFileName(partId, batchId)
+                            val fileName = exportService.generateZipFileName(partId, batchId, partCode)
                             createZipLauncher.launch(fileName)
                         },
                         modifier = Modifier
