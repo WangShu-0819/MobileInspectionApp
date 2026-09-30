@@ -1,6 +1,6 @@
 # MobileInspectionApp 新 Codex 对话续接指令
 
-将本文件作为新对话的项目协作说明。当前续接指令已更新于 2026-09-30，详细当前状态以 `docs/CODEX_CONTINUATION_PROMPT_MOBILE_INSPECTION_20260929.md` 和 `tasks/todo.md` 顶部为准；本文件下方较早的状态段落保留作历史审计记录，不应覆盖新状态。开始工作时重新核对用户最新消息、工作区源码/diff 和完整 Git 状态。新续接指令已明确用户本轮报告 T7.1、T7.2、T7.3–T7.5、T7.7 设备验收完成；T7.6 根因未定位；T7.8 handback 已由 Mimo 报告；T7.9 仍有待复核事项。
+将本文件作为新对话的项目协作说明。当前续接指令已更新于 2026-09-30，详细当前状态以 `docs/CODEX_CONTINUATION_PROMPT_MOBILE_INSPECTION_20260929.md` 和 `tasks/todo.md` 顶部为准；本文件下方较早的状态段落保留作历史审计记录，不应覆盖新状态。开始工作时重新核对用户最新消息、工作区源码/diff 和完整 Git 状态。用户报告 T7.1、T7.2、T7.3–T7.5、T7.7 设备验收完成；T7.5 的采集批次名称与批次 ZIP 默认文件名已使用零件码信息和批次时间戳，具体报告见 todo；T7.6 根因未定位；T7.9 仍有待复核事项。
 
 ## 新对话首条指令（可直接复制）
 
@@ -9,7 +9,7 @@
 
 协作边界：你负责中文方案分析、只读代码/diff/报告审查、用户明确要求的文档更新，以及编写可由用户手动转交给 Mimo 的详细中文指令。代码修改、测试、Gradle/构建、APK 和设备操作由外部执行者 Mimo 完成；用户会手动转交指令并带回结果。Mimo 不是 Codex 子 agent；不要调用子 agent、delegation 或任何 collaboration 工具，也不要联系 Mimo。不要修改生产代码，不要自行运行项目测试、Gradle、ADB、设备操作或 OCR。保留共享工作区现有改动，不整体暂存，不使用 reset/clean/stash，也不 push。仅当用户明确授权提交时，才按授权范围选择性提交；不得将文档提交与未完成代码/测试混在一起。用户明确指定文档并要求更新时才改文档。附件截图对 Mimo 不可见，必须把视觉要求写成文字验收标准，不能要求 Mimo 打开附件或 `app_launch.png`。
 
-当前状态：用户本轮报告 T7.1、T7.2、T7.3–T7.5、T7.7 设备验收完成；Mimo 2026-09-30 handback 报告拍照至相似度流程 3 轮未复现闪退，用户随后报告亲自验证通过、不卡顿、不闪退，但 T7.6 仍须记录根因未定位/`DEVICE_AVAILABLE_BUT_REPRO_FAILED`。T7.8 的 1,621 项测试汇总和 Debug 构建结果来自 Mimo handback，不是 Codex 本轮运行。T7.9 简洁卡片和 `NanoDet 检测中…`/`相似度检测中…` 阶段提示获 handback 与用户验收支持，设备性能样本仅覆盖单 ROI；当前 diff 的只读复核事项见 `tasks/todo.md`，不要把静态疑点描述为已运行测试失败。ECC 仅为方案分析，用户未要求实施。其他当前任务状态以 todo 为准。
+当前状态：用户报告 T7.1、T7.2、T7.3–T7.5、T7.7 设备验收完成。T7.5 的批次卡片名称和批次 ZIP 默认文件名均按 `<安全零件码>_yyyyMMdd_HHmmss_SSS` 生成；Mimo 报告设备/UI 验收和定向测试通过。最新全量测试的 3 项失败及 Mimo 对其来源的判断见 `tasks/todo.md`，不是 Codex 本轮运行或独立验证。Mimo 2026-09-30 handback 报告拍照至相似度流程 3 轮未复现闪退，用户随后报告亲自验证通过、不卡顿、不闪退，但 T7.6 仍须记录根因未定位/`DEVICE_AVAILABLE_BUT_REPRO_FAILED`。T7.9 简洁卡片和 `NanoDet 检测中…`/`相似度检测中…` 阶段提示获 handback 与用户验收支持，设备性能样本仅覆盖单 ROI；当前 diff 的只读复核事项见 `tasks/todo.md`，不要把静态疑点描述为已运行测试失败。ECC 仅为方案分析，用户未要求实施。其他当前任务状态以 todo 为准。
 
 每轮结束时，明确区分 Mimo/用户报告与自己实际只读复核的事实；无本轮证据就写未验证。若需要给 Mimo 指令，提供完整可复制的中文文本、文件范围、验收标准和设备不可用时的状态，不通过工具转交。
 ```
@@ -41,9 +41,10 @@
 
 - T1/T2 已完成；T3 离线实验已完成但不是现场校准；T4 软件实现按历史 handback 完成。当前 SSIM 设置默认值 `0.50`，由用户明确且本轮只读源码确认；Lowe 比率 `0.75` 是不同参数。T5/T6 等现场采集和校准数据。
 - T7.6：Mimo 报告在 SEA-AL10 / Android 10 / API 29 / arm64-v8a 上 3 轮未复现；用户报告本轮亲自验证通过。根因仍未证实，不得写成已定位或永久修复。Mimo 所报 APK SHA-256 为 `dc2af170c4d60972f372eec45a445b4e890358537c69f68d9b68e5a959cd6ea0`，242,570,104 bytes；详情与限制见 todo 和 handback。
-- T7.9：Mimo 报告 1,621 tests、0 failures/errors、5 skipped，Debug 构建成功；单 ROI 的设备阶段时延及 Native PSS 有记录。用户确认当前界面简洁、带明确 NanoDet/相似度阶段提示且不卡顿。多 ROI 真机性能未验证。ECC 仅做了方案分析，尚未授权实施。
+- T7.5：用户确认采集批次名称和批次 ZIP 默认文件名验收完成。Mimo 报告两处名称以安全零件码和 `batch.startTime` 生成同一基名，设备保存对话框/UI dump 符合预期；Codex 未独立查看设备。Mimo 报告定向测试 37 项通过、全量测试 1,641 项中 3 项失败/5 项跳过、Debug 构建成功；3 项失败来源的判断未独立验证，详见 todo。
+- T7.9：较早 Mimo handback 报告 1,621 tests、0 failures/errors、5 skipped，Debug 构建成功；单 ROI 的设备阶段时延及 Native PSS 有记录。用户确认当前界面简洁、带明确 NanoDet/相似度阶段提示且不卡顿。多 ROI 真机性能未验证。ECC 仅做了方案分析，尚未授权实施。
 - ECC 插入点只读定位在 ROI `warpPerspective` 初始变换后、`grayscaleSsim` 前。若获用户明确授权，先做标签样本离线 A/B，从单位变换和受限平移开始，检查变换上限、有效重叠、失败回退、误通过、每 ROI 时延和 Native PSS；保持逐 ROI 几何门禁及人工确认。当前无 ECC 代码改动或验证。
-- 最近只读 Git 状态：`main` HEAD 与 `origin/main` 均为 `e7fab67f`，23 tracked paths modified、11 untracked paths、0 staged。任务分批提交：`3866c3a6` T7.1/T7.3、`06bee44e` T7.2、`a7c6ea16` T7.4、`c2853341` T7.5、`e7fab67f` T7.6。远端跟踪 ref 更新来源未确认；本轮无 commit/push。新对话必须重新读取实时状态。
+- 历史 Git 快照 `e7fab67f` 和路径计数已过期。本轮 T7.5 批次命名功能已独立提交 `f9037621`；用户授权四份当前任务/续接文档组成另一提交。新对话必须重读实时 `git status`、`git log`、暂存/未暂存 diff 和未跟踪路径；不要 push。
 
 ### 2026-09-29 历史任务状态快照（已被上方续接状态覆盖）
 
@@ -110,7 +111,7 @@
 
 ## Git、文档和文件保护
 
-最近一次只读核对显示：`main...origin/main`，HEAD 与 `origin/main` 均为 `e7fab67f`；23 个已修改跟踪文件、11 个未跟踪路径、0 staged。此前用户授权的任务分批提交为 `3866c3a6`（T7.1/T7.3）、`06bee44e`（T7.2）、`a7c6ea16`（T7.4）、`c2853341`（T7.5）、`e7fab67f`（T7.6）。本轮未提交或 push，远端跟踪 ref 的更新来源未核实。文档 `tasks/todo.md`、`tasks/plan.md` 原已修改；handoff 与 continuation prompt 原已未跟踪。本轮仅按用户明确要求更新这四份文档，开始前已有的生产代码、测试和未跟踪文件均保留。新对话开始/结束时重新核对完整 Git 状态，不要把现有提交再次提交。
+本轮 T7.5 命名代码/测试已提交为 `f9037621`；任务文档、计划和续接说明仅在用户明确要求后更新，现按独立文档批次提交。工作区其他 T7.9 修改和未跟踪文件均保留，未 push。后续新对话按实时状态重读，不使用本段历史路径计数判断当前状态。
 `tasks/todo.md`、`tasks/plan.md`、`docs/reports/`、`commonMain/`、`tools/roi_similarity/` 和既有 `.npz` 默认受保护；以后只有用户明确点名文档并要求更新时才能编辑。保留全部已有改动和未跟踪文件，不得覆盖或清理。
 
 用户问“可以提交了吗”时只做审计并给结论，不等于授权提交。只有用户明确要求提交且文件范围明确时才选择性暂存/提交；绝不 push。禁止 `git add .`、`git reset`、`git clean`、`git stash`。
