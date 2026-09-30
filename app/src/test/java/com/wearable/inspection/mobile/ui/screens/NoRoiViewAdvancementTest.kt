@@ -261,8 +261,20 @@ class NoRoiViewAdvancementTest {
         val tryIdx = source.lastIndexOf("try {", insertIdx)
         assertTrue("应有 try-catch 包裹照片插入", tryIdx > 0)
         // 定位包含 CaptureUiState.ERROR 的 catch 分支（在 insert 之后）
-        val catchIdx = source.indexOf("catch (", insertIdx)
-        assertTrue("应有 catch 分支", catchIdx > insertIdx)
+        // 跳过 CancellationException catch（仅 rethrow），找包含 ERROR 的 catch
+        var searchFrom = insertIdx
+        var catchIdx = -1
+        while (true) {
+            val idx = source.indexOf("catch (", searchFrom)
+            if (idx < 0) break
+            val block = source.substring(idx, (idx + 300).coerceAtMost(source.length))
+            if (block.contains("CaptureUiState.ERROR")) {
+                catchIdx = idx
+                break
+            }
+            searchFrom = idx + 7
+        }
+        assertTrue("应有设置 CaptureUiState.ERROR 的 catch 分支", catchIdx > insertIdx)
 
         // catch 内设置 ERROR 状态，不推进
         val catchBlock = source.substring(catchIdx, (catchIdx + 300).coerceAtMost(source.length))

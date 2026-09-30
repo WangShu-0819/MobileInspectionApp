@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -26,6 +27,7 @@ import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Photo
 import androidx.compose.material.icons.filled.QrCodeScanner
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.Warning
@@ -111,9 +113,11 @@ enum class CaptureUiState {
 }
 
 /**
- * 现场采集页（上实时 + 下模板）
- * 上方 55-65%：CameraX 实时预览 + 轮廓/ROI 叠加
- * 下方 35-45%：模板参考图 + 检测信息
+ * 现场采集页（全屏相机 + 浮动参考图）
+ *
+ * T7.2: 相机预览全屏显示，模板参考图以浮动缩略图形式叠加在相机右下角，
+ * 点击可放大查看。T7: 透明度/显示隐藏控件固定在主界面底部操作栏上方，
+ * 不随悬浮窗收起/展开而消失，且不遮挡相机取景和拍摄操作。
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -335,6 +339,8 @@ fun LiveInspectionScreen(
                                         capturedTotalViews
                                     )
                                 }
+                            } catch (error: kotlinx.coroutines.CancellationException) {
+                                throw error
                             } catch (error: Exception) {
                                 captureError = "照片记录保存失败：${error.message ?: "未知错误"}"
                                 captureState = CaptureUiState.ERROR
@@ -464,63 +470,71 @@ fun LiveInspectionScreen(
         },
         containerColor = customColors.pageBackground
     ) { paddingValues ->
+        // T7: 全屏相机 + 浮动参考图 + 固定透明度控件布局
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // 上方实时预览；下方参考图需要足够空间，避免被压缩成缩略图
-            CameraPreviewSection(
-                modifier = Modifier.weight(0.40f),
-                template = inspectionState.selectedTemplate,
-                rois = inspectionState.rois,
-                active = isScreenVisible,
-                previewScaleType = previewScaleType,
-                overlayAlpha = if (templateVisible) overlayAlpha else 0f,
-                contentRect = contentRect,
-                onFrameInfo = { info ->
-                    if (isScreenVisible) contentRect = info.contentRect
-                },
-                onSessionReady = { id ->
-                    if (isScreenVisible) {
-                        contentRect = null
-                        sessionId = id
-                        if (id == null) {
-                            if (!captureNavigationPending) {
-                                captureState = CaptureUiState.ERROR
-                                captureError = "相机连接失败"
+            // 全屏相机预览（占满剩余空间）
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+            ) {
+                CameraPreviewSection(
+                    modifier = Modifier.fillMaxSize(),
+                    template = inspectionState.selectedTemplate,
+                    rois = inspectionState.rois,
+                    active = isScreenVisible,
+                    previewScaleType = previewScaleType,
+                    overlayAlpha = if (templateVisible) overlayAlpha else 0f,
+                    contentRect = contentRect,
+                    onFrameInfo = { info ->
+                        if (isScreenVisible) contentRect = info.contentRect
+                    },
+                    onSessionReady = { id ->
+                        if (isScreenVisible) {
+                            contentRect = null
+                            sessionId = id
+                            if (id == null) {
+                                if (!captureNavigationPending) {
+                                    captureState = CaptureUiState.ERROR
+                                    captureError = "相机连接失败"
+                                }
+                            } else if (!captureNavigationPending && captureState != CaptureUiState.CAPTURING) {
+                                // 新会话就绪只在没有拍照/导航过渡时重置，避免覆盖 SAVED 状态。
+                                onResetCapture()
                             }
-                        } else if (!captureNavigationPending && captureState != CaptureUiState.CAPTURING) {
-                            // 新会话就绪只在没有拍照/导航过渡时重置，避免覆盖 SAVED 状态。
-                            onResetCapture()
                         }
                     }
-                }
-            )
+                )
 
-            // 下方模板参考 + 信息（模板提示 + 拍照提示）
-            TemplateReferenceSection(
-                modifier = Modifier.weight(0.60f),
-                template = inspectionState.selectedTemplate,
-                rois = inspectionState.rois,
-                templates = inspectionState.templates,
-                viewIndex = inspectionState.currentViewIndex,
-                totalViews = inspectionState.totalViews,
-                allViewsCaptured = inspectionState.allViewsCaptured,
-                captureState = captureState,
-                captureError = captureError,
-                captureSavedMessage = captureSavedMessage,
-                captureNavigationPending = captureNavigationPending,
-                onTemplateMissing = onOpenTemplates,
-                onRetry = onResetCapture,
-                onShowTemplateSheet = { showTemplateSheet = true },
-                onResetViews = {
-                    viewModel.resetViewIndex()
-                    onResetBatch()
-                }
-            )
+                // T7: 浮动参考图（叠加在相机上，右下角）
+                FloatingReferenceImage(
+                    template = inspectionState.selectedTemplate,
+                    rois = inspectionState.rois,
+                    templates = inspectionState.templates,
+                    viewIndex = inspectionState.currentViewIndex,
+                    totalViews = inspectionState.totalViews,
+                    allViewsCaptured = inspectionState.allViewsCaptured,
+                    captureState = captureState,
+                    captureError = captureError,
+                    captureSavedMessage = captureSavedMessage,
+                    captureNavigationPending = captureNavigationPending,
+                    onTemplateMissing = onOpenTemplates,
+                    onRetry = onResetCapture,
+                    onShowTemplateSheet = { showTemplateSheet = true },
+                    onResetViews = {
+                        viewModel.resetViewIndex()
+                        onResetBatch()
+                    },
+                    modifier = Modifier.align(Alignment.BottomEnd),
+                )
+            }
 
-            // 模板叠加控制栏
+            // T7: 透明度/显示隐藏控件固定在相机预览下方、拍照栏上方
+            // 始终可见，不随悬浮窗收起/展开而变化
             TemplateOverlayControls(
                 alpha = overlayAlpha,
                 visible = templateVisible,
@@ -1008,6 +1022,167 @@ private fun TemplateReferenceSection(
 }
 
 /**
+ * 浮动参考图组件
+ *
+ * 小模式：右下角缩略图，点击图片本身即可展开（无需找独立按钮）。
+ * 大模式：近全屏叠加，点击"收起"按钮缩小。
+ * 两种模式下都显示模板图片 + ROI 叠加 + 视角信息。
+ * 透明度/显示隐藏控件固定在主界面，不在此悬浮窗内。
+ */
+@Composable
+private fun FloatingReferenceImage(
+    template: InspectionTemplateEntity?,
+    rois: List<RoiDefinitionEntity>,
+    templates: List<InspectionTemplateEntity>,
+    viewIndex: Int,
+    totalViews: Int,
+    allViewsCaptured: Boolean,
+    captureState: CaptureUiState,
+    captureError: String?,
+    captureSavedMessage: String,
+    captureNavigationPending: Boolean,
+    onTemplateMissing: () -> Unit,
+    onRetry: () -> Unit,
+    onShowTemplateSheet: () -> Unit,
+    onResetViews: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    if (expanded) {
+        // 大模式：近全屏叠加
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.7f)),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 56.dp, bottom = 80.dp) // 留出 TopAppBar 和 CaptureActionBar
+                    .align(Alignment.Center),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                // 视角信息栏 + 收起按钮（统一 16sp / Medium / 白色，基线对齐）
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 48.dp)
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    // 左侧：视角编号 + 当前视角名（多视角时点击名称切换）
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        if (totalViews > 0) {
+                            Text(
+                                text = "视角 ${viewIndex + 1}/$totalViews",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color.White,
+                            )
+                        }
+                        if (templates.size > 1 && template != null) {
+                            Text(
+                                text = template.name,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color(0xFF90CAF9),
+                                maxLines = 1,
+                                modifier = Modifier.clickable { onShowTemplateSheet() },
+                            )
+                        }
+                    }
+                    // 右侧：收起
+                    TextButton(
+                        onClick = { expanded = false },
+                        modifier = Modifier.heightIn(min = 48.dp),
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.VisibilityOff,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(16.dp),
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "收起",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color.White,
+                        )
+                    }
+                }
+
+                // 模板内容
+                if (allViewsCaptured) {
+                    AllViewsCapturedCard(onReset = onResetViews)
+                } else if (template == null) {
+                    TemplateEmptyState(
+                        hasTemplates = templates.isNotEmpty(),
+                        onGoToConfig = onTemplateMissing,
+                    )
+                } else {
+                    TemplateContent(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        template = template,
+                        rois = rois,
+                        fillImage = false,
+                        showName = false,
+                    )
+                }
+            }
+        }
+    } else {
+        // 小模式：右下角紧凑缩略图，只显示参考图 + ROI 框，无视角信息和切换入口
+        Box(
+            modifier = modifier.padding(2.dp),
+            contentAlignment = Alignment.BottomEnd,
+        ) {
+            Card(
+                modifier = Modifier
+                    .size(width = 104.dp, height = 140.dp)
+                    .clickable { expanded = true },
+                colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                shape = RoundedCornerShape(4.dp),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(2.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    if (template != null) {
+                        TemplateContent(
+                            modifier = Modifier.fillMaxSize(),
+                            template = template,
+                            rois = rois,
+                            fillImage = false,
+                            showName = false,
+                            minImageHeight = 0.dp,
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.Photo,
+                            contentDescription = null,
+                            tint = PlaceholderColor,
+                            modifier = Modifier.size(24.dp),
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
  * 当前视角切换器
  */
 @Composable
@@ -1100,6 +1275,8 @@ private fun TemplateContent(
     rois: List<RoiDefinitionEntity> = emptyList(),
     fillImage: Boolean = false,
     showName: Boolean = true,
+    /** 0.dp 表示不强制最小高度（收起态缩略图） */
+    minImageHeight: androidx.compose.ui.unit.Dp = 180.dp,
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -1110,7 +1287,7 @@ private fun TemplateContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-                .heightIn(min = 180.dp)
+                .then(if (minImageHeight > 0.dp) Modifier.heightIn(min = minImageHeight) else Modifier)
                 .clip(RoundedCornerShape(12.dp)),
             colors = CardDefaults.cardColors(containerColor = Color.Black)
         ) {
