@@ -527,4 +527,104 @@ class PhotoRegistrationEngineTest {
 
         tpl.release(); scene.release()
     }
+
+    // ---- 14. 特征提取工作分辨率缩放（T7.6 内存修复） ----
+    @Test
+    fun `feature working scale is one for images within cap`() {
+        assertEquals(1.0, PhotoRegistrationEngine.featureWorkingScale(200, 200), 1e-12)
+        assertEquals(1.0, PhotoRegistrationEngine.featureWorkingScale(2048, 1536), 1e-12)
+        assertEquals(1.0, PhotoRegistrationEngine.featureWorkingScale(1536, 2048), 1e-12)
+    }
+
+    @Test
+    fun `feature working scale caps long side at max working side`() {
+        val scale = PhotoRegistrationEngine.featureWorkingScale(8000, 6000)
+        assertEquals(2048.0 / 8000.0, scale, 1e-12)
+        assertTrue("缩放后长边不得超过上限", 8000 * scale <= RegistrationConfig.AKAZE_MAX_WORKING_SIDE + 1e-9)
+
+        val tallScale = PhotoRegistrationEngine.featureWorkingScale(3000, 4000)
+        assertEquals(2048.0 / 4000.0, tallScale, 1e-12)
+    }
+
+    @Test
+    fun `large image registration keeps full-res coordinates`() {
+        // 长边 2600 > 2048 → 走降采样检测 + 关键点换算回原图坐标系的路径
+        val largeW = 2600
+        val largeH = 2000
+        val tpl = createTexturedImage(largeW, largeH, seed = 160)
+        val tx = 40.0; val ty = 30.0
+        val (scene, _) = translateImage(tpl, tx, ty, largeW, largeH)
+
+        val roi = listOf(
+            ProjectedPoint(600.0, 500.0),
+            ProjectedPoint(1600.0, 500.0),
+            ProjectedPoint(1600.0, 1400.0),
+            ProjectedPoint(600.0, 1400.0),
+        )
+        val result = engine.register(tpl, scene, roi, largeW, largeH)
+        assertTrue("大图配准应成功: ${result.failureReason}", result.isSuccess)
+
+        // 投影坐标必须在原图坐标系（不是工作分辨率坐标系）：按平移量对齐
+        val corners = result.projectedRoiCorners!!
+        val expected = listOf(
+            ProjectedPoint(600.0 + tx, 500.0 + ty),
+            ProjectedPoint(1600.0 + tx, 500.0 + ty),
+            ProjectedPoint(1600.0 + tx, 1400.0 + ty),
+            ProjectedPoint(600.0 + tx, 1400.0 + ty),
+        )
+        for (i in corners.indices) {
+            assertEquals("corner[$i].x 应为原图坐标", expected[i].x, corners[i].x, 25.0)
+            assertEquals("corner[$i].y 应为原图坐标", expected[i].y, corners[i].y, 25.0)
+        }
+
+        tpl.release(); scene.release()
+    }
+
+    // ---- 15. computeHomography 全局门禁（会话路径） ----
+    @Test
+    fun `computeHomography success satisfies global gates`() {
+        val img = createTexturedImage(sceneW, sceneH, seed = 170)
+        val homo = engine.computeHomography(img, img, sceneW, sceneH)
+        assertTrue("同图应成功: ${homo.failureReason}", homo.isSuccess)
+        assertNotNull(homo.homography)
+        assertEquals(9, homo.homography!!.size)
+        // 成功结果必须满足全局门禁各指标（若跳过门禁这些断言不必然成立）
+        assertTrue("内点数满足门禁", homo.inlierCount >= RegistrationConfig.MIN_INLIER_COUNT)
+        assertTrue("内点比例满足门禁", homo.inlierRatio >= RegistrationConfig.MIN_INLIER_RATIO)
+        assertTrue("重投影误差满足门禁", homo.medianReprojectionError <= RegistrationConfig.MAX_MEDIAN_REPROJECTION_ERROR)
+        assertTrue("空间覆盖率满足门禁", homo.spatialCoverage >= RegistrationConfig.MIN_SPATIAL_COVERAGE)
+        img.release()
+    }
+
+    @Test
+    fun `computeHomography never returns success without gates on unrelated images`() {
+        val imgA = createTexturedImage(sceneW, sceneH, seed = 180)
+        val imgB = createTexturedImage(sceneW, sceneH, seed = 181)
+        val homo = engine.computeHomography(imgA, imgB, sceneW, sceneH)
+        assertFalse("无关图不得返回 SUCCESS", homo.isSuccess)
+        assertNull(homo.homography)
+        imgA.release(); imgB.release()
+    }
+
+    @Test
+    fun `computeHomography then projectRoiCorners matches register on same inputs`() {
+        val tpl = createTexturedImage(tplW, tplH, seed = 190)
+        val (scene, _) = translateImage(tpl, 25.0, 15.0, sceneW, sceneH)
+
+        val direct = engine.register(tpl, scene, templateRoiCorners, sceneW, sceneH)
+        val homo = engine.computeHomography(tpl, scene, sceneW, sceneH)
+        assertTrue("register 应成功: ${direct.failureReason}", direct.isSuccess)
+        assertTrue("computeHomography 应成功: ${homo.failureReason}", homo.isSuccess)
+
+        val projected = engine.projectRoiCorners(homo.homography!!, templateRoiCorners, sceneW, sceneH)
+        assertTrue("逐 ROI 投影应成功: ${projected.failureReason}", projected.isSuccess)
+        val a = direct.projectedRoiCorners!!
+        val b = projected.projectedRoiCorners!!
+        for (i in a.indices) {
+            assertEquals("corner[$i].x 一致", a[i].x, b[i].x, 1.0)
+            assertEquals("corner[$i].y 一致", a[i].y, b[i].y, 1.0)
+        }
+
+        tpl.release(); scene.release()
+    }
 }

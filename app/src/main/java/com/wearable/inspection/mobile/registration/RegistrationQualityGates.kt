@@ -45,37 +45,14 @@ object RegistrationQualityGates {
         imageWidth: Int,
         imageHeight: Int,
     ): GateResult {
-        // 0. 指标非有限值（NaN/Infinity）
-        if (!medianReprojectionError.isFinite()) {
-            return GateResult(false, "重投影误差非有限值: $medianReprojectionError")
-        }
-        if (!spatialCoverage.isFinite()) {
-            return GateResult(false, "空间覆盖率非有限值: $spatialCoverage")
-        }
-
-        // 1. 内点数量
-        if (inlierCount < RegistrationConfig.MIN_INLIER_COUNT) {
-            return GateResult(false, "内点不足: $inlierCount < ${RegistrationConfig.MIN_INLIER_COUNT}")
-        }
-
-        // 2. 内点比例
-        if (goodMatchCount <= 0) {
-            return GateResult(false, "内点比例无效: good matches=$goodMatchCount")
-        }
-        val ratio = inlierCount.toDouble() / goodMatchCount
-        if (ratio < RegistrationConfig.MIN_INLIER_RATIO) {
-            return GateResult(false, "内点比例不足: ${"%.3f".format(ratio)} < ${RegistrationConfig.MIN_INLIER_RATIO}")
-        }
-
-        // 3. 重投影误差
-        if (medianReprojectionError > RegistrationConfig.MAX_MEDIAN_REPROJECTION_ERROR) {
-            return GateResult(false, "重投影误差过大: ${"%.2f".format(medianReprojectionError)} > ${RegistrationConfig.MAX_MEDIAN_REPROJECTION_ERROR}")
-        }
-
-        // 4. 空间覆盖率
-        if (spatialCoverage < RegistrationConfig.MIN_SPATIAL_COVERAGE) {
-            return GateResult(false, "空间覆盖率不足: ${"%.3f".format(spatialCoverage)} < ${RegistrationConfig.MIN_SPATIAL_COVERAGE}")
-        }
+        // 1-4. 全局匹配质量（与 computeHomography 共用同一组门禁）
+        val global = checkGlobalMatchQuality(
+            inlierCount = inlierCount,
+            goodMatchCount = goodMatchCount,
+            medianReprojectionError = medianReprojectionError,
+            spatialCoverage = spatialCoverage,
+        )
+        if (!global.passed) return global
 
         // 5-8. 投影四边形检查
         if (projectedCorners == null || projectedCorners.size != 4) {
@@ -115,6 +92,95 @@ object RegistrationQualityGates {
             }
         }
 
+        return GateResult(true, null)
+    }
+
+    /**
+     * 全局匹配质量门禁：指标有限性、内点数量、内点比例、重投影误差、空间覆盖率。
+     *
+     * [checkAll] 与 `computeHomography()` 共用本检查：
+     * 逐 ROI 投影几何门禁不能替代这组全局检查，
+     * computeHomography 在返回 SUCCESS 前必须先通过这里。
+     */
+    fun checkGlobalMatchQuality(
+        inlierCount: Int,
+        goodMatchCount: Int,
+        medianReprojectionError: Double,
+        spatialCoverage: Double,
+    ): GateResult {
+        // 0. 指标非有限值（NaN/Infinity）
+        if (!medianReprojectionError.isFinite()) {
+            return GateResult(false, "重投影误差非有限值: $medianReprojectionError")
+        }
+        if (!spatialCoverage.isFinite()) {
+            return GateResult(false, "空间覆盖率非有限值: $spatialCoverage")
+        }
+
+        // 1. 内点数量
+        if (inlierCount < RegistrationConfig.MIN_INLIER_COUNT) {
+            return GateResult(false, "内点不足: $inlierCount < ${RegistrationConfig.MIN_INLIER_COUNT}")
+        }
+
+        // 2. 内点比例
+        if (goodMatchCount <= 0) {
+            return GateResult(false, "内点比例无效: good matches=$goodMatchCount")
+        }
+        val ratio = inlierCount.toDouble() / goodMatchCount
+        if (ratio < RegistrationConfig.MIN_INLIER_RATIO) {
+            return GateResult(false, "内点比例不足: ${"%.3f".format(ratio)} < ${RegistrationConfig.MIN_INLIER_RATIO}")
+        }
+
+        // 3. 重投影误差
+        if (medianReprojectionError > RegistrationConfig.MAX_MEDIAN_REPROJECTION_ERROR) {
+            return GateResult(false, "重投影误差过大: ${"%.2f".format(medianReprojectionError)} > ${RegistrationConfig.MAX_MEDIAN_REPROJECTION_ERROR}")
+        }
+
+        // 4. 空间覆盖率
+        if (spatialCoverage < RegistrationConfig.MIN_SPATIAL_COVERAGE) {
+            return GateResult(false, "空间覆盖率不足: ${"%.3f".format(spatialCoverage)} < ${RegistrationConfig.MIN_SPATIAL_COVERAGE}")
+        }
+
+        return GateResult(true, null)
+    }
+
+    /**
+     * Check only projected quadrilateral geometry (NaN, convexity, area ratio, boundary).
+     * Used by per-ROI projection where global match quality (inliers, reprojection error)
+     * was already validated during the initial homography computation.
+     */
+    fun checkProjectedGeometry(
+        projectedCorners: List<ProjectedPoint>?,
+        imageWidth: Int,
+        imageHeight: Int,
+    ): GateResult {
+        if (projectedCorners == null || projectedCorners.size != 4) {
+            return GateResult(false, "投影四边形无效: corners=${projectedCorners?.size}")
+        }
+        for ((i, pt) in projectedCorners.withIndex()) {
+            if (!pt.x.isFinite() || !pt.y.isFinite()) {
+                return GateResult(false, "投影点包含非有限值: corner[$i]=(${pt.x}, ${pt.y})")
+            }
+        }
+        if (!isConvexQuadrilateral(projectedCorners)) {
+            return GateResult(false, "投影四边形非凸")
+        }
+        val area = polygonArea(projectedCorners)
+        val imageArea = imageWidth.toDouble() * imageHeight.toDouble()
+        if (imageArea > 0) {
+            val areaRatio = area / imageArea
+            if (areaRatio < RegistrationConfig.MIN_PROJECTED_AREA_RATIO) {
+                return GateResult(false, "投影面积过小: ${"%.6f".format(areaRatio)} < ${RegistrationConfig.MIN_PROJECTED_AREA_RATIO}")
+            }
+            if (areaRatio > RegistrationConfig.MAX_PROJECTED_AREA_RATIO) {
+                return GateResult(false, "投影面积过大: ${"%.3f".format(areaRatio)} > ${RegistrationConfig.MAX_PROJECTED_AREA_RATIO}")
+            }
+        }
+        val margin = RegistrationConfig.BOUNDARY_MARGIN_PX
+        for ((i, pt) in projectedCorners.withIndex()) {
+            if (pt.x < -margin || pt.y < -margin || pt.x > imageWidth + margin || pt.y > imageHeight + margin) {
+                return GateResult(false, "投影点超出图像边界: corner[$i]=(${pt.x}, ${pt.y}), image=${imageWidth}x$imageHeight")
+            }
+        }
         return GateResult(true, null)
     }
 

@@ -80,11 +80,21 @@ Java_com_wearable_inspection_mobile_detection_NanoDetNcnnNative_infer(
     const int outputWidth = runtime->outputWidth;
 
     ncnn::Mat input(kInputWidth, kInputHeight, kChannels);
+    if (input.empty()) {
+        throw_illegal_state(env, "NCNN Mat allocation failed: input is empty (OOM?)");
+        return nullptr;
+    }
     jfloat* source = env->GetFloatArrayElements(input_values, nullptr);
     if (source == nullptr) return nullptr;
     const size_t plane_bytes = kInputWidth * kInputHeight * sizeof(float);
     for (int channel = 0; channel < kChannels; ++channel) {
-        std::memcpy(input.channel(channel), source + channel * kInputWidth * kInputHeight, plane_bytes);
+        float* ch = input.channel(channel);
+        if (ch == nullptr) {
+            env->ReleaseFloatArrayElements(input_values, source, JNI_ABORT);
+            throw_illegal_state(env, "NCNN Mat channel pointer is null (OOM?)");
+            return nullptr;
+        }
+        std::memcpy(ch, source + channel * kInputWidth * kInputHeight, plane_bytes);
     }
     env->ReleaseFloatArrayElements(input_values, source, JNI_ABORT);
 

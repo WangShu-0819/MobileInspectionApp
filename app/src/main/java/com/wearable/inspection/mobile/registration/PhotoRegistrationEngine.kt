@@ -15,6 +15,7 @@ import org.opencv.core.Size
 import org.opencv.features2d.AKAZE
 import org.opencv.features2d.BFMatcher
 import org.opencv.imgproc.Imgproc
+import kotlin.math.max
 
 /**
  * V4/AKAZE 单张照片配准引擎。
@@ -33,6 +34,31 @@ class PhotoRegistrationEngine {
 
         /** Diff_PM_G2 = 1（Java 绑定未暴露 DIFF_* 常量，用 C++ enum 字面量） */
         private const val AKAZE_DIFFUSIVITY = 1
+
+        /**
+         * 特征提取工作分辨率缩放系数（≤1.0）。
+         * 长边超过 [RegistrationConfig.AKAZE_MAX_WORKING_SIDE] 时按比例缩小，
+         * 否则 1.0（原图直通，既有小图语义逐位不变）。
+         */
+        internal fun featureWorkingScale(width: Int, height: Int): Double {
+            val maxSide = max(width, height)
+            return if (maxSide <= RegistrationConfig.AKAZE_MAX_WORKING_SIDE) {
+                1.0
+            } else {
+                RegistrationConfig.AKAZE_MAX_WORKING_SIDE.toDouble() / maxSide
+            }
+        }
+
+        /** 把工作分辨率下的关键点坐标换算回原图坐标系（factor = 1 / featureWorkingScale）。 */
+        internal fun scaleKeyPoints(kp: MatOfKeyPoint, factor: Double) {
+            if (factor == 1.0) return
+            val arr = kp.toArray()
+            for (kpt in arr) {
+                kpt.pt.x *= factor
+                kpt.pt.y *= factor
+            }
+            kp.fromArray(*arr)
+        }
     }
 
     private val akaze: AKAZE = AKAZE.create(
@@ -74,24 +100,33 @@ class PhotoRegistrationEngine {
         var cappedSceneKp: MatOfKeyPoint? = null
         var cappedSceneDesc: Mat? = null
         var homography: Mat? = null
+        var templateMask: Mat? = null
+        var sceneMask: Mat? = null
         val allMatOfDMatch = mutableListOf<MatOfDMatch>()
 
         try {
-            // 1. 转灰度
-            templateGray = toGray(templateImage)
-            sceneGray = toGray(sceneImage)
-            if (templateGray.empty() || sceneGray.empty()) {
+            // 1. 转灰度（长边超过上限时降采样：AKAZE 尺度空间 native 内存与像素数成正比）
+            val (tplGrayWork, tplScale) = toCappedGray(templateImage)
+            templateGray = tplGrayWork
+            val (sceneGrayWork, sceneScale) = toCappedGray(sceneImage)
+            sceneGray = sceneGrayWork
+            if (tplGrayWork.empty() || sceneGrayWork.empty()) {
                 return failResult("图像转换灰度失败")
             }
 
-            // 2. AKAZE 特征提取
+            // 2. AKAZE 特征提取（工作分辨率）；关键点坐标换算回原图坐标系，
+            //    之后的匹配、RANSAC、门禁与投影全部保持原图坐标和原阈值语义
+            templateMask = Mat()
+            sceneMask = Mat()
             templateKp = MatOfKeyPoint()
             templateDesc = Mat()
-            akaze.detectAndCompute(templateGray, Mat(), templateKp, templateDesc)
+            akaze.detectAndCompute(tplGrayWork, templateMask, templateKp, templateDesc)
+            scaleKeyPoints(templateKp, 1.0 / tplScale)
 
             sceneKp = MatOfKeyPoint()
             sceneDesc = Mat()
-            akaze.detectAndCompute(sceneGray, Mat(), sceneKp, sceneDesc)
+            akaze.detectAndCompute(sceneGrayWork, sceneMask, sceneKp, sceneDesc)
+            scaleKeyPoints(sceneKp, 1.0 / sceneScale)
 
             val tplKpCount = templateKp.rows()
             val sceneKpCount = sceneKp.rows()
@@ -230,6 +265,8 @@ class PhotoRegistrationEngine {
         } finally {
             templateGray?.release()
             sceneGray?.release()
+            templateMask?.release()
+            sceneMask?.release()
             templateKp?.release()
             templateDesc?.release()
             sceneKp?.release()
@@ -243,6 +280,245 @@ class PhotoRegistrationEngine {
         }
     }
 
+    // ---- Session API: decouple homography from per-ROI projection ----
+
+    /**
+     * Result of global homography computation (steps 1-5 of [register]).
+     * Does NOT project any ROI corners — use [projectRoiCorners] for that.
+     */
+    data class HomographyResult(
+        val status: RegistrationStatus,
+        /** 3×3 homography (row-major DoubleArray, length 9). Non-null only when [isSuccess]. */
+        val homography: DoubleArray?,
+        val inlierCount: Int,
+        val inlierRatio: Double,
+        val goodMatchCount: Int,
+        val medianReprojectionError: Double,
+        val spatialCoverage: Double,
+        val matcherName: String,
+        val matcherVersion: String,
+        val failureReason: String?,
+    ) {
+        val isSuccess: Boolean get() = status == RegistrationStatus.SUCCESS
+    }
+
+    /**
+     * Compute global homography from template to scene (AKAZE + BFMatcher + GMS + RANSAC).
+     * Does NOT project any ROI corners — call [projectRoiCorners] per ROI.
+     *
+     * Steps 1-5 of [register]: grayscale → AKAZE detectAndCompute → capFeatures →
+     * BFMatcher KNN + Lowe ratio → GMS → Homography estimation → reprojection error + spatial coverage.
+     */
+    fun computeHomography(
+        templateImage: Mat,
+        sceneImage: Mat,
+        sceneWidth: Int = sceneImage.cols(),
+        sceneHeight: Int = sceneImage.rows(),
+    ): HomographyResult {
+        var templateGray: Mat? = null
+        var sceneGray: Mat? = null
+        var templateKp: MatOfKeyPoint? = null
+        var templateDesc: Mat? = null
+        var sceneKp: MatOfKeyPoint? = null
+        var sceneDesc: Mat? = null
+        var cappedTplKp: MatOfKeyPoint? = null
+        var cappedTplDesc: Mat? = null
+        var cappedSceneKp: MatOfKeyPoint? = null
+        var cappedSceneDesc: Mat? = null
+        var homography: Mat? = null
+        var templateMask: Mat? = null
+        var sceneMask: Mat? = null
+        val allMatOfDMatch = mutableListOf<MatOfDMatch>()
+
+        try {
+            val (tplGrayWork, tplScale) = toCappedGray(templateImage)
+            templateGray = tplGrayWork
+            val (sceneGrayWork, sceneScale) = toCappedGray(sceneImage)
+            sceneGray = sceneGrayWork
+            if (tplGrayWork.empty() || sceneGrayWork.empty()) {
+                return homographyFailResult("图像转换灰度失败")
+            }
+
+            templateMask = Mat(); sceneMask = Mat()
+            templateKp = MatOfKeyPoint(); templateDesc = Mat()
+            akaze.detectAndCompute(tplGrayWork, templateMask, templateKp, templateDesc)
+            scaleKeyPoints(templateKp, 1.0 / tplScale)
+            sceneKp = MatOfKeyPoint(); sceneDesc = Mat()
+            akaze.detectAndCompute(sceneGrayWork, sceneMask, sceneKp, sceneDesc)
+            scaleKeyPoints(sceneKp, 1.0 / sceneScale)
+
+            val tplKpCount = templateKp.rows()
+            val sceneKpCount = sceneKp.rows()
+            if (tplKpCount < RegistrationConfig.MIN_TEMPLATE_KEYPOINTS) {
+                return homographyFailResult("模板特征不足: $tplKpCount < ${RegistrationConfig.MIN_TEMPLATE_KEYPOINTS}")
+            }
+            if (sceneKpCount < RegistrationConfig.MIN_SCENE_KEYPOINTS) {
+                return homographyFailResult("场景特征不足: $sceneKpCount < ${RegistrationConfig.MIN_SCENE_KEYPOINTS}")
+            }
+
+            val cappedTpl = capFeatures(templateKp, templateDesc, RegistrationConfig.AKAZE_MAX_FEATURES)
+            cappedTplKp = cappedTpl.first; cappedTplDesc = cappedTpl.second
+            templateKp = null; templateDesc = null
+            val cappedScene = capFeatures(sceneKp, sceneDesc, RegistrationConfig.AKAZE_MAX_FEATURES)
+            cappedSceneKp = cappedScene.first; cappedSceneDesc = cappedScene.second
+            sceneKp = null; sceneDesc = null
+
+            val tplKpts = cappedTplKp!!.toArray()
+            val sceneKpts = cappedSceneKp!!.toArray()
+
+            val matchesList = mutableListOf<MatOfDMatch>()
+            bfMatcher.knnMatch(cappedTplDesc!!, cappedSceneDesc!!, matchesList, 2)
+            allMatOfDMatch.addAll(matchesList)
+
+            val goodMatches = mutableListOf<DMatch>()
+            for (matchPair in matchesList) {
+                val matches = matchPair.toArray()
+                if (matches.size >= 2 && matches[0].distance < RegistrationConfig.LOWE_RATIO * matches[1].distance) {
+                    goodMatches.add(matches[0])
+                }
+            }
+            if (goodMatches.size < RegistrationConfig.MIN_GOOD_MATCHES) {
+                return homographyFailResult("good matches 不足: ${goodMatches.size} < ${RegistrationConfig.MIN_GOOD_MATCHES}")
+            }
+
+            var filteredMatches: List<DMatch> = goodMatches
+            if (goodMatches.size >= RegistrationConfig.GMS_MIN_MATCHES_TO_APPLY) {
+                val srcPts = goodMatches.map { GmsGridFilter.Point2D(tplKpts[it.queryIdx].pt.x, tplKpts[it.queryIdx].pt.y) }
+                val dstPts = goodMatches.map { GmsGridFilter.Point2D(sceneKpts[it.trainIdx].pt.x, sceneKpts[it.trainIdx].pt.y) }
+                val keep = GmsGridFilter.filter(srcPts, dstPts, templateImage.cols(), templateImage.rows(), sceneWidth, sceneHeight)
+                val filtered = goodMatches.filterIndexed { i, _ -> keep[i] }
+                if (filtered.size >= RegistrationConfig.MIN_GOOD_MATCHES) filteredMatches = filtered
+            }
+
+            val srcPts = filteredMatches.map { tplKpts[it.queryIdx].pt }
+            val dstPts = filteredMatches.map { sceneKpts[it.trainIdx].pt }
+            val srcMat = toMatOfPoint2f(srcPts)
+            val dstMat = toMatOfPoint2f(dstPts)
+            val mask = Mat()
+            try {
+                homography = Calib3d.findHomography(srcMat, dstMat, Calib3d.USAC_MAGSAC,
+                    RegistrationConfig.RANSAC_THRESHOLD, mask,
+                    RegistrationConfig.USAC_MAX_ITERS, RegistrationConfig.USAC_CONFIDENCE)
+
+                if (homography == null || homography.empty()) {
+                    return homographyFailResult("Homography 估计失败", RegistrationStatus.FALLBACK_FULL_IMAGE)
+                }
+
+                val inlierIndices = readMaskInliers(mask)
+                val inlierCount = inlierIndices.size
+                val inlierSrcPts = inlierIndices.map { ProjectedPoint(srcPts[it].x, srcPts[it].y) }
+                val inlierDstPts = inlierIndices.map { ProjectedPoint(dstPts[it].x, dstPts[it].y) }
+                val hArray = homographyToDoubleArray(homography)
+                val reprojectionError = RegistrationQualityGates.computeMedianReprojectionError(hArray, inlierSrcPts, inlierDstPts)
+                val spatialCoverage = RegistrationQualityGates.computeSpatialCoverage(inlierSrcPts, inlierDstPts)
+
+                // 全局匹配质量门禁（与 register() 的 checkAll 1-4 同一组检查）：
+                // 逐 ROI 投影几何门禁不能替代内点数/比例、重投影误差与空间覆盖率检查。
+                val globalGate = RegistrationQualityGates.checkGlobalMatchQuality(
+                    inlierCount = inlierCount,
+                    goodMatchCount = filteredMatches.size,
+                    medianReprojectionError = reprojectionError,
+                    spatialCoverage = spatialCoverage,
+                )
+                if (!globalGate.passed) {
+                    return HomographyResult(
+                        status = RegistrationStatus.FALLBACK_FULL_IMAGE,
+                        homography = null,
+                        inlierCount = inlierCount,
+                        inlierRatio = if (filteredMatches.isNotEmpty()) inlierCount.toDouble() / filteredMatches.size else 0.0,
+                        goodMatchCount = filteredMatches.size,
+                        medianReprojectionError = reprojectionError,
+                        spatialCoverage = spatialCoverage,
+                        matcherName = RegistrationConfig.MATCHER_NAME,
+                        matcherVersion = RegistrationConfig.MATCHER_VERSION,
+                        failureReason = globalGate.failureReason,
+                    )
+                }
+
+                return HomographyResult(
+                    status = RegistrationStatus.SUCCESS,
+                    homography = hArray,
+                    inlierCount = inlierCount,
+                    inlierRatio = if (filteredMatches.isNotEmpty()) inlierCount.toDouble() / filteredMatches.size else 0.0,
+                    goodMatchCount = filteredMatches.size,
+                    medianReprojectionError = reprojectionError,
+                    spatialCoverage = spatialCoverage,
+                    matcherName = RegistrationConfig.MATCHER_NAME,
+                    matcherVersion = RegistrationConfig.MATCHER_VERSION,
+                    failureReason = null,
+                )
+            } finally {
+                srcMat.release(); dstMat.release(); mask.release()
+            }
+        } finally {
+            templateGray?.release(); sceneGray?.release()
+            templateMask?.release(); sceneMask?.release()
+            templateKp?.release(); templateDesc?.release()
+            sceneKp?.release(); sceneDesc?.release()
+            cappedTplKp?.release(); cappedTplDesc?.release()
+            cappedSceneKp?.release(); cappedSceneDesc?.release()
+            homography?.release()
+            allMatOfDMatch.forEach { it.release() }
+        }
+    }
+
+    private fun homographyFailResult(
+        reason: String,
+        status: RegistrationStatus = RegistrationStatus.FAILED,
+    ) = HomographyResult(
+        status = status, homography = null,
+        inlierCount = 0, inlierRatio = 0.0, goodMatchCount = 0,
+        medianReprojectionError = 0.0, spatialCoverage = 0.0,
+        matcherName = RegistrationConfig.MATCHER_NAME,
+        matcherVersion = RegistrationConfig.MATCHER_VERSION,
+        failureReason = reason,
+    )
+
+    /**
+     * Project template ROI corners through a precomputed homography, then run quality gates.
+     * Used by the session API: compute homography once, project per ROI.
+     *
+     * @param homography 3×3 homography from [computeHomography]
+     * @param templateRoiCorners ROI corners in template pixel coordinates [左上, 右上, 右下, 左下]
+     * @param sceneWidth scene image width (for boundary checks)
+     * @param sceneHeight scene image height (for boundary checks)
+     */
+    fun projectRoiCorners(
+        homography: DoubleArray,
+        templateRoiCorners: List<ProjectedPoint>,
+        sceneWidth: Int,
+        sceneHeight: Int,
+    ): RegistrationResult {
+        val projectedCorners = RegistrationQualityGates.transformPoints(homography, templateRoiCorners)
+        // Only check per-ROI projected geometry; global match quality was already validated.
+        val gateResult = RegistrationQualityGates.checkProjectedGeometry(
+            projectedCorners = projectedCorners,
+            imageWidth = sceneWidth,
+            imageHeight = sceneHeight,
+        )
+        if (!gateResult.passed) {
+            return RegistrationResult(
+                status = RegistrationStatus.FALLBACK_FULL_IMAGE,
+                homography = null, projectedRoiCorners = null,
+                inlierCount = 0, inlierRatio = 0.0, reprojectionError = 0.0,
+                spatialCoverage = 0.0, quadrilateralValid = false,
+                matcherName = RegistrationConfig.MATCHER_NAME,
+                matcherVersion = RegistrationConfig.MATCHER_VERSION,
+                failureReason = gateResult.failureReason,
+            )
+        }
+        return RegistrationResult(
+            status = RegistrationStatus.SUCCESS,
+            homography = homography,
+            projectedRoiCorners = projectedCorners,
+            inlierCount = 1, inlierRatio = 1.0, reprojectionError = 0.0,
+            spatialCoverage = 1.0, quadrilateralValid = true,
+            matcherName = RegistrationConfig.MATCHER_NAME,
+            matcherVersion = RegistrationConfig.MATCHER_VERSION,
+            failureReason = null,
+        )
+    }
+
     // ---- 辅助方法 ----
 
     private fun toGray(src: Mat): Mat {
@@ -254,6 +530,23 @@ class PhotoRegistrationEngine {
             else -> src.copyTo(gray)
         }
         return gray
+    }
+
+    /**
+     * 转灰度并在长边超过上限时降采样（先降采样彩色再转灰度，避免全尺寸灰度副本）。
+     *
+     * @return (灰度 Mat（调用方负责 release）, 工作缩放系数 = 工作边 / 原图边)
+     */
+    private fun toCappedGray(src: Mat): Pair<Mat, Double> {
+        val scale = featureWorkingScale(src.cols(), src.rows())
+        if (scale == 1.0) return toGray(src) to 1.0
+        val scaled = Mat()
+        try {
+            Imgproc.resize(src, scaled, Size(), scale, scale, Imgproc.INTER_AREA)
+            return toGray(scaled) to scale
+        } finally {
+            scaled.release()
+        }
     }
 
     private fun homographyToDoubleArray(h: Mat): DoubleArray {

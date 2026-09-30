@@ -17,6 +17,17 @@ object RegistrationConfig {
     const val AKAZE_DESCRIPTOR_CHANNELS = 3
     /** AKAZE 响应阈值（越小特征越多） */
     const val AKAZE_THRESHOLD = 0.002f
+    /**
+     * AKAZE 特征提取分辨率上限（长边像素）。
+     *
+     * AKAZE 非线性尺度空间按输入分辨率分配 native 内存（每个 evolution 层约 4 个
+     * CV_32F 全尺寸缓冲）。48MP（8000x6000）原图直接检测会分配约 4~5GB，
+     * 触发系统 OOM kill（SEA-AL10 实测 PSS 5~6GB 后进程死亡，无 Java/native 崩溃标记）。
+     * 检测阶段降采样到该上限后，关键点坐标换算回原图坐标系；
+     * 匹配、RANSAC、质量门禁与 ROI 投影全部保持原图坐标与原阈值语义，本参数不改变
+     * Lowe 比率、RANSAC 阈值或任何门禁阈值的物理含义。
+     */
+    const val AKAZE_MAX_WORKING_SIDE = 2048
     /** AKAZE 特征数上限：按 response 降序截断 */
     const val AKAZE_MAX_FEATURES = 1000
     /** 最少模板特征点数 */
@@ -25,7 +36,7 @@ object RegistrationConfig {
     const val MIN_SCENE_KEYPOINTS = 15
 
     // ---- Lowe Ratio ----
-    const val LOWE_RATIO = 0.75f
+    const val LOWE_RATIO = 0.80f
     /** 最少 good matches 数量（Lowe 后） */
     const val MIN_GOOD_MATCHES = 10
 
