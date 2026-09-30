@@ -178,6 +178,23 @@ fun TraceRecordsScreen() {
         else repository.observeCaptureBatches()
     }.collectAsState(initial = emptyList())
 
+    // 零件表（用于取 dpmCode 生成批次名称）
+    val allParts by repository.observeParts().collectAsState(initial = emptyList())
+    val partDpmCodes = remember(allParts) { allParts.associate { it.id to it.dpmCode } }
+
+    // 批次显示名称: <安全零件码>_yyyyMMdd_HHmmss_SSS
+    val batchNames = remember(batches, partDpmCodes) {
+        batches.associate { b ->
+            b.batchId to batchDisplayName(
+                dpmCode = b.partId?.let { partDpmCodes[it] },
+                partId = b.partId,
+                partName = b.partName,
+                batchId = b.batchId,
+                startTime = b.startTime,
+            )
+        }
+    }
+
     // 当前正在导出的批次 ID
     var exportingBatchId by remember { mutableStateOf<String?>(null) }
     // 导出结果消息（key=batchId, value=message）
@@ -773,6 +790,13 @@ fun TraceRecordsScreen() {
                     val batch = batches[index]
                     CaptureBatchCard(
                         batch = batch,
+                        batchName = batchNames[batch.batchId] ?: batchDisplayName(
+                            dpmCode = null,
+                            partId = batch.partId,
+                            partName = batch.partName,
+                            batchId = batch.batchId,
+                            startTime = batch.startTime,
+                        ),
                         selected = batch.batchId in selectedBatchIds,
                         exporting = exportingBatchId == batch.batchId,
                         completed = batch.endTime != null,
@@ -780,7 +804,18 @@ fun TraceRecordsScreen() {
                         onExport = {
                             exportingBatchId = batch.batchId
                             scope.launch {
-                                val fileName = "batch_${batch.batchId.take(8)}.zip"
+                                val safeCode = resolveBatchPartCode(
+                                    dpmCode = batch.partId?.let { partDpmCodes[it] },
+                                    partId = batch.partId,
+                                    partName = batch.partName,
+                                    batchId = batch.batchId,
+                                )
+                                val fileName = exportService.generateZipFileName(
+                                    partId = batch.partId.orEmpty(),
+                                    batchId = batch.batchId,
+                                    partCode = safeCode,
+                                    timestamp = batch.startTime,
+                                )
                                 val pkgId = repository.insertExportedPackage(
                                     ExportedPackageEntity(
                                         packageType = ExportedPackageEntity.TYPE_BATCH_INSPECTION,
@@ -892,6 +927,7 @@ fun TraceRecordsScreen() {
     if (showDeleteDialog && selectedBatches.isNotEmpty()) {
         DeleteBatchDialog(
             batches = selectedBatches,
+            batchNames = batchNames,
             photoCounts = photoCountState,
             onDismiss = { showDeleteDialog = false },
             onConfirm = {
@@ -1211,6 +1247,7 @@ private fun StatItem(label: String, value: String, color: Color) {
 @Composable
 private fun CaptureBatchCard(
     batch: CaptureBatchEntity,
+    batchName: String,
     selected: Boolean,
     exporting: Boolean,
     completed: Boolean,
@@ -1254,7 +1291,7 @@ private fun CaptureBatchCard(
                         .widthIn(min = 0.dp),
                 ) {
                     Text(
-                        text = batch.partName ?: "未关联零件",
+                        text = batchName,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = TextPrimary,
@@ -1262,7 +1299,10 @@ private fun CaptureBatchCard(
                         overflow = TextOverflow.Ellipsis,
                     )
                     Text(
-                        text = dateFormat.format(Date(batch.startTime)),
+                        text = listOfNotNull(
+                            batch.partName,
+                            dateFormat.format(Date(batch.startTime)),
+                        ).joinToString(" · "),
                         style = MaterialTheme.typography.bodySmall,
                         color = TextSecondary,
                         maxLines = 1,
@@ -1416,6 +1456,7 @@ private fun BatchEmptyState(
 @Composable
 private fun DeleteBatchDialog(
     batches: List<CaptureBatchEntity>,
+    batchNames: Map<String, String>,
     photoCounts: Map<String, Int?>,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit
@@ -1441,7 +1482,7 @@ private fun DeleteBatchDialog(
                         else -> "$count 张照片"
                     }
                     Text(
-                        text = "${batch.partName ?: "未关联零件"} · ${batch.batchId.take(8)}… · $countText",
+                        text = "${batchNames[batch.batchId] ?: batch.partName ?: "未关联零件"} · $countText",
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )

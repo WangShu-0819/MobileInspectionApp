@@ -123,6 +123,74 @@ class InspectionZipExportServiceTest {
     }
 
     @Test
+    fun `generateZipFileName with explicit timestamp is stable`() {
+        val mockContext = org.mockito.Mockito.mock(android.content.Context::class.java)
+        val mockRepo = org.mockito.Mockito.mock(
+            com.wearable.inspection.mobile.data.repository.InspectionRepository::class.java
+        )
+        val service = InspectionZipExportService(mockContext, mockRepo)
+
+        // 固定时间: 2026-09-30T04:34:56.789Z
+        val fixedTime = 1759206896789L
+
+        val name1 = service.generateZipFileName("part_001", "batch_001", "DP-001", fixedTime)
+        val name2 = service.generateZipFileName("part_001", "batch_001", "DP-001", fixedTime)
+        assertEquals("相同 timestamp 应产生相同文件名", name1, name2)
+        assertTrue("文件名应以 DP-001_ 开头", name1.startsWith("DP-001_"))
+        assertTrue("文件名应以 .zip 结尾", name1.endsWith(".zip"))
+    }
+
+    @Test
+    fun `generateZipFileName timestamp format is yyyyMMdd_HHmmss_SSS`() {
+        val mockContext = org.mockito.Mockito.mock(android.content.Context::class.java)
+        val mockRepo = org.mockito.Mockito.mock(
+            com.wearable.inspection.mobile.data.repository.InspectionRepository::class.java
+        )
+        val service = InspectionZipExportService(mockContext, mockRepo)
+
+        val fixedTime = 1759206896789L
+        val name = service.generateZipFileName("part_001", "batch_001", "DP-001", fixedTime)
+        val tsPart = name.removePrefix("DP-001_").removeSuffix(".zip")
+        assertTrue("时间戳应为 yyyyMMdd_HHmmss_SSS 格式", tsPart.matches(Regex("\\d{8}_\\d{6}_\\d{3}")))
+    }
+
+    @Test
+    fun `generateZipFileName without timestamp still works`() {
+        val mockContext = org.mockito.Mockito.mock(android.content.Context::class.java)
+        val mockRepo = org.mockito.Mockito.mock(
+            com.wearable.inspection.mobile.data.repository.InspectionRepository::class.java
+        )
+        val service = InspectionZipExportService(mockContext, mockRepo)
+
+        // 不传 timestamp → 默认当前时间，向后兼容
+        val name = service.generateZipFileName("part_001", "batch_001", "DP-001")
+        assertTrue("文件名应以 DP-001_ 开头", name.startsWith("DP-001_"))
+        assertTrue("文件名应以 .zip 结尾", name.endsWith(".zip"))
+    }
+
+    @Test
+    fun `batch display name and zip filename share the same base`() {
+        val mockContext = org.mockito.Mockito.mock(android.content.Context::class.java)
+        val mockRepo = org.mockito.Mockito.mock(
+            com.wearable.inspection.mobile.data.repository.InspectionRepository::class.java
+        )
+        val service = InspectionZipExportService(mockContext, mockRepo)
+
+        val fixedTime = 1759206896789L
+        val zipName = service.generateZipFileName("part_001", "batch_001", "DP-001", fixedTime)
+
+        // batchDisplayName 应产生与 generateZipFileName 相同的基名（去掉 .zip）
+        val batchName = com.wearable.inspection.mobile.ui.screens.batchDisplayName(
+            dpmCode = "DP-001",
+            partId = "part_001",
+            partName = null,
+            batchId = "batch_001",
+            startTime = fixedTime,
+        )
+        assertEquals("批次名称 + .zip 应等于 ZIP 文件名", "$batchName.zip", zipName)
+    }
+
+    @Test
     fun `photos are sufficient for a zip when batch has no roi confirms`() {
         val source = File("src/main/java/com/wearable/inspection/mobile/data/export/InspectionZipExportService.kt")
             .readText()

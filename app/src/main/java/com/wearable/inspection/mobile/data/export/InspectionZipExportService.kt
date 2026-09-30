@@ -236,9 +236,10 @@ class InspectionZipExportService(
      * 格式: `<partCode>_yyyyMMdd_HHmmss_SSS.zip`
      * - partCode: 优先使用 dpmCode，为空时回退到 partId
      * - 非法文件名字符（\/:*?"<>|）替换为下划线
+     * - timestamp: 可选，指定时间戳（默认当前时间）；传入 batch.startTime 可得到稳定文件名
      */
-    fun generateZipFileName(partId: String, batchId: String, partCode: String? = null): String {
-        val ts = SimpleDateFormat("yyyyMMdd_HHmmss_SSS", Locale.US).format(Date())
+    fun generateZipFileName(partId: String, batchId: String, partCode: String? = null, timestamp: Long = System.currentTimeMillis()): String {
+        val ts = SimpleDateFormat("yyyyMMdd_HHmmss_SSS", Locale.US).format(Date(timestamp))
         val code = partCode?.takeIf { it.isNotBlank() } ?: partId
         val sanitized = code.replace(Regex("[\\\\/:*?\"<>|]"), "_")
         return "${sanitized}_$ts.zip"
