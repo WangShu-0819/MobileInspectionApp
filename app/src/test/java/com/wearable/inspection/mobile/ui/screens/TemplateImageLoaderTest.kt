@@ -115,7 +115,7 @@ class TemplateImageLoaderTest {
     // ── 有效 content:// URI（mock ContentResolver，每次返回新流） ──
 
     @Test
-    fun `content URI with mock resolver returns Success via two separate streams`() = runBlocking {
+    fun `content URI with mock resolver returns Success via separate streams`() = runBlocking {
         val pngBytes = createValidPngBytes()
         val callCount = java.util.concurrent.atomic.AtomicInteger(0)
         val mockResolver = mockContentResolverWithCounter(pngBytes, callCount)
@@ -124,8 +124,8 @@ class TemplateImageLoaderTest {
             contentResolver = mockResolver
         )
         assertSuccess(result)
-        // 验证恰好打开了两次流（bounds + decode）
-        assertEquals("应恰好打开两次 InputStream", 2, callCount.get())
+        // T7.1: 验证至少打开两次流（bounds + decode），EXIF 读取可能额外打开一次
+        assertTrue("应至少打开两次 InputStream（bounds + decode）", callCount.get() >= 2)
     }
 
     // ── content:// 无 ContentResolver ──

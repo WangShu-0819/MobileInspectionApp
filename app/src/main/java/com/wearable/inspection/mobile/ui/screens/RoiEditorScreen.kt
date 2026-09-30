@@ -227,32 +227,43 @@ fun RoiEditorScreen(
                     // 选中 ROI 的属性显示和编辑
                     val selectedRoi = rois.find { it.id == selectedRoiId }
                     if (selectedRoi != null && !isDrawingMode) {
-                        Row(
+                        val currentType = RoiTargetType.fromName(selectedRoi.targetType)
+                        val isFeatureType = currentType == RoiTargetType.FEATURE
+                        Column(
                             modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalArrangement = Arrangement.spacedBy(2.dp),
                         ) {
-                            Text(
-                                text = "目标属性：${RoiTargetType.fromName(selectedRoi.targetType)?.displayName ?: "未选择"}",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = if (selectedRoi.targetType != null) TextPrimary else PlaceholderColor,
-                            )
-                            Box {
-                                TextButton(onClick = { showEditTargetTypeMenu = true }) {
-                                    Text("修改", style = MaterialTheme.typography.bodySmall)
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = if (isFeatureType) "目标属性：暂无" else "目标属性：${currentType?.displayName ?: "未选择"}",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = if (isFeatureType || selectedRoi.targetType == null) PlaceholderColor else TextPrimary,
+                                    )
                                 }
-                                DropdownMenu(
-                                    expanded = showEditTargetTypeMenu,
-                                    onDismissRequest = { showEditTargetTypeMenu = false },
-                                ) {
-                                    RoiTargetType.entries.forEach { type ->
-                                        DropdownMenuItem(
-                                            text = { Text(type.displayName) },
-                                            onClick = {
-                                                showEditTargetTypeMenu = false
-                                                viewModel.updateRoiTargetType(selectedRoi.id, type)
-                                            },
-                                        )
+                                Box {
+                                    TextButton(onClick = { showEditTargetTypeMenu = true }) {
+                                        Text("修改", style = MaterialTheme.typography.bodySmall)
+                                    }
+                                    DropdownMenu(
+                                        expanded = showEditTargetTypeMenu,
+                                        onDismissRequest = { showEditTargetTypeMenu = false },
+                                    ) {
+                                        RoiTargetType.entries
+                                            .filter { it != RoiTargetType.FEATURE }
+                                            .forEach { type ->
+                                                DropdownMenuItem(
+                                                    text = { Text(type.displayName) },
+                                                    onClick = {
+                                                        showEditTargetTypeMenu = false
+                                                        viewModel.updateRoiTargetType(selectedRoi.id, type)
+                                                    },
+                                                )
+                                            }
                                     }
                                 }
                             }
@@ -261,32 +272,41 @@ fun RoiEditorScreen(
 
                     // 绘制模式下的属性选择
                     if (isDrawingMode) {
-                        Row(
+                        Column(
                             modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalArrangement = Arrangement.spacedBy(2.dp),
                         ) {
-                            Text(
-                                text = "目标属性：${drawingTargetType?.displayName ?: "请选择"}",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = if (drawingTargetType != null) TextPrimary else FailColor,
-                            )
-                            Box {
-                                TextButton(onClick = { showTargetTypeMenu = true }) {
-                                    Text("选择", style = MaterialTheme.typography.bodySmall)
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "目标属性：${drawingTargetType?.displayName ?: "请选择"}",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = if (drawingTargetType != null) TextPrimary else FailColor,
+                                    )
                                 }
-                                DropdownMenu(
-                                    expanded = showTargetTypeMenu,
-                                    onDismissRequest = { showTargetTypeMenu = false },
-                                ) {
-                                    RoiTargetType.entries.forEach { type ->
-                                        DropdownMenuItem(
-                                            text = { Text(type.displayName) },
-                                            onClick = {
-                                                showTargetTypeMenu = false
-                                                viewModel.updateDrawingTargetType(type)
-                                            },
-                                        )
+                                Box {
+                                    TextButton(onClick = { showTargetTypeMenu = true }) {
+                                        Text("选择", style = MaterialTheme.typography.bodySmall)
+                                    }
+                                    DropdownMenu(
+                                        expanded = showTargetTypeMenu,
+                                        onDismissRequest = { showTargetTypeMenu = false },
+                                    ) {
+                                        RoiTargetType.entries
+                                            .filter { it != RoiTargetType.FEATURE }
+                                            .forEach { type ->
+                                                DropdownMenuItem(
+                                                    text = { Text(type.displayName) },
+                                                    onClick = {
+                                                        showTargetTypeMenu = false
+                                                        viewModel.updateDrawingTargetType(type)
+                                                    },
+                                                )
+                                            }
                                     }
                                 }
                             }
@@ -419,6 +439,7 @@ private fun RoiCanvas(
     onRoiDragCancel: (String) -> Unit,
 ) {
     // 异步加载模板位图（避免 UI 线程解码大图卡顿）
+    // T7.1: 加载后应用 EXIF 旋转，确保模板图片以正确方向显示
     var bitmap by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
     LaunchedEffect(imagePath) {
         bitmap = withContext(Dispatchers.IO) {
@@ -426,7 +447,17 @@ private fun RoiCanvas(
                 val opts = android.graphics.BitmapFactory.Options().apply {
                     inSampleSize = 2
                 }
-                android.graphics.BitmapFactory.decodeFile(imagePath, opts)
+                val rawBitmap = android.graphics.BitmapFactory.decodeFile(imagePath, opts)
+                if (rawBitmap != null && imagePath != null) {
+                    val exif = androidx.exifinterface.media.ExifInterface(imagePath)
+                    val orientation = exif.getAttributeInt(
+                        androidx.exifinterface.media.ExifInterface.TAG_ORIENTATION,
+                        androidx.exifinterface.media.ExifInterface.ORIENTATION_NORMAL
+                    )
+                    orientBitmapForEditor(rawBitmap, orientation)
+                } else {
+                    rawBitmap
+                }
             } catch (_: Exception) { null }
         }
     }
@@ -741,4 +772,32 @@ private fun normalizedToPixel(
         right = contentRect.left + rect.right * width,
         bottom = contentRect.top + rect.bottom * height,
     )
+}
+
+/**
+ * 根据 EXIF 方向旋转 Bitmap（与 RoiCoordinateMapper.orientBitmap 逻辑一致）
+ */
+private fun orientBitmapForEditor(bitmap: android.graphics.Bitmap, orientation: Int): android.graphics.Bitmap {
+    if (orientation == androidx.exifinterface.media.ExifInterface.ORIENTATION_NORMAL) return bitmap
+    val matrix = android.graphics.Matrix().apply {
+        when (orientation) {
+            androidx.exifinterface.media.ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> setScale(-1f, 1f)
+            androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_180 -> setRotate(180f)
+            androidx.exifinterface.media.ExifInterface.ORIENTATION_FLIP_VERTICAL -> {
+                setRotate(180f)
+                postScale(-1f, 1f)
+            }
+            androidx.exifinterface.media.ExifInterface.ORIENTATION_TRANSPOSE -> {
+                setRotate(90f)
+                postScale(-1f, 1f)
+            }
+            androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_90 -> setRotate(90f)
+            androidx.exifinterface.media.ExifInterface.ORIENTATION_TRANSVERSE -> {
+                setRotate(-90f)
+                postScale(-1f, 1f)
+            }
+            androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_270 -> setRotate(-90f)
+        }
+    }
+    return android.graphics.Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
 }

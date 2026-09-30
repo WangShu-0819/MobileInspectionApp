@@ -3,8 +3,10 @@ package com.wearable.inspection.mobile.ui.screens
 import android.content.ContentResolver
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Matrix
 import android.net.Uri
 import androidx.annotation.VisibleForTesting
+import androidx.exifinterface.media.ExifInterface
 import com.wearable.inspection.mobile.BuildConfig
 import java.io.File
 import java.io.FileInputStream
@@ -144,13 +146,23 @@ internal suspend fun loadTemplateBitmapInternal(
                 logError("decode_null", imageSource, scheme, templateId, null, logEntries)
                 TemplateLoadResult.Failure("模板图片解码失败")
             } else {
+                // T7.1: 读取 EXIF 方向并旋转，确保模板图片以正确方向显示
+                val oriented = try {
+                    val exifOrientation = readExifOrientation(imageSource, scheme, contentResolver)
+                    orientBitmap(bitmap, exifOrientation)
+                } catch (e: Exception) {
+                    if (BuildConfig.DEBUG) {
+                        android.util.Log.w("TemplateImageLoader", "EXIF orientation failed, using raw bitmap", e)
+                    }
+                    bitmap
+                }
                 if (BuildConfig.DEBUG) {
                     android.util.Log.d(
                         "TemplateImageLoader",
-                        "decoded: templateId=$templateId, ${bitmap.width}x${bitmap.height}, sampleSize=$inSampleSize, scheme=$scheme, source=$imageSource"
+                        "decoded: templateId=$templateId, ${oriented.width}x${oriented.height}, sampleSize=$inSampleSize, scheme=$scheme, source=$imageSource"
                     )
                 }
-                TemplateLoadResult.Success(bitmap)
+                TemplateLoadResult.Success(oriented)
             }
         }
     } catch (e: kotlin.coroutines.cancellation.CancellationException) {
@@ -268,4 +280,77 @@ private fun logError(
     if (BuildConfig.DEBUG) {
         android.util.Log.e("TemplateImageLoader", msg, e)
     }
+}
+
+/**
+ * 读取 EXIF 方向值。
+ *
+ * 对于文件路径（FILE_URI/PLAIN），直接从文件读取；
+ * 对于 content:// URI，通过 ContentResolver 打开输入流读取。
+ * 读取失败时返回 ORIENTATION_NORMAL（不旋转）。
+ */
+private fun readExifOrientation(
+    source: String,
+    scheme: PathScheme,
+    contentResolver: ContentResolver?,
+): Int {
+    return try {
+        when (scheme) {
+            PathScheme.CONTENT -> {
+                if (contentResolver == null) return ExifInterface.ORIENTATION_NORMAL
+                val uri = Uri.parse(source)
+                contentResolver.openInputStream(uri)?.use { stream ->
+                    ExifInterface(stream).getAttributeInt(
+                        ExifInterface.TAG_ORIENTATION,
+                        ExifInterface.ORIENTATION_NORMAL
+                    )
+                } ?: ExifInterface.ORIENTATION_NORMAL
+            }
+            PathScheme.FILE_URI -> {
+                val path = Uri.parse(source).path ?: return ExifInterface.ORIENTATION_NORMAL
+                ExifInterface(path).getAttributeInt(
+                    ExifInterface.TAG_ORIENTATION,
+                    ExifInterface.ORIENTATION_NORMAL
+                )
+            }
+            PathScheme.PLAIN -> {
+                ExifInterface(source).getAttributeInt(
+                    ExifInterface.TAG_ORIENTATION,
+                    ExifInterface.ORIENTATION_NORMAL
+                )
+            }
+        }
+    } catch (_: Exception) {
+        ExifInterface.ORIENTATION_NORMAL
+    }
+}
+
+/**
+ * 根据 EXIF 方向旋转/翻转 Bitmap。
+ *
+ * 与 [RoiCoordinateMapper] 的 orientBitmap 使用相同逻辑。
+ */
+private fun orientBitmap(bitmap: Bitmap, orientation: Int): Bitmap {
+    if (orientation == ExifInterface.ORIENTATION_NORMAL) return bitmap
+    val matrix = Matrix().apply {
+        when (orientation) {
+            ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> setScale(-1f, 1f)
+            ExifInterface.ORIENTATION_ROTATE_180 -> setRotate(180f)
+            ExifInterface.ORIENTATION_FLIP_VERTICAL -> {
+                setRotate(180f)
+                postScale(-1f, 1f)
+            }
+            ExifInterface.ORIENTATION_TRANSPOSE -> {
+                setRotate(90f)
+                postScale(-1f, 1f)
+            }
+            ExifInterface.ORIENTATION_ROTATE_90 -> setRotate(90f)
+            ExifInterface.ORIENTATION_TRANSVERSE -> {
+                setRotate(-90f)
+                postScale(-1f, 1f)
+            }
+            ExifInterface.ORIENTATION_ROTATE_270 -> setRotate(-90f)
+        }
+    }
+    return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
 }
