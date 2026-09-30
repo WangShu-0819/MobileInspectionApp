@@ -1,21 +1,58 @@
-# 当前软件交付状态（2026-09-28；本节为唯一有效的任务状态）
+# 当前软件交付状态（2026-09-30；本节为唯一有效的任务状态）
 
 软件目标是完成并交付可供现场工人使用的数据采集与人工确认功能。以下按日期记录的 handback 是历史证据；与本节冲突时，以本节和用户最新指示为准。
 
-## T1–T6 状态
+## T1–T7 状态
 
 - **T1 零件颜色、ID、模板关联和模型路由：已完成。**先前 handback 报告实现及 JVM/设备 UI 验证通过；除非当前证据显示问题，不重复实现。
 - **T2 exp22/exp23 模型资产、来源与 Android parity：已完成（2026-09-29）。**来源/导出审计 `PASS_WITH_RECORDED_LIMITATION`。官方 PNNX 20260526 Windows ZIP SHA-256 为 `4e188e7606c887ac550820322f34b144140df877b73292b25e48a2ba38f297df`；ZIP 内 exe 与现有 PyPI wheel exe 字节一致，SHA-256 均为 `16165dc5fcc53d31f0339b996c15fd2dc26b8d7db43753f72eeab0a0e576116e`。CI 日志没有逐文件记录二进制 SHA-256，按 `PASS_WITH_RECORDED_LIMITATION` 处理。exp22/exp23 `assetsVerified` 已设为 `true`；生产 `NanoDetRoiInferenceService` 正向路由已在 SEA-AL10 验证：Black_ 四类（THREAD→0, NUTSERT→1, NUT→2, BOLT→3）、White_ 两类（NUT→0, THREAD→1）、White_ BOLT/NUTSERT 返回 `MODEL_TARGET_UNSUPPORTED` 且不回退 exp09、无前缀 legacy 继续走 exp09。设备：SEA-AL10 / Android 10 / API 29 / arm64-v8a。Gradle `connectedDebugAndroidTest` XML：6 tests / 0 failures / 0 errors / 0 skipped。证据路径：`app/build/t2_asset_enable_route_20260929T010000/TEST-NanoDetRoiRuntimeInstrumentedTest.xml`、`app/build/t2_asset_enable_route_20260929T010000/gradle-connected-output.txt`。运行历史：早先合并筛选有 5 个 ClassNotFoundException；六项随后分别运行通过；后续 Gradle connectedAndroidTest 生成了上述 XML。
 - **T3 离线 ROI 配准与相似度实验：离线实验已完成。**历史 48 个清洁几何案例有 46 个达到当时实验候选值，276 个合成遮挡评分案例中 0 个达到当时候选值。这些结果不构成 Android 生产验证，也不能校准真实现场风险。
-- **T4 Android ROI 相似度兜底：软件实现与回归测试已完成（按 2026-09-28 handback）。**四类小件统一使用灰度 SSIM 阈值 `0.75`；Lowe 配准比率 `0.75` 是独立参数。handback 报告 103 个 XML、1,505 项 JVM 测试、0 失败、0 错误、5 跳过，构建退出码 0。当前 APK SHA-256：`AC85E49F793FBF8B294E5946D76711AE2FA0F6089584069D60E4ADFD0CD8A66D`。本轮未重跑测试或构建。
+- **T4 Android ROI 相似度兜底：软件实现与回归测试已完成（按 2026-09-28 handback）。**早期实现记录中的 SSIM 阈值 `0.75` 和 Lowe 配准比率 `0.75` 是不同参数；当前可调 SSIM 阈值设置默认值为 `0.50`（用户明确说明，且当前只读源码 `SettingsStore` 常量为 `0.50f`）。真实现场校准仍属 T5/T6；旧测试/APK 数字仅为历史记录。
 - **T5 真实现场数据与人工标签：软件交付后的现场工作。**交付功能后由现场工人采集模板/ROI、真实样本和人工标签；这不是当前 Codex/Mimo 的软件实现任务。
 - **T6 校准集与独立留出集：软件交付后的现场工作。**现场数据形成后，由现场/质量工作流按实物、批次或会话拆分并评估；这不是当前软件收尾的阻塞项。
+- **T7 模板与现场采集易用性：按各项分别记录实现、报告与设备验收。**2026-09-30 的 Mimo handback 报告 1,621 项 JVM 测试、0 失败/错误、5 跳过，`:app:testDebugUnitTest` 与 `:app:assembleDebug` 成功；报告 APK 为 242,570,104 bytes、SHA-256 `dc2af170c4d60972f372eec45a445b4e890358537c69f68d9b68e5a959cd6ea0`，并称 SEA-AL10 已安装 APK 与本地 APK 哈希一致。Mimo 报告 3 轮拍照→配准→确认→相似度未复现闪退，用户随后明确表示亲自验证通过、不卡顿且不闪退。用户本轮另报告 T7.1、T7.2、T7.3–T7.5、T7.7 的设备验收均已完成；这些验收状态来自用户报告，Codex 未独立操作设备或核查设备截图。T7.6 仍须标记根因未定位/`DEVICE_AVAILABLE_BUT_REPRO_FAILED`：未复现与用户验收不等于根因已证实。T7.9 的简洁卡片及 `NanoDet 检测中…`/`相似度检测中…` 阶段提示有 handback 和用户验收；真机性能样本只有一个启用 ROI，多 ROI 设备实测仍有限制。
+
+### 2026-09-30 最新 handback 与只读复核补充（本段优先于下方旧快照）
+
+- **Mimo handback（用户提供，非本轮 Codex 验证）：**报告 `:app:testDebugUnitTest` exit 0，108 个 XML 汇总 1,621 tests、0 failures/errors、5 skipped；`:app:assembleDebug` exit 0。APK `app/build/outputs/apk/debug/app-debug.apk`，242,570,104 bytes，mtime `2026-09-30 10:56:49 +0800`，SHA-256 `dc2af170c4d60972f372eec45a445b4e890358537c69f68d9b68e5a959cd6ea0`。报告设备为 HUAWEI SEA-AL10 / Android 10 / API 29 / arm64-v8a，并称已安装 APK 与本地 APK hash 相同。
+- **设备报告与用户验收：**Mimo 报告 3 轮完整拍照→配准→人工确认→相似度流程未复现闪退；确认页首次显示时机保持原样，卡片已恢复简洁样式，阶段提示分别显示 `NanoDet 检测中…` 和 `相似度检测中…`。单启用 ROI 的测量报告 NanoDet 422–443 ms、相似度评分 160–170 ms、相似度会话创建约 1.92–1.96 s、相似度峰值 Native PSS 786 MB/TOTAL PSS 948 MB。多 ROI 设备延迟未验证（该模板只有一个启用 ROI）；历史 5–6 GB OOM 报告不能据此认为根因已定位。用户随后说本轮亲自验证通过、不卡顿、不闪退；这是用户报告，不是 Codex 设备复测。
+- **T7.6 当前判定：**`DEVICE_AVAILABLE_BUT_REPRO_FAILED`；新 APK 多轮未复现、用户验收通过，但根因未证实，不能写成“已定位/永久修复”。若再次复现，针对当时确切 APK/设备采集操作步骤、完整日志、设备/APK 身份、分阶段 PSS 和 native allocation profile；不得把历史启动 OOM 自动归因于拍后路径。
+- **T7.9 handback：**Mimo 报告修正 SSIM 的 `CV_8U` 饱和问题（改用 `CV_32F`）、取消传播和 Mat 释放，恢复简洁人工确认卡片，并增加 NanoDet/相似度分阶段提示；报告称 NanoDet 模型、路由、阈值和推理逻辑未改。上述代码/测试/设备细节均是 handback 声明；本轮 Codex 未重新运行测试、构建或设备验收。当前用户认可的是本轮简洁界面、阶段提示和单 ROI 设备流畅性；多 ROI 真机性能仍有限制。
+- **当前设置基线：**用户明确指出默认阈值已改为 `0.50`；本轮只读源码确认 `SettingsStore.DEFAULT_ROI_SIMILARITY_THRESHOLD = 0.50f`。T4 历史 SSIM 参数 `0.75` 与 Lowe 配准比率 `0.75` 都不能替代这一当前设置值；阈值的真实现场校准仍属 T5/T6。
+- **ECC 方案（仅完成分析，尚未授权实现）：**本轮只读检查到 `RoiSimilarityFallback.kt` 对每个 ROI 先用 `Imgproc.warpPerspective(...)` 生成 `alignedPhoto`，紧接着对 `templateRoi` 与 `alignedPhoto` 调用 `grayscaleSsim(...)`（当前约第 525–526 行）。如用户之后明确要求实验，ECC 的候选插入点是该局部初始 warp 之后、SSIM 之前；在同尺寸 ROI 坐标系以单位变换起步，先评估受限平移模型，再由数据决定是否加入小角度旋转。保留现有全局 Homography、逐 ROI 投影/门禁和人工确认；严格限制变换、检查有效重叠与边界填充，并核对 ECC 矩阵方向/`WARP_INVERSE_MAP` 及 OpenCV 4.10 Java binding 的可用签名。ECC 不收敛或不可信时不得自动判 OK/NG。ECC 对齐相关度不等于 SSIM 阈值；额外原生内存和逐 ROI 延迟需通过离线 A/B 和设备验收。用户当前只要求分析，未要求改代码。
+- **历史只读审查线索：**更早关于 `SimilaritySession` 逐 ROI 投影、资源所有权和逐 ROI 发布的风险审查早于本次 handback。Mimo 报告称相关问题已处理；新对话须按当前 diff 复核，不能将旧线索不加核对地当作现存缺陷或要求重复修改。
 
 ## 当前待办与协作边界
 
 1. **T2 启用与验证（已完成）：**`assetsVerified` 已设为 `true`；Black_ 四类、White_ 两类、White_ BOLT/NUTSERT `MODEL_TARGET_UNSUPPORTED`、legacy exp09 路径均在 SEA-AL10 验证通过。Gradle connectedDebugAndroidTest XML 6/0/0/0。详见上方 T2 状态及证据路径。
-2. **Git 路径审阅与选择性提交评估：**最近复核快照为 `main...origin/main [ahead 2]`、31 个已修改跟踪文件、100 个未跟踪文件、0 staged；新轮必须重新核对。工作区混有多项任务和受保护文件，不得整体暂存或提交。
-3. 软件交付后再启动 T5/T6 现场采集与校准工作。
+2. **T7 模板与现场采集易用性（当前：T7.1–T7.5、T7.7 用户报告验收完成；T7.6 保持未定位状态；T7.9 handback 已交付但仍有只读复核事项，ECC 仅待用户决定是否进入实验）：**
+   - [x] **T7.1 固定竖屏与图像方向（用户报告设备验收完毕）：**Mimo 报告 MainActivity 锁定竖屏，并在模板图像和 ROI 编辑图像加载时处理 EXIF。用户本轮报告该项设备验收完毕；具体设备步骤和证据未由 Codex 独立核查。
+   - [x] **T7.2 现场采集悬浮参考图（用户报告设备视觉验收完毕）：**Mimo 无法读取用户附件图片，按以下文字规格实现和验收：
+     - 收起态仅显示参考图片，不显示视角编号、名称/介绍、状态文字、切换入口或其他文字/控件。保持紧凑，缩小白边和间距，尽量减少现场画面遮挡；视角超过两个时仍须控制浮窗区域，不得随数量扩大成大面板。
+     - 图片完整显示并保持原始宽高比，不拉伸、不裁切变形。若采用留白/letterbox，ROI 框必须映射到实际图片内容区域，不能映射到留白。
+     - 只有展开态显示视角信息与切换操作。编号、名称、收起控件的字号和对齐应协调；视角切换入口简洁，不使用占空间很大的独立按钮。
+      - 用户本轮报告该项设备视觉验收完毕；具体设备步骤和证据未由 Codex 独立核查。不要求 Mimo 查看或打开附件、截图或 `app_launch.png`。
+   - [x] **T7.3 暂不支持功能（用户报告设备验收完毕）：**ROI 编辑器将“部件”标为需人工判断/不支持自动检测；用户本轮报告该项设备验收完毕，具体设备证据未由 Codex 独立核查。
+   - [x] **T7.4 视角命名（用户报告设备验收完毕）：**Mimo 报告已把新增视角命名移到进入相机前，并采用应用统一配色及键盘避让布局；用户本轮报告该项设备验收完毕，具体设备步骤和证据未由 Codex 独立核查。
+   - [x] **T7.5 导出默认名称（用户报告设备验收完毕）：**Mimo 报告文件名含零件码和时间戳并已更新单元测试；用户本轮报告该项设备验收完毕，具体导出结果未由 Codex 独立核查。
+   - [ ] **T7.6 拍后 ROI 检测闪退定位（根因未定位，当前状态 DEVICE_AVAILABLE_BUT_REPRO_FAILED）：**2026-09-30 Mimo handback 报告 SEA-AL10 / Android 10 / API 29 / arm64-v8a 上 3 轮完整拍照→配准→确认→相似度未复现；用户随后称亲自验证通过、不卡顿、不闪退。报告 APK 为 242,570,104 bytes、SHA-256 dc2af170c4d60972f372eec45a445b4e890358537c69f68d9b68e5a959cd6ea0，并称安装包与本地包一致。报告的相似度峰值为 Native PSS 786 MB / TOTAL PSS 948 MB；这些证据支持当前版本运行稳定，但不证实先前根因或永久修复。Mimo 报告未发现该轮本包 FATAL/崩溃类进程死亡；tombstone 目录直读仍未验证。若再次复现，记录当时设备/APK 身份、步骤、完整日志、分阶段 PSS 和 native allocation profile。Codex 未独立操作设备或重算 APK hash。
+   - [x] **T7.7 界面一致性与交互验收（用户报告设备验收完毕）：**用户本轮报告该项设备验收完毕；具体设备步骤和截图未由 Codex 独立核查。
+   - [x] **T7.8 测试、构建、设备验收与 handback：**Mimo 已交付本轮 handback：报告 `:app:testDebugUnitTest` exit 0（1,621 tests / 0 failures / 0 errors / 5 skipped，108 XML）及 `:app:assembleDebug` exit 0；提供 SEA-AL10 设备/APK 身份、单 ROI 阶段计时、PSS、截图/UI dump、APK 路径/大小/生成时间/hash 和未验证项。该状态表示 handback 证据已提供，不代表 Codex 亲自运行或核验，也不关闭 T7.6 根因。多 ROI 真机时延没有被覆盖。
+   - [ ] **T7.9 拍后 ROI 推理延迟、相似度阈值与人工确认：**确认页已经先显示；任务不调整首次显示时机。Mimo handback 和用户验收报告简洁卡片、逐 ROI 流程与单 ROI 设备不卡顿；多 ROI 真机测试仍未覆盖。新提出的 ECC 属于待评估增强，不属于已实现范围。
+     - 对当前支持的 widget 类型 THREAD、NUT、BOLT、NUTSERT，让 NanoDet 与 ROI SSIM 并行计算；并行范围有界，避免每个 ROI 无限制创建协程/线程。保留当前代码实际使用的 ROI 坐标、投影方式、EXIF 方向、裁图和证据保存契约，不照抄未经核实的伪参数。
+     - 只在 NanoDet 对该 ROI 明确判 NG 时采用该 ROI 的有效相似度候选。NanoDet 明确 OK 时立即发布 NanoDet OK 候选并忽略相似度候选；若该 ROI 的相似度任务已启动，人工控件仍等待该 ROI 后台任务完成或取消并完成清理后再显示；NanoDet 错误、结果缺失、目标不支持或无法明确判 NG 时不得采用相似度候选，也不得自动判 NG。NG 的相似度失败、无候选或证据无效时沿用 NG/人工确认流程。
+      - 结果逐 ROI 发布。一个 ROI 的界面更新只依赖该 ROI 自己的 NanoDet 与适用的相似度任务，不得等待其他 ROI 的最慢结果。处理中要区分阶段显示 `NanoDet 检测中…` 或 `相似度检测中…`，不可只显示含糊的“检测中”；隐藏或禁用该 ROI 的人工确认/改判控件。NanoDet NG 的 ROI 在该 ROI 的相似度工作结束前不得设置自动默认 NG；工作完成后再发布有效相似度候选，无效/失败/无候选时回退为 NanoDet NG。该 ROI 自己已启动的后台任务全部完成或取消并完成清理后，才显示可用的人工确认/改判控件，并将有效候选作为初始选中值。无需等待其他 ROI 完成。失败/无候选也算该 ROI 后台工作结束，届时显示人工控件和安全默认/未选状态。
+     - 候选只是人工确认的初始值，不自动提交该 ROI 或整体结果。人工控件出现后，用户的选择始终优先，任何迟到的后台回填都不能覆盖已选值。确认卡片保持简洁：不显示相似度候选说明、相似度分数、阈值或结果来源说明；“部件”属性显示“暂无”或隐藏。人工确认仍是最终结果。
+      - 设置页新增“算法调试”分组及“ROI 相似度阈值”：默认 **0.50**，范围 0.00–1.00、步进 0.01，显示两位小数并提供恢复默认按钮。复用 `SettingsStore` 和现有 SharedPreferences，使用独立键；非法类型、非有限、越界值安全回退或限制到合法范围。一次推理开始时读取阈值快照，同批 ROI 统一使用该值；后续设置变化只影响下一次推理。阈值只决定 ROI SSIM 候选：分数 `>=` 阈值为 OK，低于阈值为 NG；不改 NanoDet 阈值、Lowe 比率、其他匹配参数、类别映射或 ROI 几何规则。
+     - 每条实际采用的相似度结果保存本次真实阈值，历史记录不被新设置改写。状态必须区分“确实未运行”和“已经计算但因 NanoDet OK 未采用”；同步核对数据库、迁移、CSV/Excel/ZIP 导出映射与旧记录兼容性。已经运行却未采用的结果不能记成 `NOT_RUN_NANODET_NOT_NG`。只有现有字段不能准确表达时才新增状态/字段，并配套迁移和导出测试。
+     - 取消异常 `CancellationException` 必须在保存、比较和外层协程异常处理中单独重抛。任务取消、结果被丢弃、NanoDet OK 后不采用候选时，在 `finally` 清理未转交持久化流程的临时 ROI 证据；核查 OpenCV Mat/Bitmap 释放以及退出页面后的任务取消。不得吞取消异常，也不得留下未管理证据文件。
+     - 用单调时钟和 `[DIAG-VC]` 分别记录确认页已显示、裁图、NanoDet（总耗时及可行时逐 ROI）、SSIM（逐 ROI）、结果合并/默认值发布、界面更新和每个 ROI 结果出现时间。检查并行后的 CPU/内存压力；将 T7.6 闪退日志收集与复现结果单独报告。
+     - 测试至少覆盖：NanoDet NG 在相似度完成前不提前默认 NG，完成后候选正确成为默认值；某 ROI 不等待其他慢 ROI；人工控件只在该 ROI 后台任务结束后出现；已显示控件后人工改判不被覆盖；相似度运行但未采用的状态和导出正确；取消传播及证据清理；阈值边界相等时判 OK；非法设置值回退；阈值快照对同批次稳定。设备测量还须报告每 ROI 延迟和资源稳定性。
+      - **2026-09-30 Mimo handback（报告）：**`:app:testDebugUnitTest` 汇总 1,621 tests、0 failures/errors、5 skipped；`:app:assembleDebug` exit 0。APK 路径 `app/build/outputs/apk/debug/app-debug.apk`，242,570,104 bytes，mtime `2026-09-30 10:56:49 +0800`，SHA-256 `dc2af170c4d60972f372eec45a445b4e890358537c69f68d9b68e5a959cd6ea0`；SEA-AL10 安装包 hash 与本地一致。Mimo handback 报告提供了命令、XML 汇总、阶段数据及限制。Codex 本轮未运行测试/构建或设备操作。
+      - **ECC 方案状态（仅分析）：**当前只读源码显示每 ROI 经现有 `warpPerspective` 初始对齐后立即进入 `grayscaleSsim`。如果用户后续明确要求做实验，可在两者之间增加同尺寸 ROI 的受限残差 ECC；从单位矩阵开始，建议先测试平移模型，再依据数据评估 Euclidean 小角度旋转。必须限定变换、检查有效重叠、谨慎处理 warp 方向与边界填充；ECC 失败/不收敛应保留既有未判定/人工确认安全语义，绝不直接变成自动 OK/NG。ECC 相关系数与 SSIM 阈值是独立参数。用有标签样本做离线 A/B，重点查 false-OK/阈值附近翻转，同时测每 ROI 延迟、Native PSS 和峰值内存；ECC 会增加迭代成本，不能假定解决闪退。尚未修改或验证 ECC。
+      - **本轮只读源码复核（未运行测试/构建/设备）：**`ViewConfirmationViewModel` 将相似度 dispatcher 限制为 `limitedParallelism(1)`，而新增的 `ViewConfirmationPerRoiPipelineTest.slowSimilarityDoesNotBlockFastRoi` 要求慢 ROI 的 SSIM 阻塞时，后续快 ROI 仍先完成；两者存在需要核实的调度冲突。在本轮核对的 `ViewConfirmationScreen` 中未发现记录“确认页已显示”的 `[DIAG-VC]` 事件，现有 `loadData start` 与裁图后 `isLoaded=true` 不能直接证明页面显示时刻已记录。Mimo handback 的测试通过声明不是本轮 Codex 运行结果；T7.9 仍未关闭。
+3. **Git 状态与提交边界：**最近一次功能提交为 e7fab67f；此前已形成 3866c3a6（T7.1/T7.3）、06bee44e（T7.2）、a7c6ea16（T7.4）、c2853341（T7.5）、e7fab67f（T7.6）。2026-09-30 本轮文档更新前的快照为 main...origin/main、HEAD 与 origin/main 均为 e7fab67f，23 个已修改跟踪文件、11 个未跟踪路径、0 staged。该快照不代表后续状态；新对话必须重读完整 Git 状态、提交记录、暂存/未暂存 diff 和未跟踪文件。本轮提交授权只覆盖任务与续接文档；既有应用源码、测试、schema、commonMain 和其他未跟踪文件不随文档提交。不得 push；不得整体暂存或使用 reset/clean/stash。
+4. 软件交付后再启动 T5/T6 现场采集与校准工作。
 
 - 项目代码修改、测试、构建、APK 和设备操作由外部执行者 Mimo 完成；用户手动转交指令并回传 handback。协调 Codex 负责拆解任务、只读审查当前工作区和 handback，并在用户明确要求时更新指定文档。**不联系 Mimo，不调用子 agent、delegation 或 collaboration 工具，不自行改生产代码或运行项目测试、Gradle、ADB、设备操作或 OCR。**
 - 不把旧 XML/APK 当成本轮结果；每轮区分 handback 声明与本轮实际复核，并在结束前重新检查完整 Git 状态。`tasks/plan.md`、`tasks/todo.md`、`docs/reports/`、`commonMain/`、`tools/roi_similarity/` 和既有 `.npz` 默认受保护；只有用户明确指定并要求更新文档时才能编辑。

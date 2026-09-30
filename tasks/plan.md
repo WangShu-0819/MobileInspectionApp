@@ -1,24 +1,25 @@
 # Implementation Plan: MobileInspectionApp 当前阶段
 
-## 当前软件交付计划（2026-09-28；本节为唯一有效的当前指针）
+## 当前软件交付计划（2026-09-30；本节为唯一有效的当前指针）
 
 目标是完成可交付现场工人使用的数据采集与人工确认软件。详细任务状态以 `tasks/todo.md` 顶部为准；以下历史 handback 仅保留审计脉络，不代表当前待办。
 
 ### 当前状态与剩余工作
 
-- **T1：**零件颜色、最终 ID、模板关联和模型路由已完成；以先前 handback 的 JVM/设备 UI 验证为依据，不重复实现。
-- **T2 来源/导出门禁：**协调审查结论为 `PASS_WITH_RECORDED_LIMITATION`。CI 日志没有逐文件二进制 SHA-256，作为记录限制保留；不重建 PNNX、不重转模型。
-- **T2 资产启用/服务路由：已完成（2026-09-29）。**`assetsVerified` 已设为 `true`。Black_ 四类（THREAD→0, NUTSERT→1, NUT→2, BOLT→3）、White_ 两类（NUT→0, THREAD→1）、White_ BOLT/NUTSERT 返回 `MODEL_TARGET_UNSUPPORTED` 且不回退 exp09、无前缀 legacy 继续走 exp09。设备：SEA-AL10 / Android 10 / API 29 / arm64-v8a。Gradle `connectedDebugAndroidTest` XML：6 tests / 0 failures / 0 errors / 0 skipped。证据路径：`app/build/t2_asset_enable_route_20260929T010000/TEST-NanoDetRoiRuntimeInstrumentedTest.xml`、`app/build/t2_asset_enable_route_20260929T010000/gradle-connected-output.txt`。运行历史：早先合并筛选有 5 个 ClassNotFoundException；六项随后分别运行通过；后续 Gradle connectedAndroidTest 生成了上述 XML。
-- **T3：**离线 ROI 实验完成，只作离线可行性和失败模式参考，不作为现场准确率或生产阈值校准证据。
-- **T4：**ROI 相似度兜底的软件工作按既有 handback 完成。四类小件灰度 SSIM 阈值为 `0.75`，Lowe 配准比率 `0.75` 独立配置；历史测试数字不是本轮运行结果。
-- **T5/T6：**属于软件交付后的现场工作，由现场工人采集真实数据和人工标签，再按实物/批次/会话建立校准集与独立留出集。
+- **T1：**零件颜色、最终 ID、模板关联和模型路由已完成；没有新证据时不重复实现或测试。
+- **T2：**来源/导出审计为 `PASS_WITH_RECORDED_LIMITATION`；资产启用及生产 service 路由证据按既有记录完成。无需新证据时不重建 PNNX、不重转模型。
+- **T3/T4：**T3 离线实验完成但不是现场校准；T4 ROI 相似度软件实现按历史 handback 完成。早期 SSIM 值 0.75 与 Lowe 配准比率 0.75 是不同参数；当前 SettingsStore 的 SSIM 默认值为 0.50（用户已明确并由本轮只读源码确认）。真实现场校准仍待 T5/T6。
+- **T5/T6：**属于软件交付后的现场真实数据、人工标签、校准和独立留出验证。
+- **T7：**2026-09-30 Mimo handback 报告 1,621 项测试、0 失败/错误、5 跳过，Debug APK 构建成功；用户报告自己实机验证本轮通过、不卡顿且不闪退。用户本轮另报告 T7.1、T7.2、T7.3–T7.5、T7.7 设备验收均已完成；Codex 未独立复验。T7.6 仍按 `DEVICE_AVAILABLE_BUT_REPRO_FAILED` 记录：三轮没有复现，根因未证实；历史 5–6 GB PSS/OOM 不能归因到当前拍后路径。T7.9 的简洁卡片、阶段提示和单启用 ROI 性能有 handback/用户验收报告，多 ROI 真机延迟仍未验证。ECC 目前只是已分析方案，未获实现授权。
 
 ### 当前执行顺序
 
-1. T2 资产启用及生产 service 正向路由验证已完成（2026-09-29）。Gradle connectedDebugAndroidTest XML 6/0/0/0；详见 `app/build/t2_asset_enable_route_20260929T010000/`。
-2. 由协调 Codex 只读审阅实际改动、测试/设备记录、APK 身份、instrumentation XML 和完整 Git 状态。
-3. 按路径审阅混合工作区，确定选择性提交范围；不整批暂存、不 push。
-4. 软件交付后，再由现场工作流启动 T5/T6。
+1. T7.6 保持根因未定位/`DEVICE_AVAILABLE_BUT_REPRO_FAILED`；用户报告通过和 Mimo 多轮未复现均要如实保留。只有出现新的复现或用户要求继续取证时，针对确切 APK/设备收集完整日志、操作步骤、APK/设备身份、分阶段 PSS 与 native allocation profile；不把旧启动 OOM 归因到拍后路径。
+2. T7.9 当前 handback 与单 ROI 手工验收已有记录；本轮只读源码复核发现相似度 dispatcher 的 `limitedParallelism(1)` 与新增“慢 ROI 不阻塞快 ROI”测试之间存在需核实的调度冲突，并且源码中未发现确认页实际显示时刻的 `[DIAG-VC]` 事件。将这两项交由 Mimo 按当前源码/测试核对，再根据新的 handback 复审；本 Codex 不运行测试或构建。ECC 目前只完成分析；若用户明确要求实验，再先做有人工标签样本的离线 A/B：ECC 放在逐 ROI 初始 `warpPerspective` 后、SSIM 前，同尺寸 ROI、单位变换起步、先限平移、严格限制位移/重叠和失败路径；重点评估误通过、分数变化、每 ROI 耗时和 Native PSS。ECC 不替代全局 Homography、ROI 投影门禁、SSIM 或人工确认，不以 ECC 相关系数充当 SSIM 阈值。
+3. T7.1、T7.2、T7.3–T7.5、T7.7：用户本轮报告设备验收均已完成；无需重复。此状态来自用户报告，Codex 未独立复验，也未核查设备截图。
+4. T7.8 本轮 handback 已收到：报告 1,621 tests / 0 failures / 0 errors / 5 skipped，assembleDebug 成功，APK/设备信息和单 ROI 性能/内存数据已提供。后续如有实际代码变更，由 Mimo 对变更跑匹配验证并更新完整 handback；设备测量应覆盖多 ROI 情形。
+5. **Git 与提交边界：**此前按任务分批形成 T7.1/T7.3、T7.2、T7.4、T7.5、T7.6 五个提交；T7.2 实现提交为 `06bee44e`，最近一次功能提交为 `e7fab67f`。用户本轮授权仅选择性提交任务/续接文档；T7.9 源码和测试改动、schema、commonMain 及其他未跟踪文件必须保留在工作区，不得混入文档提交。后续每轮从实时 `git status` 与 `git log` 判断状态，不假定此处快照仍是最新。不得 push；不整体暂存、不使用 reset/clean/stash。
+6. 每次收到 Mimo handback 后，协调 Codex 仅读 diff、报告、测试产物和 Git 状态，区分用户/Mimo 声明与本轮实际复核；不自行补跑测试/构建/设备操作。
 
 ### 协作边界
 
