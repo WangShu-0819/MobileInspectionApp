@@ -6,13 +6,18 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CameraAlt
@@ -26,8 +31,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -43,6 +51,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -54,6 +63,8 @@ import com.wearable.inspection.mobile.camera.CameraController
 import com.wearable.inspection.mobile.camera.CameraMode
 import com.wearable.inspection.mobile.camera.CameraStateType
 import com.wearable.inspection.mobile.template.TemplateCaptureViewModel
+import com.wearable.inspection.mobile.ui.theme.BackgroundVariant1
+import com.wearable.inspection.mobile.ui.theme.DividerColor
 import com.wearable.inspection.mobile.ui.theme.FailColor
 import com.wearable.inspection.mobile.ui.theme.PassColor
 import com.wearable.inspection.mobile.ui.theme.Primary
@@ -93,6 +104,11 @@ fun TemplateCaptureScreen(
 
     var sessionId by remember { mutableStateOf<String?>(null) }
 
+    // T7.4: 自定义视角名称（仅新增模式）
+    var viewName by remember { mutableStateOf("") }
+    // T7.4: 新增模式下先进入命名页，用户确认后再显示相机
+    var namingConfirmed by remember { mutableStateOf(viewModel.isRecapture) }
+
     // 拍摄成功后自动进入 ROI 编辑器
     LaunchedEffect(captureState) {
         val saved = captureState as? TemplateCaptureViewModel.CaptureState.Saved
@@ -107,7 +123,7 @@ fun TemplateCaptureScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = if (viewModel.isRecapture) "重拍视角" else "拍摄模板",
+                        text = if (viewModel.isRecapture) "重拍视角" else if (!namingConfirmed) "新建视角" else "拍摄模板",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                     )
@@ -118,7 +134,15 @@ fun TemplateCaptureScreen(
                     navigationIconContentColor = Primary,
                 ),
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = {
+                        if (namingConfirmed && !viewModel.isRecapture) {
+                            // 返回命名页而非退出页面
+                            namingConfirmed = false
+                            viewModel.resetState()
+                        } else {
+                            onBack()
+                        }
+                    }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "返回",
@@ -128,51 +152,133 @@ fun TemplateCaptureScreen(
             )
         },
     ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .background(Color.Black),
-        ) {
-            // 相机预览区域（占满剩余空间）
-            Box(
+        if (!namingConfirmed) {
+            // T7.4: 命名页面 — 进入相机前输入视角名称
+            // 使用应用统一配色，键盘弹出时自动上推内容
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                contentAlignment = Alignment.Center,
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .background(BackgroundVariant1)
+                    .imePadding()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 24.dp, vertical = 32.dp),
+                verticalArrangement = Arrangement.Top,
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                CameraPreview(
-                    modifier = Modifier.fillMaxSize(),
-                    cameraMode = CameraMode.TEMPLATE_CAPTURE,
-                    onSessionReady = { id ->
-                        sessionId = id
-                    },
-                    onCameraError = { error ->
-                        sessionId = null
-                    },
+                Spacer(modifier = Modifier.height(32.dp))
+
+                Text(
+                    text = "为新视角命名",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = TextPrimary,
                 )
 
-                // 加载指示器（相机未就绪时）
-                if (cameraState != CameraStateType.OPEN) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(48.dp),
-                        color = Color.White,
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "输入视角名称便于后续识别，也可留空使用默认名称",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextSecondary,
+                    textAlign = TextAlign.Center,
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                OutlinedTextField(
+                    value = viewName,
+                    onValueChange = { viewName = it },
+                    label = { Text("视角名称") },
+                    placeholder = { Text("留空使用默认名称") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Primary,
+                        focusedLabelColor = Primary,
+                        cursorColor = Primary,
+                        unfocusedBorderColor = DividerColor,
+                        unfocusedLabelColor = TextSecondary,
+                    ),
+                )
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                Button(
+                    onClick = {
+                        viewModel.setPendingViewName(viewName.takeIf { it.isNotBlank() })
+                        namingConfirmed = true
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Primary,
+                        contentColor = Color.White,
+                    ),
+                    shape = RoundedCornerShape(8.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CameraAlt,
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp),
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "开始拍摄",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
                     )
                 }
             }
+        } else {
+            // 相机页面
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .background(Color.Black),
+            ) {
+                // 相机预览区域（占满剩余空间）
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CameraPreview(
+                        modifier = Modifier.fillMaxSize(),
+                        cameraMode = CameraMode.TEMPLATE_CAPTURE,
+                        onSessionReady = { id ->
+                            sessionId = id
+                        },
+                        onCameraError = { error ->
+                            sessionId = null
+                        },
+                    )
 
-            // 底部操作栏
-            CaptureControlBar(
-                captureState = captureState,
-                cameraReady = sessionId != null && cameraState == CameraStateType.OPEN,
-                onCapture = {
-                    val currentSessionId = sessionId
-                    if (currentSessionId != null) {
-                        viewModel.onCapture(currentSessionId, cameraController)
+                    // 加载指示器（相机未就绪时）
+                    if (cameraState != CameraStateType.OPEN) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(48.dp),
+                            color = Color.White,
+                        )
                     }
-                },
-                onRetry = { viewModel.resetState() },
-            )
+                }
+
+                // 底部操作栏
+                CaptureControlBar(
+                    captureState = captureState,
+                    cameraReady = sessionId != null && cameraState == CameraStateType.OPEN,
+                    onCapture = {
+                        val currentSessionId = sessionId
+                        if (currentSessionId != null) {
+                            viewModel.onCapture(currentSessionId, cameraController)
+                        }
+                    },
+                    onRetry = { viewModel.resetState() },
+                )
+            }
         }
     }
 }

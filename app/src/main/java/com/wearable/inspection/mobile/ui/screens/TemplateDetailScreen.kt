@@ -1,6 +1,7 @@
 package com.wearable.inspection.mobile.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -19,6 +20,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Photo
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
@@ -26,8 +28,10 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -35,6 +39,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,6 +51,7 @@ import com.wearable.inspection.mobile.MobileInspectionApp
 import com.wearable.inspection.mobile.data.entity.InspectionTemplateEntity
 import com.wearable.inspection.mobile.data.entity.RoiDefinitionEntity
 import com.wearable.inspection.mobile.data.entity.RoiTargetType
+import com.wearable.inspection.mobile.ui.theme.FailColor
 import com.wearable.inspection.mobile.ui.theme.LocalCustomColors
 import com.wearable.inspection.mobile.ui.theme.PlaceholderColor
 import com.wearable.inspection.mobile.ui.theme.Primary
@@ -53,6 +59,7 @@ import com.wearable.inspection.mobile.ui.theme.SurfaceWhite
 import com.wearable.inspection.mobile.ui.theme.TextPrimary
 import com.wearable.inspection.mobile.ui.theme.TextSecondary
 import com.wearable.inspection.mobile.ui.theme.DividerColor
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -74,11 +81,17 @@ fun TemplateDetailScreen(
     val customColors = LocalCustomColors.current
     val context = LocalContext.current
     val repository = remember { MobileInspectionApp.repository(context) }
+    val scope = rememberCoroutineScope()
 
     var template by remember { mutableStateOf<InspectionTemplateEntity?>(null) }
     var partViews by remember { mutableStateOf<List<InspectionTemplateEntity>>(emptyList()) }
     var rois by remember { mutableStateOf<List<RoiDefinitionEntity>>(emptyList()) }
     var loaded by remember { mutableStateOf(false) }
+
+    // T7.4: 重命名对话框状态
+    var showRenameDialog by remember { mutableStateOf(false) }
+    var renameText by remember { mutableStateOf("") }
+    var renameError by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(templateId) {
         val loadedTemplate = repository.getTemplate(templateId)
@@ -163,7 +176,39 @@ fun TemplateDetailScreen(
                             .padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        DetailRow("视角名称", t.name)
+                        // T7.4: 视角名称行，带重命名按钮
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                text = "视角名称",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = TextSecondary,
+                                modifier = Modifier.weight(0.4f)
+                            )
+                            Text(
+                                text = t.name,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = TextPrimary,
+                                modifier = Modifier.weight(0.5f)
+                            )
+                            IconButton(
+                                onClick = {
+                                    renameText = t.name
+                                    renameError = null
+                                    showRenameDialog = true
+                                },
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Edit,
+                                    contentDescription = "重命名",
+                                    tint = Primary,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
                         DetailRow("零件 ID", t.partId)
                         DetailRow("视角", "${t.displayOrder + 1} / ${partViews.size}")
                         DetailRow("状态", if (t.enabled) "启用" else "已停用")
@@ -294,6 +339,31 @@ fun TemplateDetailScreen(
             }
         }
     }
+
+    // T7.4: 重命名对话框
+    if (showRenameDialog) {
+        val currentTemplate = template
+        if (currentTemplate != null) {
+            RenameDialog(
+                currentName = currentTemplate.name,
+                onDismiss = { showRenameDialog = false },
+                onConfirm = { newName ->
+                    showRenameDialog = false
+                    scope.launch {
+                        val now = System.currentTimeMillis()
+                        repository.updateTemplate(
+                            currentTemplate.copy(
+                                name = newName,
+                                updatedAt = now
+                            )
+                        )
+                        // 刷新模板数据
+                        template = currentTemplate.copy(name = newName, updatedAt = now)
+                    }
+                }
+            )
+        }
+    }
 }
 
 @Composable
@@ -318,16 +388,53 @@ private fun DetailRow(label: String, value: String) {
     }
 }
 
+// T7.4: 重命名对话框
 @Composable
-private fun Box(
-    modifier: Modifier = Modifier,
-    contentAlignment: Alignment = Alignment.TopStart,
-    content: @Composable () -> Unit
+private fun RenameDialog(
+    currentName: String,
+    onDismiss: () -> Unit,
+    onConfirm: (String) -> Unit,
 ) {
-    androidx.compose.foundation.layout.Box(
-        modifier = modifier,
-        contentAlignment = contentAlignment
-    ) {
-        content()
-    }
+    var text by remember { mutableStateOf(currentName) }
+    var error by remember { mutableStateOf<String?>(null) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("重命名视角") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = text,
+                    onValueChange = {
+                        text = it
+                        error = null
+                    },
+                    label = { Text("视角名称") },
+                    singleLine = true,
+                    isError = error != null,
+                    supportingText = error?.let { { Text(it, color = FailColor) } },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("取消")
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    val trimmed = text.trim()
+                    when {
+                        trimmed.isBlank() -> error = "名称不能为空"
+                        trimmed == currentName -> onDismiss()
+                        else -> onConfirm(trimmed)
+                    }
+                }
+            ) {
+                Text("确定")
+            }
+        }
+    )
 }

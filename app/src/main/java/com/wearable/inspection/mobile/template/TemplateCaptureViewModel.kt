@@ -65,6 +65,18 @@ class TemplateCaptureViewModel(
     }
 
     /**
+     * T7.4: 保存待用的自定义视角名称，由 UI 层在拍摄前设置。
+     */
+    private var pendingViewName: String? = null
+
+    /**
+     * 设置自定义视角名称（新增模式下拍摄前调用）。
+     */
+    fun setPendingViewName(name: String?) {
+        pendingViewName = name
+    }
+
+    /**
      * 执行拍摄
      *
      * 1. CameraController.takePhoto() 拍到临时文件
@@ -124,7 +136,7 @@ class TemplateCaptureViewModel(
                 val old = existingTemplate ?: repository.getTemplate(templateId)
                 if (old == null) {
                     // 原 View 不存在，降级为新增
-                    return insertNewView(stored.finalPath)
+                    return insertNewView(stored.finalPath, pendingViewName)
                 }
 
                 val oldPath = old.mainImagePath
@@ -143,8 +155,10 @@ class TemplateCaptureViewModel(
                 templateId
             } else {
                 // 新增模式
-                insertNewView(stored.finalPath)
+                insertNewView(stored.finalPath, pendingViewName)
             }
+        } catch (e: kotlin.coroutines.cancellation.CancellationException) {
+            throw e
         } catch (e: Exception) {
             null
         }
@@ -153,19 +167,22 @@ class TemplateCaptureViewModel(
     /**
      * 新增 View 到数据库
      *
+     * @param imagePath 模板图片路径
+     * @param viewName 自定义视角名称；null 时使用默认 "视角 N"
      * @return 新生成的 templateId，失败返回 null
      */
-    internal suspend fun insertNewView(imagePath: String): String? {
+    internal suspend fun insertNewView(imagePath: String, viewName: String? = null): String? {
         return try {
             val existing = repository.getTemplatesByPart(partId)
             val newOrder = existing.size
             val newId = "${partId}_capture_${UUID.randomUUID()}"
             val now = System.currentTimeMillis()
+            val name = viewName?.takeIf { it.isNotBlank() } ?: "视角 ${newOrder + 1}"
             repository.insertTemplate(
                 InspectionTemplateEntity(
                     id = newId,
                     partId = partId,
-                    name = "视角 ${newOrder + 1}",
+                    name = name,
                     mainImagePath = imagePath,
                     displayOrder = newOrder,
                     createdAt = now,
@@ -173,6 +190,8 @@ class TemplateCaptureViewModel(
                 )
             )
             newId
+        } catch (e: kotlin.coroutines.cancellation.CancellationException) {
+            throw e
         } catch (e: Exception) {
             null
         }
